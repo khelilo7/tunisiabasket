@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pro A Stats</title>
+<style>
+  :root { --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  a { color:inherit; text-decoration:none; }
+  header { position:sticky; top:0; z-index:5; background:#0b101a; border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:center; padding:10px 18px; flex-wrap:wrap; }
+  header .logo { font-weight:800; letter-spacing:.5px; } header .logo b { color:var(--acc); }
+  nav { display:flex; gap:4px; flex:1; } nav a { padding:6px 12px; border-radius:8px; color:var(--mut); }
+  nav a.on, nav a:hover { background:var(--card); color:var(--txt); }
+  select, input, button { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font:inherit; }
+  button { cursor:pointer; } button:hover { border-color:var(--acc); }
+  main { max-width:1100px; margin:0 auto; padding:18px; }
+  h1 { margin:6px 0 14px; font-size:24px; } h2 { margin:22px 0 10px; font-size:16px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:16px; }
+  .grid { display:grid; gap:14px; } .g2 { grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); } .g4 { grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); }
+  .mvp { display:flex; gap:18px; align-items:center; background:linear-gradient(135deg,#2a1a08,#181f30 60%); border-color:#5a3a12; }
+  .mvp .crown { font-size:12px; color:var(--acc); font-weight:700; letter-spacing:.15em; }
+  .mvp .nm { font-size:30px; font-weight:800; line-height:1.1; }
+  .ring { width:92px; height:92px; border-radius:50%; display:grid; place-items:center; flex:none; font-size:30px; font-weight:800;
+          background:conic-gradient(var(--c) calc(var(--v)*1%), #2a3350 0); position:relative; }
+  .ring::before { content:""; position:absolute; inset:8px; background:var(--card); border-radius:50%; } .ring span { position:relative; }
+  .mvp .ring::before { background:#1d1710; }
+  .stat { text-align:center; } .stat b { display:block; font-size:24px; } .stat span { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
+  table { width:100%; border-collapse:collapse; } th, td { padding:7px 8px; text-align:right; white-space:nowrap; } th { color:var(--mut); font-weight:600; font-size:12px; text-transform:uppercase; cursor:pointer; user-select:none; }
+  th:first-child, td:first-child, .l { text-align:left; } tr { border-bottom:1px solid var(--line); } tbody tr:hover { background:#1e2740; cursor:pointer; }
+  .scroll { overflow-x:auto; } .mut { color:var(--mut); } .good { color:var(--good); } .bad { color:var(--bad); }
+  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 7px; border-radius:99px; background:#2a3350; color:var(--mut); }
+  .pill.mvp { background:var(--acc); color:#000; } .pill.w { background:#143d2c; color:var(--good); } .pill.l { background:#44202a; color:var(--bad); }
+  .rate { display:inline-block; min-width:34px; text-align:center; font-weight:800; padding:2px 6px; border-radius:7px; color:#000; }
+  .match { display:flex; align-items:center; gap:10px; justify-content:space-between; } .match b { font-size:18px; } .win { color:var(--txt); font-weight:700; } .lose { color:var(--mut); }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .sp { flex:1; }
+  svg.spark { width:100%; height:90px; } .note { color:var(--mut); font-size:12px; margin-top:8px; }
+  .banner { background:#3a2a0a; border:1px solid #7a5a1a; color:#ffd89a; padding:10px 14px; border-radius:10px; margin-bottom:14px; font-size:13px; }
+  .empty { text-align:center; color:var(--mut); padding:40px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🏀 <b>PRO A</b> STATS</div>
+  <span class="pill" title="Current competition phase">Regular season</span>
+  <nav id="nav">
+    <a href="#/" data-p="">Home</a><a href="#/players" data-p="players">Players</a>
+    <a href="#/games" data-p="games">Games</a><a href="#/teams" data-p="teams">Standings</a><a href="#/planning" data-p="planning">Planning</a>
+  </nav>
+  <a href="/admin" style="color:var(--mut);font-size:13px">Admin</a>
+  <select id="season"></select>
+  <button id="syncbtn" title="Check Google Drive for new box scores now" hidden>⟳ Sync</button>
+</header>
+<main id="app"></main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let season = localStorage.getItem('season') || '';
+const api = async p => { const r = await fetch('/api/' + p + (p.includes('?') ? '&' : '?') + 'season=' + encodeURIComponent(season)); if (!r.ok) throw new Error(r.status); return r.json(); };
+const rcol = r => r >= 90 ? '#ffb020' : r >= 75 ? '#3ecf8e' : r >= 60 ? '#6aa9ff' : r >= 45 ? '#aab3c9' : '#ff7b86';
+const rate = r => `<span class="rate" style="background:${rcol(r)}">${r}</span>`;
+const ring = (r, big) => `<div class="ring" style="--v:${r};--c:${rcol(r)}"><span>${r}</span></div>`;
+const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const title = n => n.toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
+const when = g => g.date_approx ? (g.matchday || '').replace(/ PHASE.*/i, '') : fmtDate(g.date);
+const signed = n => (n > 0 ? '+' : '') + n;
+
+async function route() {
+  const [, page, arg] = (location.hash || '#/').split('/');
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === (page === 'team' ? 'teams' : (page || ''))));
+  const app = $('#app');
+  try {
+    app.innerHTML = await ({ '': home, players, player, games, game, teams, team, planning }[page || ''] || home)(arg);
+    bind();
+  } catch (e) { app.innerHTML = `<div class="empty">Could not load this page (${esc(e.message)}).</div>`; }
+  window.scrollTo(0, 0);
+}
+
+async function home() {
+  const d = await api('overview');
+  if (!$('#season').options.length || $('#season').dataset.n != d.seasons.length) {
+    $('#season').dataset.n = d.seasons.length;
+    $('#season').innerHTML = d.seasons.map(s => `<option ${s === d.season ? 'selected' : ''}>${s}</option>`).join('');
+  }
+  if (!d.games) return `<div class="empty"><h1>No games yet</h1>Add the Anthropic API key and press Sync, or run <code>python seed_sample.py</code>.</div>`;
+  const m = d.mvp;
+  const st = d.status;
+  return `
+  ${st.error ? `<div class="banner">${esc(st.error)}</div>` : ''}
+  <div class="card mvp">${ring(m.rating)}
+    <div class="sp"><div class="crown">★ SEASON MVP · ${esc(d.season)}</div>
+      <div class="nm"><a href="#/player/${m.id}">${esc(m.name)}</a></div>
+      <div class="mut">${esc(m.team)} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}</div></div></div>
+  <h2>MVP race · players of the top ${d.top_teams.length} teams (${d.top_teams.map(esc).join(', ')})</h2>
+  <div class="card scroll"><table><thead><tr><th>#</th><th class="l">Player</th><th>Team</th><th>GP</th><th>PTS</th><th>REB</th><th>AST</th><th>PIR</th><th>Rating</th></tr></thead><tbody>
+  ${d.top.map((p, i) => `<tr data-go="player/${p.id}"><td>${i + 1}</td><td class="l">${esc(p.name)}</td><td>${esc(p.team)}</td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
+  </tbody></table></div>
+  <h2>Standings</h2>${standTable(d, true)}
+  <h2>Latest games</h2>
+  <div class="grid g2">${d.recent.map(gameCard).join('')}</div>`;
+}
+
+function gameCard(g) {
+  const [a, b] = g.teams;
+  return `<a class="card" href="#/game/${g.id}"><div class="mut" style="font-size:12px">${g.date_approx ? esc(g.matchday || '') : fmtDate(g.date) + ' · ' + esc(g.matchday || '')}</div>
+    <div class="match"><span class="${a.points > b.points ? 'win' : 'lose'}">${esc(a.code)}</span><b>${a.points} – ${b.points}</b><span class="${b.points > a.points ? 'win' : 'lose'}">${esc(b.code)}</span></div>
+    ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} pts, ${g.mvp.reb} reb, ${g.mvp.ast} ast</div>` : ''}</a>`;
+}
+
+let sortKey = 'rating', sortDir = -1, q = '', teamF = '';
+async function players() {
+  const d = await api('players');
+  const teams = [...new Set(d.players.flatMap(p => p.teams))].sort();
+  const cols = [['pts', 'PTS'], ['reb', 'REB'], ['ast', 'AST'], ['stl', 'STL'], ['blk', 'BLK'], ['fg_pct', 'FG%'], ['p3_pct', '3P%'], ['ft_pct', 'FT%'], ['min', 'MIN'], ['pir', 'PIR'], ['rating', 'RTG']];
+  const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)))
+    .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
+  return `<h1>Players <span class="mut" style="font-size:15px">${esc(d.season)} · per-game averages</span></h1>
+  <div class="row" style="margin-bottom:12px"><input id="q" placeholder="Search player…" value="${esc(q)}">
+    <select id="tf"><option value="">All teams</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
+  <div class="card scroll"><table><thead><tr><th>Player</th><th>Team</th><th data-sort="gp">GP</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
+  ${rows.map(p => `<tr data-go="player/${p.id}"><td class="l">${esc(p.name)}${p.mvp_games ? ` <span class="pill mvp">${p.mvp_games}× MVP</span>` : ''}</td><td>${esc(p.team)}</td><td>${p.gp}</td>
+    ${cols.map(([k]) => `<td>${k === 'rating' ? rate(p.rating) : p[k]}</td>`).join('')}</tr>`).join('')}
+  </tbody></table></div>${rows.length ? '' : '<div class="empty">No players match.</div>'}`;
+}
+
+async function player(id) {
+  const d = await api('players/' + id), p = d.player;
+  const pts = p.log.map(r => r.pir);
+  return `<a class="mut" href="#/players">← Players</a>
+  <div class="card row" style="margin-top:10px;gap:20px">${ring(p.rating)}
+    <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
+      <div class="mut">${p.teams.map(esc).join(' → ')} · #${p.number} · Season ${esc(d.season)}</div>
+      <div style="margin-top:6px">${d.rank ? `<span class="pill">MVP race: #${d.rank} of ${d.of}</span> ` : `<span class="pill">${p.qualified ? 'Not in the MVP pool (team outside the top ' + d.top_teams.length + ')' : 'Not enough games to rank'}</span> `}
+      ${d.rank === 1 ? '<span class="pill mvp">★ SEASON MVP</span> ' : ''}${p.mvp_games ? `<span class="pill mvp">${p.mvp_games}× game MVP</span> ` : ''}<span class="pill w">${p.wins}W</span> <span class="pill l">${p.gp - p.wins}L</span></div></div></div>
+  <h2>Season averages · ${p.gp} games</h2>
+  <div class="grid g4">${[['PTS', p.pts], ['REB', p.reb], ['AST', p.ast], ['STL', p.stl], ['BLK', p.blk], ['TOV', p.tov], ['MIN', p.min], ['+/-', signed(p.pm)],
+      ['FG%', p.fg_pct], ['3P%', p.p3_pct], ['FT%', p.ft_pct], ['TS%', p.ts_pct], ['PIR', p.pir]].map(([l, v]) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+  <h2>Form (PIR per game)</h2><div class="card">${spark(pts)}<div class="note">Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.</div></div>
+  <h2>Game log</h2>
+  <div class="card scroll"><table><thead><tr><th>Date</th><th class="l">Opp</th><th>Result</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>FG</th><th>3P</th><th>FT</th><th>+/-</th><th>PIR</th><th>RTG</th></tr></thead><tbody>
+  ${[...p.log].reverse().map(r => `<tr data-go="game/${r.game_id}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}vs ${esc(r.opp)}${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}</td>
+    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? 'W' : 'L'}</span> ${r.score}</td><td>${Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${r.ast}</td><td>${r.stl}</td><td>${r.blk}</td><td>${r.tov}</td>
+    <td>${r.fgm}/${r.fga}</td><td>${r.p3m}/${r.p3a}</td><td>${r.ftm}/${r.fta}</td><td>${signed(r.pm)}</td><td>${r.pir}</td><td>${rate(r.rating)}</td></tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function spark(v) {
+  if (v.length < 2) return '<div class="mut">Need at least 2 games for a trend.</div>';
+  const W = 600, H = 90, lo = Math.min(0, ...v), hi = Math.max(...v, 1), x = i => 10 + i * (W - 20) / (v.length - 1), y = n => H - 10 - (n - lo) / (hi - lo) * (H - 20);
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline fill="none" stroke="#ff8a1f" stroke-width="2.5" vector-effect="non-scaling-stroke" points="${v.map((n, i) => x(i) + ',' + y(n)).join(' ')}"/></svg>`;
+}
+
+async function games() {
+  const d = await api('games');
+  return `<h1>Games <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1><div class="grid g2">${d.games.map(gameCard).join('') || '<div class="empty">No games.</div>'}</div>`;
+}
+
+async function game(id) {
+  const g = await (await fetch('/api/games/' + id)).json();
+  const [a, b] = g.teams;
+  const tbl = t => `<h2>${esc(t.name)} <span class="${t.won ? 'good' : 'mut'}">${t.points}</span></h2>
+   <div class="card scroll"><table><thead><tr><th>Player</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>FG</th><th>3P</th><th>FT</th><th>+/-</th><th>PIR</th><th>RTG</th></tr></thead><tbody>
+   ${t.players.map(p => p.dnp ? `<tr class="mut"><td class="l">${esc(title(p.name))}</td><td colspan="13">DNP</td></tr>` :
+     `<tr data-go="player/${p.pid}"><td class="l">${p.starter ? '<b>' : ''}${esc(title(p.name))}${p.starter ? '</b>' : ''}${g.mvp && g.mvp.name === p.name ? ' <span class="pill mvp">MVP</span>' : ''}</td>
+     <td>${Math.round(p.min)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.fgm}/${p.fga}</td><td>${p.p3m}/${p.p3a}</td><td>${p.ftm}/${p.fta}</td><td>${signed(p.pm)}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
+   </tbody></table></div>`;
+  return `<a class="mut" href="#/games" onclick="if (history.length > 1) { history.back(); return false; }">← Back</a>
+  <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${g.date_approx ? '' : fmtDate(g.date) + ' · '}${esc(g.matchday || '')} · ${esc(g.competition || '')}</div>
+   <div class="match" style="font-size:20px"><a href="#/team/${esc(a.code)}" class="${a.won ? 'win' : 'lose'}">${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a href="#/team/${esc(b.code)}" class="${b.won ? 'win' : 'lose'}">${esc(b.name)}</a></div>
+   ${g.score_note ? `<div class="banner" style="margin-top:8px">Official result shown. ${esc(g.score_note)}.</div>` : ''}${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">GAME MVP</span> <a href="#/player/${g.mvp.player_id}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} pts, ${g.mvp.reb} reb, ${g.mvp.ast} ast · PIR ${g.mvp.pir}</div>` : ''}</div>
+  ${tbl(a)}${tbl(b)}`;
+}
+function standTable(d, compact) {
+  const top = new Set(d.top_teams);
+  return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">Team</th><th>J</th><th>W</th><th>L</th>${compact ? '' : '<th>PF</th><th>PA</th>'}<th>Diff</th><th>Pts</th>${compact ? '' : '<th title="Box scores available in the app">Box scores</th>'}</tr></thead><tbody>
+  ${d.standings.map(t => `<tr data-go="team/${esc(t.code)}"${top.has(t.code) ? ' style="background:#1d2236"' : ''}><td>${t.rank}</td><td class="l">${esc(t.name)} <span class="mut">${esc(t.code)}</span>${top.has(t.code) ? ' <span class="pill mvp">MVP pool</span>' : ''}</td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
+}
+
+async function teams() {
+  const d = await api('overview');
+  return `<h1>Standings <span class="mut" style="font-size:15px">${esc(d.season)} · regular season · phase 1 complete (J1–J11)</span></h1>${standTable(d, false)}
+  <div class="note">Click a team for its match history and calendar. 2 points for a win, 1 for a loss. Player stats only exist for games with a box score (last column). The season MVP can only come from the top ${d.top_teams.length} teams.</div>`;
+}
+
+const teamLink = (code, name) => `<a href="#/team/${esc(code)}" onclick="event.stopPropagation()"><b>${esc(name || code)}</b></a>`;
+
+async function team(code) {
+  const t = await api('teams/' + encodeURIComponent(code)), st = t.standing, inPool = t.top_teams.includes(t.code);
+  const played = t.results.length;
+  return `<a class="mut" href="#/teams">← Standings</a>
+  <div class="card" style="margin-top:10px">
+    <div class="row"><h1 style="margin:0">${esc(t.name)} <span class="mut" style="font-size:16px">${esc(t.code)}</span></h1><span class="sp"></span>
+      <span class="pill">Regular season</span></div>
+    <div style="margin-top:8px">${st ? `<span class="pill">#${st.rank} in the standings</span> <span class="pill w">${st.w}W</span> <span class="pill l">${st.l}L</span> <span class="pill">${st.pts} pts</span> <span class="pill ${st.diff >= 0 ? 'w' : 'l'}">${signed(st.diff)}</span> ` : ''}${inPool ? '<span class="pill mvp">MVP pool</span>' : ''}</div>
+  </div>
+  <h2>Match history · ${played} played</h2>
+  <div class="card scroll"><table><thead><tr><th>Day</th><th class="l">Opponent</th><th></th><th>Score</th><th></th></tr></thead><tbody>
+  ${t.results.map(r => `<tr ${r.game_id ? `data-go="game/${esc(r.game_id)}"` : 'style="cursor:default"'}><td class="l">J${r.matchday}</td>
+    <td class="l"><span class="mut small">${r.home ? 'vs' : '@'}</span> ${teamLink(r.opp, r.opp_name)}</td>
+    <td><span class="pill ${r.won ? 'w' : 'l'}">${r.won ? 'W' : 'L'}</span></td><td><b>${r.pf} – ${r.pa}</b></td>
+    <td class="mut small">${r.game_id ? 'Match stats ›' : 'No box score yet'}</td></tr>`).join('') || '<tr><td colspan="5" class="mut">No matches played yet.</td></tr>'}
+  </tbody></table></div>
+  <h2>Next matches · calendar</h2>
+  ${t.projected ? '<div class="banner">Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.</div>' : ''}
+  <div class="card scroll"><table><thead><tr><th>Day</th><th class="l">Opponent</th><th></th></tr></thead><tbody>
+  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="mut small">${u.home ? 'vs' : '@'}</span> ${teamLink(u.opp, u.opp_name)}</td><td class="mut small">${u.home ? 'Home' : 'Away'}${t.projected ? ' · projected' : ''}</td></tr>`).join('') || '<tr><td colspan="3" class="mut">No upcoming matches.</td></tr>'}
+  </tbody></table></div>
+  <h2>Players</h2>
+  <div class="card scroll"><table><thead><tr><th class="l">Player</th><th>GP</th><th>PTS</th><th>REB</th><th>AST</th><th>PIR</th><th>RTG</th></tr></thead><tbody>
+  ${t.players.map(p => `<tr data-go="player/${esc(p.id)}"><td class="l">${esc(p.name)}${p.mvp_games ? ` <span class="pill mvp">${p.mvp_games}× MVP</span>` : ''}</td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('') || '<tr><td colspan="7" class="mut">No player stats yet.</td></tr>'}
+  </tbody></table></div>`;
+}
+
+let planTeam = '';
+async function planning() {
+  const d = await (await fetch('/api/planning')).json();
+  const codes = Object.keys(d.teams).sort((a, b) => d.teams[a].localeCompare(d.teams[b]));
+  const hl = c => planTeam && c === planTeam ? ' style="background:#3a2a0a;border-radius:6px;padding:0 4px"' : '';
+  const mds = d.matchdays.filter(m => !planTeam || m.games.some(g => g.home === planTeam || g.away === planTeam));
+  return `<h1>Planning <span class="mut" style="font-size:15px">regular season · phase 2 (J${d.matchdays[0]?.matchday}–J${d.matchdays.at(-1)?.matchday})</span></h1>
+  ${d.projected ? '<div class="banner">Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.</div>' : ''}
+  <div class="row" style="margin-bottom:12px"><label class="mut small">Show one team</label>
+    <select id="pt"><option value="">All teams</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>
+  <div class="grid g2">${mds.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b><span class="sp"></span><span class="mut small">${d.projected ? 'projected' : ''}</span></div>
+    ${m.games.map(g => `<div class="match" style="padding:6px 0;border-top:1px solid var(--line)">
+      <a href="#/team/${g.home}"${hl(g.home)}>${esc(g.home)}</a>
+      ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : '<span class="mut small">vs</span>'}
+      <a href="#/team/${g.away}"${hl(g.away)}>${esc(g.away)}</a></div>`).join('')}</div>`).join('')}</div>`;
+}
+
+function bind() {
+  document.querySelectorAll('[data-go]').forEach(tr => tr.onclick = () => location.hash = '#/' + tr.dataset.go);
+  document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => { const k = th.dataset.sort; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; route(); });
+  const qi = $('#q'); if (qi) { qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; route().then(() => { const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); }); }; }
+  const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(); };
+  const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(); };
+}
+
+$('#season').onchange = e => { season = e.target.value; localStorage.setItem('season', season); route(); };
+fetch('/admin/api/me', { credentials: 'same-origin' }).then(r => r.json()).then(m => { $('#syncbtn').hidden = !m.admin; }).catch(() => {});  // Sync is for the admin only
+$('#syncbtn').onclick = async () => {
+  const b = $('#syncbtn'); b.textContent = '⟳ Syncing…';
+  const r = await fetch('/api/sync', { method: 'POST', credentials: 'same-origin' });
+  if (!r.ok) { b.textContent = '⟳ Sync'; alert('Admin login required: open /admin and log in first.'); return; }
+  for (let i = 0; i < 120; i++) { await new Promise(r => setTimeout(r, 3000)); const s = await (await fetch('/api/status', { credentials: 'same-origin' })).json(); if (!s.running) break; }
+  b.textContent = '⟳ Sync'; route();
+};
+addEventListener('hashchange', route);
+(async () => {  // fill the season picker on every page, not only Home
+  const d = await api('overview');
+  $('#season').innerHTML = d.seasons.map(x => `<option ${x === d.season ? 'selected' : ''}>${x}</option>`).join('');
+})();
+route();
+// auto-refresh data every 2 minutes so new games appear without reloading
+setInterval(() => { if (!document.hidden && !document.activeElement.matches('input')) route(); }, 120000);
+</script>
+</body>
+</html>

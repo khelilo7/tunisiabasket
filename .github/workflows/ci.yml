@@ -1,0 +1,42 @@
+name: CI
+
+# Runs on every pull request, on pushes to any branch except main (main is checked by the Deploy workflow,
+# which calls this one first) and when called by Deploy.
+on:
+  pull_request:
+  push:
+    branches-ignore: [main]
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"   # same as Ubuntu 24.04 on the server
+          cache: pip
+
+      - name: Install Tesseract (reads scanned box scores)
+        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt pyflakes
+
+      - name: Lint Python
+        run: python -m pyflakes ./*.py tools tests
+
+      - name: Lint shell scripts
+        run: shellcheck deploy/*.sh tests/test_release.sh
+
+      - name: Tests (stats rules, security, OCR accuracy, smoke)
+        run: python tests/run_all.py
+
+      - name: Rehearse a deploy (good release, refused release, automatic rollback)
+        run: bash tests/test_release.sh

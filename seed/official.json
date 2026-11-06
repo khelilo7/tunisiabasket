@@ -1,0 +1,555 @@
+{
+ "season": "2026-2027",
+ "teams": {
+  "CA": "Club Africain",
+  "JSK": "JS Kairouan",
+  "USM": "US Monastir",
+  "ESS": "ES Sahel",
+  "DSG": "DS Grombalia",
+  "CSS": "CS Sfaxien",
+  "ESG": "ES Goulette",
+  "SN": "Stade Nabeulien",
+  "JSM": "JS Manazeh",
+  "ESR": "ES Rades",
+  "USA": "US Ansar",
+  "CSHS": "CS Hammam Sousse"
+ },
+ "results": [
+  {
+   "matchday": 1,
+   "home": "CSS",
+   "away": "ESR",
+   "home_score": 68,
+   "away_score": 46
+  },
+  {
+   "matchday": 1,
+   "home": "USA",
+   "away": "JSM",
+   "home_score": 42,
+   "away_score": 73
+  },
+  {
+   "matchday": 1,
+   "home": "ESG",
+   "away": "CA",
+   "home_score": 68,
+   "away_score": 80
+  },
+  {
+   "matchday": 1,
+   "home": "JSK",
+   "away": "USM",
+   "home_score": 77,
+   "away_score": 62
+  },
+  {
+   "matchday": 1,
+   "home": "ESS",
+   "away": "SN",
+   "home_score": 77,
+   "away_score": 62
+  },
+  {
+   "matchday": 1,
+   "home": "CSHS",
+   "away": "DSG",
+   "home_score": 61,
+   "away_score": 73
+  },
+  {
+   "matchday": 2,
+   "home": "CA",
+   "away": "ESS",
+   "home_score": 72,
+   "away_score": 62
+  },
+  {
+   "matchday": 2,
+   "home": "USM",
+   "away": "CSS",
+   "home_score": 66,
+   "away_score": 53
+  },
+  {
+   "matchday": 2,
+   "home": "JSM",
+   "away": "CSHS",
+   "home_score": 67,
+   "away_score": 58
+  },
+  {
+   "matchday": 2,
+   "home": "ESR",
+   "away": "JSK",
+   "home_score": 68,
+   "away_score": 82
+  },
+  {
+   "matchday": 2,
+   "home": "DSG",
+   "away": "USA",
+   "home_score": 79,
+   "away_score": 52
+  },
+  {
+   "matchday": 2,
+   "home": "SN",
+   "away": "ESG",
+   "home_score": 81,
+   "away_score": 77
+  },
+  {
+   "matchday": 3,
+   "home": "ESG",
+   "away": "JSM",
+   "home_score": 76,
+   "away_score": 63
+  },
+  {
+   "matchday": 3,
+   "home": "CSS",
+   "away": "SN",
+   "home_score": 65,
+   "away_score": 53
+  },
+  {
+   "matchday": 3,
+   "home": "USA",
+   "away": "USM",
+   "home_score": 42,
+   "away_score": 80
+  },
+  {
+   "matchday": 3,
+   "home": "ESS",
+   "away": "DSG",
+   "home_score": 74,
+   "away_score": 69
+  },
+  {
+   "matchday": 3,
+   "home": "JSK",
+   "away": "CA",
+   "home_score": 61,
+   "away_score": 57
+  },
+  {
+   "matchday": 3,
+   "home": "CSHS",
+   "away": "ESR",
+   "home_score": 74,
+   "away_score": 55
+  },
+  {
+   "matchday": 4,
+   "home": "CA",
+   "away": "SN",
+   "home_score": 84,
+   "away_score": 46
+  },
+  {
+   "matchday": 4,
+   "home": "JSM",
+   "away": "JSK",
+   "home_score": 52,
+   "away_score": 61
+  },
+  {
+   "matchday": 4,
+   "home": "DSG",
+   "away": "CSS",
+   "home_score": 82,
+   "away_score": 70
+  },
+  {
+   "matchday": 4,
+   "home": "ESR",
+   "away": "USA",
+   "home_score": 63,
+   "away_score": 54
+  },
+  {
+   "matchday": 4,
+   "home": "USM",
+   "away": "CSHS",
+   "home_score": 83,
+   "away_score": 35
+  },
+  {
+   "matchday": 4,
+   "home": "ESG",
+   "away": "ESS",
+   "home_score": 72,
+   "away_score": 79
+  },
+  {
+   "matchday": 5,
+   "home": "USA",
+   "away": "CA",
+   "home_score": 46,
+   "away_score": 64
+  },
+  {
+   "matchday": 5,
+   "home": "JSK",
+   "away": "ESG",
+   "home_score": 90,
+   "away_score": 60
+  },
+  {
+   "matchday": 5,
+   "home": "ESS",
+   "away": "USM",
+   "home_score": 51,
+   "away_score": 58
+  },
+  {
+   "matchday": 5,
+   "home": "SN",
+   "away": "CSHS",
+   "home_score": 80,
+   "away_score": 63
+  },
+  {
+   "matchday": 5,
+   "home": "ESR",
+   "away": "DSG",
+   "home_score": 83,
+   "away_score": 84
+  },
+  {
+   "matchday": 5,
+   "home": "CSS",
+   "away": "JSM",
+   "home_score": 56,
+   "away_score": 49
+  },
+  {
+   "matchday": 6,
+   "home": "CA",
+   "away": "CSHS",
+   "home_score": 83,
+   "away_score": 49
+  },
+  {
+   "matchday": 6,
+   "home": "JSM",
+   "away": "ESR",
+   "home_score": 58,
+   "away_score": 66
+  },
+  {
+   "matchday": 6,
+   "home": "ESG",
+   "away": "CSS",
+   "home_score": 82,
+   "away_score": 71
+  },
+  {
+   "matchday": 6,
+   "home": "USA",
+   "away": "SN",
+   "home_score": 57,
+   "away_score": 67
+  },
+  {
+   "matchday": 6,
+   "home": "USM",
+   "away": "DSG",
+   "home_score": 75,
+   "away_score": 58
+  },
+  {
+   "matchday": 6,
+   "home": "JSK",
+   "away": "ESS",
+   "home_score": 87,
+   "away_score": 72
+  },
+  {
+   "matchday": 7,
+   "home": "ESS",
+   "away": "USA",
+   "home_score": 78,
+   "away_score": 63
+  },
+  {
+   "matchday": 7,
+   "home": "ESR",
+   "away": "USM",
+   "home_score": 56,
+   "away_score": 87
+  },
+  {
+   "matchday": 7,
+   "home": "DSG",
+   "away": "JSM",
+   "home_score": 75,
+   "away_score": 56
+  },
+  {
+   "matchday": 7,
+   "home": "SN",
+   "away": "JSK",
+   "home_score": 62,
+   "away_score": 71
+  },
+  {
+   "matchday": 7,
+   "home": "CSHS",
+   "away": "ESG",
+   "home_score": 61,
+   "away_score": 65
+  },
+  {
+   "matchday": 7,
+   "home": "CA",
+   "away": "CSS",
+   "home_score": 101,
+   "away_score": 59
+  },
+  {
+   "matchday": 8,
+   "home": "ESR",
+   "away": "ESS",
+   "home_score": 69,
+   "away_score": 74
+  },
+  {
+   "matchday": 8,
+   "home": "JSM",
+   "away": "CA",
+   "home_score": 70,
+   "away_score": 87
+  },
+  {
+   "matchday": 8,
+   "home": "JSK",
+   "away": "USA",
+   "home_score": 68,
+   "away_score": 40
+  },
+  {
+   "matchday": 8,
+   "home": "DSG",
+   "away": "SN",
+   "home_score": 73,
+   "away_score": 68
+  },
+  {
+   "matchday": 8,
+   "home": "CSS",
+   "away": "CSHS",
+   "home_score": 63,
+   "away_score": 59
+  },
+  {
+   "matchday": 8,
+   "home": "USM",
+   "away": "ESG",
+   "home_score": 104,
+   "away_score": 62
+  },
+  {
+   "matchday": 9,
+   "home": "CA",
+   "away": "ESR",
+   "home_score": 96,
+   "away_score": 67
+  },
+  {
+   "matchday": 9,
+   "home": "USA",
+   "away": "CSS",
+   "home_score": 67,
+   "away_score": 74
+  },
+  {
+   "matchday": 9,
+   "home": "ESG",
+   "away": "DSG",
+   "home_score": 85,
+   "away_score": 84
+  },
+  {
+   "matchday": 9,
+   "home": "CSHS",
+   "away": "JSK",
+   "home_score": 42,
+   "away_score": 85
+  },
+  {
+   "matchday": 9,
+   "home": "SN",
+   "away": "USM",
+   "home_score": 77,
+   "away_score": 94
+  },
+  {
+   "matchday": 9,
+   "home": "ESS",
+   "away": "JSM",
+   "home_score": 68,
+   "away_score": 58
+  },
+  {
+   "matchday": 10,
+   "home": "CSHS",
+   "away": "ESS",
+   "home_score": 64,
+   "away_score": 79
+  },
+  {
+   "matchday": 10,
+   "home": "USM",
+   "away": "JSM",
+   "home_score": 101,
+   "away_score": 62
+  },
+  {
+   "matchday": 10,
+   "home": "DSG",
+   "away": "CA",
+   "home_score": 59,
+   "away_score": 74
+  },
+  {
+   "matchday": 10,
+   "home": "CSS",
+   "away": "JSK",
+   "home_score": 78,
+   "away_score": 76
+  },
+  {
+   "matchday": 10,
+   "home": "ESG",
+   "away": "USA",
+   "home_score": 85,
+   "away_score": 60
+  },
+  {
+   "matchday": 10,
+   "home": "SN",
+   "away": "ESR",
+   "home_score": 73,
+   "away_score": 65
+  },
+  {
+   "matchday": 11,
+   "home": "CA",
+   "away": "USM",
+   "home_score": 78,
+   "away_score": 59
+  },
+  {
+   "matchday": 11,
+   "home": "ESR",
+   "away": "ESG",
+   "home_score": 69,
+   "away_score": 74
+  },
+  {
+   "matchday": 11,
+   "home": "JSM",
+   "away": "SN",
+   "home_score": 69,
+   "away_score": 65
+  },
+  {
+   "matchday": 11,
+   "home": "USA",
+   "away": "CSHS",
+   "home_score": 74,
+   "away_score": 45
+  },
+  {
+   "matchday": 11,
+   "home": "ESS",
+   "away": "CSS",
+   "home_score": 78,
+   "away_score": 68
+  },
+  {
+   "matchday": 11,
+   "home": "JSK",
+   "away": "DSG",
+   "home_score": 79,
+   "away_score": 64
+  }
+ ],
+ "standings": [
+  {
+   "code": "CA",
+   "w": 10,
+   "diff": 230,
+   "pts": 21
+  },
+  {
+   "code": "JSK",
+   "w": 10,
+   "diff": 180,
+   "pts": 21
+  },
+  {
+   "code": "USM",
+   "w": 9,
+   "diff": 218,
+   "pts": 20
+  },
+  {
+   "code": "ESS",
+   "w": 8,
+   "diff": 50,
+   "pts": 19
+  },
+  {
+   "code": "DSG",
+   "w": 6,
+   "diff": 23,
+   "pts": 17
+  },
+  {
+   "code": "CSS",
+   "w": 6,
+   "diff": -34,
+   "pts": 17
+  },
+  {
+   "code": "ESG",
+   "w": 6,
+   "diff": -36,
+   "pts": 17
+  },
+  {
+   "code": "SN",
+   "w": 4,
+   "diff": -61,
+   "pts": 15
+  },
+  {
+   "code": "JSM",
+   "w": 3,
+   "diff": -78,
+   "pts": 14
+  },
+  {
+   "code": "ESR",
+   "w": 2,
+   "diff": -113,
+   "pts": 13
+  },
+  {
+   "code": "USA",
+   "w": 1,
+   "diff": -179,
+   "pts": 12
+  },
+  {
+   "code": "CSHS",
+   "w": 1,
+   "diff": -196,
+   "pts": 12
+  }
+ ]
+}

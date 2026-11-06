@@ -1,0 +1,20 @@
+"""Run every check with a throwaway data folder.  python tests/run_all.py   (needs the tesseract program installed)"""
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+root = Path(__file__).resolve().parent.parent
+if not shutil.which("tesseract"):
+    sys.exit("tesseract is not installed (macOS: brew install tesseract, Ubuntu: apt install tesseract-ocr)")
+env = {**os.environ, "DATA_DIR": tempfile.mkdtemp(prefix="proa-test-")}
+failed = []
+for name in ("smoke.py", "test_repo_hygiene.py", "test_stats.py", "test_security.py", "test_results_images.py", "test_ocr.py"):
+    print(f"\n=== {name}")
+    if subprocess.run([sys.executable, str(root / "tests" / name)], cwd=root, env=env).returncode:
+        failed.append(name)
+shutil.rmtree(env["DATA_DIR"], ignore_errors=True)
+print("\nRESULT:", "FAILED: " + ", ".join(failed) if failed else "all checks passed")
+sys.exit(1 if failed else 0)

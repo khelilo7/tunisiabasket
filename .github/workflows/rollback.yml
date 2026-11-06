@@ -1,0 +1,38 @@
+name: Rollback
+
+# Manual: go back to the release that was live before the current one. Needs the same approval as a deploy.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  rollback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://${{ vars.PRODUCTION_DOMAIN }}
+    env:
+      HOST: ${{ vars.PROD_HOST }}
+      DEPLOY_USER: ${{ vars.PROD_USER }}
+    steps:
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Roll back on the server
+        run: |
+          ssh -i "$HOME/.ssh/id_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$HOST" \
+            "bash /opt/proastats/current/deploy/release.sh --rollback"

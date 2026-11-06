@@ -1,0 +1,94 @@
+name: Deploy
+
+# Every push to main: run all checks, then WAIT for a human to approve the "production" environment,
+# then install the new release on the OVH server (with automatic rollback if it is not healthy).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:   # lets you re-deploy the current main by hand
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false   # never interrupt a deploy that is running
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read   # lets the job read its own environment settings (approval-gate check below)
+    # The approval gate: Settings > Environments > production > Required reviewers.
+    # The job (and the SSH secrets stored in that environment) stays locked until a reviewer approves.
+    environment:
+      name: production
+      url: https://${{ vars.PRODUCTION_DOMAIN }}
+    env:
+      HOST: ${{ vars.PROD_HOST }}
+      DEPLOY_USER: ${{ vars.PROD_USER }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Refuse to deploy if the production environment has no required reviewer
+        # Without a reviewer rule the job would start WITHOUT anyone approving. That happens on a private repo
+        # under the free GitHub plan, or if the rule was never created. Fail closed instead.
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ALLOW_UNGATED: ${{ vars.ALLOW_UNGATED_DEPLOY }}
+        run: |
+          if [ "$ALLOW_UNGATED" = "true" ]; then echo "::warning::ALLOW_UNGATED_DEPLOY=true: deploying without the approval check"; exit 0; fi
+          n="$(gh api "repos/$GITHUB_REPOSITORY/environments/production" --jq '[.protection_rules[]? | select(.type=="required_reviewers")] | length')" || n=0
+          if [ "${n:-0}" -lt 1 ]; then
+            echo "::error::The 'production' environment has no required reviewers, so nobody approved this deploy. Add them in Settings > Environments > production (public repo, or a paid GitHub plan for private repos)."
+            exit 1
+          fi
+          echo "Approval gate is configured ($n reviewer rule)."
+
+      - name: Name this release
+        id: rel
+        run: echo "name=$(date -u +%Y%m%d%H%M%S)-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare SSH
+        env:
+          SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+
+      - name: Copy the code to the server
+        env:
+          REL: ${{ steps.rel.outputs.name }}
+        run: |
+          rsync -az \
+            --exclude '.git' --exclude '.github' --exclude '__pycache__' --exclude '*.pyc' --exclude '.venv' --exclude 'data' \
+            -e "ssh -i $HOME/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            --rsync-path="mkdir -p /opt/proastats/releases/$REL && rsync" \
+            ./ "$DEPLOY_USER@$HOST:/opt/proastats/releases/$REL/"
+
+      - name: Install, test and switch (rolls back by itself if unhealthy)
+        env:
+          REL: ${{ steps.rel.outputs.name }}
+        run: |
+          ssh -i "$HOME/.ssh/id_deploy" -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes "$DEPLOY_USER@$HOST" \
+            "bash /opt/proastats/releases/$REL/deploy/release.sh $REL"
+
+      - name: Check the public site
+        if: ${{ vars.PRODUCTION_DOMAIN != '' }}
+        env:
+          DOMAIN: ${{ vars.PRODUCTION_DOMAIN }}
+        run: |
+          for _ in 1 2 3 4 5 6; do
+            if curl -fsS -m 10 "https://$DOMAIN/api/overview" > /dev/null; then echo "Site is up."; exit 0; fi
+            sleep 10
+          done
+          echo "Public site did not answer. Check Cloudflare/DNS, or roll back with the Rollback workflow."; exit 1

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · Pro A Stats</title>
+<style>
+  :root { --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c; --warn:#ffd89a; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  a { color:inherit; text-decoration:none; }
+  header { position:sticky; top:0; z-index:5; background:#0b101a; border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:center; padding:10px 18px; }
+  header .logo { font-weight:800; } header .logo b { color:var(--acc); } header a.back { color:var(--mut); margin-left:auto; }
+  main { max-width:1000px; margin:0 auto; padding:18px; }
+  h2 { margin:26px 0 10px; font-size:16px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
+  select, input, button, textarea { background:#111829; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
+  button { cursor:pointer; } button:hover { border-color:var(--acc); } button.primary { background:var(--acc); color:#000; border-color:var(--acc); font-weight:700; }
+  button.danger:hover { border-color:var(--bad); color:var(--bad); } button:disabled { opacity:.5; cursor:default; }
+  .drop { border:2px dashed var(--line); border-radius:14px; padding:34px; text-align:center; color:var(--mut); transition:.15s; cursor:pointer; }
+  .drop.over { border-color:var(--acc); color:var(--txt); background:#1d2236; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .sp { flex:1; } .mut { color:var(--mut); } .small { font-size:12px; }
+  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:#2a3350; color:var(--mut); }
+  .pill.ok { background:#143d2c; color:var(--good); } .pill.bad { background:#44202a; color:var(--bad); } .pill.warn { background:#3a2a0a; color:var(--warn); } .pill.acc { background:var(--acc); color:#000; }
+  .problems { background:#2d1820; border:1px solid #6a2a38; color:#ffb3bd; border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  .warns { background:#3a2a0a; border:1px solid #7a5a1a; color:var(--warn); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  .okbox { background:#10281f; border:1px solid #1d5a40; color:#9be8c4; border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  ul { margin:4px 0; padding-left:18px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; } th, td { padding:4px 6px; text-align:right; } th:first-child, td:first-child, td.l, th.l { text-align:left; }
+  th { color:var(--mut); font-weight:600; font-size:11px; text-transform:uppercase; } tr { border-bottom:1px solid var(--line); }
+  textarea { width:100%; height:240px; font:12px/1.4 ui-monospace,Menlo,monospace; }
+  input.num { width:64px; } input.code { width:80px; text-transform:uppercase; }
+  details { margin-top:8px; } summary { cursor:pointer; color:var(--mut); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; } .chip { padding:3px 9px; border-radius:8px; font-size:12px; background:#111829; border:1px solid var(--line); color:var(--mut); }
+  .chip.full { background:#143d2c; color:var(--good); border-color:#1d5a40; } .chip.part { background:#3a2a0a; color:var(--warn); }
+  .saved { opacity:.55; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🏀 <b>PRO A</b> ADMIN</div>
+  <button id="logout" hidden>Log out</button>
+  <a class="back" href="/">← Back to the app</a>
+</header>
+<main>
+  <div id="login" class="card" style="max-width:420px;margin:60px auto" hidden>
+    <h2 style="margin-top:0">🔒 Admin login</h2>
+    <p class="mut small">Only the administrator can upload files, save data or run a sync. Enter the admin token.</p>
+    <form id="loginform" class="row">
+      <input id="token" type="password" autocomplete="current-password" placeholder="XXXX-XXXX-XXXX-XXXX" style="flex:1">
+      <button class="primary" type="submit">Log in</button>
+    </form>
+    <div id="loginmsg" style="margin-top:10px"></div>
+  </div>
+<div id="tool" hidden>
+  <div class="card">
+    <div class="drop" id="drop">
+      <b>Drop files here</b> or click to choose<br>
+      <span class="small">Box-score PDFs (several at once, multi-page too) · box-score images · "Score Final" result images · ZIP stacks of any of these</span>
+      <input id="file" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.webp,.zip" hidden>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <label class="mut small">What are they?</label>
+      <select id="kind"><option value="auto">Auto-detect</option><option value="box">Box scores</option><option value="results">Result graphics</option></select>
+      <label class="mut small">Matchday (optional hint)</label>
+      <input id="md" class="num" type="number" min="1" max="60" placeholder="e.g. 12">
+      <span class="sp"></span><span id="queued" class="mut small"></span>
+      <button id="go" class="primary" disabled>Upload &amp; convert</button>
+    </div>
+  </div>
+
+  <div id="msg"></div>
+  <h2>Converted files <span id="jobinfo" class="mut small"></span></h2>
+  <div id="items"><div class="mut">Nothing uploaded yet.</div></div>
+
+  <h2>Needs review (from Drive sync)</h2>
+  <div id="review"><div class="mut">Loading…</div></div>
+
+  <h2>Official results saved</h2>
+  <div id="official" class="chips"></div>
+</div>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let picked = [], teams = {}, jobId = null, timer = null;
+const api = async (path, opts = {}) => {
+  const r = await fetch('/admin/api/' + path, { credentials: 'same-origin', ...opts });
+  if (r.status === 401) { showLogin(); throw new Error('Your session ended. Please log in again.'); }
+  if (r.status === 403) throw new Error('Refused (403).');
+  const body = await r.json().catch(() => ({}));
+  if (!r.ok && !body.error) throw new Error('Request failed (' + r.status + ')');
+  return { ok: r.ok, status: r.status, body };
+};
+const say = (t, cls = 'okbox') => { $('#msg').innerHTML = t ? `<div class="${cls}">${esc(t)}</div>` : ''; };
+
+// ---- picking files
+const drop = $('#drop'), fileIn = $('#file');
+drop.onclick = () => fileIn.click();
+fileIn.onchange = () => addFiles(fileIn.files);
+['dragover', 'dragenter'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(e => drop.addEventListener(e, ev => { ev.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', ev => addFiles(ev.dataTransfer.files));
+function addFiles(fl) { picked = picked.concat([...fl]); $('#queued').textContent = picked.length + ' file(s) ready: ' + picked.slice(0, 3).map(f => f.name).join(', ') + (picked.length > 3 ? '…' : ''); $('#go').disabled = !picked.length; }
+
+$('#go').onclick = async () => {
+  const fd = new FormData();
+  picked.forEach(f => fd.append('files', f));
+  fd.append('kind', $('#kind').value); fd.append('matchday', $('#md').value);
+  $('#go').disabled = true; say('Uploading…');
+  try {
+    const { ok, body } = await api('upload', { method: 'POST', body: fd });
+    if (!ok) throw new Error(body.error || 'Upload failed');
+    picked = []; $('#queued').textContent = ''; fileIn.value = '';
+    say(`${body.items} item(s) queued for conversion.` + (body.skipped.length ? ' Skipped: ' + body.skipped.join('; ') : ''));
+    jobId = body.job_id; poll();
+  } catch (e) { say(e.message, 'problems'); $('#go').disabled = false; }
+};
+
+async function poll() {
+  clearTimeout(timer);
+  const { body } = await api('jobs/' + jobId);
+  renderItems(body);
+  $('#jobinfo').textContent = body.pending ? `· converting… ${body.pending} left (scanned pages take ~25 s each)` : '· done';
+  if (body.pending) timer = setTimeout(poll, 2000);
+}
+
+// ---- cards
+const cardState = {};  // id -> unsaved edits survive re-render
+function renderItems(job) {
+  const box = $('#items');
+  if (!job.items.length) { box.innerHTML = '<div class="mut">No convertible files in that upload.</div>'; return; }
+  if (box.dataset.job !== job.id) { box.innerHTML = ''; box.dataset.job = job.id; }
+  job.items.forEach(it => {  // only touch cards whose status changed, so typing/edits are never wiped
+    const key = 'job:' + job.id + ':' + it.id;
+    const html = card(it, key).replace('class="card"', `class="card" data-status="${it.status}"`).replace('class="card saved"', `class="card saved" data-status="${it.status}"`);
+    const old = box.querySelector(`[data-key="${key}"]`);
+    if (!old) box.insertAdjacentHTML('beforeend', html);
+    else if (old.dataset.status !== it.status) old.outerHTML = html;
+  });
+  bindCards(job.id);
+}
+
+function card(it, key, review) {
+  const head = `<div class="row"><b>${esc(it.filename)}</b> <span class="pill">${esc(it.kind)}</span> ${statusPill(it)}<span class="sp"></span></div>`;
+  if (it.status === 'queued' || it.status === 'processing') return `<div class="card" data-key="${key}">${head}<div class="mut small">${it.status === 'queued' ? 'Waiting in the queue…' : 'Reading…'}</div></div>`;
+  if (it.status === 'error') return `<div class="card" data-key="${key}">${head}<div class="problems">${esc(it.message)}</div></div>`;
+  if (it.kind === 'standings') return `<div class="card saved" data-key="${key}">${head}<div class="mut small">${esc(it.message)}</div></div>`;
+  if (it.status === 'saved' || it.status === 'discarded') return `<div class="card saved" data-key="${key}">${head}<div class="mut small">${it.status === 'saved' ? 'Saved to the app.' : 'Discarded.'}</div></div>`;
+  return it.kind === 'results' ? resultsCard(it, key, head) : boxCard(it, key, head, review);
+}
+const statusPill = it => ({ queued: '<span class="pill">queued</span>', processing: '<span class="pill warn">reading…</span>', done: '<span class="pill ok">ready to review</span>', error: '<span class="pill bad">failed</span>', saved: '<span class="pill ok">saved</span>', discarded: '<span class="pill">discarded</span>' }[it.status] || '');
+
+function boxCard(it, key, head, review) {
+  const g = it.result, [a, b] = g.teams, s = it.suggest || {};
+  const probs = it.problems || [];
+  const played = t => t.players.filter(p => !p.dnp);
+  const md = (cardState[key]?.md) ?? s.matchday ?? '';
+  return `<div class="card" data-key="${key}" data-type="box">${head}
+    <div class="row"><b style="font-size:17px">${esc(a.code)} ${a.points} – ${b.points} ${esc(b.code)}</b>
+      <span class="pill">${esc(g.source || '')}</span><span class="mut small">${esc(teams[a.code] || a.name)} vs ${esc(teams[b.code] || b.name)} · ${played(a).length + played(b).length} players</span></div>
+    ${probs.length ? `<div class="problems"><b>Checks failed.</b> Fix the JSON below (or save anyway if you checked the sheet yourself):<ul>${probs.map(p => `<li>${esc(p)}</li>`).join('')}</ul></div>` : '<div class="okbox">All consistency checks passed.</div>'}
+    ${s.official ? `<div class="${s.score_matches ? 'okbox' : 'warns'}">Official result: ${esc(s.official)} ${s.score_matches ? '✓ same score' : '— score differs from this sheet; the official score is used'}</div>` : (s.unknown_codes?.length ? `<div class="warns">Unknown team code(s): ${s.unknown_codes.map(esc).join(', ')}.</div>` : '<div class="warns">No official result for this pair yet. Set the matchday and tick “add official result”.</div>')}
+    ${s.duplicate_of ? `<div class="warns">Looks like a game already in the app (${esc(s.duplicate_of)}). Saving adds a copy; the better source wins automatically.</div>` : ''}
+    <div class="row" style="margin-top:8px">
+      <label class="mut small">Matchday</label><input class="num" data-f="md" type="number" min="1" max="60" value="${esc(md)}">
+      <label class="mut small">Date</label><input data-f="date" type="date" value="${g.date_approx ? '' : esc(g.date || '')}">
+      <label class="small"><input data-f="addres" type="checkbox" ${s.official ? '' : 'checked'}> add official result</label>
+      <span class="sp"></span>
+      <button class="primary" data-act="save">Save to app</button>
+      ${probs.length ? '<button data-act="force">Save anyway</button>' : ''}
+      <button class="danger" data-act="discard">Discard</button>
+    </div>
+    <details><summary>Players &amp; JSON (editable)</summary>
+      <div style="overflow-x:auto;margin:8px 0">${[a, b].map(t => `<div class="small mut" style="margin-top:6px">${esc(t.name)}</div><table><thead><tr><th>#</th><th class="l">Name</th><th>MIN</th><th>PTS</th><th>REB</th><th>AST</th><th>STL</th><th>BLK</th><th>TOV</th><th>+/-</th></tr></thead><tbody>${played(t).map(p => `<tr><td>${p.number}</td><td class="l">${esc(p.name)}</td><td>${Math.round(p.min)}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pm}</td></tr>`).join('')}</tbody></table>`).join('')}</div>
+      <textarea data-f="json" spellcheck="false">${esc(JSON.stringify(g, null, 1))}</textarea>
+      <div class="row small" style="margin-top:6px"><a href="#" data-act="download" class="mut">⬇ Download JSON</a></div>
+    </details>
+  </div>`;
+}
+
+function resultsCard(it, key, head) {
+  const r = it.result, md = cardState[key]?.md ?? r.matchday ?? '';
+  const opts = sel => `<option value=""></option>` + Object.keys(teams).map(c => `<option ${c === sel ? 'selected' : ''}>${esc(c)}</option>`).join('');
+  return `<div class="card" data-key="${key}" data-type="results">${head}
+    ${it.warnings?.length ? `<div class="warns"><ul>${it.warnings.map(w => `<li>${esc(w)}</li>`).join('')}</ul></div>` : '<div class="okbox">Read without warnings.</div>'}
+    ${it.message ? `<div class="warns">${esc(it.message)}</div>` : ''}
+    <div class="row"><label class="mut small">Matchday</label><input class="num" data-f="md" type="number" min="1" max="60" value="${esc(md)}">
+      <span class="mut small">Check each row against the image, then save.</span></div>
+    <table style="max-width:560px;margin-top:8px"><tbody>${r.games.map((g, i) => `<tr data-i="${i}"><td><select data-f="home">${opts(g.home)}</select></td><td><input class="num" data-f="hs" type="number" value="${g.home_score ?? ''}"></td><td>–</td><td><input class="num" data-f="as" type="number" value="${g.away_score ?? ''}"></td><td><select data-f="away">${opts(g.away)}</select></td></tr>`).join('')}</tbody></table>
+    <div class="row" style="margin-top:10px"><span class="sp"></span><button class="primary" data-act="save">Save official results</button><button class="danger" data-act="discard">Discard</button></div>
+  </div>`;
+}
+
+// ---- actions
+function bindCards(jid) {
+  document.querySelectorAll('.card[data-key]').forEach(c => {
+    const key = c.dataset.key;
+    c.querySelectorAll('[data-f=md]').forEach(i => i.oninput = () => { (cardState[key] ||= {}).md = i.value === '' ? null : +i.value; });
+    c.querySelectorAll('[data-act]').forEach(btn => btn.onclick = ev => { ev.preventDefault(); act(c, key, btn.dataset.act, btn); });
+  });
+}
+
+async function act(c, key, what, btn) {
+  const [kind, a, b] = key.split(':');
+  const urlBase = kind === 'job' ? `jobs/${a}/items/${b}` : `review/${a}`;
+  if (what === 'download') {
+    const t = c.querySelector('[data-f=json]').value; const url = URL.createObjectURL(new Blob([t], { type: 'application/json' }));
+    const el = document.createElement('a'); el.href = url; el.download = 'game.json'; el.click(); return;
+  }
+  if (what === 'discard') { await api(urlBase + '/discard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); c.classList.add('saved'); c.innerHTML = '<div class="mut small">Discarded.</div>'; return; }
+  const md = c.querySelector('[data-f=md]').value; const body = { matchday: md === '' ? null : +md };
+  if (c.dataset.type === 'results') {
+    body.games = [...c.querySelectorAll('tbody tr')].map(tr => ({ home: tr.querySelector('[data-f=home]').value, away: tr.querySelector('[data-f=away]').value, home_score: parseInt(tr.querySelector('[data-f=hs]').value), away_score: parseInt(tr.querySelector('[data-f=as]').value) }));
+  } else {
+    try { body.game = JSON.parse(c.querySelector('[data-f=json]').value); } catch (e) { say('The JSON is not valid: ' + e.message, 'problems'); return; }
+    body.date = c.querySelector('[data-f=date]').value || null; body.add_result = c.querySelector('[data-f=addres]').checked; body.force = what === 'force';
+  }
+  btn.disabled = true;
+  try {
+    const { ok, body: res } = await api(urlBase + '/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!ok) { say((res.error || 'Could not save') + (res.problems ? ': ' + res.problems.join('; ') : ''), 'problems'); btn.disabled = false; return; }
+    say(res.message); c.classList.add('saved'); c.innerHTML = `<div class="mut small">✓ ${esc(res.message)}</div>`; loadOfficial();
+  } catch (e) { say(e.message, 'problems'); btn.disabled = false; }
+}
+
+async function loadReview() {
+  try {
+    const { body } = await api('review');
+    $('#review').innerHTML = body.items.length ? body.items.map(it => card(it, 'review:' + it.id, true)).join('') : '<div class="mut">Nothing waiting. Games that fail the checks during a Drive sync appear here.</div>';
+    bindCards();
+  } catch (e) { $('#review').innerHTML = `<div class="problems">${esc(e.message)}</div>`; }
+}
+async function loadOfficial() {
+  try {
+    const { body } = await api('official'); teams = body.teams;
+    const n = Math.max(11, ...Object.keys(body.matchdays).map(Number));
+    $('#official').innerHTML = Array.from({ length: n }, (_, i) => i + 1).map(m => { const c = body.matchdays[m] || 0; return `<span class="chip ${c >= 6 ? 'full' : c ? 'part' : ''}">J${m}: ${c}/6</span>`; }).join('') + `<span class="mut small" style="margin-left:6px">${body.games} games</span>`;
+  } catch (e) { /* shown by loadReview */ }
+}
+function showLogin(msg) {
+  $('#tool').hidden = true; $('#login').hidden = false; $('#logout').hidden = true;
+  $('#loginmsg').innerHTML = msg ? `<div class="problems">${esc(msg)}</div>` : '';
+}
+$('#loginform').onsubmit = async ev => {
+  ev.preventDefault();
+  const r = await fetch('/admin/api/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: $('#token').value }) });
+  const b = await r.json().catch(() => ({}));
+  $('#token').value = '';
+  if (r.ok) boot(); else showLogin(b.error || 'Login failed.');
+};
+$('#logout').onclick = async () => { await fetch('/admin/api/logout', { method: 'POST', credentials: 'same-origin' }); showLogin('Logged out.'); };
+async function boot() {
+  const me = await (await fetch('/admin/api/me', { credentials: 'same-origin' })).json();
+  if (!me.admin) { showLogin(me.configured ? '' : 'No admin token is set yet. Run: python manage.py new-token'); return; }
+  $('#login').hidden = true; $('#tool').hidden = false; $('#logout').hidden = false;
+  await loadOfficial(); loadReview();
+}
+boot();
+</script>
+</body>
+</html>

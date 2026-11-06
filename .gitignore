@@ -1,0 +1,15 @@
+# live data and secrets never go into git
+data/
+dist/
+.env
+*.pem
+id_*
+
+# python / editor
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
+static/_tmp/

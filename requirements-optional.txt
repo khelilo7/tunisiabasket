@@ -1,0 +1,2 @@
+# Optional: Claude-vision fallback for PDFs the free reader cannot verify (needs ANTHROPIC_API_KEY)
+anthropic
