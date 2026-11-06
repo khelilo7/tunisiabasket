@@ -1,4 +1,5 @@
 """Aggregation, ratings and MVP logic. Pure functions over the stored game JSON files."""
+import bisect
 import difflib
 import json
 import re
@@ -10,6 +11,8 @@ config.ensure_data()
 GAMES_DIR = config.DATA_DIR / "games"
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
+POSITIONS_FILE = config.DATA_DIR / "positions.json"  # manual position corrections: {"<player id>": "PG"}
+POSITIONS = ["PG", "SG", "SF", "PF", "C"]
 PHASE_LEN = 11  # 12 teams, each plays every other team once per phase
 MVP_TOP_TEAMS = 4  # the season MVP can only come from the top-N teams in the official standings
 
@@ -231,6 +234,11 @@ def enrich_game(g: dict) -> dict:
     return g
 
 
+def _per36(rows, key):
+    m = sum(r["min"] for r in rows)
+    return round(36 * sum(r[key] for r in rows) / m, 2) if m else 0.0
+
+
 def _avg(xs):
     return round(sum(xs) / len(xs), 1) if xs else 0.0
 
@@ -290,6 +298,10 @@ def build(season=None):
             "wins": sum(r["won"] for r in rows),
             "mvp_games": sum(r["is_mvp"] for r in rows),
             "totals": {k: tot(k) for k in ("pts", "reb", "ast", "stl", "blk", "tov")},
+            "total_min": round(tot("min"), 1),
+            "reb36": _per36(rows, "reb"), "ast36": _per36(rows, "ast"), "blk36": _per36(rows, "blk"),
+            "stl36": _per36(rows, "stl"),
+            "p3_share": round(tot("p3a") / tot("fga"), 3) if tot("fga") else 0.0,
             "rating": rating(_avg([r["pir"] for r in rows])),
             "log": sorted(rows, key=lambda r: (r["date"], r["game_id"])),
         })
@@ -298,6 +310,7 @@ def build(season=None):
     need = min(MIN_GAMES_FOR_SEASON_MVP, max_gp)
     for p in players:
         p["qualified"] = p["gp"] >= need and p["min"] >= MIN_MINUTES_FOR_RANKING
+    assign_positions(players)
     official = load_official()
     table = official_standings(official) if official.get("season") == season else []
     rank = {r["code"]: r["rank"] for r in table}
@@ -379,6 +392,102 @@ def team_view(code, season=None):
                 opp = g["away"] if home else g["home"]
                 upcoming.append({"matchday": md["matchday"], "opp": opp, "opp_name": o["teams"][opp], "home": home})
     row = next((r for r in d["standings"] if r["code"] == code), None)
+    team_players = [p for p in d["players"] if p["team"] == code]
     return {"code": code, "name": o["teams"][code], "standing": row, "results": results, "upcoming": upcoming,
+            "lineup": team_lineup(team_players),
             "projected": plan["projected"], "top_teams": d["top_teams"],
             "players": [{k: v for k, v in p.items() if k != "log"} for p in d["players"] if p["team"] == code]}
+
+
+# --- Positions and lineups ------------------------------------------------------
+# The box scores do not say who plays where, so positions are INFERRED from how a player plays: big men rebound
+# and block, guards pass, steal and shoot threes. The result is a number from 1 (point guard) to 5 (center) =
+# the player's percentile among all regular players on the "bigness" score. A manual correction in
+# data/positions.json (edited in the admin tool) always wins.
+def load_positions():
+    try:
+        return json.loads(POSITIONS_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _z(values):
+    m = sum(values) / len(values)
+    sd = (sum((v - m) ** 2 for v in values) / len(values)) ** 0.5 or 1.0
+    return m, sd
+
+
+def assign_positions(players):
+    """Adds pos (PG..C), pos_value (1..5), auto_pos and pos_source ('auto' or 'manual') to every player dict."""
+    manual = load_positions()
+    ref = [p for p in players if p["total_min"] >= 60] or players
+    if not ref:
+        return
+    feats = ("reb36", "ast36", "blk36", "stl36", "p3_share")
+    stat = {k: _z([p[k] for p in ref]) for k in feats}
+
+    def bigness(p):
+        z = {k: (p[k] - stat[k][0]) / stat[k][1] for k in feats}
+        return z["reb36"] + 0.8 * z["blk36"] - 1.0 * z["ast36"] - 0.5 * z["p3_share"] - 0.3 * z["stl36"]
+
+    ref_scores = sorted(bigness(p) for p in ref)
+    for p in players:
+        pct = bisect.bisect_left(ref_scores, bigness(p)) / max(1, len(ref_scores) - 1)
+        value = 1 + 4 * min(1.0, pct)
+        p["auto_pos"] = POSITIONS[min(4, max(0, round(value) - 1))]
+        if manual.get(p["id"]) in POSITIONS:
+            p["pos"], p["pos_source"] = manual[p["id"]], "manual"
+            p["pos_value"] = float(POSITIONS.index(p["pos"]) + 1)
+        else:
+            p["pos"], p["pos_source"], p["pos_value"] = p["auto_pos"], "auto", round(value, 2)
+
+
+def arrange(items):
+    """Put up to five players on the five court spots: sorted by pos_value, so spots PG..C are each used once.
+    Returns the list in spot order, each item gaining 'spot' (the role it fills on the floor)."""
+    ordered = sorted(items, key=lambda x: (x["pos_value"], -x.get("total_min", x.get("min", 0))))[:5]
+    # with fewer than five players spread them over the spots by value instead of packing the first ones
+    n = len(ordered)
+    for i, it in enumerate(ordered):
+        idx = i if n == 5 else min(4, round((it["pos_value"] - 1)))
+        it["spot"] = POSITIONS[idx]
+    return ordered
+
+
+def team_lineup(players):
+    """The five most-played players of a team (by total minutes) arranged on the court."""
+    top = sorted((p for p in players if p["total_min"] > 0), key=lambda p: -p["total_min"])[:5]
+    keys = ("id", "name", "number", "pos", "pos_source", "pos_value", "gp", "total_min", "min", "pts", "reb", "ast",
+            "stl", "blk", "tov", "pm", "pir", "rating", "fg_pct", "p3_pct", "ft_pct", "ts_pct")
+    return arrange([{k: p[k] for k in keys} for p in top])
+
+
+def game_lineups(g, pos_by_id):
+    """Per team: the starting five arranged on the court, the bench by minutes, and who did not play."""
+    out = {}
+    for t in g["teams"]:
+        rows = []
+        for p in t["players"]:
+            pos = pos_by_id.get(p.get("pid"), {"pos": "SF", "pos_value": 3.0, "pos_source": "auto"})
+            r = {"id": p.get("pid"), "name": p["name"], "number": p["number"], "dnp": bool(p.get("dnp")),
+                 "starter": bool(p.get("starter")), "pos": pos["pos"], "pos_value": pos["pos_value"],
+                 "pos_source": pos["pos_source"]}
+            if not p.get("dnp"):
+                fga, p3a = p["fga"], p["p3a"]
+                r.update(min=p["min"], pts=p["pts"], reb=p["reb"], oreb=p["oreb"], dreb=p["dreb"], ast=p["ast"],
+                         stl=p["stl"], blk=p["blk"], tov=p["tov"], pf=p["pf"], fd=p["fd"], pm=p["pm"], pir=p["pir"],
+                         rating=p["rating"], fgm=p["fgm"], fga=fga, p2m=p["p2m"], p2a=p["p2a"], p3m=p["p3m"], p3a=p3a,
+                         ftm=p["ftm"], fta=p["fta"],
+                         fg_pct=round(100 * p["fgm"] / fga, 1) if fga else 0.0,
+                         p3_pct=round(100 * p["p3m"] / p3a, 1) if p3a else 0.0,
+                         ts_pct=round(100 * p["pts"] / (2 * (fga + 0.44 * p["fta"])), 1) if (fga + p["fta"]) else 0.0)
+            rows.append(r)
+        played = [r for r in rows if not r["dnp"]]
+        starters = [r for r in played if r["starter"]]
+        if len(starters) != 5:  # the sheet did not mark five starters: use the five with most minutes
+            starters = sorted(played, key=lambda r: -r["min"])[:5]
+        sid = {id(r) for r in starters}
+        out[t["code"]] = {"starters": arrange(starters),
+                          "bench": sorted((r for r in played if id(r) not in sid), key=lambda r: -r["min"]),
+                          "dnp": [r for r in rows if r["dnp"]]}
+    return out

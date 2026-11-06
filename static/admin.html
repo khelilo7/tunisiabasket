@@ -3,42 +3,51 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin · Pro A Stats</title>
+<title>Admin · Tunisia Basket</title>
+<script>document.documentElement.dataset.theme = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');</script>
 <style>
-  :root { --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c; --warn:#ffd89a; }
+  :root, :root[data-theme=dark] { color-scheme:dark;
+    --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c; --warn:#ffd89a;
+    --hdr:#0b101a; --field:#111829; --hover:#1d2236; --pill:#2a3350; --pillok:#143d2c; --pillbad:#44202a; --pillwarn:#3a2a0a;
+    --prob-bg:#2d1820; --prob-line:#6a2a38; --prob-txt:#ffb3bd; --warn-line:#7a5a1a; --ok-bg:#10281f; --ok-line:#1d5a40; --ok-txt:#9be8c4; }
+  :root[data-theme=light] { color-scheme:light;
+    --bg:#f2f4fa; --card:#ffffff; --line:#dbe1ee; --txt:#18202f; --mut:#5d6985; --acc:#e06c00; --good:#12804f; --bad:#cf2f46; --warn:#7a5200;
+    --hdr:#ffffff; --field:#f6f8fd; --hover:#eef2fb; --pill:#e6eaf4; --pillok:#d9f2e6; --pillbad:#fbdfe4; --pillwarn:#fff3d9;
+    --prob-bg:#fdecef; --prob-line:#f0b5bf; --prob-txt:#a3213a; --warn-line:#e6c685; --ok-bg:#e3f6ec; --ok-line:#a9dcc2; --ok-txt:#0f6a42; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   a { color:inherit; text-decoration:none; }
-  header { position:sticky; top:0; z-index:5; background:#0b101a; border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:center; padding:10px 18px; }
-  header .logo { font-weight:800; } header .logo b { color:var(--acc); } header a.back { color:var(--mut); margin-left:auto; }
+  header { position:sticky; top:0; z-index:5; background:var(--hdr); border-bottom:1px solid var(--line); display:flex; gap:18px; align-items:center; padding:10px 18px; }
+  header .logo { font-weight:800; } header .logo b { color:var(--acc); } header a.back { color:var(--mut); margin-left:auto; } #theme { padding:5px 9px; line-height:1; }
   main { max-width:1000px; margin:0 auto; padding:18px; }
   h2 { margin:26px 0 10px; font-size:16px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
   .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:12px; }
-  select, input, button, textarea { background:#111829; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
+  select, input, button, textarea { background:var(--field); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:7px 10px; font:inherit; }
   button { cursor:pointer; } button:hover { border-color:var(--acc); } button.primary { background:var(--acc); color:#000; border-color:var(--acc); font-weight:700; }
   button.danger:hover { border-color:var(--bad); color:var(--bad); } button:disabled { opacity:.5; cursor:default; }
   .drop { border:2px dashed var(--line); border-radius:14px; padding:34px; text-align:center; color:var(--mut); transition:.15s; cursor:pointer; }
-  .drop.over { border-color:var(--acc); color:var(--txt); background:#1d2236; }
+  .drop.over { border-color:var(--acc); color:var(--txt); background:var(--hover); }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .sp { flex:1; } .mut { color:var(--mut); } .small { font-size:12px; }
-  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:#2a3350; color:var(--mut); }
-  .pill.ok { background:#143d2c; color:var(--good); } .pill.bad { background:#44202a; color:var(--bad); } .pill.warn { background:#3a2a0a; color:var(--warn); } .pill.acc { background:var(--acc); color:#000; }
-  .problems { background:#2d1820; border:1px solid #6a2a38; color:#ffb3bd; border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
-  .warns { background:#3a2a0a; border:1px solid #7a5a1a; color:var(--warn); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
-  .okbox { background:#10281f; border:1px solid #1d5a40; color:#9be8c4; border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  .pill { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; background:var(--pill); color:var(--mut); }
+  .pill.ok { background:var(--pillok); color:var(--good); } .pill.bad { background:var(--pillbad); color:var(--bad); } .pill.warn { background:var(--pillwarn); color:var(--warn); } .pill.acc { background:var(--acc); color:#000; }
+  .problems { background:var(--prob-bg); border:1px solid var(--prob-line); color:var(--prob-txt); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  .warns { background:var(--pillwarn); border:1px solid var(--warn-line); color:var(--warn); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
+  .okbox { background:var(--ok-bg); border:1px solid var(--ok-line); color:var(--ok-txt); border-radius:10px; padding:8px 12px; margin:8px 0; font-size:13px; }
   ul { margin:4px 0; padding-left:18px; }
   table { width:100%; border-collapse:collapse; font-size:13px; } th, td { padding:4px 6px; text-align:right; } th:first-child, td:first-child, td.l, th.l { text-align:left; }
   th { color:var(--mut); font-weight:600; font-size:11px; text-transform:uppercase; } tr { border-bottom:1px solid var(--line); }
   textarea { width:100%; height:240px; font:12px/1.4 ui-monospace,Menlo,monospace; }
   input.num { width:64px; } input.code { width:80px; text-transform:uppercase; }
   details { margin-top:8px; } summary { cursor:pointer; color:var(--mut); }
-  .chips { display:flex; gap:6px; flex-wrap:wrap; } .chip { padding:3px 9px; border-radius:8px; font-size:12px; background:#111829; border:1px solid var(--line); color:var(--mut); }
-  .chip.full { background:#143d2c; color:var(--good); border-color:#1d5a40; } .chip.part { background:#3a2a0a; color:var(--warn); }
+  .chips { display:flex; gap:6px; flex-wrap:wrap; } .chip { padding:3px 9px; border-radius:8px; font-size:12px; background:var(--field); border:1px solid var(--line); color:var(--mut); }
+  .chip.full { background:var(--pillok); color:var(--good); border-color:var(--ok-line); } .chip.part { background:var(--pillwarn); color:var(--warn); }
   .saved { opacity:.55; }
 </style>
 </head>
 <body>
 <header>
-  <div class="logo">🏀 <b>PRO A</b> ADMIN</div>
+  <div class="logo">🏀 <b>TUNISIA</b> BASKET · ADMIN</div>
+  <button id="theme" title="Switch between dark and light mode" aria-label="Switch between dark and light mode">☀️</button>
   <button id="logout" hidden>Log out</button>
   <a class="back" href="/">← Back to the app</a>
 </header>
@@ -75,6 +84,9 @@
 
   <h2>Needs review (from Drive sync)</h2>
   <div id="review"><div class="mut">Loading…</div></div>
+
+  <h2>Player positions</h2>
+  <div class="card" id="positions"><div class="mut">Loading…</div></div>
 
   <h2>Official results saved</h2>
   <div id="official" class="chips"></div>
@@ -232,6 +244,31 @@ async function loadReview() {
     bindCards();
   } catch (e) { $('#review').innerHTML = `<div class="problems">${esc(e.message)}</div>`; }
 }
+let posData = null;
+async function loadPositions() {
+  const box = $('#positions');
+  try {
+    const { body } = await api('positions'); posData = body;
+    const teams = [...new Set(body.players.map(p => p.team))].sort();
+    const cur = box.dataset.team && teams.includes(box.dataset.team) ? box.dataset.team : teams[0];
+    box.dataset.team = cur;
+    box.innerHTML = `<p class="mut small" style="margin-top:0">Positions are guessed from each player's stats (the box scores do not list them) and decide where players stand on the court maps.
+      Correct any player here; "Auto" removes a correction. The five most-played players of a team are arranged PG, SG, SF, PF, C in the order of their position.</p>
+      <div class="row" style="margin-bottom:8px"><label class="mut small">Team</label><select id="postean">${teams.map(t => `<option ${t === cur ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+      <span class="sp"></span><span id="posmsg" class="small"></span><button class="primary" id="possave">Save corrections</button></div>
+      <table><thead><tr><th>#</th><th class="l">Player</th><th>GP</th><th>MIN</th><th>Guessed</th><th>Position</th></tr></thead><tbody>
+      ${body.players.filter(p => p.team === cur).map(p => `<tr data-pid="${esc(p.id)}" data-was="${esc(p.manual || '')}"><td>${esc(p.number)}</td><td class="l">${esc(p.name)}</td><td>${p.gp}</td><td>${Math.round(p.total_min)}</td><td class="mut">${esc(p.auto)}</td>
+        <td><select data-f="pos"><option value="">Auto (${esc(p.auto)})</option>${body.positions.map(x => `<option ${x === p.manual ? 'selected' : ''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
+    $('#postean').onchange = ev => { box.dataset.team = ev.target.value; loadPositions(); };
+    $('#possave').onclick = async () => {
+      const changes = {};
+      box.querySelectorAll('tbody tr').forEach(tr => { const v = tr.querySelector('select').value, was = tr.dataset.was; if (v !== was) changes[tr.dataset.pid] = v || null; });
+      if (!Object.keys(changes).length) { $('#posmsg').textContent = 'Nothing changed.'; return; }
+      const { ok, body: res } = await api('positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes }) });
+      if (ok) { await loadPositions(); $('#posmsg').textContent = `Saved ${Object.keys(changes).length} correction(s).`; } else $('#posmsg').textContent = res.error || 'Could not save';
+    };
+  } catch (e) { box.innerHTML = `<div class="problems">${esc(e.message)}</div>`; }
+}
 async function loadOfficial() {
   try {
     const { body } = await api('official'); teams = body.teams;
@@ -255,8 +292,10 @@ async function boot() {
   const me = await (await fetch('/admin/api/me', { credentials: 'same-origin' })).json();
   if (!me.admin) { showLogin(me.configured ? '' : 'No admin token is set yet. Run: python manage.py new-token'); return; }
   $('#login').hidden = true; $('#tool').hidden = false; $('#logout').hidden = false;
-  await loadOfficial(); loadReview();
+  await loadOfficial(); loadReview(); loadPositions();
 }
+$('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
+$('#theme').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t); $('#theme').textContent = t === 'dark' ? '☀️' : '🌙'; };
 boot();
 </script>
 </body>

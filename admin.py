@@ -265,6 +265,43 @@ def review_list():
     return jsonify(items=items)
 
 
+@bp.get("/admin/api/positions")
+def positions_view():
+    """Every player with the position the model infers and any manual correction."""
+    d = stats.build()
+    manual = stats.load_positions()
+    rows = [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"], "gp": p["gp"],
+             "total_min": p["total_min"], "auto": p["auto_pos"], "pos": p["pos"], "manual": manual.get(p["id"])}
+            for p in d["players"]]
+    rows.sort(key=lambda r: (r["team"], -r["total_min"]))
+    return jsonify(positions=stats.POSITIONS, players=rows)
+
+
+@bp.post("/admin/api/positions")
+def positions_save():
+    """Body {"changes": {"<player id>": "PG" | null}}: null removes a correction (back to automatic)."""
+    changes = (request.get_json(silent=True) or {}).get("changes")
+    if not isinstance(changes, dict):
+        return jsonify(error="Send {\"changes\": {player id: position or null}}."), 422
+    known = {p["id"] for p in stats.build()["players"]}
+    with _file_lock:
+        cur = stats.load_positions()
+        for pid_, pos in changes.items():
+            if pid_ not in known:
+                return jsonify(error=f"unknown player {pid_}"), 422
+            if pos is None:
+                cur.pop(pid_, None)
+            elif pos in stats.POSITIONS:
+                cur[pid_] = pos
+            else:
+                return jsonify(error=f"bad position {pos!r}"), 422
+        tmp = stats.POSITIONS_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+        tmp.replace(stats.POSITIONS_FILE)
+    auth.audit("positions", f"{len(changes)} change(s)")
+    return jsonify(ok=True, manual=len(cur))
+
+
 @bp.get("/admin/api/official")
 def official_view():
     o = _official()

@@ -100,7 +100,8 @@ def game(gid):
     g = next((g for g in stats.build_all_games() if g["id"] == gid), None)
     if not g:
         abort(404)
-    return jsonify(g)
+    pos = {p["id"]: p for p in stats.build(stats.season_of(g["date"]))["players"]}
+    return jsonify({**g, "lineups": stats.game_lineups(g, pos)})
 
 
 @app.get("/api/teams/<code>")

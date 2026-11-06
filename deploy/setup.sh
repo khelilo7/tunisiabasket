@@ -72,7 +72,7 @@ fi
 echo "==> 5/9 Service (starts after the first deploy)"
 cat > /etc/systemd/system/proastats.service <<'UNIT'
 [Unit]
-Description=Pro A Stats (gunicorn)
+Description=Tunisia Basket (gunicorn)
 After=network-online.target
 Wants=network-online.target
 

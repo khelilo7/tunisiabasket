@@ -1,4 +1,4 @@
-# Pro A Stats
+# Tunisia Basket
 
 Web app that reads FIBA box-score PDFs from a public Google Drive folder, turns them into
 player stats, rates every performance and names the MVP. Fully free: no paid API needed.
@@ -74,3 +74,12 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
 `config.py` all file paths · `static/` pages · `assets/` digit templates · `seed/` starting data (copied into an empty data folder on first run) ·
 `data/` live data (git-ignored; move with `DATA_DIR`) · `tests/` checks (`python tests/run_all.py`, `bash tests/test_release.sh`) ·
 `deploy/` server scripts · `.github/workflows/` CI, Deploy (with approval), Rollback.
+
+## Court maps and positions
+- **Team page:** a half court with the team's five most-played players (by total minutes), placed by position.
+- **Match page:** a full court with both starting fives, then the bench and the full stat sheet.
+- The marker number is selectable (rating, points, rebounds, assists, steals, blocks, PIR, minutes, +/-, shooting %); its colour is the rating tier.
+- **Positions are inferred**, because box scores do not list them: a "bigness" score from rebounds, blocks, assists, steals and three-point share
+  per 36 minutes, turned into a percentile (PG ... C). The five players of a lineup are arranged PG, SG, SF, PF, C in that order, so every spot is used once.
+  Corrections made in the admin tool (Player positions) are stored in `data/positions.json` and always win.
+- **Light / dark mode:** the sun/moon button in the header; the first visit follows the device setting and the choice is remembered.
