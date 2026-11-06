@@ -62,9 +62,11 @@ check(L[0]["top"][0]["value"] == pts, "leaders: top scorer is not the highest po
 
 # qualification: at least 70% of the games of the player's team(s) (NBA rule), so nobody below that can rank
 import math  # noqa: E402
-games = stats.build()["games"]
+built = stats.build()
+games = built["games"]
+played = {r["code"]: r["j"] for r in built["standings"]}      # official games played (box scores may be missing)
 for p in players.values():
-    avail = sum(1 for g in games for t in g["teams"] if t["code"] in p["teams"])
+    avail = sum(max(sum(1 for g in games for t in g["teams"] if t["code"] == c), played.get(c, 0)) for c in p["teams"])
     check(p["qualified"] == (p["gp"] >= max(1, math.ceil(0.7 * avail)) and p["min"] >= stats.MIN_MINUTES_FOR_RANKING), f"qualified flag wrong for {p['id']}")
 
 print("bios:", "FAILED" if fails else f"ok ({n} profiles)")

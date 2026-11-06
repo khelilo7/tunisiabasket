@@ -311,15 +311,18 @@ def build(season=None):
             "log": sorted(rows, key=lambda r: (r["date"], r["game_id"])),
         })
     # Ranking: need enough games (or all games if the season is still short).
+    # Games a team has really played come from the official table (box scores may be missing for some games).
+    official = load_official()
+    table = official_standings(official) if official.get("season") == season else []
     team_games = Counter(t["code"] for g in games for t in g["teams"])
+    for r in table:
+        team_games[r["code"]] = max(team_games[r["code"]], r["j"])
     for p in players:
         avail = sum(team_games[c] for c in p["teams"])
         p["games_needed"] = max(1, math.ceil(QUALIFY_SHARE * avail))
         p["qualified"] = p["gp"] >= p["games_needed"] and p["min"] >= MIN_MINUTES_FOR_RANKING
     assign_positions(players)
     attach_bios(players)
-    official = load_official()
-    table = official_standings(official) if official.get("season") == season else []
     rank = {r["code"]: r["rank"] for r in table}
     top = {r["code"] for r in table[:MVP_TOP_TEAMS]}
     for p in players:
