@@ -100,6 +100,13 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
 
+## Visitor statistics
+The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country
+(Cloudflare's country header, so it works once the site is behind Cloudflare), the referring site, the device type and the language, plus a visitor code
+that is a daily-changing hash (so people are counted once per day and cannot be traced). Crawlers and the admin's own visits are ignored. The numbers
+are in the admin panel, tab **Traffic** (today, online now, 7/30/90/365 days, countries, pages, referrers, devices). They live in `data/traffic.db`
+and are kept 400 days. For a second opinion, Cloudflare's free dashboard (Analytics & Logs > Traffic) also shows requests and bandwidth.
+
 ## Licence
 The source code is released under the **MIT licence** (`LICENSE`). The licence does not cover the Tunisia Basket name and emblem, the club names and logos
 (they belong to their owners), or the data from the federation: see `NOTICE.md`. Open-source libraries keep their own licences.

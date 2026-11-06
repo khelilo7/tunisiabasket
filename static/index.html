@@ -305,6 +305,15 @@ function setMeta(titleText, desc) {
 }
 let pageMeta = null;   // a page fills this in; route() applies it
 
+// Page-view counter: one small anonymous beacon per page the visitor opens (no cookie; see traffic.py). Filters on a page do not count.
+let tracked = '', firstView = true;
+function track() {
+  if (location.pathname === tracked) return;
+  tracked = location.pathname;
+  try { navigator.sendBeacon('/api/hit', new Blob([JSON.stringify({ path: location.pathname, lang: LANG, ref: firstView ? document.referrer : '' })], { type: 'application/json' })); } catch (e) { /* ignore */ }
+  firstView = false;
+}
+
 async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings' }[r.page] || r.page)));
@@ -315,6 +324,7 @@ async function route(keepScroll) {
     bind();
     drawCourt();
     if (pageMeta) setMeta(...pageMeta);
+    track();
   } catch (e) { app.innerHTML = `<div class="empty">${_('Could not load this page')} (${esc(e.message)}).</div>`; }
   if (!keepScroll) window.scrollTo(0, 0);
 }

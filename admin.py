@@ -23,6 +23,7 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 import auth
 import config
 import stats
+import traffic
 from extractor import extract
 from ocr_parser import IMAGE_EXT, page_count
 from results_parser import bar_crops, find_bars, parse_results_image
@@ -263,6 +264,11 @@ def review_list():
                       "result": g, "problems": problems, "warnings": [], "message": "From Drive sync",
                       "suggest": _suggest(g)})
     return jsonify(items=items)
+
+
+@bp.get("/admin/api/traffic")
+def traffic_view():
+    return jsonify(traffic.summary(request.args.get("days", 30)))
 
 
 @bp.get("/admin/api/positions")

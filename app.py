@@ -10,6 +10,7 @@ from flask import Flask, Response, abort, jsonify, make_response, redirect, requ
 import auth
 import seo
 import stats
+import traffic
 
 app = Flask(__name__, static_folder="static", static_url_path="")
 if os.environ.get("BEHIND_PROXY") == "1":  # Caddy/nginx in front: trust its X-Forwarded-Proto so cookies get the Secure flag
@@ -174,6 +175,17 @@ def sync_now():
     auth.audit("sync")
     threading.Thread(target=run_sync, daemon=True).start()
     return jsonify(started=True)
+
+
+@app.post("/api/hit")
+def hit():
+    """Page-view beacon sent by the site itself (see traffic.py: no cookies, nothing personal stored)."""
+    body = request.get_json(silent=True, force=True) or {}
+    try:
+        traffic.record(request, str(body.get("path", ""))[:200], str(body.get("ref", ""))[:300], str(body.get("lang", ""))[:5])
+    except Exception:           # statistics must never break the site
+        pass
+    return "", 204
 
 
 @app.after_request
