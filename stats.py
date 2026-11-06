@@ -413,6 +413,33 @@ def load_positions():
         return {}
 
 
+# Category leaders for the home page: the top three players of each statistic among players with enough games.
+# (key, value taken from the player's averages or computed from the game log, minimum shot attempts per game if any)
+LEADER_STATS = ("pts", "reb", "ast", "stl", "blk", "p3m", "fg_pct", "pir")
+
+
+def leaders(players, n=3):
+    pool = [p for p in players if p["qualified"]]
+    out = []
+    for key in LEADER_STATS:
+        rows = []
+        for p in pool:
+            log = p["log"]
+            if key == "p3m":
+                value = round(sum(r["p3m"] for r in log) / len(log), 1)
+            elif key == "fg_pct":
+                if sum(r["fga"] for r in log) / len(log) < 4:      # shooting % only means something with volume
+                    continue
+                value = p["fg_pct"]
+            else:
+                value = p[key]
+            rows.append((value, p["pir"], p))
+        rows.sort(key=lambda r: (r[0], r[1]), reverse=True)
+        out.append({"key": key, "top": [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"],
+                                         "gp": p["gp"], "rating": p["rating"], "value": v} for v, _, p in rows[:n]]})
+    return out
+
+
 def load_bios():
     """Profiles (height cm, weight kg, birth date) from assets/players_info.json, overridden per player by data/players_info.json."""
     out = {}

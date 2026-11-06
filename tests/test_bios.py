@@ -50,6 +50,16 @@ if "ca-24" in players:
     check(b and b["height"] == 189 and b["birth"] == "1993-04-20", "ca-24 profile not attached")
 check(all("bio" in p for p in players.values()), "every player must carry a bio key (None when unknown)")
 
+# category leaders (home page): 8 categories, 3 players each, sorted best first, only players with enough games
+L = stats.leaders(list(stats.build()["players"]))
+check([c["key"] for c in L] == list(stats.LEADER_STATS), "leaders: categories")
+for c in L:
+    vals = [x["value"] for x in c["top"]]
+    check(len(c["top"]) == 3 and vals == sorted(vals, reverse=True), f"leaders: {c['key']} must hold 3 players, best first")
+    check(all(players[x["id"]]["qualified"] for x in c["top"]), f"leaders: {c['key']} has an unqualified player")
+pts = max(p["pts"] for p in players.values() if p["qualified"])
+check(L[0]["top"][0]["value"] == pts, "leaders: top scorer is not the highest points average")
+
 print("bios:", "FAILED" if fails else f"ok ({n} profiles)")
 for f in fails:
     print("  FAIL", f)

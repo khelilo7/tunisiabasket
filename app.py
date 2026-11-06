@@ -111,7 +111,8 @@ def overview():
     return jsonify(
         season=d["season"], seasons=d["seasons"], games=len(d["games"]), players=len(d["players"]),
         mvp=slim(pool[0]) if pool else None,
-        top=[slim(p) for p in pool[:5]], top_teams=d["top_teams"],
+        top=[slim(p) for p in pool[:5]], top_teams=d["top_teams"], leaders=stats.leaders(d["players"]),
+        facts={"games": len(d["games"]), "avg_points": round(sum(t["points"] for g in d["games"] for t in g["teams"]) / (2 * len(d["games"]) or 1), 1)},
         recent=[{k: g.get(k) for k in ("id", "date", "date_approx", "matchday", "mvp", "score_note")} | {
             "teams": [{"code": t["code"], "name": t["name"], "points": t["points"]} for t in g["teams"]]}
             for g in reversed(d["games"][-6:])],

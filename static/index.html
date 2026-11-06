@@ -16,13 +16,13 @@
     --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c;
     --hdr:#0b101a; --hover:#1e2740; --pill:#2a3350; --pillw:#143d2c; --pilll:#44202a; --track:#2a3350;
     --banner-bg:#3a2a0a; --banner-line:#7a5a1a; --banner-txt:#ffd89a;
-    --mvp-grad:linear-gradient(135deg,#2a1a08,#181f30 60%); --mvp-line:#5a3a12; --mvp-in:#1d1710;
+    --glow:rgba(255,138,31,.14); --mvp-grad:linear-gradient(135deg,#2a1a08,#181f30 60%); --mvp-line:#5a3a12; --mvp-in:#1d1710;
     --court:#1b2742; --court-paint:#22325a; --court-line:#5d6f9c; --court-b:#0f1a30; }
   :root[data-theme=light] { color-scheme:light;
     --bg:#f2f4fa; --card:#ffffff; --line:#dbe1ee; --txt:#18202f; --mut:#5d6985; --acc:#e06c00; --good:#12804f; --bad:#cf2f46;
     --hdr:#ffffff; --hover:#eef2fb; --pill:#e6eaf4; --pillw:#d9f2e6; --pilll:#fbdfe4; --track:#dfe4f1;
     --banner-bg:#fff3d9; --banner-line:#e6c685; --banner-txt:#7a5200;
-    --mvp-grad:linear-gradient(135deg,#ffeed8,#ffffff 60%); --mvp-line:#f0c58a; --mvp-in:#fff7ec;
+    --glow:rgba(224,108,0,.13); --mvp-grad:linear-gradient(135deg,#ffeed8,#ffffff 60%); --mvp-line:#f0c58a; --mvp-in:#fff7ec;
     --court:#f1ddb7; --court-paint:#e8c88f; --court-line:#8f6f3f; --court-b:#d9bb86; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
@@ -59,6 +59,33 @@
   .banner { background:var(--banner-bg); border:1px solid var(--banner-line); color:var(--banner-txt); padding:10px 14px; border-radius:10px; margin-bottom:14px; font-size:13px; }
   .empty { text-align:center; color:var(--mut); padding:40px; }
   .hl { background:var(--banner-bg); border-radius:6px; padding:0 4px; } tr.top { background:var(--hover); }
+  /* look: warm court glow, accent headings, hero and leader cards */
+  body { background:var(--bg) radial-gradient(900px 420px at 85% -80px, var(--glow), transparent 70%) no-repeat; }
+  header { border-bottom:2px solid var(--acc); }
+  h2 { display:flex; align-items:center; gap:9px; } h2::before { content:""; width:4px; height:1em; border-radius:2px; background:var(--acc); flex:none; }
+  .hero { position:relative; overflow:hidden; display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:center; padding:24px; background:var(--mvp-grad); border-color:var(--mvp-line); }
+  .hero .herobg { position:absolute; right:-40px; top:-30px; width:360px; opacity:.16; pointer-events:none; transform:rotate(8deg); }
+  .hero .watermark { position:absolute; right:22px; bottom:-26px; width:170px; height:170px; opacity:.09; pointer-events:none; filter:grayscale(.3); }
+  .hero .ring { width:128px; height:128px; font-size:42px; } .hero .ring::before { inset:10px; background:var(--mvp-in); }
+  .hero .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.18em; }
+  .hero .nm { font-size:clamp(26px,5vw,40px); font-weight:800; line-height:1.1; margin:4px 0; }
+  .hero .who { color:var(--mut); margin-bottom:12px; position:relative; }
+  .hero .tiles { display:flex; gap:10px; flex-wrap:wrap; position:relative; }
+  .hero .tile { background:var(--mvp-in); border:1px solid var(--mvp-line); border-radius:12px; padding:8px 14px; min-width:74px; text-align:center; }
+  .hero .tile b { display:block; font-size:24px; color:var(--acc); line-height:1.1; } .hero .tile span { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
+  .facts { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; } .facts .pill { font-size:12px; padding:4px 11px; }
+  .leaders { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+  .lead { padding:14px 14px 10px; display:flex; flex-direction:column; gap:2px; transition:border-color .15s, transform .15s; } .lead:hover { border-color:var(--acc); transform:translateY(-2px); }
+  .lead .lh { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; } .lead .lt { font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:.07em; color:var(--acc); }
+  .lead .lr { display:grid; grid-template-columns:auto auto 1fr auto; gap:9px; align-items:center; padding:7px 0; border-top:1px solid var(--line); position:relative; }
+  .lead .lr:first-of-type { border-top:0; padding:6px 0 10px; }
+  .lead .nmb { min-width:0; } .lead .nmb b { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .lead .nmb span { font-size:12px; color:var(--mut); }
+  .lead .val { font-weight:800; font-size:18px; font-variant-numeric:tabular-nums; } .lead .lr.first .val { font-size:25px; color:var(--acc); line-height:1; }
+  .lead .lr.first .nmb b { font-size:16px; white-space:normal; line-height:1.2; } .lead .nmb span { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lead .bar { position:absolute; left:0; bottom:-1px; height:2px; background:var(--acc); opacity:.5; border-radius:2px; }
+  .medal { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; color:#1a1a1a; flex:none; }
+  .medal.m1 { background:linear-gradient(135deg,#ffd75e,#e8a600); } .medal.m2 { background:linear-gradient(135deg,#e3e8f2,#a4aec4); } .medal.m3 { background:linear-gradient(135deg,#e7a86c,#b4692a); }
+  @media (max-width:760px) { .hero { grid-template-columns:1fr; justify-items:start; padding:18px; gap:14px; } .hero .ring { width:100px; height:100px; font-size:34px; } .leaders { grid-template-columns:1fr; } }
   /* courts */
   svg.court { width:100%; height:auto; display:block; border-radius:12px; }
   svg.court.half { max-width:520px; margin:0 auto; }
@@ -127,6 +154,10 @@ const FR = {
   'Season': 'Saison', 'Form (PIR per game)': 'Forme (PIR par match)', 'Game log': 'Journal des matchs', 'Need at least 2 games for a trend.': 'Il faut au moins 2 matchs pour une tendance.',
   'Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.':
     'Note = indice de performance FIBA (PTS+REB+PD+INT+CTR+FP − tirs manqués − BP − fautes), ramené à 0–99. MVP du match = meilleur PIR + 2 dans l’équipe gagnante uniquement. MVP de la saison = meilleure moyenne parmi les joueurs des 4 premières équipes.',
+  'League leaders': 'Leaders de la ligue', 'Top scorers': 'Meilleurs marqueurs', 'Top rebounders': 'Meilleurs rebondeurs', 'Top passers': 'Meilleurs passeurs',
+  'Top ball stealers': 'Meilleurs intercepteurs', 'Top shot blockers': 'Meilleurs contreurs', 'Three-pointers made': 'Tirs à 3 points réussis',
+  'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
+  'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
   'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
@@ -162,7 +193,7 @@ const W = LANG === 'fr' ? 'V' : 'W', Ls = LANG === 'fr' ? 'D' : 'L';
 const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
-    seasonMvp: s => `★ SEASON MVP · ${s}`,
+    seasonMvp: s => `★ SEASON MVP · ${s}`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
     playersSub: s => `${s} · per-game averages`, standingsSub: s => `${s} · regular season · phase 1 complete (J1–J11)`,
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
@@ -175,7 +206,7 @@ const SENT = {
   },
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
-    seasonMvp: s => `★ MVP DE LA SAISON · ${s}`,
+    seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
     playersSub: s => `${s} · moyennes par match`, standingsSub: s => `${s} · saison régulière · phase 1 terminée (J1–J11)`,
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
@@ -272,10 +303,17 @@ async function home() {
   if (!d.games) return `<div class="empty"><h1>${_('No games yet')}</h1>${_('Box scores appear here as soon as they are added.')}</div>`;
   const m = d.mvp;
   return `
-  <div class="card mvp">${ring(m.rating)}
-    <div class="sp"><div class="crown">${f('seasonMvp', esc(d.season))}</div>
-      <div class="nm tn" style="gap:10px">${logo(m.team, 40)}${plink(m)}</div>
-      <div class="mut">${esc(f('mvpLine', m))}</div></div></div>
+  <div class="card hero">
+    <svg class="herobg" viewBox="0 0 500 470" aria-hidden="true">${halfLines(false)}</svg>
+    <img class="watermark" src="/img/teams/${esc(m.team)}.png" alt="" onerror="this.remove()">
+    ${ring(m.rating)}
+    <div style="position:relative"><div class="crown">${f('seasonMvp', esc(d.season))}</div>
+      <div class="nm tn" style="gap:12px">${logo(m.team, 44)}${plink(m)}</div>
+      <div class="who">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${esc(f('mvpTeam', m))}</div>
+      <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div></div>
+  <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
+  <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
+  <div class="leaders">${d.leaders.map(leaderCard).join('')}</div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
   <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${_('Team')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${_('Rating')}</th></tr></thead><tbody>
   ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
@@ -283,6 +321,16 @@ async function home() {
   <h2>${_('Standings')}</h2>${standTable(d, true)}
   <h2>${_('Latest games')}</h2>
   <div class="grid g2">${d.recent.map(gameCard).join('')}</div>`;
+}
+
+const LEAD = { pts: ['Top scorers', 'PTS', ''], reb: ['Top rebounders', 'REB', ''], ast: ['Top passers', 'AST', ''], stl: ['Top ball stealers', 'STL', ''],
+  blk: ['Top shot blockers', 'BLK', ''], p3m: ['Three-pointers made', '3P', ''], fg_pct: ['Best shooters (FG%)', 'FG%', '%'], pir: ['Most efficient (PIR)', 'PIR', ''] };
+function leaderCard(c) {
+  const [name, unit, suf] = LEAD[c.key], top = c.top[0] ? c.top[0].value || 1 : 1;
+  return `<div class="card lead"><div class="lh"><span class="lt">${_(name)}</span><span class="mut small">${H(unit)}</span></div>
+    ${c.top.map((p, i) => `<a class="lr${i ? '' : ' first'}" href="${playerUrl(p.id, p.name)}"><span class="medal m${i + 1}">${i + 1}</span>${logo(p.team, i ? 26 : 34)}
+      <span class="nmb"><b>${esc(title(p.name))}</b><span>${esc(p.team)} · #${p.number} · ${p.gp} ${H('GP')}</span></span><span class="val">${p.value}${suf}</span>
+      ${i ? `<i class="bar" style="width:${Math.round(100 * p.value / top)}%"></i>` : ''}</a>`).join('')}</div>`;
 }
 
 function gameCard(g) {
