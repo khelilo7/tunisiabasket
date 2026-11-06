@@ -51,6 +51,8 @@ install -d -m 700 /var/backups/proastats
 runuser -u deploy -- python3 -m venv "$APP/venv"
 
 echo "==> 4/9 Settings (/etc/proastats.env)"
+AUTO_SYNC_VALUE=0
+if [ -n "$DRIVE_FOLDER_ID" ]; then AUTO_SYNC_VALUE=1; fi
 if [ ! -f /etc/proastats.env ]; then
   cat > /etc/proastats.env <<ENV
 APP_ENV=production
@@ -60,7 +62,7 @@ BIND=127.0.0.1:5055
 DATA_DIR=$APP/shared/data
 SYNC_INTERVAL_MIN=$SYNC_INTERVAL_MIN
 DRIVE_FOLDER_ID=$DRIVE_FOLDER_ID
-AUTO_SYNC=$([ -n "$DRIVE_FOLDER_ID" ] && echo 1 || echo 0)
+AUTO_SYNC=$AUTO_SYNC_VALUE
 PYTHONDONTWRITEBYTECODE=1
 ENV
   chown root:proa /etc/proastats.env

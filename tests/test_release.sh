@@ -11,7 +11,7 @@ ln -s "$(python3 -c 'import sys; print(sys.prefix)')" "$ROOT/venv"
 cat > "$ROOT/restart.sh" <<RS
 #!/usr/bin/env bash
 # stand-in for "systemctl restart proastats": stop the old server, start gunicorn from the 'current' release
-[ -f "$ROOT/run/pid" ] && kill "\$(cat "$ROOT/run/pid")" 2>/dev/null || true
+if [ -f "$ROOT/run/pid" ]; then kill "\$(cat "$ROOT/run/pid")" 2>/dev/null || true; fi
 sleep 1
 cd "$ROOT/current"
 APP_ENV=production AUTO_SYNC=0 BEHIND_PROXY=1 DATA_DIR="$ROOT/shared/data" BIND=127.0.0.1:$PORT \
@@ -19,7 +19,10 @@ APP_ENV=production AUTO_SYNC=0 BEHIND_PROXY=1 DATA_DIR="$ROOT/shared/data" BIND=
 echo \$! > "$ROOT/run/pid"
 RS
 chmod +x "$ROOT/restart.sh"; export RESTART_CMD="$ROOT/restart.sh"
-cleanup() { [ -f "$ROOT/run/pid" ] && kill "$(cat "$ROOT/run/pid")" 2>/dev/null || true; rm -rf "$ROOT"; }
+cleanup() {
+  if [ -f "$ROOT/run/pid" ]; then kill "$(cat "$ROOT/run/pid")" 2>/dev/null || true; fi
+  rm -rf "$ROOT"
+}
 trap cleanup EXIT
 
 new_release() {  # name [broken-kind]

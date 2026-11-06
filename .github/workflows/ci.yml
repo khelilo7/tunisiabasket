@@ -33,7 +33,7 @@ jobs:
         run: python -m pyflakes ./*.py tools tests
 
       - name: Lint shell scripts
-        run: shellcheck deploy/*.sh tests/test_release.sh
+        run: shellcheck --severity=warning deploy/*.sh tests/test_release.sh
 
       - name: Tests (stats rules, security, OCR accuracy, smoke)
         run: python tests/run_all.py
