@@ -2,7 +2,6 @@
 
   1. PDF has a text layer  -> text_parser (exact)
   2. PDF is a scan         -> ocr_parser  (Tesseract, cell by cell, arithmetic-checked)
-  3. Still failing checks and ANTHROPIC_API_KEY is set -> optional Claude-vision fallback.
 Returns (game, problems); problems == [] means every consistency check passed.
 """
 import datetime
@@ -73,14 +72,6 @@ def extract(pdf_path, filename="", matchday="", page=0):
         source, game = "ocr", parse_scanned_pdf(pdf_path, page=page)
 
     problems = validate(game)
-    if problems and page == 0 and not str(pdf_path).lower().endswith(IMAGE_EXT) and os.environ.get("ANTHROPIC_API_KEY"):
-        try:
-            from extractor_claude import extract as claude_extract
-            alt, alt_problems = claude_extract(pdf_path)
-            if len(alt_problems) < len(problems):
-                game, problems, source = alt, alt_problems, "claude"
-        except Exception as e:  # fallback is optional; keep the free result
-            problems.append(f"claude fallback failed: {e}")
 
     game["source"] = source
     game["date_approx"] = False

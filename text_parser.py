@@ -15,10 +15,6 @@ NOT_NAME = ("Team/Coach", "Totals", "Coach", "Field", "Legend", "No Name")
 HEAD = re.compile(r"^(.+?)\s*\(\s*([A-Za-z0-9 ]{2,6}?)\s*\)​?\s+Assistant Coach")
 
 
-def _num(s):
-    return int(s)
-
-
 def parse_text_pdf(path, page=0):
     with pdfplumber.open(path) as pdf:
         text = pdf.pages[page].extract_text() or ""

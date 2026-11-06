@@ -8,7 +8,7 @@ import app  # noqa: E402
 
 c = app.app.test_client()
 checks = {"/": 200, "/admin": 200, "/api/overview": 200, "/api/players": 200, "/api/games": 200,
-          "/api/planning": 200, "/api/teams/CA": 200, "/api/teams/ZZZ": 404, "/admin/api/official": 401}
+          "/api/planning": 200, "/fr/": 200, "/standings": 200, "/fr/classement": 200, "/sitemap.xml": 200, "/robots.txt": 200, "/favicon.ico": 200, "/img/teams/CA.png": 200, "/api/teams/CA": 200, "/api/teams/ZZZ": 404, "/admin/api/official": 401}
 bad = 0
 for path, want in checks.items():
     got = c.get(path).status_code

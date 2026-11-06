@@ -13,14 +13,13 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 Tests: `.venv/bin/python tests/run_all.py`.
 The app checks the Drive folder every 10 minutes (`SYNC_INTERVAL_MIN`) and adds new PDFs; the
 "Sync" button does it on demand. Another folder: `DRIVE_FOLDER_ID`. Season start (for last-resort dates): `SEASON_START`.
-Import files from disk instead: `.venv/bin/python import_pdf.py game.pdf --matchday "J3 PHASE ALLER"`.
+Upload files by hand (PDFs, images, ZIPs) in the admin tool: `/admin`.
 
 ## How a PDF is read (extractor.py)
 1. PDF has a text layer -> `text_parser.py` (exact).
 2. Scanned image -> `ocr_parser.py`: Tesseract on every table cell, 3-10 reads voted, then repaired with the
    box score's arithmetic (REB=OR+DR, PTS=2*2P+3*3P+FT, column sums = Totals, EF, and sum(+/-) = 5 x margin).
 3. `validate.py` re-checks everything. A game that fails goes to `data/review/` (visible in the admin tool) and is NOT shown in the app.
-4. Optional: if `ANTHROPIC_API_KEY` is set, Claude vision is tried as a fallback for failed games.
 Check OCR accuracy any time: `.venv/bin/python tests/test_ocr.py`.
 
 ## Ratings (stats.py)
@@ -65,7 +64,7 @@ PROJECTED as the mirror of phase 1 (same order, home/away swapped). To use the r
 `{"fixtures": [{"matchday": 12, "home": "CA", "away": "ESG"}, ...]}`. Results for J12+ added in the admin replace their fixtures.
 
 ## Deploying
-Start with `TODO.md` (4 steps: OVH server, domain, GitHub, pipeline). How it fits together: `deploy/DEPLOY.md`.
+How it fits together, and how to set up a new server from scratch: `deploy/DEPLOY.md`.
 Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) behind Caddy and Cloudflare.
 
 ## Repository layout
@@ -83,3 +82,19 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   per 36 minutes, turned into a percentile (PG ... C). The five players of a lineup are arranged PG, SG, SF, PF, C in that order, so every spot is used once.
   Corrections made in the admin tool (Player positions) are stored in `data/positions.json` and always win.
 - **Light / dark mode:** the sun/moon button in the header; the first visit follows the device setting and the choice is remembered.
+
+## Search engines (SEO), languages and logos
+- **Real URLs**, one per page, in two languages: `/team/CA`, `/player/ca-24-omar-abada`, `/game/<id>` and `/fr/equipe/CA`, `/fr/joueur/...`, `/fr/match/...`
+  (`/fr/` prefix, translated words). Old `/#/team/CA` links are redirected in the browser.
+- For every URL the server sends what crawlers need **before any JavaScript runs** (`seo.py`): its own `<title>` and description, canonical and
+  `hreflang` links, Open Graph / Twitter cards (the share image is `static/img/og-image.jpg`), JSON-LD (WebSite, SportsTeam, Person, SportsEvent) and a plain
+  HTML version of the page with real links. The app replaces that content when it loads.
+- `/sitemap.xml` (every team, player and game in both languages, with `hreflang` pairs) and `/robots.txt` are generated from the data. `/admin` is `noindex`.
+  Canonical links use the address the visitor used; set `SITE_URL=https://yourdomain` to force one.
+- After deploying, submit `https://yourdomain/sitemap.xml` in Google Search Console and Bing Webmaster Tools (verify the domain with a DNS TXT record in Cloudflare).
+- **Languages:** English and French, chosen with the selector in the header (remembered; a French browser visiting `/` is offered `/fr/`). Texts live in the
+  `FR` dictionary, `SENT` sentence builders and `META` titles at the top of the script in `static/index.html`, and in `T` in `seo.py`.
+  `tests/test_i18n.py` fails if a string has no French translation. To add a language, add it to `LANGS`/`SLUGS` (seo.py) and the dictionaries.
+- **Brand:** `static/img/` (logo, favicons, app icons, share image), `static/site.webmanifest`; the original artwork is `assets/brand/logo-source.jpg`.
+- **Team logos:** `static/img/teams/<CODE>.png`, cut from the federation result graphics by `tools/extract_team_logos.py` (128 px circles, the best the source images allow).
+  Put a better square PNG with the same name there and the site uses it. The logos belong to the clubs.

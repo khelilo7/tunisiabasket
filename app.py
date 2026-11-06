@@ -3,9 +3,12 @@ import os
 import threading
 import time
 
-from flask import Flask, abort, jsonify, request, send_from_directory
+from functools import partial
+
+from flask import Flask, Response, abort, jsonify, make_response, redirect, request
 
 import auth
+import seo
 import stats
 
 app = Flask(__name__, static_folder="static", static_url_path="")
@@ -48,9 +51,42 @@ def slim(p):
     return {k: v for k, v in p.items() if k != "log"}
 
 
-@app.get("/")
-def index():
-    return send_from_directory("static", "index.html")
+def _page_view(lang, page, arg=None):
+    """Every public page URL: the single-page app plus the head tags and crawler content for that exact URL."""
+    m = seo.meta(lang, page, arg)
+    if m is None:
+        resp = make_response(seo.shell(lang, "home", seo.not_found_meta(lang)), 404)
+    else:
+        if page == "player" and m["redirect_arg"] and arg != m["redirect_arg"]:
+            return redirect(seo.path(lang, "player", m["redirect_arg"]), 301)   # one canonical URL per player
+        if page == "team" and arg != m["arg"]:
+            return redirect(seo.path(lang, "team", m["arg"]), 301)
+        resp = make_response(seo.shell(lang, page, m))
+    resp.headers["Content-Type"] = "text/html; charset=utf-8"
+    resp.headers["Cache-Control"] = "public, max-age=60"
+    return resp
+
+
+for _lang in seo.LANGS:   # /, /standings, /team/CA, ... and /fr/, /fr/classement, /fr/equipe/CA, ...
+    for _page in seo.LIST_PAGES:
+        app.add_url_rule(seo.path(_lang, _page), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
+    for _page in seo.ITEM_PAGES:
+        app.add_url_rule(seo.path(_lang, _page, "<arg>"), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
+
+
+@app.get("/index.html")
+def raw_template():
+    return redirect("/", 301)   # the file holds template tokens: never show or index it
+
+
+@app.get("/sitemap.xml")
+def sitemap():
+    return Response(seo.sitemap_xml(), mimetype="application/xml", headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/robots.txt")
+def robots():
+    return Response(seo.robots_txt(), mimetype="text/plain", headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/api/overview")

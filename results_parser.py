@@ -15,8 +15,6 @@ from PIL import Image
 import config
 import tesseract
 
-CODE_WL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 Xx"
-
 
 def _tess(img, psm=7, wl=None, h=70, invert=False):
     w0, h0 = img.size
@@ -57,13 +55,6 @@ def find_bars(rgb):
     hs = np.array([b[1] - b[0] for b in bands])
     med = np.median(hs)
     return [b for b in bands if 0.8 * med < b[1] - b[0] < 1.25 * med]
-
-
-def _bar_extent(rgb_arr, band):
-    y0, y1 = band
-    white = rgb_arr[y0:y1].min(2) > 215
-    cols = np.where(white.mean(0) > 0.5)[0]
-    return int(cols.min()), int(cols.max())
 
 
 def read_matchday(rgb):

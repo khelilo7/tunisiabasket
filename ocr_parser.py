@@ -24,7 +24,6 @@ COLS = ["no", "name", "min", "fgma", "fgp", "p2ma", "p2p", "p3ma", "p3p", "ftma"
 SKIP = {"fgp", "p2p", "p3p"}  # percentages are recomputed, never read (FT% is read only as a tie-breaker)
 COLS_EF = COLS[:-1] + ["ef", "pts"]  # variant layout with an Efficiency column
 INT_COLS = ["oreb", "dreb", "reb", "ast", "tov", "stl", "blk", "pf", "fd", "pm", "pts"]
-HEIGHTS = (36, 40, 44)
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ '-()."
 
 

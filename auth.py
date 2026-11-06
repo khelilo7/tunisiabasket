@@ -191,4 +191,5 @@ def add_security_headers(resp):
     resp.headers.setdefault("Referrer-Policy", "same-origin")
     if request.path.startswith("/admin") or request.path.startswith("/api/sync"):
         resp.headers["Cache-Control"] = "no-store"
+        resp.headers["X-Robots-Tag"] = "noindex, nofollow"
     return resp
