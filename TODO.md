@@ -30,6 +30,12 @@ Alternative without reinstalling: **Reboot in rescue mode**, then follow OVH's g
 ([OVH: rescue mode / change the root password](https://support.us.ovhcloud.com/hc/en-us/articles/4412634196115-How-to-Change-the-Root-Password-on-a-VPS)).
 Test with: `ssh ubuntu@SERVER_IP` (note the **@**; the colon form `ubuntu@SERVER_IP:` is only for `scp`).
 
+**"Your password has expired… Current password: … Authentication token manipulation error"**: OVH's first password must be changed at the first login, and the
+server asks for it twice: at `ubuntu@…'s password:` AND again at `Current password:`. Both times type **the temporary password from OVH's email**
+(nothing is shown while you type; copy it from the email so there is no typo), then choose a **new** password (12+ characters, not the old one, not your name)
+and type it twice. That error means the "Current password" did not match, most often because a *new* password was typed there by mistake.
+If the email is lost: OVH Control Panel → VPS → Reinstall (without an SSH key) sends a fresh password. After you are in, `provision.sh` installs your SSH key for you.
+
 **Prepare the server (once), one command from your Mac.** In the project folder:
 ```bash
 bash deploy/provision.sh SERVER_IP tunisiabasket.com

@@ -15,6 +15,16 @@ if [ ! -f "$KEY.pub" ]; then
   ssh-keygen -t ed25519 -f "$KEY" -C github-deploy -N "" -q
 fi
 DEPLOY_PUBKEY="$(cat "$KEY.pub")"
+
+# Your own key: the first time you are asked for the server password ONCE; after that no more passwords.
+MYKEY=""
+for f in "$HOME/.ssh/id_ed25519.pub" "$HOME/.ssh/id_rsa.pub"; do
+  if [ -z "$MYKEY" ] && [ -f "$f" ]; then MYKEY="$f"; fi
+done
+if [ -n "$MYKEY" ] && ! ssh -o BatchMode=yes -o ConnectTimeout=10 -o StrictHostKeyChecking=accept-new "$SSH_USER@$IP" true 2>/dev/null; then
+  echo "==> Installing your SSH key ($MYKEY) on the server. Type the server password when asked."
+  ssh-copy-id -o StrictHostKeyChecking=accept-new -i "$MYKEY" "$SSH_USER@$IP"
+fi
 read -r -p "Google Drive folder ID (the part after /folders/ in your Drive link; Enter to skip, sync stays off): " DRIVE_FOLDER_ID
 
 echo "==> Copying setup.sh to $SSH_USER@$IP"
