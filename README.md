@@ -96,5 +96,6 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   `FR` dictionary, `SENT` sentence builders and `META` titles at the top of the script in `static/index.html`, and in `T` in `seo.py`.
   `tests/test_i18n.py` fails if a string has no French translation. To add a language, add it to `LANGS`/`SLUGS` (seo.py) and the dictionaries.
 - **Brand:** `static/img/` (logo, favicons, app icons, share image), `static/site.webmanifest`; the original artwork is `assets/brand/logo-source.jpg`.
-- **Team logos:** `static/img/teams/<CODE>.png`, cut from the federation result graphics by `tools/extract_team_logos.py` (128 px circles, the best the source images allow).
-  Put a better square PNG with the same name there and the site uses it. The logos belong to the clubs.
+- **Team logos:** the clubs' own logos are in `assets/team-logos-src/<CODE>.<png|jpg>`. `python tools/build_team_logos.py` crops each to its real content, removes
+  non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
+  To change a logo, replace its source file and run the script again. The logos belong to the clubs.

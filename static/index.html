@@ -81,7 +81,9 @@
   footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
   footer a:hover { color:var(--txt); }
   .brand { display:flex; align-items:center; gap:9px; } .brand img { display:block; height:42px; width:auto; }
-  .tn { display:inline-flex; align-items:center; gap:7px; } .tlogo { border-radius:50%; flex:none; background:#fff; object-fit:cover; }
+  .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
+  .tlogo { flex:none; display:inline-block; vertical-align:middle; }   /* the files are already round, same-size badges */
+  td .tlogo { margin-right:4px; } .tn .tlogo { margin:0; }
   #lang { padding:5px 8px; } header .adm { color:var(--mut); font-size:13px; }
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
@@ -269,11 +271,11 @@ async function home() {
   return `
   <div class="card mvp">${ring(m.rating)}
     <div class="sp"><div class="crown">${f('seasonMvp', esc(d.season))}</div>
-      <div class="nm">${logo(m.team, 34)} ${plink(m)}</div>
+      <div class="nm tn" style="gap:10px">${logo(m.team, 40)}${plink(m)}</div>
       <div class="mut">${esc(f('mvpLine', m))}</div></div></div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
   <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${_('Team')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${_('Rating')}</th></tr></thead><tbody>
-  ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td>${logo(p.team, 20)} ${esc(p.team)}</td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
+  ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
   </tbody></table></div>
   <h2>${_('Standings')}</h2>${standTable(d, true)}
   <h2>${_('Latest games')}</h2>
@@ -299,7 +301,7 @@ async function players() {
   <div class="row" style="margin-bottom:12px"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
     <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
   <div class="card scroll"><table><thead><tr><th>${_('Player')}</th><th>${_('Team')}</th><th data-sort="gp">${H('GP')}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td>${logo(p.team, 20)} ${esc(p.team)}</td><td>${p.gp}</td>
+  ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
     ${cols.map(([k]) => `<td>${k === 'rating' ? rate(p.rating) : p[k]}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
@@ -312,7 +314,7 @@ async function player(ref) {
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
   <div class="card row" style="margin-top:10px;gap:20px">${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
-      <div class="mut">${p.teams.map(c => `<a href="${teamUrl(c)}">${logo(c, 20)} ${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
+      <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       <div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
       ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span></div></div></div>
   <h2>${esc(f('avgTitle', p.gp))}</h2>
@@ -321,7 +323,7 @@ async function player(ref) {
   <h2>${_('Form (PIR per game)')}</h2><div class="card">${spark(pts)}<div class="note">${_('Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.')}</div></div>
   <h2>${_('Game log')}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Date')}</th><th class="l">${_('Opp')}</th><th>${_('Result')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-  ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}${_('vs')} ${logo(r.opp, 18)} <a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}</td>
+  ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}</td>
     <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${r.ast}</td><td>${r.stl}</td><td>${r.blk}</td><td>${r.tov}</td>
     <td>${r.fgm}/${r.fga}</td><td>${r.p3m}/${r.p3a}</td><td>${r.ftm}/${r.fta}</td><td>${signed(r.pm)}</td><td>${r.pir}</td><td>${rate(r.rating)}</td></tr>`).join('')}
   </tbody></table></div>`;
@@ -384,7 +386,7 @@ function halfCourt(players) {   // one team around one basket
 function fullCourt(left, right) {   // two teams, each around its own basket; centres under the baskets, guards towards the middle
   const toL = (x, y) => [y, 500 - x], toR = (x, y) => [940 - y, x];
   const put = (t, fn) => t.players.map(p => marker(...fn(...SPOT[p.spot]), p)).join('');
-  const lg = (code, x) => `<image href="/img/teams/${esc(code)}.png" x="${x}" y="6" width="42" height="42"/>`;
+  const lg = (code, x) => `<image href="/img/teams/${esc(code)}.png" x="${x}" y="4" width="46" height="46"/>`;
   return `<svg class="court" viewBox="-8 -8 956 516" role="img" aria-label="${_('Starting five')}"><rect x="-8" y="-8" width="956" height="516" fill="var(--court-b)"/>
     <rect x="0" y="0" width="940" height="500" fill="var(--court)"/>
     <g transform="translate(0 500) rotate(-90)">${halfLines(false)}</g><g transform="translate(940 0) rotate(90)">${halfLines(false)}</g>
@@ -441,7 +443,7 @@ async function game(id) {
      <div class="s"><span>#${esc(p.number)} · ${esc(posName(p.pos))}</span>${rate(p.rating)}</div><div class="s"><span>${Math.round(p.min)} ${_('min')}</span><span>${p.pts} ${_('pts')}</span><span>${p.reb} ${_('reb')}</span><span>${p.ast} ${_('ast')}</span></div></div>`).join('') || `<div class="mut">${_('No bench players.')}</div>`}</div>`;
   return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
-   <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 36)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 36)}</a></div>
+   <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.score_note ? `<div class="banner" style="margin-top:8px">${esc(f('officialNote', g.score_note))}</div>` : ''}${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')} · PIR ${g.mvp.pir}</div>` : ''}</div>
   <h2>${_('Starting five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Click a player for the season page')}</span></div><div id="court"></div>
@@ -452,7 +454,7 @@ async function game(id) {
 function standTable(d, compact) {
   const top = new Set(d.top_teams), pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA';
   return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${compact ? '' : `<th>${pf}</th><th>${pa}</th>`}<th>${_('Diff')}</th><th>${_('Pts')}</th>${compact ? '' : `<th title="${_('Box scores available in the app')}">${_('Box scores')}</th>`}</tr></thead><tbody>
-  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 26)}<span>${esc(t.name)}</span></a> <span class="mut">${esc(t.code)}</span>${top.has(t.code) ? ` <span class="pill mvp">${_('MVP pool')}</span>` : ''}</td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
 async function standings() {
@@ -468,7 +470,7 @@ async function team(codeArg) {
   courtData = t.lineup.length ? { kind: 'team', lineup: t.lineup } : null;
   pageMeta = [f('metaTeam', t.name, t.code), st ? `${t.name} · ${f('rankIn', st.rank)} · ${st.w}${W} ${st.l}${Ls}` : t.name];
   const dayRows = t.results.map(r => `<tr ${r.game_id ? `data-go="${gameUrl(r.game_id)}"` : 'style="cursor:default"'}><td class="l">J${r.matchday}</td>
-    <td class="l"><span class="mut small">${r.home ? _('vs') : '@'}</span> ${logo(r.opp, 22)} ${teamLink(r.opp, r.opp_name)}</td>
+    <td class="l"><span class="tn"><span class="mut small">${r.home ? _('vs') : '@'}</span>${logo(r.opp, 26)}${teamLink(r.opp, r.opp_name)}</span></td>
     <td><span class="pill ${r.won ? 'w' : 'l'}">${r.won ? W : Ls}</span></td><td><b>${r.pf} – ${r.pa}</b></td>
     <td class="mut small">${r.game_id ? `<a href="${gameUrl(r.game_id)}">${_('Match stats ›')}</a>` : _('No box score yet')}</td></tr>`).join('');
   return `<a class="mut" href="${url('standings')}">← ${_('Standings')}</a>
@@ -487,7 +489,7 @@ async function team(codeArg) {
   <h2>${_('Next matches · calendar')}</h2>
   ${t.projected ? `<div class="banner">${_('Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.')}</div>` : ''}
   <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th></tr></thead><tbody>
-  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="mut small">${u.home ? _('vs') : '@'}</span> ${logo(u.opp, 22)} ${teamLink(u.opp, u.opp_name)}</td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('projected') : ''}</td></tr>`).join('') || `<tr><td colspan="3" class="mut">${_('No upcoming matches.')}</td></tr>`}
+  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('projected') : ''}</td></tr>`).join('') || `<tr><td colspan="3" class="mut">${_('No upcoming matches.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
