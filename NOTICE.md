@@ -1,3 +1,9 @@
+# What the MIT licence covers, and what it does not
+
+The MIT licence in `LICENSE` covers the **source code** of this repository. It does **not** cover:
+- **The Tunisia Basket name and emblem** (`static/img/`, `assets/brand/`): all rights reserved. Please do not present another site as Tunisia Basket.
+- **Club names and logos** and other third-party material described below: they belong to their owners.
+
 # Third-party material
 
 ## Club names and logos

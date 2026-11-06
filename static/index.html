@@ -87,6 +87,7 @@
   #lang { padding:5px 8px; } header .adm { color:var(--mut); font-size:13px; }
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
+.bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
 </style>
 </head>
 <body>
@@ -126,6 +127,7 @@ const FR = {
   'Season': 'Saison', 'Form (PIR per game)': 'Forme (PIR par match)', 'Game log': 'Journal des matchs', 'Need at least 2 games for a trend.': 'Il faut au moins 2 matchs pour une tendance.',
   'Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.':
     'Note = indice de performance FIBA (PTS+REB+PD+INT+CTR+FP − tirs manqués − BP − fautes), ramené à 0–99. MVP du match = meilleur PIR + 2 dans l’équipe gagnante uniquement. MVP de la saison = meilleure moyenne parmi les joueurs des 4 premières équipes.',
+  'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
   'Season averages · click a player': 'Moyennes de la saison · cliquez sur un joueur', 'Marker colour = rating:': 'Couleur du marqueur = note :',
@@ -307,6 +309,17 @@ async function players() {
   </tbody></table></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
 
+// Height / weight / birth date of a player (only what is known). Estimated values get a "~", disagreeing sources a range.
+function bioLine(b) {
+  if (!b) return '';
+  const ap = k => (b.approx || []).includes(k) ? '~' : '', age = b.birth && Math.floor((Date.now() - new Date(b.birth + 'T12:00')) / 31557600000);
+  const h = b.height && (Array.isArray(b.height) ? b.height.join('–') : b.height);
+  const bits = [[_('Height'), h && `${ap('height')}${h} cm`], [_('Weight'), b.weight && `${ap('weight')}${b.weight} kg`],
+    [_('Born'), b.birth && new Date(b.birth + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })],
+    [_('Age'), age && `${age} ${_('yrs')}`]].filter(x => x[1]);
+  return bits.length ? `<div class="bio">${bits.map(([l, v]) => `<span><span class="mut">${l}</span> <b>${esc(v)}</b></span>`).join('')}</div>` : '';
+}
+
 async function player(ref) {
   const id = (ref.match(/^([a-z0-9]+-\d+)/) || [, ref])[1];
   const d = await api('players/' + id), p = d.player;
@@ -316,7 +329,7 @@ async function player(ref) {
   <div class="card row" style="margin-top:10px;gap:20px">${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
-      <div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
+      ${bioLine(p.bio)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
       ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span></div></div></div>
   <h2>${esc(f('avgTitle', p.gp))}</h2>
   <div class="grid g4">${[['PTS', p.pts], ['REB', p.reb], [H('AST'), p.ast], [H('STL'), p.stl], [H('BLK'), p.blk], [H('TOV'), p.tov], ['MIN', p.min], ['+/-', signed(p.pm)],

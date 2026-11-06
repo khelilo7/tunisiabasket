@@ -101,6 +101,5 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
 
 ## Licence
-All rights reserved (see `LICENSE`): the repository is public so that it can be deployed, not to be reused. Club names and logos belong to their owners and the
-open-source libraries keep their own licences (`NOTICE.md`). To open the code to others later, replace `LICENSE` with the licence you want (for example MIT, or AGPL-3.0 if
-you want anyone who runs a modified copy as a website to publish their changes).
+The source code is released under the **MIT licence** (`LICENSE`). The licence does not cover the Tunisia Basket name and emblem, the club names and logos
+(they belong to their owners), or the data from the federation: see `NOTICE.md`. Open-source libraries keep their own licences.

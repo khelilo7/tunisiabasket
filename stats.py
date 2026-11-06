@@ -11,6 +11,7 @@ config.ensure_data()
 GAMES_DIR = config.DATA_DIR / "games"
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
+BIOS_FILE = config.DATA_DIR / "players_info.json"  # optional corrections to assets/players_info.json
 POSITIONS_FILE = config.DATA_DIR / "positions.json"  # manual position corrections: {"<player id>": "PG"}
 POSITIONS = ["PG", "SG", "SF", "PF", "C"]
 PHASE_LEN = 11  # 12 teams, each plays every other team once per phase
@@ -311,6 +312,7 @@ def build(season=None):
     for p in players:
         p["qualified"] = p["gp"] >= need and p["min"] >= MIN_MINUTES_FOR_RANKING
     assign_positions(players)
+    attach_bios(players)
     official = load_official()
     table = official_standings(official) if official.get("season") == season else []
     rank = {r["code"]: r["rank"] for r in table}
@@ -409,6 +411,28 @@ def load_positions():
         return json.loads(POSITIONS_FILE.read_text())
     except (OSError, ValueError):
         return {}
+
+
+def load_bios():
+    """Profiles (height cm, weight kg, birth date) from assets/players_info.json, overridden per player by data/players_info.json."""
+    out = {}
+    for path in (config.ASSETS_DIR / "players_info.json", BIOS_FILE):
+        try:
+            raw = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        for pid, info in raw.items():
+            if not pid.startswith("_") and isinstance(info, dict):
+                out[pid] = {**out.get(pid, {}), **info}
+    return out
+
+
+def attach_bios(players):
+    """Adds p['bio'] (or None). height may be a [min, max] pair; 'approx' names the estimated fields."""
+    bios = load_bios()
+    for p in players:
+        b = bios.get(p["id"])
+        p["bio"] = {k: b[k] for k in ("height", "weight", "birth", "approx") if k in b} if b else None
 
 
 def _z(values):
