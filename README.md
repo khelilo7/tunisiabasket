@@ -84,17 +84,17 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
 - **Light / dark mode:** the sun/moon button in the header; the first visit follows the device setting and the choice is remembered.
 
 ## Search engines (SEO), languages and logos
-- **Real URLs**, one per page, in two languages: `/team/CA`, `/player/ca-24-omar-abada`, `/game/<id>` and `/fr/equipe/CA`, `/fr/joueur/...`, `/fr/match/...`
-  (`/fr/` prefix, translated words). Old `/#/team/CA` links are redirected in the browser.
+- **Real URLs**, one per page, in two languages. **French is the default** (no prefix): `/equipe/CA`, `/joueur/ca-24-omar-abada`, `/match/<id>`, `/classement`, `/calendrier`.
+  English lives under `/en/`: `/en/team/CA`, `/en/player/...`, `/en/game/...`. Older addresses (`/fr/equipe/CA`, `/team/CA`, `/#/team/CA`) redirect to the current ones.
 - For every URL the server sends what crawlers need **before any JavaScript runs** (`seo.py`): its own `<title>` and description, canonical and
   `hreflang` links, Open Graph / Twitter cards (the share image is `static/img/og-image.jpg`), JSON-LD (WebSite, SportsTeam, Person, SportsEvent) and a plain
   HTML version of the page with real links. The app replaces that content when it loads.
 - `/sitemap.xml` (every team, player and game in both languages, with `hreflang` pairs) and `/robots.txt` are generated from the data. `/admin` is `noindex`.
   Canonical links use the address the visitor used; set `SITE_URL=https://yourdomain` to force one.
 - After deploying, submit `https://yourdomain/sitemap.xml` in Google Search Console and Bing Webmaster Tools (verify the domain with a DNS TXT record in Cloudflare).
-- **Languages:** English and French, chosen with the selector in the header (remembered; a French browser visiting `/` is offered `/fr/`). Texts live in the
+- **Languages:** French (default) and English, chosen with the selector in the header (remembered: a visitor who picked English lands on `/en/`; search engines and deep links are never redirected). Texts live in the
   `FR` dictionary, `SENT` sentence builders and `META` titles at the top of the script in `static/index.html`, and in `T` in `seo.py`.
-  `tests/test_i18n.py` fails if a string has no French translation. To add a language, add it to `LANGS`/`SLUGS` (seo.py) and the dictionaries.
+  `tests/test_i18n.py` fails if a string has no French translation. To add a language, add it to `LANGS`/`SLUGS` (seo.py), to `parsePath` in `static/index.html`, and to the dictionaries; `DEFAULT` in seo.py and in the script sets the main language.
 - **Brand:** `static/img/` (logo, favicons, app icons, share image), `static/site.webmanifest`; the original artwork is `assets/brand/logo-source.jpg`.
 - **Team logos:** the clubs' own logos are in `assets/team-logos-src/<CODE>.<png|jpg>`. `python tools/build_team_logos.py` crops each to its real content, removes
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).

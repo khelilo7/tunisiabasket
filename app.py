@@ -67,11 +67,25 @@ def _page_view(lang, page, arg=None):
     return resp
 
 
-for _lang in seo.LANGS:   # /, /standings, /team/CA, ... and /fr/, /fr/classement, /fr/equipe/CA, ...
+for _lang in seo.LANGS:   # French: /, /classement, /equipe/CA ...   English: /en/, /en/standings, /en/team/CA ...
     for _page in seo.LIST_PAGES:
         app.add_url_rule(seo.path(_lang, _page), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
     for _page in seo.ITEM_PAGES:
         app.add_url_rule(seo.path(_lang, _page, "<arg>"), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
+
+
+def _redirect_to(lang, page, arg=None):
+    return redirect(seo.path(lang, page, arg), 301)
+
+
+# Addresses used before French became the default: /fr/equipe/CA -> /equipe/CA and /team/CA -> /en/team/CA
+for _page in seo.LIST_PAGES:
+    app.add_url_rule("/fr/" if _page == "home" else "/fr" + seo.path("fr", _page), f"old_fr_{_page}", partial(_redirect_to, "fr", _page))
+    if _page != "home":
+        app.add_url_rule("/" + seo.SLUGS["en"][_page], f"old_en_{_page}", partial(_redirect_to, "en", _page))
+for _page in seo.ITEM_PAGES:
+    app.add_url_rule("/fr" + seo.path("fr", _page, "<arg>"), f"old_fr_{_page}", partial(_redirect_to, "fr", _page))
+    app.add_url_rule("/" + seo.SLUGS["en"][_page] + "/<arg>", f"old_en_{_page}", partial(_redirect_to, "en", _page))
 
 
 @app.get("/index.html")

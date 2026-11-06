@@ -1,13 +1,13 @@
 {
  "name": "Tunisia Basket",
  "short_name": "Tunisia Basket",
- "description": "Tunisian Pro A basketball: scores, standings, player stats and the MVP race.",
+ "description": "Basket Pro A tunisien : résultats, classement, statistiques des joueurs et course au MVP.",
  "start_url": "/",
  "scope": "/",
  "display": "standalone",
  "background_color": "#0f1420",
  "theme_color": "#0f1420",
- "lang": "en",
+ "lang": "fr",
  "icons": [
   {
    "src": "/img/icon-192.png",

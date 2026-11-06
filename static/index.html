@@ -95,7 +95,7 @@
   <span class="pill" id="phase">{{REGULAR}}</span>
   <nav id="nav"><!--NAV--></nav>
   <select id="season" aria-label="Season"></select>
-  <select id="lang" aria-label="Language"><option value="en">English</option><option value="fr">Français</option></select>
+  <select id="lang" aria-label="Language"><option value="fr">Français</option><option value="en">English</option></select>
   <button id="theme" aria-label="Switch between dark and light mode">☀️</button>
   <button id="syncbtn" hidden>⟳ Sync</button>
 </header>
@@ -104,7 +104,8 @@
 
 <script>
 const $ = s => document.querySelector(s);
-const LANG = document.documentElement.lang === 'fr' ? 'fr' : 'en';
+const DEFAULT = 'fr';   // French is the main language (no address prefix); English lives under /en
+const LANG = document.documentElement.lang === 'en' ? 'en' : 'fr';
 
 // ---------------------------------------------------------------- languages
 // English text is the key; French is looked up here. Sentences with numbers use SENT below.
@@ -140,7 +141,7 @@ const FR = {
   'At home': 'Domicile', 'Away': 'Extérieur', 'projected': 'projeté', 'Show one team': 'Afficher une équipe',
   'Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.':
     'Calendrier projeté : la deuxième phase est supposée reprendre la première (même ordre, domicile et extérieur inversés). Il sera remplacé par les dates officielles dès leur publication.',
-  'Back to standings': 'Retour au classement', 'Back to players': 'Retour aux joueurs',
+  'Team page': 'Page de l’équipe', 'Back to standings': 'Retour au classement', 'Back to players': 'Retour aux joueurs',
   // metrics
   'Points': 'Points', 'Rebounds': 'Rebonds', 'Assists': 'Passes décisives', 'Steals': 'Interceptions', 'Blocks': 'Contres', 'PIR (efficiency)': 'PIR (évaluation)',
   'Minutes': 'Minutes', 'Plus / minus': 'Plus / moins', 'FG %': '% au tir', '3P %': '% à 3 pts', 'True shooting %': '% de tir réel',
@@ -191,14 +192,14 @@ const SLUG = {
   en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', team: 'team', player: 'player', game: 'game' },
   fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', team: 'equipe', player: 'joueur', game: 'match' }
 };
-const pre = l => (l === 'en' ? '' : '/fr');
+const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
 const slugify = s => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 const playerUrl = (id, name) => url('player', name ? `${id}-${slugify(name)}` : id);
 const gameUrl = id => url('game', id), teamUrl = code => url('team', code);
 function parsePath(p) {
-  let lang = 'en';
-  if (p === '/fr' || p.startsWith('/fr/')) { lang = 'fr'; p = p.slice(3) || '/'; }
+  let lang = DEFAULT;
+  for (const o of ['en']) if (p === '/' + o || p.startsWith('/' + o + '/')) { lang = o; p = p.slice(o.length + 1) || '/'; }
   const parts = p.split('/').filter(Boolean);
   if (!parts.length) return { lang, page: 'home' };
   const page = Object.keys(SLUG[lang]).find(k => SLUG[lang][k] === parts[0]);
@@ -469,7 +470,7 @@ async function team(codeArg) {
   const played = t.results.length;
   courtData = t.lineup.length ? { kind: 'team', lineup: t.lineup } : null;
   pageMeta = [f('metaTeam', t.name, t.code), st ? `${t.name} · ${f('rankIn', st.rank)} · ${st.w}${W} ${st.l}${Ls}` : t.name];
-  const dayRows = t.results.map(r => `<tr ${r.game_id ? `data-go="${gameUrl(r.game_id)}"` : 'style="cursor:default"'}><td class="l">J${r.matchday}</td>
+  const dayRows = [...t.results].reverse().map(r => `<tr ${r.game_id ? `data-go="${gameUrl(r.game_id)}"` : 'style="cursor:default"'}><td class="l">J${r.matchday}</td>
     <td class="l"><span class="tn"><span class="mut small">${r.home ? _('vs') : '@'}</span>${logo(r.opp, 26)}${teamLink(r.opp, r.opp_name)}</span></td>
     <td><span class="pill ${r.won ? 'w' : 'l'}">${r.won ? W : Ls}</span></td><td><b>${r.pf} – ${r.pa}</b></td>
     <td class="mut small">${r.game_id ? `<a href="${gameUrl(r.game_id)}">${_('Match stats ›')}</a>` : _('No box score yet')}</td></tr>`).join('');
@@ -502,17 +503,28 @@ async function planning() {
   const d = await (await fetch('/api/planning')).json();
   pageMeta = META.planning[LANG];
   const codes = Object.keys(d.teams).sort((a, b) => d.teams[a].localeCompare(d.teams[b]));
-  const hl = c => planTeam && c === planTeam ? ' class="hl"' : '';
-  const mds = d.matchdays.filter(m => !planTeam || m.games.some(g => g.home === planTeam || g.away === planTeam));
-  return `<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
+  const head = `<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
   ${d.projected ? `<div class="banner">${_('Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.')}</div>` : ''}
   <div class="row" style="margin-bottom:12px"><label class="mut small" for="pt">${_('Show one team')}</label>
-    <select id="pt"><option value="">${_('All teams')}</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>
-  <div class="grid g2">${mds.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b><span class="sp"></span><span class="mut small">${d.projected ? _('projected') : ''}</span></div>
+    <select id="pt"><option value="">${_('All teams')}</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>`;
+  if (planTeam) {   // only this team's matches, one line per matchday
+    const rows = d.matchdays.map(m => {
+      const g = m.games.find(x => x.home === planTeam || x.away === planTeam);
+      if (!g) return '';
+      const home = g.home === planTeam, opp = home ? g.away : g.home;
+      const res = g.played ? `<b>${home ? g.home_score : g.away_score} – ${home ? g.away_score : g.home_score}</b>` : '';
+      return `<tr style="cursor:default"><td class="l">J${m.matchday}</td><td class="l"><span class="tn"><span class="mut small">${home ? _('vs') : '@'}</span>${logo(opp, 26)}${teamLink(opp, d.teams[opp])}</span></td>
+        <td class="mut small">${home ? _('At home') : _('Away')}${d.projected && !g.played ? ' · ' + _('projected') : ''}</td><td>${res}</td></tr>`;
+    }).join('');
+    return head + `<div class="card"><div class="row" style="margin-bottom:6px"><span class="tn" style="font-size:18px;font-weight:800">${logo(planTeam, 40)}${esc(d.teams[planTeam])}</span><span class="sp"></span>
+      <a href="${teamUrl(planTeam)}" class="mut small">${_('Team page')} ›</a></div>
+      <div class="scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th><th>${_('Score')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+  }
+  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b><span class="sp"></span><span class="mut small">${d.projected ? _('projected') : ''}</span></div>
     ${m.games.map(g => `<div class="match" style="padding:6px 0;border-top:1px solid var(--line)">
-      <a class="tn" href="${teamUrl(g.home)}"${hl(g.home)}>${logo(g.home, 22)}${esc(g.home)}</a>
+      <a class="tn" href="${teamUrl(g.home)}">${logo(g.home, 22)}${esc(g.home)}</a>
       ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small">${_('vs')}</span>`}
-      <a class="tn" href="${teamUrl(g.away)}"${hl(g.away)}>${esc(g.away)}${logo(g.away, 22)}</a></div>`).join('')}</div>`).join('')}</div>`;
+      <a class="tn" href="${teamUrl(g.away)}">${esc(g.away)}${logo(g.away, 22)}</a></div>`).join('')}</div>`).join('')}</div>`;
 }
 
 // ---------------------------------------------------------------- wiring
@@ -541,8 +553,8 @@ if (location.hash.startsWith('#/')) {
   const page = { teams: 'standings', '': 'home' }[pg] ?? pg;
   if (SLUG.en[page] || page === 'home') history.replaceState(null, '', url(page, arg));
 }
-// first visit by a French-speaking browser to the English home page: offer the French site
-if (location.pathname === '/' && !localStorage.getItem('lang') && /^fr/i.test(navigator.language || '')) location.replace('/fr/');
+// a visitor who chose English earlier goes straight to the English home page (deep links and search engines are never redirected)
+if (location.pathname === '/' && localStorage.getItem('lang') === 'en') location.replace('/en/');
 
 $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
 $('#theme').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');

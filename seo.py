@@ -4,7 +4,7 @@ The page itself is a single-page app (static/index.html). For every URL this mod
 before any JavaScript runs: <title>, description, canonical + language alternates, Open Graph / Twitter tags,
 JSON-LD, and a plain HTML version of the page content (which the app replaces once it loads).
 
-Languages: English (no prefix) and French (/fr/...), with translated URL words (team -> equipe, ...).
+Languages: French is the default (no prefix) and English lives under /en/..., with translated URL words (team -> equipe, ...).
 """
 import json
 import os
@@ -19,7 +19,8 @@ from flask import request
 import config
 import stats
 
-LANGS = ("en", "fr")
+DEFAULT = "fr"          # the main language: its addresses have no prefix (/equipe/CA); the others do (/en/team/CA)
+LANGS = ("fr", "en")
 SLUGS = {
     "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning",
            "team": "team", "player": "player", "game": "game"},
@@ -103,7 +104,7 @@ def player_id(ref):
 
 
 def path(lang, page, arg=None):
-    pre = "" if lang == "en" else "/fr"
+    pre = "" if lang == DEFAULT else f"/{lang}"
     if page == "home":
         return pre + "/"
     base = f"{pre}/{SLUGS[lang][page]}"
@@ -117,15 +118,16 @@ def base_url():
 def alternates(page, arg=None):
     b = base_url()
     alts = {lang: b + path(lang, page, arg) for lang in LANGS}
-    alts["x-default"] = alts["en"]
+    alts["x-default"] = alts[DEFAULT]
     return alts
 
 
 def parse_path(p):
-    """'/fr/equipe/CA' -> ('fr', 'team', 'CA'); None if it is not one of our pages."""
-    lang = "en"
-    if p == "/fr" or p.startswith("/fr/"):
-        lang, p = "fr", p[3:] or "/"
+    """'/en/team/CA' -> ('en', 'team', 'CA'); '/equipe/CA' -> ('fr', 'team', 'CA'); None if it is not one of our pages."""
+    lang = DEFAULT
+    for other in LANGS:
+        if other != DEFAULT and (p == f"/{other}" or p.startswith(f"/{other}/")):
+            lang, p = other, p[len(other) + 1:] or "/"
     parts = [x for x in p.split("/") if x]
     if not parts:
         return lang, "home", None
@@ -223,7 +225,7 @@ def meta(lang, page, arg=None):
             rank = f'{rk}{"er" if rk == 1 else "e"}'
         desc = t["t_desc"].format(name=v["name"], wl=wl, rank=rank)
         res = "".join(f'<li>J{r["matchday"]} {"vs" if r["home"] else "@"} <a href="{path(lang, "team", r["opp"])}">{esc(r["opp_name"])}</a> {r["pf"]}–{r["pa"]}'
-                      + (f' (<a href="{path(lang, "game", r["game_id"])}">{t["starters"]}</a>)' if r["game_id"] else "") + "</li>" for r in v["results"])
+                      + (f' (<a href="{path(lang, "game", r["game_id"])}">{t["starters"]}</a>)' if r["game_id"] else "") + "</li>" for r in reversed(v["results"]))
         up = "".join(f'<li>J{u["matchday"]} {"vs" if u["home"] else "@"} {esc(u["opp_name"])}</li>' for u in v["upcoming"])
         out.update(title=t["t_title"].format(name=v["name"], code=v["code"]), description=desc, arg=v["code"],
                    jsonld=[_org_jsonld(lang), {"@context": "https://schema.org", "@type": "SportsTeam", "name": v["name"], "sport": "Basketball",

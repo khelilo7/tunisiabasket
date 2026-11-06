@@ -72,12 +72,17 @@ for (lang, page), ts in titles.items():
         check(len(set(ts)) == len(ts), f"{lang} {page}: duplicate titles")
 
 # canonical redirects and 404s
-code = c.get("/player/" + players[0]["id"]).status_code
+code = c.get("/joueur/" + players[0]["id"]).status_code
 check(code == 301, f"id-only player URL must redirect to the canonical one, got {code}")
 check(c.get("/index.html").status_code == 301, "/index.html must redirect to /")
-check(c.get("/team/ca").status_code == 301, "lower-case team code must redirect to /team/CA")
-check(c.get("/team/NOPE").status_code == 404 and c.get("/fr/match/nope").status_code == 404, "unknown pages must be 404")
-check('name="robots" content="noindex"' in get("/team/NOPE")[1], "404 pages must be noindex")
+check(c.get("/equipe/ca").status_code == 301, "lower-case team code must redirect to /equipe/CA")
+check(c.get("/equipe/NOPE").status_code == 404 and c.get("/en/game/nope").status_code == 404, "unknown pages must be 404")
+check(seo.DEFAULT == "fr" and seo.path("fr", "team", "CA") == "/equipe/CA" and seo.path("en", "team", "CA") == "/en/team/CA", "French is the default language")
+check(get("/")[1].count('<html lang="fr">') == 1, "the home page must be French")
+for old, new in (("/fr/", "/"), ("/fr/equipe/CA", "/equipe/CA"), ("/fr/classement", "/classement"), ("/team/CA", "/en/team/CA"), ("/standings", "/en/standings"), ("/players", "/en/players")):
+    r = c.get(old)
+    check(r.status_code == 301 and r.headers["Location"].endswith(new), f"old address {old} must redirect (301) to {new}, got {r.status_code} {r.headers.get('Location')}")
+check('name="robots" content="noindex"' in get("/equipe/NOPE")[1], "404 pages must be noindex")
 
 # sitemap: valid XML, every URL answers 200 (no redirects), both languages, hreflang pairs
 code, xml = get("/sitemap.xml")
