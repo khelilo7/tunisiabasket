@@ -86,6 +86,41 @@
   .medal { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:800; color:#1a1a1a; flex:none; }
   .medal.m1 { background:linear-gradient(135deg,#ffd75e,#e8a600); } .medal.m2 { background:linear-gradient(135deg,#e3e8f2,#a4aec4); } .medal.m3 { background:linear-gradient(135deg,#e7a86c,#b4692a); }
   @media (max-width:760px) { .hero { grid-template-columns:1fr; justify-items:start; padding:18px; gap:14px; } .hero .ring { width:100px; height:100px; font-size:34px; } .leaders { grid-template-columns:1fr; } }
+  /* polish: depth, motion, tables, focus */
+  :root, :root[data-theme=dark] { --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 6px 18px rgba(0,0,0,.28); --ov:rgba(5,8,16,.72); }
+  :root[data-theme=light] { --shadow:0 1px 2px rgba(24,32,47,.06), 0 8px 22px rgba(24,32,47,.07); --ov:rgba(24,32,47,.45); }
+  .card { box-shadow:var(--shadow); } a.card { display:block; transition:transform .15s, border-color .15s; } a.card:hover { transform:translateY(-2px); border-color:var(--acc); }
+  header { backdrop-filter:blur(10px); } header .logo { font-size:17px; }
+  nav a { transition:background .15s, color .15s; } nav a.on { box-shadow:inset 0 -2px 0 var(--acc); border-radius:8px 8px 4px 4px; }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:6px; }
+  ::-webkit-scrollbar { height:9px; width:9px; } ::-webkit-scrollbar-thumb { background:var(--line); border-radius:6px; } ::-webkit-scrollbar-thumb:hover { background:var(--mut); }
+  h1 { font-size:28px; font-weight:800; letter-spacing:-.01em; }
+  thead th { border-bottom:2px solid var(--line); position:sticky; top:0; background:var(--card); z-index:1; } th[data-sort]:hover { color:var(--acc); }
+  tbody tr { transition:background .12s; } tbody tr:last-child { border-bottom:0; } tbody tr:hover td:first-child { box-shadow:inset 3px 0 0 var(--acc); }
+  td.rk { color:var(--mut); font-variant-numeric:tabular-nums; width:34px; } td.rk.t3 { color:var(--acc); font-weight:800; }
+  td, th { font-variant-numeric:tabular-nums; } td.l, th.l { text-align:left; }
+  .tablecard { padding:0; overflow:hidden; } .tablecard .scroll { max-height:78vh; }
+  .tablecard td:first-child, .tablecard th:first-child { padding-left:14px; } .tablecard td:last-child, .tablecard th:last-child { padding-right:14px; }
+  .toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; } .toolbar input[type=search], .toolbar input#q { min-width:220px; }
+  .chip { display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border:1px solid var(--line); border-radius:99px; background:var(--card); cursor:pointer; user-select:none; font-size:13px; }
+  .chip.on { border-color:var(--acc); color:var(--acc); background:var(--hover); font-weight:700; }
+  .lead { cursor:pointer; } .lead .more { margin-top:6px; padding-top:8px; border-top:1px solid var(--line); color:var(--mut); font-size:12px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; display:flex; justify-content:space-between; }
+  .lead:hover .more { color:var(--acc); }
+  .modal-bg { position:fixed; inset:0; z-index:50; background:var(--ov); backdrop-filter:blur(3px); display:flex; align-items:flex-start; justify-content:center; padding:5vh 12px; overflow:auto; animation:fade .15s; }
+  .modal { width:min(620px,100%); background:var(--card); border:1px solid var(--line); border-radius:18px; box-shadow:0 24px 60px rgba(0,0,0,.5); overflow:hidden; animation:rise .18s; }
+  .modal .mh { display:flex; align-items:center; gap:10px; padding:16px 18px; background:var(--mvp-grad); border-bottom:1px solid var(--mvp-line); }
+  .modal .mh h3 { margin:0; font-size:18px; flex:1; } .modal .mh small { color:var(--mut); display:block; font-weight:400; font-size:12px; margin-top:2px; }
+  .modal .x { padding:4px 10px; font-size:18px; line-height:1; }
+  .modal .mr { display:grid; grid-template-columns:28px auto 1fr auto auto; gap:10px; align-items:center; padding:9px 18px; border-bottom:1px solid var(--line); position:relative; }
+  .modal .bar { position:absolute; height:3px; background:var(--acc); opacity:.55; border-radius:2px; }
+  .modal .mr:hover { background:var(--hover); } .modal .mr .bar { bottom:0; left:18px; }
+  .modal .mr .nmb b { display:block; } .modal .mr .nmb span { font-size:12px; color:var(--mut); } .modal .mr .val { font-weight:800; font-size:18px; min-width:48px; text-align:right; }
+  .modal .mr .rk { text-align:center; color:var(--mut); font-weight:700; font-variant-numeric:tabular-nums; }
+  .modal .mf { padding:14px 18px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; background:var(--bg); } .modal .mf button.go { background:var(--acc); color:#10131c; border-color:var(--acc); font-weight:800; padding:8px 16px; }
+  @keyframes fade { from { opacity:0 } } @keyframes rise { from { transform:translateY(14px); opacity:0 } }
+  @media (prefers-reduced-motion: reduce) { * { animation:none !important; transition:none !important; } }
+  header { gap:10px; } nav a { padding:6px 9px; white-space:nowrap; } header .brand { display:flex; align-items:center; gap:9px; flex:none; }
+  @media (max-width:1060px) and (min-width:761px) { #phase { display:none; } }
   /* courts */
   svg.court { width:100%; height:auto; display:block; border-radius:12px; }
   svg.court.half { max-width:520px; margin:0 auto; }
@@ -154,6 +189,7 @@ const FR = {
   'Season': 'Saison', 'Form (PIR per game)': 'Forme (PIR par match)', 'Game log': 'Journal des matchs', 'Need at least 2 games for a trend.': 'Il faut au moins 2 matchs pour une tendance.',
   'Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.':
     'Note = indice de performance FIBA (PTS+REB+PD+INT+CTR+FP − tirs manqués − BP − fautes), ramené à 0–99. MVP du match = meilleur PIR + 2 dans l’équipe gagnante uniquement. MVP de la saison = meilleure moyenne parmi les joueurs des 4 premières équipes.',
+  'Top 10': 'Top 10', 'Close': 'Fermer', 'Only players with enough games are ranked.': 'Seuls les joueurs avec assez de matchs sont classés.', 'All players, all stats': 'Tous les joueurs, toutes les stats',
   'League leaders': 'Leaders de la ligue', 'Top scorers': 'Meilleurs marqueurs', 'Top rebounders': 'Meilleurs rebondeurs', 'Top passers': 'Meilleurs passeurs',
   'Top ball stealers': 'Meilleurs intercepteurs', 'Top shot blockers': 'Meilleurs contreurs', 'Three-pointers made': 'Tirs à 3 points réussis',
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
@@ -193,7 +229,7 @@ const W = LANG === 'fr' ? 'V' : 'W', Ls = LANG === 'fr' ? 'D' : 'L';
 const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
-    seasonMvp: s => `★ SEASON MVP · ${s}`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
+    seasonMvp: s => `★ SEASON MVP · ${s}`, qualRule: n => `≥ ${n}% of team games`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
     playersSub: s => `${s} · per-game averages`, standingsSub: s => `${s} · regular season · phase 1 complete (J1–J11)`,
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
@@ -206,7 +242,7 @@ const SENT = {
   },
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
-    seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
+    seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, qualRule: n => `≥ ${n} % des matchs de l’équipe`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
     playersSub: s => `${s} · moyennes par match`, standingsSub: s => `${s} · saison régulière · phase 1 terminée (J1–J11)`,
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
@@ -313,10 +349,10 @@ async function home() {
       <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div></div>
   <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
   <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
-  <div class="leaders">${d.leaders.map(leaderCard).join('')}</div>
+  <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
-  <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${_('Team')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${_('Rating')}</th></tr></thead><tbody>
-  ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
+  <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${_('Rating')}</th></tr></thead><tbody>
+  ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
   </tbody></table></div>
   <h2>${_('Standings')}</h2>${standTable(d, true)}
   <h2>${_('Latest games')}</h2>
@@ -325,13 +361,37 @@ async function home() {
 
 const LEAD = { pts: ['Top scorers', 'PTS', ''], reb: ['Top rebounders', 'REB', ''], ast: ['Top passers', 'AST', ''], stl: ['Top ball stealers', 'STL', ''],
   blk: ['Top shot blockers', 'BLK', ''], p3m: ['Three-pointers made', '3P', ''], fg_pct: ['Best shooters (FG%)', 'FG%', '%'], pir: ['Most efficient (PIR)', 'PIR', ''] };
+let leadData = [];
+const fmtVal = (key, v) => key === 'fg_pct' ? v + '%' : v;
 function leaderCard(c) {
-  const [name, unit, suf] = LEAD[c.key], top = c.top[0] ? c.top[0].value || 1 : 1;
-  return `<div class="card lead"><div class="lh"><span class="lt">${_(name)}</span><span class="mut small">${H(unit)}</span></div>
-    ${c.top.map((p, i) => `<a class="lr${i ? '' : ' first'}" href="${playerUrl(p.id, p.name)}"><span class="medal m${i + 1}">${i + 1}</span>${logo(p.team, i ? 26 : 34)}
-      <span class="nmb"><b>${esc(title(p.name))}</b><span>${esc(p.team)} · #${p.number} · ${p.gp} ${H('GP')}</span></span><span class="val">${p.value}${suf}</span>
-      ${i ? `<i class="bar" style="width:${Math.round(100 * p.value / top)}%"></i>` : ''}</a>`).join('')}</div>`;
+  const [name, unit] = LEAD[c.key], top3 = c.top.slice(0, 3), best = top3[0] ? top3[0].value || 1 : 1;
+  return `<div class="card lead" role="button" tabindex="0" data-lead="${c.key}" aria-label="${esc(_(name))} – ${_('Top 10')}"><div class="lh"><span class="lt">${_(name)}</span><span class="mut small">${H(unit)}</span></div>
+    ${top3.map((p, i) => `<a class="lr${i ? '' : ' first'}" href="${playerUrl(p.id, p.name)}"><span class="medal m${i + 1}">${i + 1}</span>${logo(p.team, i ? 26 : 34)}
+      <span class="nmb"><b>${esc(title(p.name))}</b><span>${esc(p.team)} · #${p.number} · ${p.gp} ${H('GP')}</span></span><span class="val">${fmtVal(c.key, p.value)}</span>
+      ${i ? `<i class="bar" style="width:${Math.round(100 * p.value / best)}%"></i>` : ''}</a>`).join('')}
+    <div class="more"><span>${_('Top 10')}</span><span>→</span></div></div>`;
 }
+
+function openLeaders(key) {
+  const c = leadData.find(x => x.key === key); if (!c) return;
+  const [name, unit] = LEAD[key], best = c.top[0] ? c.top[0].value || 1 : 1;
+  closeModal();
+  const el = document.createElement('div'); el.className = 'modal-bg'; el.id = 'modal';
+  el.innerHTML = `<div class="modal" role="dialog" aria-modal="true" aria-label="${esc(_(name))}">
+    <div class="mh"><h3>${_(name)}<small>${_('Top 10')} · ${_('per game')} · ${H(unit)} · ${esc(f('qualRule', QUAL))}</small></h3><button class="x" aria-label="${_('Close')}">×</button></div>
+    ${c.top.map((p, i) => `<a class="mr" href="${playerUrl(p.id, p.name)}"><span class="rk">${i + 1}</span>${logo(p.team, 28)}
+      <span class="nmb"><b>${esc(title(p.name))}</b><span>${esc(p.team)} · #${p.number} · ${p.gp} ${H('GP')}</span></span>${rate(p.rating)}<span class="val">${fmtVal(key, p.value)}</span>
+      <i class="bar" style="width:calc(${Math.round(100 * p.value / best)}% - 36px)"></i></a>`).join('')}
+    <div class="mf"><span class="mut small">${_('Only players with enough games are ranked.')}</span><button class="go" data-more="${key}">${_('All players, all stats')} →</button></div></div>`;
+  el.onclick = e => { if (e.target === el || e.target.closest('.x')) closeModal(); else if (e.target.closest('[data-more]')) showAll(key); else if (e.target.closest('a')) closeModal(); };
+  document.body.appendChild(el); document.body.style.overflow = 'hidden'; el.querySelector('.x').focus();
+}
+function closeModal() { const m = $('#modal'); if (m) { m.remove(); document.body.style.overflow = ''; } }
+function showAll(key) { closeModal(); qualOnly = true; sortKey = key; sortDir = -1; q = ''; teamF = ''; go(url('players')); }
+addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  const c = e.target.closest && e.target.closest('[data-lead]'); if (c && (e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); openLeaders(c.dataset.lead); }
+});
 
 function gameCard(g) {
   const [a, b] = g.teams;
@@ -340,21 +400,27 @@ function gameCard(g) {
     ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}</a>`;
 }
 
-let sortKey = 'rating', sortDir = -1, q = '', teamF = '';
+let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = false;
+const QUAL = 70;   // % of its team's games a player must have played to be ranked (same rule as the NBA, 58 of 82)
 async function players() {
   const d = await api('players');
   pageMeta = META.players[LANG];
   const teams = [...new Set(d.players.flatMap(p => p.teams))].sort();
-  const cols = [['pts', 'PTS'], ['reb', 'REB'], ['ast', H('AST')], ['stl', H('STL')], ['blk', H('BLK')], ['fg_pct', H('FG%')], ['p3_pct', H('3P%')], ['ft_pct', H('FT%')], ['min', 'MIN'], ['pir', 'PIR'], ['rating', H('RTG')]];
-  const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)))
+  const pair = (m, a) => `${m}-${a}`;
+  const cols = [['min', 'MIN'], ['pts', 'PTS'], ['reb', 'REB'], ['oreb', H('OR')], ['dreb', H('DR')], ['ast', H('AST')], ['stl', H('STL')], ['blk', H('BLK')], ['tov', H('TOV')], ['pf', H('PF')], ['fd', H('FD')],
+    ['fgm', H('FG'), p => pair(p.fgm, p.fga)], ['fg_pct', H('FG%')], ['p3m', H('3P'), p => pair(p.p3m, p.p3a)], ['p3_pct', H('3P%')], ['ftm', H('FT'), p => pair(p.ftm, p.fta)], ['ft_pct', H('FT%')],
+    ['ts_pct', H('TS%')], ['pm', '+/-', p => signed(p.pm)], ['pir', 'PIR'], ['rating', H('RTG'), p => rate(p.rating)]];
+  const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || p.qualified))
     .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
   return `<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
-  <div class="row" style="margin-bottom:12px"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
-    <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select></div>
-  <div class="card scroll"><table><thead><tr><th>${_('Player')}</th><th>${_('Team')}</th><th data-sort="gp">${H('GP')}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
-    ${cols.map(([k]) => `<td>${k === 'rating' ? rate(p.rating) : p[k]}</td>`).join('')}</tr>`).join('')}
-  </tbody></table></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
+  <div class="toolbar"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
+    <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
+    <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
+    <span class="mut small">${rows.length} ${_('players')} · ${_('per game')}</span></div>
+  <div class="card tablecard"><div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th data-sort="gp">${H('GP')}${sortKey === 'gp' ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
+  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
+    ${cols.map(([k, , fn]) => `<td>${fn ? fn(p) : p[k]}</td>`).join('')}</tr>`).join('')}
+  </tbody></table></div></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
 
 // Height / weight / birth date of a player (only what is known). Estimated values get a "~", disagreeing sources a range.
@@ -593,6 +659,8 @@ function bind() {
   document.querySelectorAll('[data-go]').forEach(el => el.onclick = e => { if (e.target.closest('a')) return; go(el.dataset.go); });
   document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => { const k = th.dataset.sort; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; route(true); });
   const qi = $('#q'); if (qi) { qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; route(true).then(() => { const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); }); }; }
+  document.querySelectorAll('[data-lead]').forEach(c => c.onclick = e => { if (!e.target.closest('a')) openLeaders(c.dataset.lead); });
+  const ql = $('#qual'); if (ql) { ql.onclick = () => { qualOnly = !qualOnly; route(true); }; ql.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ql.click(); } }; }
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };

@@ -2,6 +2,7 @@
 import bisect
 import difflib
 import json
+import math
 import re
 from collections import Counter, defaultdict
 
@@ -26,7 +27,9 @@ MVP_TOP_TEAMS = 4  # the season MVP can only come from the top-N teams in the of
 # Season MVP: best average impact among players of the top-N teams of the official standings.
 # Rating (0-99) is a simple linear scale of PIR so that ~0 PIR = 45 and ~20 PIR = 95.
 WIN_BONUS = 2
-MIN_GAMES_FOR_SEASON_MVP = 3
+# Qualification for rankings (MVP race and league leaders), as in the NBA: the player must have played at least 70% of
+# the games his team(s) have played (the NBA asks 58 of 82 = 70.7%), and not be a token appearance (minutes per game).
+QUALIFY_SHARE = 0.7
 MIN_MINUTES_FOR_RANKING = 5
 
 
@@ -289,6 +292,7 @@ def build(season=None):
             "blk": _avg([r["blk"] for r in rows]),
             "tov": _avg([r["tov"] for r in rows]),
             "pf": _avg([r["pf"] for r in rows]),
+            **{k: _avg([r[k] for r in rows]) for k in ("oreb", "dreb", "fd", "fgm", "fga", "p3m", "p3a", "ftm", "fta")},
             "pm": _avg([r["pm"] for r in rows]),
             "fg_pct": round(100 * tot("fgm") / tot("fga"), 1) if tot("fga") else 0,
             "p3_pct": round(100 * tot("p3m") / tot("p3a"), 1) if tot("p3a") else 0,
@@ -307,10 +311,11 @@ def build(season=None):
             "log": sorted(rows, key=lambda r: (r["date"], r["game_id"])),
         })
     # Ranking: need enough games (or all games if the season is still short).
-    max_gp = max((p["gp"] for p in players), default=0)
-    need = min(MIN_GAMES_FOR_SEASON_MVP, max_gp)
+    team_games = Counter(t["code"] for g in games for t in g["teams"])
     for p in players:
-        p["qualified"] = p["gp"] >= need and p["min"] >= MIN_MINUTES_FOR_RANKING
+        avail = sum(team_games[c] for c in p["teams"])
+        p["games_needed"] = max(1, math.ceil(QUALIFY_SHARE * avail))
+        p["qualified"] = p["gp"] >= p["games_needed"] and p["min"] >= MIN_MINUTES_FOR_RANKING
     assign_positions(players)
     attach_bios(players)
     official = load_official()
@@ -418,25 +423,15 @@ def load_positions():
 LEADER_STATS = ("pts", "reb", "ast", "stl", "blk", "p3m", "fg_pct", "pir")
 
 
-def leaders(players, n=3):
+def leaders(players, n=10):
+    """Per category the best n qualified players (value = per-game average, or a percentage)."""
     pool = [p for p in players if p["qualified"]]
     out = []
     for key in LEADER_STATS:
-        rows = []
-        for p in pool:
-            log = p["log"]
-            if key == "p3m":
-                value = round(sum(r["p3m"] for r in log) / len(log), 1)
-            elif key == "fg_pct":
-                if sum(r["fga"] for r in log) / len(log) < 4:      # shooting % only means something with volume
-                    continue
-                value = p["fg_pct"]
-            else:
-                value = p[key]
-            rows.append((value, p["pir"], p))
-        rows.sort(key=lambda r: (r[0], r[1]), reverse=True)
+        rows = [p for p in pool if key != "fg_pct" or p["fga"] >= 4]      # shooting % only means something with volume
+        rows.sort(key=lambda p: (p[key], p["pir"]), reverse=True)
         out.append({"key": key, "top": [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"],
-                                         "gp": p["gp"], "rating": p["rating"], "value": v} for v, _, p in rows[:n]]})
+                                         "gp": p["gp"], "rating": p["rating"], "value": p[key]} for p in rows[:n]]})
     return out
 
 

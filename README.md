@@ -24,7 +24,7 @@ Check OCR accuracy any time: `.venv/bin/python tests/test_ocr.py`.
 
 ## Ratings (stats.py)
 PIR = PTS+REB+AST+STL+BLK+FD - missed FG - missed FT - TOV - fouls. Rating 0-99 = 45 + 2.5 x PIR.
-Game MVP = best PIR (+2 if the team won) among the WINNING team's players. Season MVP = best average among players with >= 3 games from the top 4 teams.
+Game MVP = best PIR (+2 if the team won) among the WINNING team's players. Season MVP = best average among the top 4 teams' players who played at least 70% of their team's games (the NBA rule; the same rule decides who appears in the league leaders).
 Players are identified by team + jersey number, so spelling differences between PDFs don't split them.
 
 ## Official data (data/official.json)

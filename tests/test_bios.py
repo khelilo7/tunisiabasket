@@ -50,15 +50,22 @@ if "ca-24" in players:
     check(b and b["height"] == 189 and b["birth"] == "1993-04-20", "ca-24 profile not attached")
 check(all("bio" in p for p in players.values()), "every player must carry a bio key (None when unknown)")
 
-# category leaders (home page): 8 categories, 3 players each, sorted best first, only players with enough games
+# category leaders (home page): 8 categories, top 10 each, sorted best first, only players with enough games
 L = stats.leaders(list(stats.build()["players"]))
 check([c["key"] for c in L] == list(stats.LEADER_STATS), "leaders: categories")
 for c in L:
     vals = [x["value"] for x in c["top"]]
-    check(len(c["top"]) == 3 and vals == sorted(vals, reverse=True), f"leaders: {c['key']} must hold 3 players, best first")
+    check(len(c["top"]) == 10 and vals == sorted(vals, reverse=True), f"leaders: {c['key']} must hold 10 players, best first")
     check(all(players[x["id"]]["qualified"] for x in c["top"]), f"leaders: {c['key']} has an unqualified player")
 pts = max(p["pts"] for p in players.values() if p["qualified"])
 check(L[0]["top"][0]["value"] == pts, "leaders: top scorer is not the highest points average")
+
+# qualification: at least 70% of the games of the player's team(s) (NBA rule), so nobody below that can rank
+import math  # noqa: E402
+games = stats.build()["games"]
+for p in players.values():
+    avail = sum(1 for g in games for t in g["teams"] if t["code"] in p["teams"])
+    check(p["qualified"] == (p["gp"] >= max(1, math.ceil(0.7 * avail)) and p["min"] >= stats.MIN_MINUTES_FOR_RANKING), f"qualified flag wrong for {p['id']}")
 
 print("bios:", "FAILED" if fails else f"ok ({n} profiles)")
 for f in fails:
