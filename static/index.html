@@ -400,7 +400,7 @@ function gameCard(g) {
     ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}</a>`;
 }
 
-let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = false;
+let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = true;   // by default only ranked players; searching a name looks at everyone
 const QUAL = 70;   // % of its team's games a player must have played to be ranked (same rule as the NBA, 58 of 82)
 async function players() {
   const d = await api('players');
@@ -410,7 +410,7 @@ async function players() {
   const cols = [['min', 'MIN'], ['pts', 'PTS'], ['reb', 'REB'], ['oreb', H('OR')], ['dreb', H('DR')], ['ast', H('AST')], ['stl', H('STL')], ['blk', H('BLK')], ['tov', H('TOV')], ['pf', H('PF')], ['fd', H('FD')],
     ['fgm', H('FG'), p => pair(p.fgm, p.fga)], ['fg_pct', H('FG%')], ['p3m', H('3P'), p => pair(p.p3m, p.p3a)], ['p3_pct', H('3P%')], ['ftm', H('FT'), p => pair(p.ftm, p.fta)], ['ft_pct', H('FT%')],
     ['ts_pct', H('TS%')], ['pm', '+/-', p => signed(p.pm)], ['pir', 'PIR'], ['rating', H('RTG'), p => rate(p.rating)]];
-  const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || p.qualified))
+  const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || q || p.qualified))
     .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
   return `<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
   <div class="toolbar"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
