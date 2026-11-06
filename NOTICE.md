@@ -1,0 +1,23 @@
+# Third-party material
+
+## Club names and logos
+The names and logos of the Pro A clubs (in `assets/team-logos-src/` and `static/img/teams/`) belong to their respective owners. They are used only to
+identify the teams in results and statistics. Tunisia Basket is an independent project and is not affiliated with the Tunisian Basketball Federation
+(FTBB) or with any club. A rights holder who wants a logo removed can ask and it will be taken down.
+
+## Competition data
+Results, standings and box scores come from the federation's public match sheets and result graphics (`seed/`, `tests/`). The statistics derived from them
+(ratings, MVP, positions, lineups) are our own calculations.
+
+## Software the site is built on
+| Package | Licence |
+|---|---|
+| Flask, Werkzeug, Jinja2, MarkupSafe, ItsDangerous, Click, Blinker | BSD-3-Clause / BSD |
+| requests, urllib3, idna, charset-normalizer, certifi | Apache-2.0 / MIT / BSD-3-Clause / MPL-2.0 (certifi, unmodified) |
+| pdfplumber, pdfminer.six | MIT |
+| pypdfium2 | BSD-3-Clause / Apache-2.0 |
+| NumPy | BSD-3-Clause and others (permissive) |
+| Pillow | MIT-CMU |
+| gunicorn | MIT |
+
+Used at the server: Tesseract OCR (Apache-2.0), Caddy (Apache-2.0), Ubuntu. All are permissive: they do not require this project's code to be published.

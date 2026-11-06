@@ -58,6 +58,7 @@ T = {
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
         "mvp_game": " Game MVP: {name}.", "not_found": "Page not found – Tunisia Basket",
+        "legal": "© {year} Tunisia Basket · Independent site, not affiliated with the Tunisian Basketball Federation or the clubs. Club names and logos belong to their owners.",
     },
     "fr": {
         "season_word": "saison", "regular": "saison régulière", "standings": "Classement", "players": "Joueurs", "games": "Matchs",
@@ -83,6 +84,7 @@ T = {
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
         "mvp_game": " MVP du match : {name}.", "not_found": "Page introuvable – Tunisia Basket",
+        "legal": "© {year} Tunisia Basket · Site indépendant, non affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs. Les noms et logos des clubs appartiennent à leurs propriétaires.",
     },
 }
 
@@ -325,6 +327,7 @@ def shell(lang, page, m):
         _template.update(mtime=mt, text=f.read_text())
     return (_template["text"].replace("{{LANG}}", lang).replace("{{HOME}}", path(lang, "home"))
             .replace("{{REGULAR}}", esc(T[lang]["regular"][0].upper() + T[lang]["regular"][1:]))
+            .replace("{{LEGAL}}", esc(T[lang]["legal"].format(year=time.gmtime().tm_year)))
             .replace("<!--NAV-->", nav_html(lang)).replace("<!--HEAD-->", head_html(lang, page, m))
             .replace("<!--SSR-->", m.get("ssr", "")))
 

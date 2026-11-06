@@ -99,3 +99,8 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
 - **Team logos:** the clubs' own logos are in `assets/team-logos-src/<CODE>.<png|jpg>`. `python tools/build_team_logos.py` crops each to its real content, removes
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
+
+## Licence
+All rights reserved (see `LICENSE`): the repository is public so that it can be deployed, not to be reused. Club names and logos belong to their owners and the
+open-source libraries keep their own licences (`NOTICE.md`). To open the code to others later, replace `LICENSE` with the licence you want (for example MIT, or AGPL-3.0 if
+you want anyone who runs a modified copy as a website to publish their changes).

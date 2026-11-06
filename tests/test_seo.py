@@ -62,7 +62,7 @@ for lang in seo.LANGS:
                 json.loads(block.replace("<\\/", "</"))
             except ValueError:
                 check(False, f"{path}: JSON-LD is not valid JSON")
-        check("{{" not in html and "<!--HEAD" not in html and "<!--SSR" not in html and "<!--NAV" not in html, f"{path}: template token left in the page")
+        check("©" in html and "{{" not in html and "<!--HEAD" not in html and "<!--SSR" not in html and "<!--NAV" not in html, f"{path}: template token left in the page")
         check(len(re.findall(r'<a href="/', html)) >= 5, f"{path}: too few crawlable internal links")
         if title:
             titles.setdefault((lang, page), []).append(title.group(1))
