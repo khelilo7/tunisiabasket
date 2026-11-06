@@ -24,5 +24,11 @@
   "ca-6":    {"height": 192, "birth": "1997-04-16", "src": "FIBA"},
   "jsk-9":   {"height": 192, "birth": "1997-07-14", "src": "FIBA"},
   "jsk-23":  {"height": 195, "birth": "1998-08-19", "src": "FIBA"},
-  "usm-11":  {"height": 204, "birth": "1986-11-15", "src": "FIBA"}
+  "usm-11":  {"height": 204, "birth": "1986-11-15", "src": "FIBA"},
+  "ca-9":    {"height": 203, "birth": "1986-04-27", "src": "FIBA"},
+  "dsg-17":  {"height": 202, "birth": "2006-05-15", "src": "FIBA"},
+  "esr-13":  {"height": 196, "birth": "2002-05-10", "src": "FIBA"},
+  "esg-4":   {"height": 185, "birth": "1996-07-21", "src": "FIBA"},
+  "ess-7":   {"height": 191, "birth": "1994-10-21", "src": "FIBA"},
+  "esr-12":  {"height": 198, "birth": "1998-05-03", "src": "FIBA"}
 }
