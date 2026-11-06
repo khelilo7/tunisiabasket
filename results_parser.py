@@ -8,12 +8,12 @@ before anything is saved.
 import difflib
 import io
 import re
-import subprocess
 
 import numpy as np
 from PIL import Image
 
 import config
+import tesseract
 
 CODE_WL = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 Xx"
 
@@ -28,10 +28,10 @@ def _tess(img, psm=7, wl=None, h=70, invert=False):
     cv.paste(im, (30, 30))
     buf = io.BytesIO()
     cv.save(buf, "PNG")
-    cmd = ["tesseract", "stdin", "stdout", "--psm", str(psm), "-l", "eng", "--dpi", "300"]
+    args = ["--psm", str(psm), "-l", "eng", "--dpi", "300"]
     if wl:
-        cmd += ["-c", f"tessedit_char_whitelist={wl}"]
-    return subprocess.run(cmd, input=buf.getvalue(), capture_output=True, timeout=30).stdout.decode(errors="ignore").strip()
+        args += ["-c", f"tessedit_char_whitelist={wl}"]
+    return tesseract.run(args, buf.getvalue())
 
 
 def _groups(idx, gap=3):

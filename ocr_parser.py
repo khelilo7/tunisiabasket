@@ -10,13 +10,14 @@ Anything still inconsistent is reported by validate.py and goes to manual review
 import io
 import itertools
 import re
-import subprocess
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import pdfplumber
 from PIL import Image
+
+import tesseract
 
 COLS = ["no", "name", "min", "fgma", "fgp", "p2ma", "p2p", "p3ma", "p3p", "ftma", "ftp",
         "oreb", "dreb", "reb", "ast", "tov", "stl", "blk", "pf", "fd", "pm", "pts"]
@@ -36,11 +37,10 @@ def _tess(img, whitelist, h=40, psm=7, binarize=True, pad=40):
     cv.paste(im, (pad, pad))
     buf = io.BytesIO()
     cv.save(buf, "PNG")
-    cmd = ["tesseract", "stdin", "stdout", "--psm", str(psm), "-l", "eng", "--dpi", "300"]
+    args = ["--psm", str(psm), "-l", "eng", "--dpi", "300"]
     if whitelist:
-        cmd += ["-c", f"tessedit_char_whitelist={whitelist}"]
-    r = subprocess.run(cmd, input=buf.getvalue(), capture_output=True, timeout=30)
-    return r.stdout.decode(errors="ignore").strip()
+        args += ["-c", f"tessedit_char_whitelist={whitelist}"]
+    return tesseract.run(args, buf.getvalue())
 
 
 def _groups(vals, gap=2):
@@ -324,7 +324,7 @@ def parse_scanned_pdf(path, dpi=300, page=0):
         head = gray.crop((xs[0], lines[0] - 85, int(xs[-1] * 0.8), lines[0] - 5))
         layout.append((rlist, head))
 
-    with ThreadPoolExecutor(8) as ex:
+    with ThreadPoolExecutor(tesseract.workers()) as ex:
         res = list(ex.map(_cell_job, jobs))
         heads = list(ex.map(lambda h: _tess(_ink_crop(h) or h, "", 60, 7, False, 30), [l[1] for l in layout]))
 
