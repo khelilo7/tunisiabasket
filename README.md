@@ -131,7 +131,7 @@ live cards at the top of the home page (they refresh every 15 seconds while a ma
 French or English automatically). A finished match stays on the board for 36 hours and becomes a news item. Stored in `data/live.json`.
 **News** (home page, after the latest games): the fans' vote while it is open, matches finished on the live board, and the latest two matchdays with every
 official result, each game's MVP and the player of the matchday, all built from data we already have.
-**No outside feed is used.** SofaScore has no public API: its data endpoints answer 403 to anything but a real browser and its terms do not allow automated copying,
+**No outside feed is used.** SofaScore has no public API: its data endpoints answer 403 to anything but a real browser, and nothing says automated use is allowed,
 so the site does not read it. If a licensed feed with Pro A coverage is chosen later, it only needs to call `live.apply(...)`, the same function the admin tab uses.
 
 ## Visitor statistics
