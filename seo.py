@@ -357,7 +357,7 @@ def sitemap_xml():
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
     entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None)]
     entries += [("team", c) for c in stats.load_official()["teams"]]
-    entries += [("player", player_ref(p)) for p in d["players"]]
+    entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]
     entries += [("game", g["id"]) for g in d["games"]]
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">']

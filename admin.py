@@ -300,6 +300,145 @@ def mvp_admin_save():
     return jsonify(ok=True)
 
 
+# ---------------------------------------------------------------- roster: bios, new players, hiding, transfers
+def _roster_save(ro: dict):
+    tmp = stats.ROSTER_FILE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(ro, indent=1, ensure_ascii=False))
+    tmp.replace(stats.ROSTER_FILE)
+
+
+def _bio_value(field, v):
+    """Validated value for one bio field; None clears it. Height may be 190 or [189, 192]."""
+    if v in (None, "", []):
+        return None
+    if field == "height":
+        h = [int(x) for x in (v if isinstance(v, list) else [v])]
+        if not 1 <= len(h) <= 2 or any(not 140 <= x <= 235 for x in h) or (len(h) == 2 and h[0] > h[1]):
+            raise ValueError("Height must be 140-235 cm (or a min-max range).")
+        return h[0] if len(h) == 1 else h
+    if field == "weight":
+        w = int(v)
+        if not 40 <= w <= 200:
+            raise ValueError("Weight must be 40-200 kg.")
+        return w
+    if field == "birth":
+        d = time.strptime(str(v), "%Y-%m-%d")
+        if not 1970 <= d.tm_year <= 2014:
+            raise ValueError("Birth year must be between 1970 and 2014.")
+        return time.strftime("%Y-%m-%d", d)
+    raise ValueError(f"unknown field {field}")
+
+
+@bp.get("/admin/api/roster")
+def roster_view():
+    """Every player (hidden ones too) with bio, plus the roster changes made so far."""
+    d = stats.build(keep_hidden=True)
+    rows = [{"id": p["id"], "name": p["name"], "team": p["team"], "teams": p["teams"], "number": p["number"], "gp": p["gp"], "pos": p["pos"],
+             "bio": p["bio"], "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
+            for p in d["players"]]
+    rows.sort(key=lambda r: (r["team"], r["number"]))
+    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(), positions=stats.POSITIONS)
+
+
+@bp.post("/admin/api/roster")
+def roster_change():
+    """Body {"op": ..., ...}. ops: bio, add, hide, restore, rename, transfer, undo_transfer."""
+    b = request.get_json(silent=True) or {}
+    op = b.get("op")
+    pid = str(b.get("id") or "")
+    teams = stats.load_official()["teams"]
+    players = {p["id"]: p for p in stats.build(keep_hidden=True)["players"]}
+    try:
+        with _file_lock:
+            ro = stats.load_roster()
+            if op == "bio":
+                p = players.get(pid)
+                if not p:
+                    return jsonify(error="Unknown player."), 404
+                try:
+                    cur = json.loads(stats.BIOS_FILE.read_text())
+                except (OSError, ValueError):
+                    cur = {}
+                entry = dict(cur.get(pid) or {})
+                edited = [f for f in ("height", "weight", "birth") if f in b]
+                for f in edited:
+                    entry[f] = _bio_value(f, b[f])
+                base = (p.get("bio") or {}).get("approx") or []
+                entry["approx"] = [x for x in base if x not in edited]       # a value typed by the admin is no longer an estimate
+                entry = {k: v for k, v in entry.items() if k == "approx" or v not in (None, [])}      # an empty 'approx' must stay: it overrides the estimate flags of the repo file
+                cur[pid] = entry
+                stats.BIOS_FILE.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+            elif op == "add":
+                team, name = str(b.get("team") or "").upper(), " ".join(str(b.get("name") or "").split()).title()
+                num = int(b.get("number"))
+                if team not in teams or not name or not 0 <= num <= 99:
+                    return jsonify(error="Choose a team, a name and a jersey number (0-99)."), 422
+                pid = f"{team.lower()}-{num}"
+                if pid in players and not players[pid].get("added") or pid in {a["id"] for a in ro["added"]}:
+                    return jsonify(error=f"{team} #{num} already exists ({players.get(pid, {}).get('name', 'added earlier')})."), 409
+                ro["added"].append({"id": pid, "name": name, "team": team, "number": num})
+                if b.get("pos") in stats.POSITIONS:
+                    pos = stats.load_positions()
+                    pos[pid] = b["pos"]
+                    stats.POSITIONS_FILE.write_text(json.dumps(pos, indent=1, ensure_ascii=False))
+                _roster_save(ro)
+                for f in ("height", "weight", "birth"):
+                    if b.get(f) not in (None, ""):
+                        roster_change_bio(pid, f, b[f])
+            elif op in ("hide", "restore"):
+                if pid not in players:
+                    return jsonify(error="Unknown player."), 404
+                ro["hidden"] = [x for x in ro["hidden"] if x != pid] + ([pid] if op == "hide" else [])
+            elif op == "rename":
+                name = " ".join(str(b.get("name") or "").split()).title()
+                if pid not in players or not name:
+                    return jsonify(error="Unknown player or empty name."), 422
+                ro["renames"][pid] = name
+            elif op == "transfer":
+                p, to = players.get(pid), str(b.get("to") or "").upper()
+                if not p or to not in teams:
+                    return jsonify(error="Choose a player and the new team."), 422
+                if to == p["team"]:
+                    return jsonify(error="The player is already in that team."), 422
+                num = int(b.get("number") or p["number"])
+                alias = f"{to.lower()}-{num}"
+                other = players.get(alias)
+                if other and other["id"] != pid and other["gp"] and not b.get("same_person"):
+                    return jsonify(error=f"{to} #{num} already exists as {other['name']} with {other['gp']} game(s). If it is the same person, tick "
+                                         f"'same person' to merge the two profiles; otherwise pick another number."), 409
+                if other and other["id"] != pid and other["gp"] == 0 and other.get("added"):
+                    ro["added"] = [a for a in ro["added"] if a["id"] != alias]           # the placeholder is replaced by the transfer
+                ro["transfers"].append({"id": pid, "from": p["team"], "to": to, "number": num, "alias": alias,
+                                        "date": str(b.get("date") or time.strftime("%Y-%m-%d"))[:10], "note": str(b.get("note") or "")[:200]})
+            elif op == "undo_transfer":
+                i = int(b.get("index", -1))
+                if not 0 <= i < len(ro["transfers"]):
+                    return jsonify(error="Unknown transfer."), 404
+                ro["transfers"].pop(i)
+            else:
+                return jsonify(error="Unknown operation."), 422
+            if op != "bio" and op != "add":
+                _roster_save(ro)
+    except (ValueError, TypeError) as e:
+        return jsonify(error=str(e) or "Invalid value."), 422
+    auth.audit("roster", f"{op} {pid}")
+    return jsonify(ok=True, id=pid)
+
+
+def roster_change_bio(pid, field, value):
+    try:
+        cur = json.loads(stats.BIOS_FILE.read_text())
+    except (OSError, ValueError):
+        cur = {}
+    cur.setdefault(pid, {})[field] = _bio_value(field, value)
+    stats.BIOS_FILE.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+
+
+@bp.get("/admin/api/team-stats")
+def team_stats_view():
+    return jsonify(stats.team_stats(request.args.get("season")))
+
+
 @bp.get("/admin/api/positions")
 def positions_view():
     """Every player with the position the model infers and any manual correction."""

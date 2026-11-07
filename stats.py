@@ -13,6 +13,7 @@ GAMES_DIR = config.DATA_DIR / "games"
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
 BIOS_FILE = config.DATA_DIR / "players_info.json"  # optional corrections to assets/players_info.json
+ROSTER_FILE = config.DATA_DIR / "roster.json"  # admin roster changes: added / hidden players, transfers, renames
 POSITIONS_FILE = config.DATA_DIR / "positions.json"  # manual position corrections: {"<player id>": "PG"}
 POSITIONS = ["PG", "SG", "SF", "PF", "C"]
 PHASE_LEN = 11  # 12 teams, each plays every other team once per phase
@@ -132,6 +133,61 @@ def _canonicalise(games):
                     p["pid"] = f"{t['code'].lower()}-{nums[(t['code'], p['name'])].most_common(1)[0][0]}"
                 else:
                     p["pid"] = f"{t['code'].lower()}-{p['number']}"
+    # A transfer marked by the admin says "the player now called jsk-9 is the one we knew as ca-24": same person, one profile.
+    alias = {t["alias"]: t["id"] for t in load_roster()["transfers"] if t.get("alias") and t["alias"] != t["id"]}
+    if alias:
+        for g in games:
+            for t in g["teams"]:
+                for p in t["players"]:
+                    p["pid"] = alias.get(p["pid"], p["pid"])
+
+
+def load_roster():
+    """{'added': [{id,name,team,number,pos}], 'hidden': [ids], 'transfers': [{id,from,to,number,alias,date,note}], 'renames': {id: name}}"""
+    try:
+        raw = json.loads(ROSTER_FILE.read_text())
+    except (OSError, ValueError):
+        raw = {}
+    return {"added": list(raw.get("added") or []), "hidden": list(raw.get("hidden") or []),
+            "transfers": list(raw.get("transfers") or []), "renames": dict(raw.get("renames") or {})}
+
+
+def blank_player(a: dict) -> dict:
+    """A rostered player with no box score yet (new signing): all statistics zero, same fields as a played one."""
+    z = 0.0
+    return {"id": a["id"], "name": a["name"], "teams": [a["team"]], "team": a["team"], "number": a["number"], "gp": 0,
+            **{k: z for k in ("min", "pts", "reb", "ast", "stl", "blk", "tov", "pf", "oreb", "dreb", "fd", "fgm", "fga", "p3m", "p3a", "ftm", "fta",
+                              "pm", "fg_pct", "p3_pct", "ft_pct", "ts_pct", "pir", "impact", "total_min", "reb36", "ast36", "blk36", "stl36", "p3_share")},
+            "wins": 0, "mvp_games": 0, "totals": {k: 0 for k in ("pts", "reb", "ast", "stl", "blk", "tov")},
+            "rating": rating(0.0), "log": [], "added": True}
+
+
+def apply_roster(players: list, keep_hidden: bool = False) -> list:
+    """The admin's roster changes on top of what the box scores say."""
+    ro = load_roster()
+    byid = {p["id"]: p for p in players}
+    for a in ro["added"]:
+        if a["id"] not in byid:                       # once the player has a box score the real data takes over
+            p = blank_player(a)
+            players.append(p)
+            byid[p["id"]] = p
+    for tr in ro["transfers"]:
+        p = byid.get(tr["id"])
+        if not p:
+            continue
+        p.setdefault("transfers", []).append({k: tr.get(k) for k in ("from", "to", "number", "date", "note")})
+        if tr["to"] not in p["teams"]:                # no game for the new club yet: show him there already
+            p["teams"] = [*p["teams"], tr["to"]]
+            p["team"], p["number"] = tr["to"], tr.get("number") or p["number"]
+    for pid, name in ro["renames"].items():
+        if pid in byid:
+            byid[pid]["name"] = name
+    hidden = set(ro["hidden"])
+    if keep_hidden:
+        for p in players:
+            p["hidden"] = p["id"] in hidden
+        return players
+    return [p for p in players if p["id"] not in hidden]
 
 
 def build_all_games():
@@ -247,7 +303,7 @@ def _avg(xs):
     return round(sum(xs) / len(xs), 1) if xs else 0.0
 
 
-def build(season=None):
+def build(season=None, keep_hidden=False):
     """Return (games, players) for a season (default: the latest one)."""
     all_games = build_all_games()
     seasons = sorted({season_of(g["date"]) for g in all_games}, reverse=True)
@@ -310,6 +366,7 @@ def build(season=None):
             "rating": rating(_avg([r["pir"] for r in rows])),
             "log": sorted(rows, key=lambda r: (r["date"], r["game_id"])),
         })
+    players = apply_roster(players, keep_hidden)
     # Ranking: need enough games (or all games if the season is still short).
     # Games a team has really played come from the official table (box scores may be missing for some games).
     official = load_official()
@@ -371,6 +428,33 @@ def planning(official=None):
                                          "home_score": r["home_score"], "away_score": r["away_score"]})
     return {"projected": projected, "teams": o["teams"],
             "matchdays": [{"matchday": md, "games": sorted(gs, key=lambda g: g["home"])} for md, gs in sorted(by_md.items())]}
+
+
+def team_stats(season=None):
+    """One row per team for comparisons: official record and scoring, plus per-game averages from the box scores we have."""
+    d = build(season)
+    acc = defaultdict(lambda: Counter())
+    for g in d["games"]:
+        for t in g["teams"]:
+            c = acc[t["code"]]
+            c["n"] += 1
+            for p in t["players"]:
+                if not p.get("dnp"):
+                    for k in ("fgm", "fga", "p3m", "p3a", "ftm", "fta", "reb", "ast", "stl", "blk", "tov", "oreb", "fd"):
+                        c[k] += p[k]
+    rows = []
+    for r in d["standings"]:
+        c, n = acc[r["code"]], acc[r["code"]]["n"]
+        per = lambda k: round(c[k] / n, 1) if n else 0.0
+        pct = lambda m, a: round(100 * c[m] / c[a], 1) if c[a] else 0.0
+        top = max((p for p in d["players"] if p["team"] == r["code"] and p["gp"]), key=lambda p: p["pts"], default=None)
+        rows.append({"code": r["code"], "name": r["name"], "rank": r["rank"], "gp": r["j"], "box": n, "w": r["w"], "l": r["l"],
+                     "ppg": round(r["pf"] / r["j"], 1) if r["j"] else 0.0, "opp_ppg": round(r["pa"] / r["j"], 1) if r["j"] else 0.0,
+                     "diff_pg": round(r["diff"] / r["j"], 1) if r["j"] else 0.0,
+                     "fg_pct": pct("fgm", "fga"), "p3_pct": pct("p3m", "p3a"), "ft_pct": pct("ftm", "fta"),
+                     "reb": per("reb"), "ast": per("ast"), "stl": per("stl"), "blk": per("blk"), "tov": per("tov"),
+                     "top_scorer": {"name": top["name"], "pts": top["pts"]} if top else None})
+    return {"season": d["season"], "teams": rows}
 
 
 def team_view(code, season=None):
@@ -449,6 +533,8 @@ def load_bios():
         for pid, info in raw.items():
             if not pid.startswith("_") and isinstance(info, dict):
                 out[pid] = {**out.get(pid, {}), **info}
+    for pid in out:                                  # the admin clears a field by saving null
+        out[pid] = {k: v for k, v in out[pid].items() if v is not None}
     return out
 
 

@@ -112,6 +112,19 @@ to `data/mvp.json` and wins over the repo file). Nobody is crowned while voting 
 (or the admin closes voting) the best 70/30 score becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the
 visitor's real address (`CF-Connecting-IP`, or the proxy's forwarded address), not the proxy's.
 
+## Admin: players, rosters and images
+Two more tabs in the admin panel (`/admin`).
+**👥 Players**: per team, edit height, weight and birth date (saved in `data/players_info.json`, which overrides `assets/players_info.json`; a typed value is
+official and drops the "estimated" mark; an empty field clears it). **Add a player** for a new signing with no box score yet (he shows on the team and Players
+pages with zero games and is not ranked; real statistics take over once a box score has the same team and number). **Delete** hides a player from the whole site
+(rankings, leaders, MVP race, pages) but keeps every box score, and **Restore** brings him back. **Rename** changes how a name is shown. **Transfer** marks that a
+player moved: the site shows him in the new team (keeping his history and a "Transfer CA → JSK" line on his page); box scores that later appear under the new
+team and number are linked to his profile automatically; if a different profile with games already uses that number you must tick "same person" to merge them.
+Transfers can be undone. All of this lives in `data/roster.json` and is audited in `data/admin.log`.
+**🖼️ Images**: draws 1080 px PNGs in the browser (nothing is uploaded) from the live numbers, in French or English: player vs player, team vs team (record, scoring,
+shooting, rebounds, assists, steals, blocks, turnovers; team shooting figures come from the box scores we have), the MVP race, and the league leaders (one
+category as a top 5/10, or the top 3 of every category in one image).
+
 ## Visitor statistics
 The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country
 (Cloudflare's country header: it appears as soon as the DNS records are Proxied, no firewall step needed), the referring site, the device type and the language, plus a visitor code
