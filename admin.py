@@ -23,6 +23,7 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 import auth
 import config
 import stats
+import mvp
 import traffic
 from extractor import extract
 from ocr_parser import IMAGE_EXT, page_count
@@ -269,6 +270,30 @@ def review_list():
 @bp.get("/admin/api/traffic")
 def traffic_view():
     return jsonify(traffic.summary(request.args.get("days", 30)))
+
+
+@bp.get("/admin/api/mvp")
+def mvp_admin():
+    out = []
+    for ph in mvp.PHASES:
+        r = mvp.race(ph)
+        out.append({"phase": ph, "complete": r["complete"], **mvp.settings(ph), "votes": mvp.admin_votes(ph),
+                    "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "score", "impact")} for c in r["candidates"]]})
+    return jsonify(phases=out)
+
+
+@bp.post("/admin/api/mvp")
+def mvp_admin_save():
+    b = request.get_json(silent=True) or {}
+    ph = int(b.get("phase") or 0)
+    if ph not in mvp.PHASES:
+        return jsonify(error="Unknown phase."), 400
+    winner = b.get("winner") or None
+    if winner and winner not in {c["id"] for c in mvp.candidates(ph)}:
+        return jsonify(error="That player is not a candidate of this phase."), 400
+    mvp.save_settings(ph, winner, bool(b.get("voting_open")), str(b.get("note") or ""))
+    auth.audit("mvp", f"phase {ph} winner={winner} open={bool(b.get('voting_open'))}")
+    return jsonify(ok=True)
 
 
 @bp.get("/admin/api/positions")

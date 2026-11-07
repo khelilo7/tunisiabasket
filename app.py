@@ -8,6 +8,7 @@ from functools import partial
 from flask import Flask, Response, abort, jsonify, make_response, redirect, request
 
 import auth
+import mvp
 import seo
 import stats
 import traffic
@@ -104,6 +105,14 @@ def robots():
     return Response(seo.robots_txt(), mimetype="text/plain", headers={"Cache-Control": "public, max-age=3600"})
 
 
+def _phase_summary():
+    r = mvp.race(1)
+    keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share", "score", "mvp_games")
+    pick = lambda c: {k: c[k] for k in keep} if c else None
+    return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "total_votes": r["total_votes"],
+            "winner": pick(r["winner"]), "leader": pick(r["leader"]), "runners": [pick(c) for c in r["candidates"][:3]]}
+
+
 @app.get("/api/overview")
 def overview():
     d = stats.build(request.args.get("season"))
@@ -112,13 +121,40 @@ def overview():
     return jsonify(
         season=d["season"], seasons=d["seasons"], games=len(d["games"]), players=len(d["players"]),
         mvp=slim(pool[0]) if pool else None,
-        top=[slim(p) for p in pool[:5]], top_teams=d["top_teams"], leaders=stats.leaders(d["players"]),
+        phase_mvp=_phase_summary(), top=[slim(p) for p in pool[:5]], top_teams=d["top_teams"], leaders=stats.leaders(d["players"]),
         facts={"games": len(d["games"]), "avg_points": round(sum(t["points"] for g in d["games"] for t in g["teams"]) / (2 * len(d["games"]) or 1), 1)},
         recent=[{k: g.get(k) for k in ("id", "date", "date_approx", "matchday", "mvp", "score_note")} | {
             "teams": [{"code": t["code"], "name": t["name"], "points": t["points"]} for t in g["teams"]]}
             for g in reversed(d["games"][-6:])],
         standings=[{**r, "box": counts.get(r["code"], 0)} for r in d["standings"]], status=public_status(),
     )
+
+
+def _phase_arg():
+    try:
+        ph = int(request.args.get("phase") or (request.get_json(silent=True) or {}).get("phase") or 1)
+    except (TypeError, ValueError):
+        abort(400)
+    if ph not in mvp.PHASES:
+        abort(404)
+    return ph
+
+
+@app.get("/api/mvp")
+def mvp_race():
+    """The phase MVP race: candidates, scores, fan votes, race chart, winner. ?vid= adds the caller's own vote."""
+    ph = _phase_arg()
+    out = mvp.race(ph)
+    out["my_vote"] = mvp.my_vote(ph, request.args.get("vid", ""))
+    return jsonify(out)
+
+
+@app.post("/api/mvp/vote")
+def mvp_vote():
+    body = request.get_json(silent=True, force=True) or {}
+    ph = _phase_arg()
+    ok, why = mvp.cast(request, ph, str(body.get("player", ""))[:40], str(body.get("vid", ""))[:80])
+    return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429}.get(why, 400))
 
 
 @app.get("/api/players")

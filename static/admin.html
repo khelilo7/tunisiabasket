@@ -75,7 +75,8 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button></div>
+  <div id="tab-mvp" hidden><div id="mvpbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-traffic" hidden>
     <div class="row" style="margin:12px 0"><b>Traffic</b><span class="sp"></span><label class="mut small">Period</label>
       <select id="tdays"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">1 year</option></select></div>
@@ -351,10 +352,30 @@ async function loadTraffic() {
     </div>
     <p class="mut small" style="margin-top:12px">Private by design: no cookies, no IP address stored. A visitor is a hash that changes every day, so people are counted once per day. Search-engine crawlers and your own admin visits are ignored. "Visitors" over several days adds up the people of each day.</p>`;
 }
+async function loadMvp() {
+  const box = $('#mvpbox');
+  const { ok, body } = await api('mvp');
+  if (!ok) { box.innerHTML = '<div class="problems">Could not load the MVP settings.</div>'; return; }
+  box.innerHTML = body.phases.map(p => `<div class="card" style="margin-top:12px" data-phase="${p.phase}">
+    <h3 style="margin-top:0">Phase ${p.phase} MVP <span class="mut small">· ${p.complete ? 'phase complete' : 'phase in progress'}</span></h3>
+    <div class="kpis"><div class="kpi"><b>${p.votes.total}</b><span>fan votes</span></div><div class="kpi"><b>${p.votes.networks}</b><span>different networks</span></div></div>
+    <div class="row" style="margin:10px 0"><label class="small mut">Crowned winner</label>
+      <select data-f="winner"><option value="">None (race leader wins once voting is closed)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
+    <label class="row small" style="margin:8px 0"><input type="checkbox" data-f="open" ${p.voting_open ? 'checked' : ''}> Fan voting is open</label>
+    <div class="row" style="margin:8px 0"><label class="small mut">Note on the winner card (optional)</label><input data-f="note" maxlength="200" style="flex:1;min-width:240px" value="${esc(p.note || '')}"></div>
+    <button data-save="${p.phase}">Save</button> <span class="small mut" data-msg></span>
+    <p class="mut small" style="margin-bottom:0">Each browser votes once; at most 8 browsers per network. Only hashes are stored. Fan votes count for 25% of the score once 20 votes are in.</p></div>`).join('');
+  box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
+    const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
+    const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value }) });
+    card.querySelector('[data-msg]').textContent = r.ok ? 'Saved.' : (r.body.error || 'Could not save.');
+  });
+}
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $('#tab-data').hidden = b.dataset.tab !== 'data'; $('#tab-traffic').hidden = b.dataset.tab !== 'traffic';
+  $('#tab-data').hidden = b.dataset.tab !== 'data'; $('#tab-traffic').hidden = b.dataset.tab !== 'traffic'; $('#tab-mvp').hidden = b.dataset.tab !== 'mvp';
   if (b.dataset.tab === 'traffic') loadTraffic();
+  if (b.dataset.tab === 'mvp') loadMvp();
 });
 $('#tdays').onchange = loadTraffic;
 

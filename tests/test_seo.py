@@ -35,7 +35,7 @@ def head_of(html):
 d = stats.build()
 players = d["players"]
 game_ids = [g["id"] for g in d["games"]]
-pages = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None)]
+pages = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None)]
 pages += [("team", code) for code in stats.load_official()["teams"]]
 pages += [("player", seo.player_ref(p)) for p in players[:25]] + [("game", gid) for gid in game_ids[:12]]
 

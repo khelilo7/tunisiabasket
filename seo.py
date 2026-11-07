@@ -22,12 +22,12 @@ import stats
 DEFAULT = "fr"          # the main language: its addresses have no prefix (/equipe/CA); the others do (/en/team/CA)
 LANGS = ("fr", "en")
 SLUGS = {
-    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning",
+    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race",
            "team": "team", "player": "player", "game": "game"},
-    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier",
+    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp",
            "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "standings", "players", "games", "planning")
+LIST_PAGES = ("home", "standings", "players", "games", "planning", "mvp")
 ITEM_PAGES = ("team", "player", "game")
 SITE = "Tunisia Basket"
 OG_LOCALE = {"en": "en_US", "fr": "fr_FR"}
@@ -57,6 +57,9 @@ T = {
         "p_desc": "{name}, {team} #{num}: {pts} points, {reb} rebounds and {ast} assists per game over {gp} games in the {season} Pro A season. Rating {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
+        "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_leader": "Race leader", "mv_h1": "MVP race – phase 1 (J1–J11)",
+        "mv_title": "MVP race and fan vote – phase 1 – Tunisia Basket",
+        "mv_desc": "Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans' vote. {who}",
         "mvp_game": " Game MVP: {name}.", "not_found": "Page not found – Tunisia Basket",
         "legal": "© {year} Tunisia Basket · Independent site, not affiliated with the Tunisian Basketball Federation or the clubs. Club names and logos belong to their owners.",
     },
@@ -83,6 +86,9 @@ T = {
         "p_desc": "{name}, {team} n°{num} : {pts} points, {reb} rebonds et {ast} passes décisives par match en {gp} matchs de Pro A {season}. Note {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
+        "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_leader": "Leader de la course", "mv_h1": "Course au MVP – phase 1 (J1–J11)",
+        "mv_title": "Course au MVP et vote des fans – phase 1 – Tunisia Basket",
+        "mv_desc": "Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans. {who}",
         "mvp_game": " MVP du match : {name}.", "not_found": "Page introuvable – Tunisia Basket",
         "legal": "© {year} Tunisia Basket · Site indépendant, non affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs. Les noms et logos des clubs appartiennent à leurs propriétaires.",
     },
@@ -194,6 +200,16 @@ def meta(lang, page, arg=None):
                    ssr=f'<h1>{t["h_h1"]}</h1><p>{esc(t["h_desc"].format(season=season, word=t["season_word"], mvp=mvp))}</p>'
                        f'<h2>{t["standings"]}</h2>{_standings_table(lang, d)}<h2>{t["mvp_race"]}</h2>{_players_table(lang, pool[:5], 5)}'
                        f'<h2>{t["latest"]}</h2><ul>{_links(lang, _game_items(lang, list(reversed(d["games"]))[:8]))}</ul>')
+    elif page == "mvp":
+        import mvp
+        r = mvp.race(1)
+        top = r["winner"] or r["leader"]
+        who = f'{t["mv_phase1"] if r["winner"] else t["mv_leader"]}: {top["name"]} ({top["team"]}).' if top else ""
+        rows = "".join(f'<tr><td>{c["rank"]}</td><td><a href="{path(lang, "player", player_ref(c))}">{esc(c["name"])}</a></td><td>{esc(c["team"])}</td>'
+                       f'<td>{c["pts"]}</td><td>{c["reb"]}</td><td>{c["ast"]}</td><td>{c["votes"]}</td><td>{c["score"]}</td></tr>' for c in r["candidates"][:10])
+        out.update(title=t["mv_title"], description=t["mv_desc"].format(who=who).strip(),
+                   ssr=f'<h1>{t["mv_h1"]}</h1><p>{esc(who)}</p><table><thead><tr><th>#</th><th>{t["players"]}</th><th>{t["team"]}</th><th>PTS</th><th>{t["reb"]}</th>'
+                       f'<th>{t["ast"]}</th><th>{t["mv_votes"]}</th><th>Score</th></tr></thead><tbody>{rows}</tbody></table>')
     elif page == "standings":
         out.update(title=t["st_title"].format(season=season), description=t["st_desc"].format(season=season, lead=_lead(d)),
                    ssr=f'<h1>{t["standings"]} {season}</h1>{_standings_table(lang, d)}')
@@ -316,7 +332,7 @@ _template = {"mtime": 0, "text": ""}
 def nav_html(lang):
     t = T[lang]
     return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in
-                   (("home", t["home"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"]), ("planning", t["planning"])))
+                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"]), ("planning", t["planning"])))
 
 
 def shell(lang, page, m):
@@ -339,7 +355,7 @@ def sitemap_xml():
     files = [config.DATA_DIR / "official.json", *config.DATA_DIR.glob("games/*.json")]
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
-    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None)]
+    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None)]
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"]]
     entries += [("game", g["id"]) for g in d["games"]]

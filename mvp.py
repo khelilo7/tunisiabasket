@@ -1,0 +1,227 @@
+"""Phase MVP: the race, the fans' vote and the winner.
+
+A phase is 11 matchdays (phase 1 = J1-J11, phase 2 = J12-J22). For a phase:
+  * the RACE ranks the candidates (qualified players of the top teams, the same pool as the season MVP) by their average
+    impact over the phase's games, and draws how each candidate's average moved matchday after matchday;
+  * the FANS' VOTE lets every visitor back one candidate. One vote per browser; a handful per network, because mobile
+    operators put many people behind one address. Only hashes are stored (no address, no browser string);
+  * the SCORE of a candidate is 75% stats + 25% fans, both scaled so the best candidate gets 100. Until the fans have
+    cast MIN_VOTES votes the score is stats only, so a few early votes cannot decide the race;
+  * the WINNER is the player the admin crowns (assets/mvp_awards.json in the repo, or data/mvp.json from the admin panel,
+    which wins). With no crown, a phase whose voting is closed goes to the race leader.
+"""
+import hashlib
+import hmac
+import json
+import math
+import os
+import re
+import sqlite3
+import threading
+import time
+from collections import Counter, defaultdict
+from pathlib import Path
+
+import auth
+import config
+import stats
+import traffic
+
+PHASE_LEN = stats.PHASE_LEN
+PHASES = (1, 2)
+STATS_WEIGHT, FAN_WEIGHT = 0.75, 0.25
+MIN_VOTES = 20                    # fans' share only counts once this many votes are in
+MAX_VOTERS_PER_NETWORK = 8        # distinct browsers per network per phase (carrier-grade NAT shares addresses)
+RACE_LINES = 6                    # candidates drawn on the race chart
+AWARDS_REPO = Path(__file__).parent / "assets" / "mvp_awards.json"
+AWARDS_LIVE = config.DATA_DIR / "mvp.json"
+DB_FILE = config.DATA_DIR / "votes.db"
+VID = re.compile(r"^[a-f0-9]{16,64}$")
+_lock = threading.Lock()
+_ready = False
+
+
+# ---------------------------------------------------------------- settings (who is crowned, is voting open)
+def _read(p):
+    try:
+        return json.loads(Path(p).read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def settings(phase: int) -> dict:
+    """{'winner': player id or None, 'voting_open': bool, 'note': str}. The live file overrides the repo file, key by key."""
+    out = {"winner": None, "voting_open": True, "note": ""}
+    for src in (_read(AWARDS_REPO), _read(AWARDS_LIVE)):
+        out.update({k: v for k, v in (src.get(str(phase)) or {}).items() if k in out})
+    return out
+
+
+def save_settings(phase: int, winner, voting_open: bool, note: str = ""):
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    data = _read(AWARDS_LIVE)
+    data[str(phase)] = {"winner": winner or None, "voting_open": bool(voting_open), "note": (note or "")[:200]}
+    AWARDS_LIVE.write_text(json.dumps(data, indent=1))
+
+
+# ---------------------------------------------------------------- votes
+def _db():
+    global _ready
+    con = sqlite3.connect(DB_FILE, timeout=10)
+    if not _ready:
+        con.execute("CREATE TABLE IF NOT EXISTS votes(phase INTEGER, voter TEXT, net TEXT, pid TEXT, ts INTEGER, PRIMARY KEY(phase, voter))")
+        con.commit()
+        try:
+            os.chmod(DB_FILE, 0o600)
+        except OSError:
+            pass
+        _ready = True
+    return con
+
+
+def _hash(label: str, *parts) -> str:
+    return hmac.new(traffic._key(), "|".join([label, *map(str, parts)]).encode(), hashlib.sha256).hexdigest()[:24]
+
+
+def tally(phase: int) -> dict:
+    with _lock:
+        con = _db()
+        try:
+            return dict(con.execute("SELECT pid, COUNT(*) FROM votes WHERE phase=? GROUP BY pid", (phase,)))
+        finally:
+            con.close()
+
+
+def my_vote(phase: int, vid: str):
+    if not VID.match(vid or ""):
+        return None
+    with _lock:
+        con = _db()
+        try:
+            r = con.execute("SELECT pid FROM votes WHERE phase=? AND voter=?", (phase, _hash("vid", phase, vid))).fetchone()
+            return r[0] if r else None
+        finally:
+            con.close()
+
+
+def cast(request, phase: int, pid: str, vid: str):
+    """Returns (ok, reason). reason: ok | closed | candidate | browser | bot | network."""
+    ua = request.headers.get("User-Agent", "")
+    if not ua or traffic.BOT.search(ua):
+        return False, "bot"
+    if not VID.match(vid or ""):
+        return False, "browser"
+    if not settings(phase)["voting_open"]:
+        return False, "closed"
+    if pid not in {c["id"] for c in candidates(phase)}:
+        return False, "candidate"
+    voter, net = _hash("vid", phase, vid), _hash("net", phase, auth.client_ip())
+    with _lock:
+        con = _db()
+        try:
+            known = con.execute("SELECT 1 FROM votes WHERE phase=? AND voter=?", (phase, voter)).fetchone()
+            if not known and con.execute("SELECT COUNT(*) FROM votes WHERE phase=? AND net=?", (phase, net)).fetchone()[0] >= MAX_VOTERS_PER_NETWORK:
+                return False, "network"
+            con.execute("INSERT OR REPLACE INTO votes VALUES (?,?,?,?,?)", (phase, voter, net, pid, int(time.time())))   # changing your mind replaces your vote
+            con.commit()
+        finally:
+            con.close()
+    return True, "ok"
+
+
+def admin_votes(phase: int) -> dict:
+    with _lock:
+        con = _db()
+        try:
+            return {"total": con.execute("SELECT COUNT(*) FROM votes WHERE phase=?", (phase,)).fetchone()[0],
+                    "networks": con.execute("SELECT COUNT(DISTINCT net) FROM votes WHERE phase=?", (phase,)).fetchone()[0],
+                    "per_day": [list(r) for r in con.execute(
+                        "SELECT strftime('%Y-%m-%d', ts, 'unixepoch', 'localtime'), COUNT(*) FROM votes WHERE phase=? GROUP BY 1 ORDER BY 1", (phase,))]}
+        finally:
+            con.close()
+
+
+# ---------------------------------------------------------------- the race
+def _md(g):
+    return stats.matchday_hint(g)
+
+
+def _phase_range(phase):
+    return (phase - 1) * PHASE_LEN + 1, phase * PHASE_LEN
+
+
+def _race_data(phase: int):
+    """(rows, matchdays, complete) where rows = candidates with phase-only averages, best impact first."""
+    d = stats.build()
+    lo, hi = _phase_range(phase)
+    gid = {g["id"]: _md(g) for g in d["games"]}
+    in_phase = {i for i, m in gid.items() if m and lo <= m <= hi}
+    box = Counter(t["code"] for g in d["games"] if g["id"] in in_phase for t in g["teams"])
+    played = {r["code"]: min(PHASE_LEN, max(0, r["j"] - (phase - 1) * PHASE_LEN)) for r in d["standings"]}
+    top = set(d["top_teams"])
+    rows = []
+    for p in d["players"]:
+        log = [r for r in p["log"] if r["game_id"] in in_phase]
+        if not log:
+            continue
+        avail = sum(max(box[c], played.get(c, 0)) for c in p["teams"])
+        need = max(1, math.ceil(stats.QUALIFY_SHARE * avail))
+        n = len(log)
+        mins = sum(r["min"] for r in log) / n
+        if n < need or mins < stats.MIN_MINUTES_FOR_RANKING or (top and p["team"] not in top):
+            continue
+        avg = lambda k: round(sum(r[k] for r in log) / n, 1)
+        by_md = defaultdict(list)
+        for r in log:
+            by_md[gid[r["game_id"]]].append(r["impact"])
+        rows.append({"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"], "pos": p["pos"], "gp": n, "need": need,
+                     "pts": avg("pts"), "reb": avg("reb"), "ast": avg("ast"), "stl": avg("stl"), "blk": avg("blk"), "pir": avg("pir"),
+                     "impact": avg("impact"), "mvp_games": sum(r["is_mvp"] for r in log), "wins": sum(r["won"] for r in log),
+                     "_by_md": dict(by_md)})
+    rows.sort(key=lambda r: (r["impact"], r["pts"]), reverse=True)
+    matchdays = sorted({m for m in gid.values() if m and lo <= m <= hi})
+    complete = bool(d["standings"]) and all(r["j"] >= phase * PHASE_LEN for r in d["standings"])
+    return rows, matchdays, complete
+
+
+def candidates(phase: int):
+    return _race_data(phase)[0]
+
+
+def race(phase: int = 1) -> dict:
+    if phase not in PHASES:
+        raise ValueError("phase")
+    rows, matchdays, complete = _race_data(phase)
+    votes = tally(phase)
+    total = sum(votes.get(r["id"], 0) for r in rows)
+    fans_count = total >= MIN_VOTES
+    best_impact = max((r["impact"] for r in rows), default=0) or 1
+    best_votes = max((votes.get(r["id"], 0) for r in rows), default=0) or 1
+    for r in rows:
+        r["votes"] = votes.get(r["id"], 0)
+        r["vote_share"] = round(100 * r["votes"] / total, 1) if total else 0
+        r["stats_score"] = round(100 * max(r["impact"], 0) / best_impact, 1)
+        r["fan_score"] = round(100 * r["votes"] / best_votes, 1) if fans_count else 0
+        r["score"] = round(STATS_WEIGHT * r["stats_score"] + FAN_WEIGHT * r["fan_score"], 1) if fans_count else r["stats_score"]
+    rows.sort(key=lambda r: (r["score"], r["impact"], r["pts"]), reverse=True)
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i
+    # race chart: running average impact of the leading candidates after each matchday they have played
+    for r in rows:
+        acc, series = [], []
+        for m in matchdays:
+            acc += r["_by_md"].get(m, [])
+            series.append(round(sum(acc) / len(acc), 1) if acc else None)
+        r["series"] = series
+    for r in rows:
+        del r["_by_md"]
+    st = settings(phase)
+    winner = next((r for r in rows if r["id"] == st["winner"]), None)
+    decided = winner is not None
+    if not decided and not st["voting_open"] and complete and rows:
+        winner, decided = rows[0], True
+    return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": st["voting_open"], "note": st["note"],
+            "total_votes": total, "min_votes": MIN_VOTES, "fans_count": fans_count,
+            "weights": {"stats": int(STATS_WEIGHT * 100), "fans": int(FAN_WEIGHT * 100)},
+            "winner": winner if decided else None, "leader": rows[0] if rows else None,
+            "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}

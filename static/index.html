@@ -150,6 +150,32 @@
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
+  /* phase MVP: banner on the home page, race page, fan vote */
+  .phase { cursor:pointer; display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:center; margin-top:14px; background:var(--mvp-grad); border-color:var(--mvp-line); transition:border-color .15s, transform .15s; } .phase:hover { border-color:var(--acc); transform:translateY(-2px); }
+  .phase .crown, .winner .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+  .phase .pn { display:flex; align-items:center; gap:12px; margin:6px 0 4px; font-size:clamp(22px,4vw,30px); font-weight:800; line-height:1.1; }
+  .phase .runners { display:grid; gap:7px; } .phase .rn { display:grid; grid-template-columns:22px 1fr auto; gap:9px; align-items:center; font-size:13px; }
+  .phase .meter, .vrow .meter { height:6px; border-radius:4px; background:var(--track); overflow:hidden; } .meter i { display:block; height:100%; background:var(--acc); border-radius:4px; }
+  .cta { display:inline-block; margin-top:10px; padding:7px 14px; border-radius:99px; background:var(--acc); color:#10131c; font-weight:800; font-size:13px; border:0; cursor:pointer; }
+  .winner { position:relative; overflow:hidden; display:grid; grid-template-columns:auto 1fr; gap:22px; align-items:center; padding:24px; background:var(--mvp-grad); border-color:var(--mvp-line); }
+  .winner .trophy { font-size:64px; line-height:1; filter:drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+  .winner .nm { font-size:clamp(26px,5vw,38px); font-weight:800; line-height:1.1; margin:4px 0; display:flex; align-items:center; gap:12px; }
+  .winner .tiles { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; } .winner .tile { background:var(--mvp-in); border:1px solid var(--mvp-line); border-radius:12px; padding:8px 14px; min-width:70px; text-align:center; }
+  .winner .tile b { display:block; font-size:22px; color:var(--acc); line-height:1.1; } .winner .tile span { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
+  .chart { width:100%; height:auto; display:block; } .chart text { fill:var(--mut); font-size:11px; } .chart .gl { stroke:var(--line); stroke-width:1; } .chart path { fill:none; stroke-width:2.6; stroke-linejoin:round; stroke-linecap:round; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:10px; font-size:13px; } .legend span { display:inline-flex; align-items:center; gap:6px; } .legend i { width:12px; height:4px; border-radius:2px; display:inline-block; }
+  .vrow { display:grid; grid-template-columns:28px 32px minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) 52px auto; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--line); }
+  .vrow:first-child { border-top:0; } .vrow.me { background:var(--hover); box-shadow:inset 3px 0 0 var(--acc); }
+  .vrow .rk { text-align:center; color:var(--mut); font-weight:800; font-variant-numeric:tabular-nums; } .vrow:nth-child(-n+3) .rk { color:var(--acc); }
+  .vrow .nmb b { display:block; } .vrow .nmb span, .vrow .vv span { font-size:12px; color:var(--mut); } .vrow .sc { font-weight:800; font-size:18px; text-align:right; font-variant-numeric:tabular-nums; }
+  .vrow .vv b { font-variant-numeric:tabular-nums; }
+  button.vote { white-space:nowrap; padding:6px 14px; border-radius:99px; border:1px solid var(--acc); background:transparent; color:var(--acc); font-weight:800; cursor:pointer; } button.vote:hover { background:var(--acc); color:#10131c; }
+  button.vote.on { background:var(--acc); color:#10131c; cursor:default; } button.vote[disabled] { opacity:.45; cursor:not-allowed; }
+  .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
+  .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
+  @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr) auto; gap:8px 10px; } .vrow .bars, .vrow .vv { grid-column:3 / span 2; } .vrow .sc { display:none; } .vrow button.vote { grid-column:4; grid-row:1; } }
+  @media (max-width:760px) { .phase { grid-template-columns:1fr; } .winner { grid-template-columns:1fr; padding:18px; } .winner .trophy { font-size:48px; }
+  }
 </style>
 </head>
 <body>
@@ -194,6 +220,13 @@ const FR = {
   'Top ball stealers': 'Meilleurs intercepteurs', 'Top shot blockers': 'Meilleurs contreurs', 'Three-pointers made': 'Tirs à 3 points réussis',
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
   'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
+  'Phase 1 MVP': 'MVP de la phase 1', 'Race leader': 'Leader de la course', 'Vote now': 'Voter maintenant', 'See the race': 'Voir la course', 'Phase 1': 'Phase 1',
+  'in progress': 'en cours', 'The race': 'La course', 'Fan vote': 'Vote des fans', 'Voting is open': 'Le vote est ouvert', 'Voting is closed': 'Le vote est clos', 'Votes': 'Votes',
+  'Stats': 'Stats', 'Vote': 'Voter', 'Your vote': 'Votre vote', 'Show the top 10': 'Voir le top 10', 'How it works': 'Comment ça marche',
+  'Running average of the impact rating, matchday by matchday': 'Moyenne cumulée de l’indice d’impact, journée par journée',
+  'Thanks! Your vote is counted. You can change it until voting closes.': 'Merci ! Votre vote est pris en compte. Vous pouvez le changer jusqu’à la clôture du vote.',
+  'Voting is closed.': 'Le vote est clos.', 'Too many votes from this network. Try again later.': 'Trop de votes depuis ce réseau. Réessayez plus tard.',
+  'Could not record your vote.': 'Impossible d’enregistrer votre vote.',
   'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
@@ -229,6 +262,11 @@ const W = LANG === 'fr' ? 'V' : 'W', Ls = LANG === 'fr' ? 'D' : 'L';
 const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
+    votesN: n => `${n} vote${n === 1 ? '' : 's'}`, allCands: n => `Show all ${n} candidates`,
+    mvpHow: (s, fa, min, on) => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
+      <p><b>Stats (${s}%).</b> The average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. The best candidate gets 100, the others are scaled to him.</p>
+      <p><b>Fans (${fa}%).</b> Every browser has one vote and can change it until voting closes. The most-voted candidate gets 100. Fan votes only count once ${min} votes are in, so a few early votes cannot decide the race${on ? ' (that threshold is reached)' : ''}.</p>
+      <p><b>Score</b> = ${s}% stats + ${fa}% fans. The phase MVP is crowned when the phase is over and voting has closed.</p>`,
     seasonMvp: s => `★ SEASON MVP · ${s}`, qualRule: n => `≥ ${n}% of team games`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
     playersSub: s => `${s} · per-game averages`, standingsSub: s => `${s} · regular season · phase 1 complete (J1–J11)`,
@@ -242,6 +280,11 @@ const SENT = {
   },
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
+    votesN: n => `${n} vote${n > 1 ? 's' : ''}`, allCands: n => `Voir les ${n} candidats`,
+    mvpHow: (s, fa, min, on) => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
+      <p><b>Statistiques (${s} %).</b> L’impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Le meilleur candidat obtient 100, les autres sont ramenés à lui.</p>
+      <p><b>Fans (${fa} %).</b> Chaque navigateur a une voix et peut la changer jusqu’à la fin du vote. Le candidat le plus voté obtient 100. Les votes des fans ne comptent qu’à partir de ${min} votes, pour que quelques votes précoces ne décident pas la course${on ? ' (ce seuil est atteint)' : ''}.</p>
+      <p><b>Score</b> = ${s} % statistiques + ${fa} % fans. Le MVP de la phase est couronné quand la phase est terminée et le vote clos.</p>`,
     seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, qualRule: n => `≥ ${n} % des matchs de l’équipe`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
     playersSub: s => `${s} · moyennes par match`, standingsSub: s => `${s} · saison régulière · phase 1 terminée (J1–J11)`,
@@ -258,8 +301,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -320,7 +363,7 @@ async function route(keepScroll) {
   const app = $('#app');
   courtData = null; pageMeta = null;
   try {
-    app.innerHTML = await ({ home, standings, players, games, planning, team, player, game }[r.page] || home)(r.arg);
+    app.innerHTML = await ({ home, standings, players, games, planning, mvp, team, player, game }[r.page] || home)(r.arg);
     bind();
     drawCourt();
     if (pageMeta) setMeta(...pageMeta);
@@ -339,6 +382,8 @@ const META = {
              fr: ['Statistiques des joueurs Pro A – points, rebonds, passes – Tunisia Basket', 'Moyennes par match et notes de chaque joueur de la Pro A tunisienne de basket.'] },
   games: { en: ['Pro A results and box scores – Tunisia Basket', 'Every Tunisian Pro A basketball game with the final score, box score and game MVP.'],
            fr: ['Résultats et feuilles de match Pro A – Tunisia Basket', 'Tous les matchs de la Pro A tunisienne de basket avec le score final, la feuille de match et le MVP.'] },
+  mvp: { en: ['MVP race and fan vote – phase 1 – Tunisia Basket', 'Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans’ vote.'],
+         fr: ['Course au MVP et vote des fans – phase 1 – Tunisia Basket', 'Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans.'] },
   planning: { en: ['Pro A calendar – upcoming matches – Tunisia Basket', 'The Tunisian Pro A basketball calendar, matchday by matchday.'],
               fr: ['Calendrier Pro A – prochains matchs – Tunisia Basket', 'Le calendrier de la Pro A tunisienne de basket, journée par journée.'] }
 };
@@ -358,6 +403,7 @@ async function home() {
       <div class="who">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${esc(f('mvpTeam', m))}</div>
       <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div></div>
   <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
+  ${phaseCard(d.phase_mvp)}
   <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
   <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
@@ -402,6 +448,84 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape') closeModal();
   const c = e.target.closest && e.target.closest('[data-lead]'); if (c && (e.key === 'Enter' || e.key === ' ') && e.target === c) { e.preventDefault(); openLeaders(c.dataset.lead); }
 });
+
+
+// ---------------------------------------------------------------- phase MVP: banner, race, fan vote
+const PHASE = 1, LINES = ['#e06c00', '#2fb27a', '#4f93ff', '#c45bf0', '#d9a400', '#ee5a6c'];
+const voterId = () => {   // random code kept in this browser: it makes "one vote per browser" possible without any account
+  let v = localStorage.getItem('vid');
+  if (!/^[a-f0-9]{32}$/.test(v || '')) { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('vid', v); }
+  return v;
+};
+function phaseCard(pm) {
+  if (!pm || !(pm.winner || pm.leader)) return '';
+  const m = pm.winner || pm.leader, best = Math.max(1, ...pm.runners.map(r => r.score));
+  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">🏆 ${pm.winner ? _('Phase 1 MVP') : _('Race leader')}</div>
+    <div class="pn">${logo(m.team, 52)}<span>${plink(m, esc(title(m.name)))}</span></div>
+    <div class="mut small">${esc(m.team)} · #${m.number} · ${m.pts} ${_('pts')} · ${m.reb} ${_('reb')} · ${m.ast} ${_('ast')} · PIR ${m.pir}</div>
+    <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div>
+    <div class="runners"><div class="mut small" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">${_('MVP race')} · ${esc(f('votesN', pm.total_votes))}</div>
+    ${pm.runners.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.score / best)}%"></i></div></div><b>${r.score}</b></div>`).join('')}</div></div>`;
+}
+
+let mvpAll = false, voteMsg = null;
+async function mvp() {
+  pageMeta = META.mvp[LANG];
+  const r = await (await fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`)).json();
+  const c = r.candidates, shown = mvpAll ? c : c.slice(0, 10), W = r.winner, lead = W || r.leader;
+  if (!c.length) return `<h1>${_('MVP race')}</h1><div class="empty">${_('No games yet')}</div>`;
+  const top = Math.max(1, ...c.map(x => x.votes));
+  const winner = lead ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${W ? _('Phase 1 MVP') : _('Race leader')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
+      <div class="nm">${logo(lead.team, 48)}<span>${plink(lead, esc(title(lead.name)))}</span></div>
+      <div class="mut">${esc(lead.team)} · #${lead.number} · ${esc(posName(lead.pos))} · ${lead.gp} ${H('GP')}${lead.mvp_games ? ' · ' + esc(f('mvpCount', lead.mvp_games)) : ''}</div>
+      <div class="tiles">${[['PTS', lead.pts], ['REB', lead.reb], [H('AST'), lead.ast], [H('STL'), lead.stl], [H('BLK'), lead.blk], ['PIR', lead.pir], [_('Votes'), lead.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+      ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
+  return `<h1>${_('MVP race')} <span class="mut" style="font-size:15px">${_('Phase 1')} · J1–J${PHASE * 11}${r.complete ? '' : ' · ' + _('in progress')}</span></h1>
+  ${winner}
+  <h2>${_('The race')}</h2><div class="card">${raceChart(r)}</div>
+  <h2>${_('Fan vote')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(f('votesN', r.total_votes))} · ${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span></h2>
+  ${voteMsg ? `<div class="votemsg${voteMsg.ok ? '' : ' bad'}" role="status">${esc(voteMsg.text)}</div>` : ''}
+  <div class="card tablecard">${shown.map(x => `<div class="vrow${x.id === r.my_vote ? ' me' : ''}"><span class="rk">${x.rank}</span>${logo(x.team, 32)}
+      <a class="nmb" href="${playerUrl(x.id, x.name)}"><b>${esc(title(x.name))}</b><span>${esc(x.team)} · #${x.number} · ${x.gp} ${H('GP')} · ${x.pts} ${_('pts')} · PIR ${x.pir}</span></a>
+      <div class="bars"><div class="small mut">${_('Stats')} ${x.stats_score}</div><div class="meter"><i style="width:${x.stats_score}%"></i></div></div>
+      <div class="vv"><b>${x.votes}</b> <span>· ${x.vote_share}%</span><div class="meter"><i style="width:${Math.round(100 * x.votes / top)}%"></i></div></div>
+      <span class="sc">${x.score}</span>
+      ${x.id === r.my_vote ? `<button class="vote on" disabled>✓ ${_('Your vote')}</button>` : `<button class="vote" data-vote="${x.id}" ${r.voting_open ? '' : 'disabled'}>${_('Vote')}</button>`}</div>`).join('')}</div>
+  ${c.length > 10 ? `<p style="text-align:center"><button id="mvpall">${mvpAll ? _('Show the top 10') : esc(f('allCands', c.length))}</button></p>` : ''}
+  <h2>${_('How it works')}</h2><div class="card how">${f('mvpHow', r.weights.stats, r.weights.fans, r.min_votes, r.fans_count)}</div>`;
+}
+function raceChart(r) {
+  const rows = r.chart.map(id => r.candidates.find(c => c.id === id)).filter(Boolean), n = r.matchdays.length;
+  const all = rows.flatMap(x => x.series).filter(v => v != null);
+  if (n < 2 || !all.length) return `<div class="empty">${_('Need at least 2 games for a trend.')}</div>`;
+  const lo = Math.floor(Math.min(...all) / 5) * 5, hi = Math.ceil(Math.max(...all) / 5) * 5 || lo + 5, W = 660, Hh = 270, L = 38, R = 118, T = 12, B = 26;
+  const X = i => L + (W - L - R) * (n === 1 ? 0 : i / (n - 1)), Y = v => T + (Hh - T - B) * (1 - (v - lo) / (hi - lo));
+  const grid = []; for (let v = lo; v <= hi; v += 5) grid.push(`<line class="gl" x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`);
+  const xs = r.matchdays.map((m, i) => `<text x="${X(i)}" y="${Hh - 8}" text-anchor="middle">J${m}</text>`);
+  const ends = [];
+  const lines = rows.map((x, k) => {
+    const col = LINES[k % LINES.length]; let d = '', last = null;
+    x.series.forEach((v, i) => { if (v == null) return; d += (d ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); last = [i, v]; });
+    if (last) ends.push({ y: Y(last[1]), col, k, name: x.name.split(' ').slice(-1)[0], v: last[1], x: X(last[0]) });
+    return `<path d="${d}" stroke="${col}"/>`;
+  });
+  ends.sort((a, b) => a.y - b.y); for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 13) ends[i].y = ends[i - 1].y + 13;   // keep end labels apart
+  const labels = ends.map(e => `<circle cx="${e.x}" cy="${e.y}" r="4" fill="${e.col}"/><text x="${e.x + 8}" y="${e.y + 4}" style="fill:${e.col};font-weight:700">${esc(title(e.name))} ${e.v}</text>`);
+  return `<svg class="chart" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${esc(_('Running average of the impact rating, matchday by matchday'))}">${grid.join('')}${xs.join('')}${lines.join('')}${labels.join('')}</svg>
+    <div class="legend">${rows.map((x, k) => `<span><i style="background:${LINES[k % LINES.length]}"></i><b>${esc(title(x.name))}</b> <span class="mut">${esc(x.team)}</span></span>`).join('')}</div>
+    <div class="note">${_('Running average of the impact rating, matchday by matchday')}</div>`;
+}
+async function castVote(pid) {
+  const msg = { ok: false, text: _('Could not record your vote.') };
+  try {
+    const res = await fetch('/api/mvp/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: PHASE, player: pid, vid: voterId() }) });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok && j.ok) { msg.ok = true; msg.text = _('Thanks! Your vote is counted. You can change it until voting closes.'); }
+    else if (j.reason === 'closed') msg.text = _('Voting is closed.');
+    else if (j.reason === 'network') msg.text = _('Too many votes from this network. Try again later.');
+  } catch (e) { /* keep the generic message */ }
+  voteMsg = msg; await route(true);
+}
 
 function gameCard(g) {
   const [a, b] = g.teams;
@@ -671,6 +795,8 @@ function bind() {
   const qi = $('#q'); if (qi) { qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; route(true).then(() => { const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); }); }; }
   document.querySelectorAll('[data-lead]').forEach(c => c.onclick = e => { if (!e.target.closest('a')) openLeaders(c.dataset.lead); });
   const ql = $('#qual'); if (ql) { ql.onclick = () => { qualOnly = !qualOnly; route(true); }; ql.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ql.click(); } }; }
+  document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => castVote(b.dataset.vote));
+  const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };

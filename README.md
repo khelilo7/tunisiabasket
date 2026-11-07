@@ -100,6 +100,16 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
 
+## Phase MVP: race and fan vote (mvp.py)
+Page `/course-mvp` (`/en/mvp-race`). A phase is 11 matchdays (phase 1 = J1-J11). Candidates are the players of the top 4 teams who played at least 70% of
+their team's games in the phase. The race score is **75% stats** (average impact over the phase = PIR + 2 per win) and **25% fans' vote**, each scaled so the
+best candidate gets 100; the fans' share only counts after 20 votes. The chart shows each leading candidate's running average after every matchday.
+Voting: one vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused, changing your vote
+replaces it. Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from
+several browsers or phones: treat the fan share as a popularity signal, not an audit.
+The winner is crowned in `assets/mvp_awards.json` (in the repo) or in the admin panel (tab MVP, saved to `data/mvp.json`, which wins): crowned player, voting open or
+closed, an optional note. With no crown, a finished phase whose voting is closed goes to the race leader.
+
 ## Visitor statistics
 The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country
 (Cloudflare's country header, so it works once the site is behind Cloudflare), the referring site, the device type and the language, plus a visitor code
