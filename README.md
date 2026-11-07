@@ -102,19 +102,23 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
 
 ## Phase MVP: race and fan vote (mvp.py)
 Page `/course-mvp` (`/en/mvp-race`). A phase is 11 matchdays (phase 1 = J1-J11). Candidates are the players of the top 4 teams who played at least 70% of
-their team's games in the phase. The race score is **75% stats** (average impact over the phase = PIR + 2 per win) and **25% fans' vote**, each scaled so the
+their team's games in the phase. The race score is **70% stats** (average impact over the phase = PIR + 2 per win) and **30% fans' vote**, each scaled so the
 best candidate gets 100; the fans' share only counts after 20 votes. The chart shows each leading candidate's running average after every matchday.
 Voting: one vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused, changing your vote
 replaces it. Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from
 several browsers or phones: treat the fan share as a popularity signal, not an audit.
-The winner is crowned in `assets/mvp_awards.json` (in the repo) or in the admin panel (tab MVP, saved to `data/mvp.json`, which wins): crowned player, voting open or
-closed, an optional note. With no crown, a finished phase whose voting is closed goes to the race leader.
+Voting has a **deadline** (phase 1: Wednesday 11 November 2026, 12:00 Tunisian time, set in `assets/mvp_awards.json`; change it in the admin panel, tab MVP, which saves
+to `data/mvp.json` and wins over the repo file). Nobody is crowned while voting is open: the page shows the stats leader as provisional. When the deadline passes
+(or the admin closes voting) the best 70/30 score becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the
+visitor's real address (`CF-Connecting-IP`, or the proxy's forwarded address), not the proxy's.
 
 ## Visitor statistics
 The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country
-(Cloudflare's country header, so it works once the site is behind Cloudflare), the referring site, the device type and the language, plus a visitor code
+(Cloudflare's country header: it appears as soon as the DNS records are Proxied, no firewall step needed), the referring site, the device type and the language, plus a visitor code
 that is a daily-changing hash (so people are counted once per day and cannot be traced). Crawlers and the admin's own visits are ignored. The numbers
-are in the admin panel, tab **Traffic** (today, online now, 7/30/90/365 days, countries, pages, referrers, devices). They live in `data/traffic.db`
+Besides the daily code there is a second, **returning-visitor code**: a random id the browser keeps, stored only as a hash and never derived from the address.
+It tells a new person from one who comes back (new = came on one day, returning = 2+ days). It is one browser, not one human: a phone and a computer count twice and
+clearing the browser data makes someone look new. The numbers are in the admin panel, tab **Traffic** (today, online now, 7/30/90/365 days, countries, pages, referrers, devices). They live in `data/traffic.db`
 and are kept 400 days. For a second opinion, Cloudflare's free dashboard (Analytics & Logs > Traffic) also shows requests and bandwidth.
 
 ## Licence

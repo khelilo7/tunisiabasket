@@ -85,6 +85,16 @@ def client_ip() -> str:
     return request.remote_addr or "?"
 
 
+def visitor_ip() -> str:
+    """The visitor's address for statistics and the vote's per-network cap (never for security decisions: use client_ip()).
+    Behind Caddy every request comes from 127.0.0.1, and behind Cloudflare the real address is in CF-Connecting-IP; a forged
+    header here can only skew our own counts, so it is accepted even when TRUST_CLOUDFLARE is off."""
+    ip = (request.headers.get("CF-Connecting-IP") or "").strip()
+    if not ip and request.remote_addr in ("127.0.0.1", "::1"):
+        ip = (request.headers.get("X-Forwarded-For") or "").split(",")[-1].strip()
+    return ip or request.remote_addr or "?"
+
+
 # ---------------------------------------------------------------- audit log
 def audit(action: str, detail: str = ""):
     try:

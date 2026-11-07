@@ -109,7 +109,7 @@ def _phase_summary():
     r = mvp.race(1)
     keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share", "score", "mvp_games")
     pick = lambda c: {k: c[k] for k in keep} if c else None
-    return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "total_votes": r["total_votes"],
+    return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "deadline_ts": r["deadline_ts"], "total_votes": r["total_votes"],
             "winner": pick(r["winner"]), "leader": pick(r["leader"]), "runners": [pick(c) for c in r["candidates"][:3]]}
 
 
@@ -218,7 +218,7 @@ def hit():
     """Page-view beacon sent by the site itself (see traffic.py: no cookies, nothing personal stored)."""
     body = request.get_json(silent=True, force=True) or {}
     try:
-        traffic.record(request, str(body.get("path", ""))[:200], str(body.get("ref", ""))[:300], str(body.get("lang", ""))[:5])
+        traffic.record(request, str(body.get("path", ""))[:200], str(body.get("ref", ""))[:300], str(body.get("lang", ""))[:5], str(body.get("rid", ""))[:40])
     except Exception:           # statistics must never break the site
         pass
     return "", 204

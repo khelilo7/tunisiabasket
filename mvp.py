@@ -5,10 +5,11 @@ A phase is 11 matchdays (phase 1 = J1-J11, phase 2 = J12-J22). For a phase:
     impact over the phase's games, and draws how each candidate's average moved matchday after matchday;
   * the FANS' VOTE lets every visitor back one candidate. One vote per browser; a handful per network, because mobile
     operators put many people behind one address. Only hashes are stored (no address, no browser string);
-  * the SCORE of a candidate is 75% stats + 25% fans, both scaled so the best candidate gets 100. Until the fans have
+  * the SCORE of a candidate is 70% stats + 30% fans, both scaled so the best candidate gets 100. Until the fans have
     cast MIN_VOTES votes the score is stats only, so a few early votes cannot decide the race;
-  * the WINNER is the player the admin crowns (assets/mvp_awards.json in the repo, or data/mvp.json from the admin panel,
-    which wins). With no crown, a phase whose voting is closed goes to the race leader.
+  * VOTING closes at the phase's deadline (or earlier if the admin closes it). The WINNER is the player the admin crowns
+    (assets/mvp_awards.json in the repo, or data/mvp.json from the admin panel, which wins); with no crown, a finished
+    phase whose voting is closed goes to the race leader, i.e. the best 70/30 score.
 """
 import hashlib
 import hmac
@@ -19,6 +20,7 @@ import re
 import sqlite3
 import threading
 import time
+from datetime import datetime, timedelta, timezone
 from collections import Counter, defaultdict
 from pathlib import Path
 
@@ -29,7 +31,7 @@ import traffic
 
 PHASE_LEN = stats.PHASE_LEN
 PHASES = (1, 2)
-STATS_WEIGHT, FAN_WEIGHT = 0.75, 0.25
+STATS_WEIGHT, FAN_WEIGHT = 0.70, 0.30
 MIN_VOTES = 20                    # fans' share only counts once this many votes are in
 MAX_VOTERS_PER_NETWORK = 8        # distinct browsers per network per phase (carrier-grade NAT shares addresses)
 RACE_LINES = 6                    # candidates drawn on the race chart
@@ -51,16 +53,38 @@ def _read(p):
 
 def settings(phase: int) -> dict:
     """{'winner': player id or None, 'voting_open': bool, 'note': str}. The live file overrides the repo file, key by key."""
-    out = {"winner": None, "voting_open": True, "note": ""}
+    out = {"winner": None, "voting_open": True, "note": "", "deadline": None}
     for src in (_read(AWARDS_REPO), _read(AWARDS_LIVE)):
         out.update({k: v for k, v in (src.get(str(phase)) or {}).items() if k in out})
     return out
 
 
-def save_settings(phase: int, winner, voting_open: bool, note: str = ""):
+TUNIS = timezone(timedelta(hours=1))      # Tunisia has no daylight saving time
+
+
+def parse_deadline(s):
+    """'2026-11-11T12:00' (Tunisian time) or with an offset -> aware datetime, None if empty, ValueError if unreadable."""
+    if not s:
+        return None
+    d = datetime.fromisoformat(str(s))
+    return d if d.tzinfo else d.replace(tzinfo=TUNIS)
+
+
+def voting_open(phase: int) -> bool:
+    st = settings(phase)
+    try:
+        dl = parse_deadline(st["deadline"])
+    except ValueError:
+        dl = None
+    return bool(st["voting_open"]) and (dl is None or datetime.now(timezone.utc) < dl)
+
+
+def save_settings(phase: int, winner, voting_open: bool, note: str = "", deadline=None):
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     data = _read(AWARDS_LIVE)
-    data[str(phase)] = {"winner": winner or None, "voting_open": bool(voting_open), "note": (note or "")[:200]}
+    dl = parse_deadline(deadline)
+    data[str(phase)] = {"winner": winner or None, "voting_open": bool(voting_open), "note": (note or "")[:200],
+                        "deadline": dl.astimezone(TUNIS).isoformat(timespec="minutes") if dl else None}
     AWARDS_LIVE.write_text(json.dumps(data, indent=1))
 
 
@@ -111,11 +135,11 @@ def cast(request, phase: int, pid: str, vid: str):
         return False, "bot"
     if not VID.match(vid or ""):
         return False, "browser"
-    if not settings(phase)["voting_open"]:
+    if not voting_open(phase):
         return False, "closed"
     if pid not in {c["id"] for c in candidates(phase)}:
         return False, "candidate"
-    voter, net = _hash("vid", phase, vid), _hash("net", phase, auth.client_ip())
+    voter, net = _hash("vid", phase, vid), _hash("net", phase, auth.visitor_ip())
     with _lock:
         con = _db()
         try:
@@ -216,11 +240,17 @@ def race(phase: int = 1) -> dict:
     for r in rows:
         del r["_by_md"]
     st = settings(phase)
+    is_open = voting_open(phase)
+    try:
+        dl = parse_deadline(st["deadline"])
+    except ValueError:
+        dl = None
     winner = next((r for r in rows if r["id"] == st["winner"]), None)
     decided = winner is not None
-    if not decided and not st["voting_open"] and complete and rows:
+    if not decided and not is_open and complete and rows:
         winner, decided = rows[0], True
-    return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": st["voting_open"], "note": st["note"],
+    return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": is_open, "note": st["note"],
+            "deadline": dl.isoformat() if dl else None, "deadline_ts": int(dl.timestamp()) if dl else None,
             "total_votes": total, "min_votes": MIN_VOTES, "fans_count": fans_count,
             "weights": {"stats": int(STATS_WEIGHT * 100), "fans": int(FAN_WEIGHT * 100)},
             "winner": winner if decided else None, "leader": rows[0] if rows else None,

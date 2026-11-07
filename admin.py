@@ -278,7 +278,7 @@ def mvp_admin():
     for ph in mvp.PHASES:
         r = mvp.race(ph)
         out.append({"phase": ph, "complete": r["complete"], **mvp.settings(ph), "votes": mvp.admin_votes(ph),
-                    "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "score", "impact")} for c in r["candidates"]]})
+                    "open_now": mvp.voting_open(ph), "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "score", "impact")} for c in r["candidates"]]})
     return jsonify(phases=out)
 
 
@@ -291,7 +291,11 @@ def mvp_admin_save():
     winner = b.get("winner") or None
     if winner and winner not in {c["id"] for c in mvp.candidates(ph)}:
         return jsonify(error="That player is not a candidate of this phase."), 400
-    mvp.save_settings(ph, winner, bool(b.get("voting_open")), str(b.get("note") or ""))
+    try:
+        mvp.parse_deadline(b.get("deadline"))
+    except ValueError:
+        return jsonify(error="The deadline is not a valid date and time."), 400
+    mvp.save_settings(ph, winner, bool(b.get("voting_open")), str(b.get("note") or ""), b.get("deadline"))
     auth.audit("mvp", f"phase {ph} winner={winner} open={bool(b.get('voting_open'))}")
     return jsonify(ok=True)
 

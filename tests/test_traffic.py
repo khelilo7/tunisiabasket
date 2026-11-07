@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import app  # noqa: E402
 import auth  # noqa: E402
 import config  # noqa: E402
+import traffic  # noqa: E402
 
 auth.time.sleep = lambda s: None
 fails = []
@@ -27,8 +28,8 @@ PHONE = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.
 DESK = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
 
 
-def hit(path, ua=PHONE, ip="203.0.113.5", country="TN", ref=""):
-    return c.post("/api/hit", json={"path": path, "ref": ref, "lang": "fr"},
+def hit(path, ua=PHONE, ip="203.0.113.5", country="TN", ref="", rid=""):
+    return c.post("/api/hit", json={"path": path, "ref": ref, "lang": "fr", "rid": rid},
                   headers={"User-Agent": ua, "CF-IPCountry": country}, environ_overrides={"REMOTE_ADDR": ip})
 
 
@@ -56,11 +57,38 @@ c.post("/admin/api/login", json={"token": "TEST-TOKEN-0000-1111"}, environ_overr
 hit("/", ip="192.0.2.50")
 check(c.get("/admin/api/traffic").get_json()["views"] == 3, "admin visits must not be counted")
 
+c.post("/admin/api/logout")                                         # stop being the admin, whose own visits are ignored
+# new vs returning: the browser's random id is stored as a hash; an older visit makes the person "returning"
+import hashlib, hmac  # noqa: E401,E402
+RID_NEW, RID_BACK, RID_BACK2 = "a" * 32, "b" * 32, "c" * 32
+rh = lambda r: hmac.new(traffic._key(), f"ret|{r}".encode(), hashlib.sha256).hexdigest()[:16]
+hit("/", rid=RID_NEW, ip="203.0.113.21")
+hit("/mvp", rid=RID_NEW, ip="203.0.113.21")                      # same day twice: still one new person
+hit("/", rid=RID_BACK, ip="203.0.113.22")
+hit("/", rid=RID_BACK2, ip="203.0.113.23")
+hit("/", rid="not-a-valid-id", ip="203.0.113.24")                # bad id: counted as a visitor, not as a person
+con = sqlite3.connect(config.DATA_DIR / "traffic.db")
+con.execute("INSERT INTO hits(ts,day,page,path,country,ref,device,lang,visitor,rid) VALUES (1,'2026-01-05','home','home','TN','','mobile','fr','x',?)", (rh(RID_BACK),))
+con.commit(); con.close()
+t = c.get("/admin/api/traffic?days=7", headers={"X-Admin-Token": "TEST-TOKEN-0000-1111"}).get_json()
+check(t["people"]["total"] == 3 and t["people"]["new"] == 2 and t["people"]["returning"] == 1, f"people new/returning: {t['people']}")
+check(t["people"]["unidentified"] >= 1, "visits without a valid browser id are listed as unidentified")
+check(sum(s["new"] for s in t["series"]) == 2, "new people per day (the returning one is not new)")
+check(t["people"]["frequency"]["1"] == 3 and t["people"]["frequency"]["2-3"] == 0, f"frequency {t['people']['frequency']}")
+
+# country is read whenever Cloudflare sends it; the site no longer needs the firewall setting for that
+auth.TRUST_CLOUDFLARE = False
+hit("/", ip="203.0.113.60", country="DE")
+t = c.get("/admin/api/traffic?days=7", headers={"X-Admin-Token": "TEST-TOKEN-0000-1111"}).get_json()
+check(t["country_known"] and "DE" in {x[0] for x in t["countries"]}, "country counted without TRUST_CLOUDFLARE")
+auth.TRUST_CLOUDFLARE = True
+
 # nothing personal on disk
 con = sqlite3.connect(config.DATA_DIR / "traffic.db")
 dump = " ".join(str(v) for row in con.execute("SELECT * FROM hits") for v in row)
 con.close()
 check("203.0.113.5" not in dump and "iPhone" not in dump and "Mozilla" not in dump, "no IP address or browser string may be stored")
+check(RID_NEW not in dump, "the raw browser id is never stored, only its hash")
 check(oct((config.DATA_DIR / "traffic.db").stat().st_mode & 0o777) == "0o600", "traffic.db must be private (600)")
 
 # bad input never breaks the site

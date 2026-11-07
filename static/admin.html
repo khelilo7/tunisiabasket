@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
 <link rel="apple-touch-icon" href="/img/apple-touch-icon.png">
 <title>Admin · Tunisia Basket</title>
-<script>document.documentElement.dataset.theme = localStorage.getItem('theme') || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');</script>
+<script>document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';</script>
 <style>
   :root, :root[data-theme=dark] { color-scheme:dark;
     --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c; --warn:#ffd89a;
@@ -50,6 +50,7 @@
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:12px; }
   .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; } .kpi b { display:block; font-size:28px; line-height:1.1; } .kpi span { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
   .kpi.live b { color:var(--good); } .kpi.live b::before { content:""; display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--good); margin-right:8px; vertical-align:middle; box-shadow:0 0 0 4px var(--pillok); }
+  h3.sub { margin:14px 0 8px; font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
   .tgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; } .tgrid .card { margin:0; }
   .tgrid h3 { margin:0 0 8px; font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
   .brow { display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:5px 0; font-size:13px; position:relative; } .brow .n { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .brow b { font-variant-numeric:tabular-nums; }
@@ -341,16 +342,25 @@ async function loadTraffic() {
       <div class="kpi"><b>${t.views}</b><span>page views · ${t.days} days</span></div>
       <div class="kpi"><b>${t.views && t.visitors ? (t.views / t.visitors).toFixed(1) : '–'}</b><span>pages per visit</span></div>
     </div>
+    <h3 class="sub">People: new or returning?</h3>
+    <div class="kpis">
+      <div class="kpi"><b>${t.people.total}</b><span>different people (browsers) · ${t.days} days</span></div>
+      <div class="kpi"><b>${t.people.new}</b><span>new: came once</span></div>
+      <div class="kpi live"><b>${t.people.returning}</b><span>returning: came on 2+ days</span></div>
+      <div class="kpi"><b>${t.people.total ? Math.round(100 * t.people.returning / t.people.total) + '%' : '–'}</b><span>return rate</span></div>
+    </div>
     <div class="card">${chart(t.series)}</div>
     <div class="tgrid">
-      <div class="card"><h3>Countries (visitors)</h3>${t.country_known ? bars(t.countries, r => `${flag(r[0])} ${esc(cname(r[0]))}`, x => x) : '<div class="warns">Countries are known once the site runs behind Cloudflare (the setting TRUST_CLOUDFLARE=1 is applied by firewall-cloudflare.sh).</div>'}</div>
+      <div class="card"><h3>Countries (visitors)</h3>${t.country_known ? bars(t.countries, r => `${flag(r[0])} ${esc(cname(r[0]))}`, x => x) : `<div class="warns">No country received yet. Countries come from Cloudflare, so the site has to be served through it: in Cloudflare → DNS switch the <b>@</b> and <b>www</b> records to <b>Proxied</b> (orange cloud), with SSL/TLS = Full (strict). Countries then appear on the next visits, nothing else to install. Until then visits are still counted, just without a country.</div>`}</div>
+      <div class="card"><h3>How often people come (days with a visit)</h3>${t.people.total ? bars(Object.entries(t.people.frequency).filter(r => r[1]), r => ({ '1': '1 day', '2-3': '2–3 days', '4-7': '4–7 days', '8+': '8 days or more' }[r[0]]), x => x) : '<div class="mut small">No data yet: returning visitors are recognised from the moment this version is live.</div>'}
+        ${t.people.unidentified ? `<div class="mut small" style="margin-top:8px">${t.people.unidentified} visits came from browsers that block storage: counted as visitors, but not as new or returning.</div>` : ''}</div>
       <div class="card"><h3>Most viewed pages</h3>${bars(t.pages, r => pageName(r[0]))}</div>
       <div class="card"><h3>Where visitors come from</h3><div class="brow"><span class="n">Direct / bookmarks / apps</span><b>${t.direct}</b><i style="width:${Math.max(2, 100 * t.direct / Math.max(1, t.visitors))}%"></i></div>${bars(t.referrers, r => esc(r[0]))}</div>
       <div class="card"><h3>Devices</h3>${t.devices.map(r => `<div class="brow"><span class="n">${{ mobile: '📱 Phone', desktop: '🖥️ Computer', tablet: '📟 Tablet' }[r[0]] || esc(r[0])}</span><b>${Math.round(100 * r[1] / total)}%</b><i style="width:${100 * r[1] / total}%"></i></div>`).join('') || '<div class="mut small">No data yet.</div>'}
         <h3 style="margin-top:14px">Language</h3>${bars(t.langs, r => ({ fr: '🇫🇷 French', en: '🇬🇧 English' }[r[0]] || esc(r[0])))}</div>
       <div class="card"><h3>Busiest hours (server time)</h3>${bars(t.hours.slice().sort((a, b) => b[1] - a[1]).slice(0, 6), r => String(r[0]).padStart(2, '0') + ':00 – ' + String(r[0]).padStart(2, '0') + ':59')}</div>
     </div>
-    <p class="mut small" style="margin-top:12px">Private by design: no cookies, no IP address stored. A visitor is a hash that changes every day, so people are counted once per day. Search-engine crawlers and your own admin visits are ignored. "Visitors" over several days adds up the people of each day.</p>`;
+    <p class="mut small" style="margin-top:12px">Private by design: no cookies, no IP address stored. “Visitors” are a hash that changes every day, so people are counted once per day. “People” use a random id kept in the browser (stored only as a hash): one person using a phone and a computer counts twice, and clearing the browser data makes them look new. Search-engine crawlers and your own admin visits are ignored. "Visitors" over several days adds up the people of each day.</p>`;
 }
 async function loadMvp() {
   const box = $('#mvpbox');
@@ -360,14 +370,15 @@ async function loadMvp() {
     <h3 style="margin-top:0">Phase ${p.phase} MVP <span class="mut small">· ${p.complete ? 'phase complete' : 'phase in progress'}</span></h3>
     <div class="kpis"><div class="kpi"><b>${p.votes.total}</b><span>fan votes</span></div><div class="kpi"><b>${p.votes.networks}</b><span>different networks</span></div></div>
     <div class="row" style="margin:10px 0"><label class="small mut">Crowned winner</label>
-      <select data-f="winner"><option value="">None (race leader wins once voting is closed)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
+      <select data-f="winner"><option value="">None (the best 70/30 score wins when voting closes)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
+ <div class="row" style="margin:8px 0"><label class="small mut">Voting deadline (Tunisia time)</label><input type="datetime-local" data-f="deadline" value="${esc((p.deadline || '').slice(0, 16))}"><span class="small mut">${p.open_now ? 'voting is open now' : 'voting is closed now'}</span></div>
     <label class="row small" style="margin:8px 0"><input type="checkbox" data-f="open" ${p.voting_open ? 'checked' : ''}> Fan voting is open</label>
     <div class="row" style="margin:8px 0"><label class="small mut">Note on the winner card (optional)</label><input data-f="note" maxlength="200" style="flex:1;min-width:240px" value="${esc(p.note || '')}"></div>
     <button data-save="${p.phase}">Save</button> <span class="small mut" data-msg></span>
-    <p class="mut small" style="margin-bottom:0">Each browser votes once; at most 8 browsers per network. Only hashes are stored. Fan votes count for 25% of the score once 20 votes are in.</p></div>`).join('');
+    <p class="mut small" style="margin-bottom:0">Each browser votes once; at most 8 browsers per network. Only hashes are stored. Fan votes count for 30% of the score once 20 votes are in; stats 70%.</p></div>`).join('');
   box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
     const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
-    const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value }) });
+    const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value, deadline: g('deadline').value }) });
     card.querySelector('[data-msg]').textContent = r.ok ? 'Saved.' : (r.body.error || 'Could not save.');
   });
 }
