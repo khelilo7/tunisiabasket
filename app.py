@@ -8,7 +8,9 @@ from functools import partial
 from flask import Flask, Response, abort, jsonify, make_response, redirect, request
 
 import auth
+import live
 import mvp
+import news
 import seo
 import stats
 import traffic
@@ -198,6 +200,19 @@ def team(code):
     if not v:
         abort(404)
     return jsonify(v)
+
+
+@app.get("/api/live")
+def live_board():
+    """Matches in play and recently finished: polled by the home page every few seconds while a match is live."""
+    resp = jsonify(live.board())
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
+@app.get("/api/news")
+def news_feed():
+    return jsonify(items=news.items())
 
 
 @app.get("/api/planning")

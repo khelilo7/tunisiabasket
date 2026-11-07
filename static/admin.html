@@ -76,7 +76,8 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="live">🔴 Live</button></div>
+  <div id="tab-live" hidden><div id="livebox2"><div class="mut">Loading…</div></div></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="mvpbox"><div class="mut">Loading…</div></div></div>
@@ -386,11 +387,12 @@ async function loadMvp() {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $('#tab-data').hidden = b.dataset.tab !== 'data'; $('#tab-traffic').hidden = b.dataset.tab !== 'traffic'; $('#tab-mvp').hidden = b.dataset.tab !== 'mvp'; $('#tab-roster').hidden = b.dataset.tab !== 'roster'; $('#tab-images').hidden = b.dataset.tab !== 'images';
+  $('#tab-data').hidden = b.dataset.tab !== 'data'; $('#tab-traffic').hidden = b.dataset.tab !== 'traffic'; $('#tab-mvp').hidden = b.dataset.tab !== 'mvp'; $('#tab-roster').hidden = b.dataset.tab !== 'roster'; $('#tab-images').hidden = b.dataset.tab !== 'images'; $('#tab-live').hidden = b.dataset.tab !== 'live';
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'mvp') loadMvp();
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
+  if (b.dataset.tab === 'live') loadLive();
 });
 $('#tdays').onchange = loadTraffic;
 
@@ -406,5 +408,6 @@ boot();
 </script>
 <script src="/admin-roster.js"></script>
 <script src="/admin-images.js"></script>
+<script src="/admin-live.js"></script>
 </body>
 </html>

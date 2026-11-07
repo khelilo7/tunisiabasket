@@ -125,6 +125,15 @@ Transfers can be undone. All of this lives in `data/roster.json` and is audited 
 shooting, rebounds, assists, steals, blocks, turnovers; team shooting figures come from the box scores we have), the MVP race, and the league leaders (one
 category as a top 5/10, or the top 3 of every category in one image).
 
+## Live matches and news (live.py, news.py)
+**Live board.** Admin tab **🔴 Live**: create a match, tap +1/+2/+3 as points are scored, set the quarter and clock, post a short note, finish. Visitors see
+live cards at the top of the home page (they refresh every 15 seconds while a match is in play, and the score line, quarter changes and the final are worded in
+French or English automatically). A finished match stays on the board for 36 hours and becomes a news item. Stored in `data/live.json`.
+**News** (home page, after the latest games): the fans' vote while it is open, matches finished on the live board, and the latest two matchdays with every
+official result, each game's MVP and the player of the matchday, all built from data we already have.
+**No outside feed is used.** SofaScore has no public API: its data endpoints answer 403 to anything but a real browser and its terms do not allow automated copying,
+so the site does not read it. If a licensed feed with Pro A coverage is chosen later, it only needs to call `live.apply(...)`, the same function the admin tab uses.
+
 ## Visitor statistics
 The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country
 (Cloudflare's country header: it appears as soon as the DNS records are Proxied, no firewall step needed), the referring site, the device type and the language, plus a visitor code
