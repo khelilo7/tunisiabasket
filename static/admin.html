@@ -375,7 +375,7 @@ async function loadMvp() {
     <label class="row small" style="margin:8px 0"><input type="checkbox" data-f="open" ${p.voting_open ? 'checked' : ''}> Fan voting is open</label>
     <div class="row" style="margin:8px 0"><label class="small mut">Note on the winner card (optional)</label><input data-f="note" maxlength="200" style="flex:1;min-width:240px" value="${esc(p.note || '')}"></div>
     <button data-save="${p.phase}">Save</button> <span class="small mut" data-msg></span>
-    <p class="mut small" style="margin-bottom:0">Each browser votes once; at most 8 browsers per network. Only hashes are stored. Fan votes count for 30% of the score once 20 votes are in; stats 70%.</p></div>`).join('');
+    <p class="mut small" style="margin-bottom:0">Fans choose among the top 3 by stats; each browser votes once and the vote is final; at most 8 browsers per network. Only hashes are stored. Fan votes count for 30% of the score once 20 votes are in; stats 70%.</p></div>`).join('');
   box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
     const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
     const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value, deadline: g('deadline').value }) });

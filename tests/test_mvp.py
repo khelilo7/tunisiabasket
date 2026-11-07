@@ -49,9 +49,11 @@ a, b = cands[0]["id"], cands[1]["id"]
 check(vote(a).status_code == 200, "a vote is accepted")
 check(c.get(f"/api/mvp?phase=1&vid={vid(1)}").get_json()["my_vote"] == a, "my vote is remembered for my browser")
 check(c.get("/api/mvp?phase=1&vid=" + vid(2)).get_json()["my_vote"] is None, "other browsers have no vote")
-check(vote(b).status_code == 200, "changing the vote is allowed")
+check(vote(b).status_code == 409, "a vote is final: no second vote, no change")
 t = c.get("/api/mvp?phase=1").get_json()
-check(t["total_votes"] == 1 and {x["id"]: x["votes"] for x in t["candidates"]}[b] == 1, "changing replaces, never doubles")
+check(t["total_votes"] == 1 and {x["id"]: x["votes"] for x in t["candidates"]}[a] == 1, "one vote counted once")
+check(t["ballot"] == [x["id"] for x in cands[:3]], "the ballot is the top 3 by stats")
+check(vote(cands[5]["id"], n=40).status_code == 400, "only the top 3 can be voted for")
 check(vote("nobody-0").status_code == 400, "unknown player refused")
 check(c.post("/api/mvp/vote", json={"phase": 1, "player": a, "vid": "short"}, headers={"User-Agent": UA}).status_code == 400, "bad browser code refused")
 check(vote(a, n=3, ua="Googlebot/2.1").status_code == 400, "crawlers cannot vote")
@@ -61,7 +63,7 @@ for n in range(10, 17):
     vote(a, n=n, ip="198.51.100.7")
 check(vote(a, n=17, ip="198.51.100.7").status_code == 200, "8th browser of one network still counts")
 check(vote(a, n=18, ip="198.51.100.7").status_code == 429, "9th browser of one network is refused")
-check(vote(a, n=17, ip="198.51.100.7").status_code == 200, "a known browser on a full network can still change its vote")
+check(vote(a, n=17, ip="198.51.100.7").status_code == 409, "a known browser cannot vote again")
 check(vote(a, n=19, ip="198.51.100.8").status_code == 200, "another network is fine")
 
 # behind Caddy/Cloudflare everybody arrives from 127.0.0.1: the cap must use the visitor's own address

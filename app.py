@@ -154,7 +154,7 @@ def mvp_vote():
     body = request.get_json(silent=True, force=True) or {}
     ph = _phase_arg()
     ok, why = mvp.cast(request, ph, str(body.get("player", ""))[:40], str(body.get("vid", ""))[:80])
-    return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429}.get(why, 400))
+    return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400))
 
 
 @app.get("/api/players")

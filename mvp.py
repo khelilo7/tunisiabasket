@@ -3,7 +3,7 @@
 A phase is 11 matchdays (phase 1 = J1-J11, phase 2 = J12-J22). For a phase:
   * the RACE ranks the candidates (qualified players of the top teams, the same pool as the season MVP) by their average
     impact over the phase's games, and draws how each candidate's average moved matchday after matchday;
-  * the FANS' VOTE lets every visitor back one candidate. One vote per browser; a handful per network, because mobile
+  * the FANS' VOTE lets every visitor back one of the top 3 candidates by stats. One final vote per browser; a handful per network, because mobile
     operators put many people behind one address. Only hashes are stored (no address, no browser string);
   * the SCORE of a candidate is 70% stats + 30% fans, both scaled so the best candidate gets 100. Until the fans have
     cast MIN_VOTES votes the score is stats only, so a few early votes cannot decide the race;
@@ -34,6 +34,7 @@ PHASES = (1, 2)
 STATS_WEIGHT, FAN_WEIGHT = 0.70, 0.30
 MIN_VOTES = 20                    # fans' share only counts once this many votes are in
 MAX_VOTERS_PER_NETWORK = 8        # distinct browsers per network per phase (carrier-grade NAT shares addresses)
+BALLOT_SIZE = 3                   # fans choose among the top N by stats; one vote each, final
 RACE_LINES = 6                    # candidates drawn on the race chart
 AWARDS_REPO = Path(__file__).parent / "assets" / "mvp_awards.json"
 AWARDS_LIVE = config.DATA_DIR / "mvp.json"
@@ -129,7 +130,7 @@ def my_vote(phase: int, vid: str):
 
 
 def cast(request, phase: int, pid: str, vid: str):
-    """Returns (ok, reason). reason: ok | closed | candidate | browser | bot | network."""
+    """Returns (ok, reason). reason: ok | closed | candidate | browser | bot | network | already. A vote is final."""
     ua = request.headers.get("User-Agent", "")
     if not ua or traffic.BOT.search(ua):
         return False, "bot"
@@ -137,16 +138,17 @@ def cast(request, phase: int, pid: str, vid: str):
         return False, "browser"
     if not voting_open(phase):
         return False, "closed"
-    if pid not in {c["id"] for c in candidates(phase)}:
+    if pid not in ballot(phase):
         return False, "candidate"
     voter, net = _hash("vid", phase, vid), _hash("net", phase, auth.visitor_ip())
     with _lock:
         con = _db()
         try:
-            known = con.execute("SELECT 1 FROM votes WHERE phase=? AND voter=?", (phase, voter)).fetchone()
-            if not known and con.execute("SELECT COUNT(*) FROM votes WHERE phase=? AND net=?", (phase, net)).fetchone()[0] >= MAX_VOTERS_PER_NETWORK:
+            if con.execute("SELECT 1 FROM votes WHERE phase=? AND voter=?", (phase, voter)).fetchone():
+                return False, "already"
+            if con.execute("SELECT COUNT(*) FROM votes WHERE phase=? AND net=?", (phase, net)).fetchone()[0] >= MAX_VOTERS_PER_NETWORK:
                 return False, "network"
-            con.execute("INSERT OR REPLACE INTO votes VALUES (?,?,?,?,?)", (phase, voter, net, pid, int(time.time())))   # changing your mind replaces your vote
+            con.execute("INSERT INTO votes VALUES (?,?,?,?,?)", (phase, voter, net, pid, int(time.time())))
             con.commit()
         finally:
             con.close()
@@ -212,15 +214,21 @@ def candidates(phase: int):
     return _race_data(phase)[0]
 
 
+def ballot(phase: int):
+    """The ids fans can vote for: the best BALLOT_SIZE candidates by stats (never by votes, so the ballot cannot drift)."""
+    return [c["id"] for c in candidates(phase)[:BALLOT_SIZE]]
+
+
 def race(phase: int = 1) -> dict:
     if phase not in PHASES:
         raise ValueError("phase")
     rows, matchdays, complete = _race_data(phase)
     votes = tally(phase)
+    ballot_ids = [r["id"] for r in rows[:BALLOT_SIZE]]          # rows are still in stats order here
     total = sum(votes.get(r["id"], 0) for r in rows)
     fans_count = total >= MIN_VOTES
     best_impact = max((r["impact"] for r in rows), default=0) or 1
-    best_votes = max((votes.get(r["id"], 0) for r in rows), default=0) or 1
+    best_votes = max((votes.get(r["id"], 0) for r in rows if r["id"] in ballot_ids), default=0) or 1
     for r in rows:
         r["votes"] = votes.get(r["id"], 0)
         r["vote_share"] = round(100 * r["votes"] / total, 1) if total else 0
@@ -254,4 +262,4 @@ def race(phase: int = 1) -> dict:
             "total_votes": total, "min_votes": MIN_VOTES, "fans_count": fans_count,
             "weights": {"stats": int(STATS_WEIGHT * 100), "fans": int(FAN_WEIGHT * 100)},
             "winner": winner if decided else None, "leader": rows[0] if rows else None,
-            "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}
+            "ballot": ballot_ids, "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}
