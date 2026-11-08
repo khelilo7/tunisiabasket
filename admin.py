@@ -278,7 +278,7 @@ def mvp_admin():
     for ph in mvp.PHASES:
         r = mvp.race(ph)
         out.append({"phase": ph, "complete": r["complete"], **mvp.settings(ph), "votes": mvp.admin_votes(ph),
-                    "open_now": mvp.voting_open(ph), "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "score", "impact")} for c in r["candidates"]]})
+                    "open_now": mvp.voting_open(ph), "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "stats_score", "impact")} for c in r["candidates"]]})
     return jsonify(phases=out)
 
 

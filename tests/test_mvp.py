@@ -11,7 +11,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import app  # noqa: E402
 import auth  # noqa: E402
 import config  # noqa: E402
-import mvp  # noqa: E402
 
 auth.time.sleep = lambda s: None
 fails = []
@@ -36,10 +35,11 @@ r = c.get("/api/mvp?phase=1").get_json()
 cands = r["candidates"]
 check(len(cands) >= 8, "the race needs candidates")
 check([x["rank"] for x in cands] == list(range(1, len(cands) + 1)), "ranks are 1..n")
-check(all(cands[i]["score"] >= cands[i + 1]["score"] for i in range(len(cands) - 1)), "candidates sorted by score")
+check(all(cands[i]["impact"] >= cands[i + 1]["impact"] for i in range(len(cands) - 1)), "the stats race is sorted by average impact")
 check(r["complete"] and len(r["matchdays"]) == 11, "phase 1 is complete (J1-J11)")
 check(all(len(x["series"]) == 11 for x in cands), "one race point per matchday")
-check(cands[0]["score"] == 100 and r["weights"] == {"stats": 70, "fans": 30} and r["total_votes"] == 0 and not r["fans_count"], "no votes yet: score is the stats score")
+check(cands[0]["stats_score"] == 100 and r["total_votes"] == 0 and r["decided_by"] == "fans" and "weights" not in r, "stats race scaled to 100; the phase MVP is decided by the fans alone")
+check(r["vote_leader"] is None, "nobody voted yet: no fans' favourite")
 check(all(x["gp"] >= x["need"] for x in cands), "candidates meet the 70% games rule")
 check(r["winner"] is None and r["leader"]["id"] == "ca-24", "nobody crowned while fans can still vote; Abada leads on stats")
 check(r["voting_open"] and r["deadline"] == "2026-11-11T12:00:00+01:00", f"deadline from the repo file: {r['deadline']}")
@@ -71,14 +71,14 @@ for n in range(600, 612):
     r = c.post("/api/mvp/vote", json={"phase": 1, "player": cands[2]["id"], "vid": vid(n)}, headers={"User-Agent": UA, "CF-Connecting-IP": f"203.0.113.{n % 200}"}, environ_overrides={"REMOTE_ADDR": "127.0.0.1"})
     check(r.status_code == 200, f"visitor {n} behind the proxy must not share one network cap ({r.status_code})")
 
-# fans count once MIN_VOTES votes are in: the score then mixes both
-for n in range(100, 100 + mvp.MIN_VOTES):
+# the fans decide: 20 votes for the second best player make him the favourite although he is not the stats leader
+for n in range(100, 120):
     vote(b, n=n, ip=f"192.0.2.{n % 250}")
 t = c.get("/api/mvp?phase=1").get_json()
-check(t["fans_count"], "fan weight switches on after MIN_VOTES")
 top = {x["id"]: x for x in t["candidates"]}
-check(top[b]["fan_score"] == 100 and 0 < top[a]["fan_score"] < 100, "fan score is scaled to the most-voted candidate")
-check(abs(top[b]["score"] - (0.70 * top[b]["stats_score"] + 30)) < 0.11, "score = 70% stats + 30% fans")
+check(t["vote_leader"]["id"] == b and top[b]["votes"] == 20, "most votes = the fans' favourite")
+check(t["leader"]["id"] == a and [x["id"] for x in t["candidates"]][0] == a, "the stats race is not changed by the votes")
+check(abs(sum(x["vote_share"] for x in t["candidates"]) - 100) < 0.3, "vote shares add up")
 
 # admin: needs login, can change winner / close voting
 check(c.get("/admin/api/mvp").status_code == 401 and c.post("/admin/api/mvp", json={"phase": 1}).status_code == 401, "admin only")
@@ -88,17 +88,17 @@ check(c.post("/admin/api/mvp", json={"phase": 1, "winner": b, "voting_open": Fal
 t = c.get("/api/mvp?phase=1").get_json()
 check(t["winner"]["id"] == b and not t["voting_open"] and t["note"] == "x", "live settings override the repo file")
 check(vote(a, n=500, ip="192.0.2.250").status_code == 403, "closed voting refuses votes")
-# the deadline closes voting by itself, then the best 70/30 score is the winner
+# the deadline closes voting by itself, then the player with most votes is the winner
 c.post("/admin/api/mvp", json={"phase": 1, "winner": None, "voting_open": True, "deadline": "2020-01-01T12:00"}, headers=ADMIN)
 t = c.get("/api/mvp?phase=1").get_json()
 check(not t["voting_open"] and vote(a, n=501, ip="192.0.2.251").status_code == 403, "voting closes at the deadline")
-check(t["winner"] and t["winner"]["id"] == t["candidates"][0]["id"], "after the deadline the best score wins")
+check(t["winner"] and t["winner"]["id"] == b and t["leader"]["id"] == a, "after the deadline the fans' favourite wins, not the stats leader")
 c.post("/admin/api/mvp", json={"phase": 1, "winner": None, "voting_open": False}, headers=ADMIN)
 t = c.get("/api/mvp?phase=1").get_json()
-check(t["winner"] and t["winner"]["id"] == t["candidates"][0]["id"], "no crown + voting closed + phase complete: race leader wins")
+check(t["winner"] and t["winner"]["id"] == b, "no crown + voting closed + phase complete: most votes wins")
 check(c.get("/admin/api/mvp", headers=ADMIN).get_json()["phases"][0]["votes"]["total"] > 20, "admin sees vote totals")
 ov = c.get("/api/overview").get_json()["phase_mvp"]
-check(ov["winner"] and ov["runners"] and "log" not in ov["winner"], "home summary")
+check(ov["winner"] and len(ov["ballot"]) == 3 and "log" not in ov["winner"] and ov["leader"]["id"] == a, "home summary")
 
 # pages
 for p in ("/course-mvp", "/en/mvp-race"):

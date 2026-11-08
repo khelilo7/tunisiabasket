@@ -372,12 +372,12 @@ async function loadMvp() {
     <h3 style="margin-top:0">Phase ${p.phase} MVP <span class="mut small">· ${p.complete ? 'phase complete' : 'phase in progress'}</span></h3>
     <div class="kpis"><div class="kpi"><b>${p.votes.total}</b><span>fan votes</span></div><div class="kpi"><b>${p.votes.networks}</b><span>different networks</span></div></div>
     <div class="row" style="margin:10px 0"><label class="small mut">Crowned winner</label>
-      <select data-f="winner"><option value="">None (the best 70/30 score wins when voting closes)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
+      <select data-f="winner"><option value="">None (the most-voted player wins when voting closes)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
  <div class="row" style="margin:8px 0"><label class="small mut">Voting deadline (Tunisia time)</label><input type="datetime-local" data-f="deadline" value="${esc((p.deadline || '').slice(0, 16))}"><span class="small mut">${p.open_now ? 'voting is open now' : 'voting is closed now'}</span></div>
     <label class="row small" style="margin:8px 0"><input type="checkbox" data-f="open" ${p.voting_open ? 'checked' : ''}> Fan voting is open</label>
     <div class="row" style="margin:8px 0"><label class="small mut">Note on the winner card (optional)</label><input data-f="note" maxlength="200" style="flex:1;min-width:240px" value="${esc(p.note || '')}"></div>
     <button data-save="${p.phase}">Save</button> <span class="small mut" data-msg></span>
-    <p class="mut small" style="margin-bottom:0">Fans choose among the top 3 by stats; each browser votes once and the vote is final; at most 8 browsers per network. Only hashes are stored. Fan votes count for 30% of the score once 20 votes are in; stats 70%.</p></div>`).join('');
+    <p class="mut small" style="margin-bottom:0">Fans choose among the top 3 by stats; each browser votes once and the vote is final; at most 8 browsers per network. Only hashes are stored. The phase MVP is decided by the votes alone.</p></div>`).join('');
   box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
     const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
     const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value, deadline: g('deadline').value }) });

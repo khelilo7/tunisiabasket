@@ -401,6 +401,18 @@ def box_counts(games):
 
 
 # --- Planning (calendar) -----------------------------------------------------
+def load_calendar() -> dict:
+    """{matchday number: 'YYYY-MM-DD'} from assets/calendar.json, single dates overridden by data/calendar.json."""
+    out = {}
+    for path in (config.ASSETS_DIR / "calendar.json", config.DATA_DIR / "calendar.json"):
+        try:
+            raw = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        out.update({int(k): v for k, v in raw.items() if str(k).isdigit() and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(v))})
+    return out
+
+
 def planning(official=None):
     """Matchdays after phase 1. If data/fixtures.json exists it is the official calendar; otherwise the
     calendar is PROJECTED as the mirror of phase 1 (same order, home/away swapped), the usual double
@@ -427,7 +439,7 @@ def planning(official=None):
             by_md[r["matchday"]].append({"home": r["home"], "away": r["away"], "played": True,
                                          "home_score": r["home_score"], "away_score": r["away_score"]})
     return {"projected": projected, "teams": o["teams"],
-            "matchdays": [{"matchday": md, "games": sorted(gs, key=lambda g: g["home"])} for md, gs in sorted(by_md.items())]}
+            "matchdays": [{"matchday": md, "date": load_calendar().get(md), "games": sorted(gs, key=lambda g: g["home"])} for md, gs in sorted(by_md.items())]}
 
 
 def team_stats(season=None):
@@ -455,6 +467,32 @@ def team_stats(season=None):
                      "reb": per("reb"), "ast": per("ast"), "stl": per("stl"), "blk": per("blk"), "tov": per("tov"),
                      "top_scorer": {"name": top["name"], "pts": top["pts"]} if top else None})
     return {"season": d["season"], "teams": rows}
+
+
+def matchup(home, away, season=None):
+    """Everything to compare two teams before they meet, from the games played so far."""
+    o = load_official()
+    if home not in o["teams"] or away not in o["teams"] or home == away:
+        return None
+    ts = {r["code"]: r for r in team_stats(season)["teams"]}
+    d = build(season)
+
+    def form(code):
+        rs = [r for r in sorted(o["results"], key=lambda r: r["matchday"]) if code in (r["home"], r["away"])][-5:]
+        return [{"matchday": r["matchday"], "won": (r["home_score"] > r["away_score"]) == (r["home"] == code),
+                 "opp": r["away"] if r["home"] == code else r["home"]} for r in rs]
+
+    def key_players(code):
+        ps = sorted((p for p in d["players"] if p["team"] == code and p["gp"]), key=lambda p: (p["pts"], p["pir"]), reverse=True)[:3]
+        return [{k: p[k] for k in ("id", "name", "number", "pts", "reb", "ast", "pir", "gp")} for p in ps]
+
+    meetings = [{"matchday": r["matchday"], "home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"]}
+                for r in sorted(o["results"], key=lambda r: r["matchday"]) if {r["home"], r["away"]} == {home, away}]
+    cal = load_calendar()
+    nxt = next((m for m in planning(o)["matchdays"] for g in m["games"] if not g["played"] and {g["home"], g["away"]} == {home, away}), None)
+    return {"home": ts.get(home), "away": ts.get(away), "meetings": meetings, "form": {home: form(home), away: form(away)},
+            "players": {home: key_players(home), away: key_players(away)},
+            "next": {"matchday": nxt["matchday"], "date": cal.get(nxt["matchday"])} if nxt else None}
 
 
 def team_view(code, season=None):

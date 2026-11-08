@@ -7,14 +7,14 @@
     fr: { player: 'Joueur', pcmp: 'COMPARAISON DES JOUEURS', tcmp: 'COMPARAISON DES ÉQUIPES', race: 'COURSE AU MVP · PHASE 1', per: 'Moyennes par match', yrs: 'ans',
       GP: 'Matchs', MIN: 'Minutes', PTS: 'Points', REB: 'Rebonds', AST: 'Passes décisives', STL: 'Interceptions', BLK: 'Contres', TOV: 'Balles perdues', FG: 'Tir %', P3: '3 points %', FT: 'Lancers francs %', PIR: 'PIR (évaluation)',
       REC: 'Bilan', RANK: 'Classement', PPG: 'Points marqués', OPP: 'Points encaissés', DIFF: 'Différence / match', edge: 'Avantage', cats: 'catégories',
-      scorer: 'Meilleur marqueur', leader: 'LEADER DE LA COURSE', score: 'Score', votes: 'votes', weights: (s, f) => `Score = ${s} % statistiques + ${f} % vote des fans`,
+      scorer: 'Meilleur marqueur', leader: 'MEILLEUR JOUEUR À CE JOUR', score: 'Score', votes: 'votes', weights: () => 'Classement aux statistiques · le MVP est choisi par les fans',
       closes: 'Fin du vote', closed: 'Vote clos', topn: n => `Top ${n}`, lead: 'Leaders de la ligue', qual: 'Joueurs ayant joué au moins 70 % des matchs de leur équipe', ranking: 'Classement',
       cat: { pts: 'Meilleurs marqueurs', reb: 'Meilleurs rebondeurs', ast: 'Meilleurs passeurs', stl: 'Meilleurs intercepteurs', blk: 'Meilleurs contreurs', p3m: 'Tirs à 3 points réussis', fg_pct: 'Meilleurs shooteurs (TIR %)', pir: 'Plus efficaces (PIR)' },
       unit: { pts: 'PTS', reb: 'REB', ast: 'PD', stl: 'INT', blk: 'CTR', p3m: '3PT', fg_pct: '%', pir: 'PIR' }, season: 'Saison', pos: { PG: 'MEN', SG: 'ARR', SF: 'AIL', PF: 'AF', C: 'PIV' }, w: 'V', l: 'D', allcats: 'Les 3 premiers de chaque catégorie' },
     en: { player: 'Player', pcmp: 'PLAYER COMPARISON', tcmp: 'TEAM COMPARISON', race: 'MVP RACE · PHASE 1', per: 'Per-game averages', yrs: 'yrs',
       GP: 'Games', MIN: 'Minutes', PTS: 'Points', REB: 'Rebounds', AST: 'Assists', STL: 'Steals', BLK: 'Blocks', TOV: 'Turnovers', FG: 'FG %', P3: '3-point %', FT: 'Free throw %', PIR: 'PIR (efficiency)',
       REC: 'Record', RANK: 'Standing', PPG: 'Points scored', OPP: 'Points allowed', DIFF: 'Margin / game', edge: 'Edge', cats: 'categories',
-      scorer: 'Top scorer', leader: 'RACE LEADER', score: 'Score', votes: 'votes', weights: (s, f) => `Score = ${s}% stats + ${f}% fans’ vote`,
+      scorer: 'Top scorer', leader: 'BEST PLAYER SO FAR', score: 'Score', votes: 'votes', weights: () => 'Stats ranking · the MVP is chosen by the fans',
       closes: 'Voting closes', closed: 'Voting closed', topn: n => `Top ${n}`, lead: 'League leaders', qual: 'Players with at least 70% of their team’s games', ranking: 'Ranking',
       cat: { pts: 'Top scorers', reb: 'Top rebounders', ast: 'Top passers', stl: 'Top ball stealers', blk: 'Top shot blockers', p3m: 'Three-pointers made', fg_pct: 'Best shooters (FG%)', pir: 'Most efficient (PIR)' },
       unit: { pts: 'PTS', reb: 'REB', ast: 'AST', stl: 'STL', blk: 'BLK', p3m: '3P', fg_pct: '%', pir: 'PIR' }, season: 'Season', pos: { PG: 'PG', SG: 'SG', SF: 'SF', PF: 'PF', C: 'C' }, w: 'W', l: 'L', allcats: 'Top 3 in every category' }
@@ -161,7 +161,7 @@
     const t = L[lang], r = D.mvp, n = Math.min(+sel.rn || 8, r.candidates.length), rows = r.candidates.slice(0, n), lead = r.winner || r.leader;
     if (!lead) return;
     const RH = 96, top = 300, banner = 200, H = top + banner + 28 + n * RH + 70 + 120;
-    const ctx = await frame(H, t.race, t.leader.charAt(0) + t.leader.slice(1).toLowerCase() + ': ' + nm(lead.name), t.weights(r.weights.stats, r.weights.fans));
+    const ctx = await frame(H, t.race, t.leader.charAt(0) + t.leader.slice(1).toLowerCase() + ': ' + nm(lead.name), t.weights());
     // leader banner
     ctx.fillStyle = C.card; rr(ctx, 40, top, W - 80, banner, 24); ctx.fill(); ctx.strokeStyle = C.acc; ctx.lineWidth = 3; ctx.stroke();
     await logo(ctx, lead.team, 70, top + 36, 128);
@@ -170,7 +170,7 @@
     txt(ctx, `${lead.team} · #${lead.number} · ${lead.gp} ${t.GP.toLowerCase()}`, 230, top + 146, { size: 24, color: C.mut });
     txt(ctx, `${f1(lead.pts)} PTS   ${f1(lead.reb)} REB   ${f1(lead.ast)} ${lang === 'fr' ? 'PD' : 'AST'}   PIR ${f1(lead.pir)}`, 230, top + 184, { size: 28, weight: 800, color: C.acc2 || C.acc });
     // rows
-    const best = Math.max(1, ...rows.map(x => x.score));
+    const best = Math.max(1, ...rows.map(x => x.stats_score));
     for (let i = 0; i < n; i++) {
       const x = rows[i], y = top + banner + 28 + i * RH;
       if (i % 2 === 0) { ctx.fillStyle = 'rgba(255,255,255,.035)'; ctx.fillRect(40, y, W - 80, RH); }
@@ -179,8 +179,8 @@
       await logo(ctx, x.team, 118, y + 18, 60);
       txt(ctx, nm(x.name), 196, y + 38, { size: 30, weight: 800, maxW: 400 });
       txt(ctx, `${x.team} · ${f1(x.pts)} PTS · ${f1(x.reb)} REB · ${f1(x.ast)} ${lang === 'fr' ? 'PD' : 'AST'} · PIR ${f1(x.pir)}`, 196, y + 64, { size: 20, color: C.mut, maxW: 520 });
-      const bx = 716, bw = 190; ctx.fillStyle = C.line; rr(ctx, bx, y + 30, bw, 14, 7); ctx.fill(); ctx.fillStyle = C.acc; rr(ctx, bx, y + 30, Math.max(8, bw * x.score / best), 14, 7); ctx.fill();
-      txt(ctx, f1(x.score), W - 52, y + 52, { size: 38, weight: 900, color: i === 0 ? C.acc : C.txt, align: 'right' });
+      const bx = 716, bw = 190; ctx.fillStyle = C.line; rr(ctx, bx, y + 30, bw, 14, 7); ctx.fill(); ctx.fillStyle = C.acc; rr(ctx, bx, y + 30, Math.max(8, bw * x.stats_score / best), 14, 7); ctx.fill();
+      txt(ctx, f1(x.stats_score), W - 52, y + 52, { size: 38, weight: 900, color: i === 0 ? C.acc : C.txt, align: 'right' });
       txt(ctx, `${x.votes} ${t.votes} · ${f1(x.vote_share)}%`, bx, y + 72, { size: 18, color: C.mut });
     }
     const foot = r.deadline_ts ? `${r.voting_open ? t.closes : t.closed}: ${new Date(r.deadline_ts * 1000).toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Tunis' })}` : '';

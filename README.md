@@ -100,17 +100,26 @@ Production runs `gunicorn -c gunicorn.conf.py app:app` (one worker on purpose) b
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
 
-## Phase MVP: race and fan vote (mvp.py)
+## Phase MVP: stats race and fan vote (mvp.py)
 Page `/course-mvp` (`/en/mvp-race`). A phase is 11 matchdays (phase 1 = J1-J11). Candidates are the players of the top 4 teams who played at least 70% of
-their team's games in the phase. The race score is **70% stats** (average impact over the phase = PIR + 2 per win) and **30% fans' vote**, each scaled so the
-best candidate gets 100; the fans' share only counts after 20 votes. The chart shows each leading candidate's running average after every matchday.
-Voting: one vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused, changing your vote
-replaces it. Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from
-several browsers or phones: treat the fan share as a popularity signal, not an audit.
-Voting has a **deadline** (phase 1: Wednesday 11 November 2026, 12:00 Tunisian time, set in `assets/mvp_awards.json`; change it in the admin panel, tab MVP, which saves
-to `data/mvp.json` and wins over the repo file). Nobody is crowned while voting is open: the page shows the stats leader as provisional. When the deadline passes
-(or the admin closes voting) the best 70/30 score becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the
-visitor's real address (`CF-Connecting-IP`, or the proxy's forwarded address), not the proxy's.
+their team's games in the phase. Two separate things:
+- **Stats race**: every candidate ranked by average impact over the phase (PIR + 2 per win), with a chart of each leader's running average after every matchday.
+  It shows the best player so far and decides nothing.
+- **Fan vote**: fans choose among the top 3 of the stats race. **The phase MVP is decided by the votes alone** (most votes; a tie goes to the better stats; if nobody
+  voted, the stats leader). One final vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused.
+  Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from several browsers
+  or phones: treat the result as a popularity vote, not an audit.
+Voting has a **deadline** (phase 1: Wednesday 11 November 2026, 12:00 Tunisian time, set in `assets/mvp_awards.json`; change it in the admin panel, tab MVP, which
+saves to `data/mvp.json` and wins over the repo file). Nobody is crowned while voting is open. When the deadline passes (or the admin closes voting) the most-voted
+player becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the visitor's real address (`CF-Connecting-IP`, or
+the proxy's forwarded address), not the proxy's.
+
+## Home page: next games banner (assets/calendar.json)
+The banner at the top is a carousel of the next games (up to 12, one at a time, moving every few seconds; arrows, dots and swipe also work). The pairings come from the
+calendar (`stats.planning()`; for J12-J22 the mirror of phase 1, which matches the games already published) and the dates from `assets/calendar.json` (the federation
+calendar; `data/calendar.json` can override single dates). Clicking a game opens a comparison built from the games played so far (`/api/matchup`): record, standing,
+scoring, shooting, rebounds, assists, steals, blocks, turnovers, form, the previous meeting and the key players. The "best player so far" card and the fan-vote card sit
+below it.
 
 ## Admin: players, rosters and images
 Two more tabs in the admin panel (`/admin`).

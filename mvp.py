@@ -5,11 +5,11 @@ A phase is 11 matchdays (phase 1 = J1-J11, phase 2 = J12-J22). For a phase:
     impact over the phase's games, and draws how each candidate's average moved matchday after matchday;
   * the FANS' VOTE lets every visitor back one of the top 3 candidates by stats. One final vote per browser; a handful per network, because mobile
     operators put many people behind one address. Only hashes are stored (no address, no browser string);
-  * the SCORE of a candidate is 70% stats + 30% fans, both scaled so the best candidate gets 100. Until the fans have
-    cast MIN_VOTES votes the score is stats only, so a few early votes cannot decide the race;
+  * the phase MVP is decided by the FANS' VOTE ALONE (most votes; a tie goes to the better stats). The stats race is a separate
+    ranking: it shows the best player so far and decides nothing;
   * VOTING closes at the phase's deadline (or earlier if the admin closes it). The WINNER is the player the admin crowns
     (assets/mvp_awards.json in the repo, or data/mvp.json from the admin panel, which wins); with no crown, a finished
-    phase whose voting is closed goes to the race leader, i.e. the best 70/30 score.
+    phase whose voting is closed goes to the player with the most votes (the stats leader if nobody voted).
 """
 import hashlib
 import hmac
@@ -31,8 +31,6 @@ import traffic
 
 PHASE_LEN = stats.PHASE_LEN
 PHASES = (1, 2)
-STATS_WEIGHT, FAN_WEIGHT = 0.70, 0.30
-MIN_VOTES = 20                    # fans' share only counts once this many votes are in
 MAX_VOTERS_PER_NETWORK = 8        # distinct browsers per network per phase (carrier-grade NAT shares addresses)
 BALLOT_SIZE = 3                   # fans choose among the top N by stats; one vote each, final
 RACE_LINES = 6                    # candidates drawn on the race chart
@@ -220,46 +218,39 @@ def ballot(phase: int):
 
 
 def race(phase: int = 1) -> dict:
+    """Two separate things: the STATS race (every candidate ranked by average impact, rank/series/chart) and the FANS' vote
+    (votes and share per candidate). The phase MVP is decided by the votes alone."""
     if phase not in PHASES:
         raise ValueError("phase")
-    rows, matchdays, complete = _race_data(phase)
+    rows, matchdays, complete = _race_data(phase)       # best average impact first
     votes = tally(phase)
-    ballot_ids = [r["id"] for r in rows[:BALLOT_SIZE]]          # rows are still in stats order here
+    ballot_ids = [r["id"] for r in rows[:BALLOT_SIZE]]
     total = sum(votes.get(r["id"], 0) for r in rows)
-    fans_count = total >= MIN_VOTES
     best_impact = max((r["impact"] for r in rows), default=0) or 1
-    best_votes = max((votes.get(r["id"], 0) for r in rows if r["id"] in ballot_ids), default=0) or 1
-    for r in rows:
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i                                     # rank in the stats race
         r["votes"] = votes.get(r["id"], 0)
         r["vote_share"] = round(100 * r["votes"] / total, 1) if total else 0
         r["stats_score"] = round(100 * max(r["impact"], 0) / best_impact, 1)
-        r["fan_score"] = round(100 * r["votes"] / best_votes, 1) if fans_count else 0
-        r["score"] = round(STATS_WEIGHT * r["stats_score"] + FAN_WEIGHT * r["fan_score"], 1) if fans_count else r["stats_score"]
-    rows.sort(key=lambda r: (r["score"], r["impact"], r["pts"]), reverse=True)
-    for i, r in enumerate(rows, 1):
-        r["rank"] = i
-    # race chart: running average impact of the leading candidates after each matchday they have played
-    for r in rows:
         acc, series = [], []
         for m in matchdays:
             acc += r["_by_md"].get(m, [])
             series.append(round(sum(acc) / len(acc), 1) if acc else None)
         r["series"] = series
-    for r in rows:
         del r["_by_md"]
+    # the fans' favourite: most votes, a tie goes to the better stats; nobody if nobody voted
+    vote_leader = max((r for r in rows if r["votes"]), key=lambda r: (r["votes"], r["impact"]), default=None)
     st = settings(phase)
     is_open = voting_open(phase)
     try:
         dl = parse_deadline(st["deadline"])
     except ValueError:
         dl = None
-    winner = next((r for r in rows if r["id"] == st["winner"]), None)
-    decided = winner is not None
-    if not decided and not is_open and complete and rows:
-        winner, decided = rows[0], True
+    winner = next((r for r in rows if r["id"] == st["winner"]), None)       # a crown set by the admin always wins
+    if winner is None and not is_open and complete and rows:
+        winner = vote_leader or rows[0]                                      # voting is over: the fans decide (no votes at all: the stats leader)
     return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": is_open, "note": st["note"],
             "deadline": dl.isoformat() if dl else None, "deadline_ts": int(dl.timestamp()) if dl else None,
-            "total_votes": total, "min_votes": MIN_VOTES, "fans_count": fans_count,
-            "weights": {"stats": int(STATS_WEIGHT * 100), "fans": int(FAN_WEIGHT * 100)},
-            "winner": winner if decided else None, "leader": rows[0] if rows else None,
+            "total_votes": total, "decided_by": "fans",
+            "winner": winner, "leader": rows[0] if rows else None, "vote_leader": vote_leader,
             "ballot": ballot_ids, "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}

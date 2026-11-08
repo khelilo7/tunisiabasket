@@ -107,10 +107,12 @@ def robots():
 
 def _phase_summary():
     r = mvp.race(1)
-    keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share", "score", "mvp_games")
+    keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share")
     pick = lambda c: {k: c[k] for k in keep} if c else None
+    by = {c["id"]: c for c in r["candidates"]}
     return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "deadline_ts": r["deadline_ts"], "total_votes": r["total_votes"],
-            "winner": pick(r["winner"]), "leader": pick(r["leader"]), "runners": [pick(c) for c in r["candidates"][:3]]}
+            "winner": pick(r["winner"]), "leader": pick(r["leader"]), "vote_leader": pick(r["vote_leader"]),
+            "ballot": [pick(by[i]) for i in r["ballot"] if i in by]}
 
 
 @app.get("/api/overview")
@@ -198,6 +200,20 @@ def team(code):
     if not v:
         abort(404)
     return jsonify(v)
+
+
+@app.get("/api/team-stats")
+def team_stats_public():
+    return jsonify(stats.team_stats(request.args.get("season")))
+
+
+@app.get("/api/matchup")
+def matchup():
+    """Head-to-head preview of two teams from the games played so far (used by the next-games banner)."""
+    m = stats.matchup(str(request.args.get("home", "")).upper(), str(request.args.get("away", "")).upper(), request.args.get("season"))
+    if not m:
+        abort(404)
+    return jsonify(m)
 
 
 @app.get("/api/planning")

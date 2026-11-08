@@ -150,6 +150,36 @@
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
+  /* next-games banner, matchup modal, home duo */
+  .nb { position:relative; overflow:hidden; border-radius:18px; border:1px solid var(--mvp-line); background:var(--mvp-grad); box-shadow:var(--shadow); margin-bottom:14px; }
+  .nbt { overflow:hidden; } .nbtrack { display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1); }
+  .nbs { flex:0 0 100%; padding:22px 64px 20px; cursor:pointer; text-align:center; position:relative; user-select:none; }
+  .nbs .nbh { display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--acc); }
+  .nbs .nbh .pill { letter-spacing:0; }
+  .nbs .nbm { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; margin:14px 0 10px; }
+  .nbs .nbtm { display:flex; flex-direction:column; align-items:center; gap:8px; font-size:clamp(15px,2.4vw,20px); font-weight:800; line-height:1.2; } .nbs .nbtm small { font-weight:600; color:var(--mut); font-size:12px; }
+  .nbs .nbvs { font-size:clamp(20px,4vw,30px); font-weight:900; color:var(--mut); letter-spacing:.06em; }
+  .nbs .nbcta { display:inline-block; margin-top:4px; padding:6px 16px; border-radius:99px; background:var(--acc); color:#10131c; font-weight:800; font-size:13px; }
+  .nbs:hover .nbcta { filter:brightness(1.1); }
+  .nbn { position:absolute; top:50%; transform:translateY(-50%); width:40px; height:40px; border-radius:50%; padding:0; font-size:22px; line-height:1; background:var(--card); border:1px solid var(--line); color:var(--txt); cursor:pointer; z-index:2; display:grid; place-items:center; }
+  .nbn:hover { border-color:var(--acc); color:var(--acc); } .nbn.p { left:12px; } .nbn.n { right:12px; }
+  .nbd { display:flex; justify-content:center; gap:7px; padding:0 0 12px; align-items:center; } .nbd button { width:9px; height:9px; padding:0; border-radius:50%; border:0; background:var(--line); cursor:pointer; } .nbd button.on { background:var(--acc); width:22px; border-radius:6px; }
+  .nbd .nbc { font-size:11px; color:var(--mut); margin-left:8px; font-variant-numeric:tabular-nums; }
+  .mu { padding:0 0 6px; } .mu .muh { padding:16px 18px; background:var(--mvp-grad); border-bottom:1px solid var(--mvp-line); }
+  .mu .mut2 { display:grid; grid-template-columns:1fr auto 1fr; gap:12px; align-items:center; margin-top:8px; text-align:center; } .mu .mut2 .t { display:flex; flex-direction:column; align-items:center; gap:4px; font-weight:800; }
+  .mu .sec { padding:12px 18px 0; } .mu .sec h4 { margin:0 0 8px; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color:var(--mut); }
+  .mu .cr { display:grid; grid-template-columns:64px 1fr 118px 1fr 64px; gap:8px; align-items:center; padding:5px 0; font-size:13px; }
+  .mu .cr b { font-variant-numeric:tabular-nums; font-size:15px; color:var(--mut); } .mu .cr b.win { color:var(--txt); } .mu .cr b:first-child { text-align:right; } .mu .cr > span { text-align:center; font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.05em; }
+  .mu .cb { height:8px; background:var(--track); border-radius:4px; position:relative; overflow:hidden; } .mu .cb i { position:absolute; top:0; bottom:0; background:var(--acc); opacity:.45; border-radius:4px; } .mu .cb.l i { right:0; } .mu .cb.r i { left:0; background:#4f93ff; }
+  .mu .cb i.win { opacity:1; }
+  .mu .chips { display:flex; gap:5px; } .mu .chip2 { width:26px; height:26px; border-radius:7px; display:grid; place-items:center; font-size:12px; font-weight:800; } .mu .chip2.w { background:var(--pillw); color:var(--good); } .mu .chip2.l { background:var(--pilll); color:var(--bad); }
+  .mu .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; } .mu .pl { font-size:13px; padding:4px 0; display:flex; justify-content:space-between; gap:8px; } .mu .pl span { color:var(--mut); }
+  .duo { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; } .duo .phase { margin-top:0; grid-template-columns:1fr; }
+  .bestnow { display:flex; flex-direction:column; gap:6px; } .bestnow .bn { display:flex; align-items:center; gap:12px; font-size:clamp(20px,3.5vw,26px); font-weight:800; line-height:1.15; }
+  .bestnow .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+  .bestnow .tiles { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; } .bestnow .tile { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:6px 11px; min-width:56px; text-align:center; }
+  .bestnow .tile b { display:block; font-size:19px; color:var(--acc); line-height:1.1; } .bestnow .tile span { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
+  @media (max-width:760px) { .duo { grid-template-columns:1fr; } .nbs { padding:18px 14px 16px; } .nbn { display:none; } .mu .cr { grid-template-columns:52px 1fr 90px 1fr 52px; } .mu .two { grid-template-columns:1fr; } }
   /* phase MVP: banner on the home page, race page, fan vote */
   .phase { cursor:pointer; display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:center; margin-top:14px; background:var(--mvp-grad); border-color:var(--mvp-line); transition:border-color .15s, transform .15s; } .phase:hover { border-color:var(--acc); transform:translateY(-2px); }
   .phase .crown, .winner .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
@@ -171,7 +201,7 @@
   .bcard .tiles { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:4px 0; } .bcard .tile { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:5px 9px; min-width:52px; }
   .bcard .tile b { display:block; font-size:16px; color:var(--acc); line-height:1.1; } .bcard .tile span { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
   .bcard .vv { width:100%; font-size:13px; } .bcard .vv .meter { margin-top:4px; } .bcard button.vote { width:100%; padding:9px 14px; font-size:14px; margin-top:4px; }
-  .vrow { display:grid; grid-template-columns:28px 32px minmax(0,1.5fr) minmax(0,1fr) minmax(0,1fr) 52px; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--line); }
+  .vrow { display:grid; grid-template-columns:28px 32px minmax(0,1.5fr) minmax(0,1fr) 52px; gap:12px; align-items:center; padding:11px 16px; border-top:1px solid var(--line); }
   .vrow:first-child { border-top:0; } .vrow.me { background:var(--hover); box-shadow:inset 3px 0 0 var(--acc); }
   .vrow .rk { text-align:center; color:var(--mut); font-weight:800; font-variant-numeric:tabular-nums; } .vrow:nth-child(-n+3) .rk { color:var(--acc); }
   .vrow .nmb b { display:block; } .vrow .nmb span, .vrow .vv span { font-size:12px; color:var(--mut); } .vrow .sc { font-weight:800; font-size:18px; text-align:right; font-variant-numeric:tabular-nums; }
@@ -180,7 +210,7 @@
   button.vote.on { background:var(--acc); color:#10131c; cursor:default; } button.vote[disabled] { opacity:.45; cursor:not-allowed; }
   .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
   .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
-  @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars, .vrow .vv { grid-column:3; } .vrow .sc { display:none; } }
+  @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars { grid-column:3; } .vrow .sc { display:none; } }
   @media (max-width:760px) { .ballot { grid-template-columns:1fr; } .phase { grid-template-columns:1fr; } .winner { grid-template-columns:1fr; padding:18px; } .winner .trophy { font-size:48px; }
   }
 </style>
@@ -235,7 +265,11 @@ const FR = {
   'You already voted: one vote per person.': 'Vous avez déjà voté : une seule voix par personne.', 'Ranking': 'Classement',
   'Voting is closed.': 'Le vote est clos.', 'Too many votes from this network. Try again later.': 'Trop de votes depuis ce réseau. Réessayez plus tard.',
   'Could not record your vote.': 'Impossible d’enregistrer votre vote.',
-  'Transfer': 'Transfert',
+  'Transfer': 'Transfert', 'Next games': 'Prochains matchs', 'Compare the teams': 'Comparer les équipes', 'Compare': 'Comparer', 'Previous': 'Précédent', 'Next': 'Suivant',
+  'Based on the games played so far': 'Basé sur les matchs joués jusqu’ici', 'Record': 'Bilan', 'Standing': 'Classement', 'Points scored': 'Points marqués', 'Points allowed': 'Points encaissés',
+  'Margin / game': 'Différence / match', 'Free throw %': 'Lancers francs %', 'Turnovers': 'Balles perdues', 'Last meeting': 'Dernière confrontation', 'Form (last 5)': 'Forme (5 derniers)',
+  'Team stats': 'Statistiques d’équipe', 'Key players': 'Joueurs clés', 'No previous meeting this season.': 'Pas de confrontation cette saison.', 'Best player so far': 'Meilleur joueur à ce jour',
+  'Stats race': 'Course aux statistiques', 'Decided by the fans': 'Décidé par les fans', 'Impact': 'Impact',
   'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
@@ -272,13 +306,12 @@ const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
-    provisional: (s, fa) => `Best player by the stats so far. The final decision is ${s}% stats and ${fa}% fans’ vote, announced when voting closes.`,
-    ballotIntro: n => `Choose your MVP among the top ${n} players by stats. One vote per person, and it is final.`,
+    ballotIntro: n => `Choose your Phase 1 MVP among the top ${n} of the stats race. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
     votesN: n => `${n} vote${n === 1 ? '' : 's'}`, allCands: n => `Show all ${n} candidates`,
-    mvpHow: (s, fa, min, on) => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
-      <p><b>Stats (${s}%).</b> The average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. The best candidate gets 100, the others are scaled to him.</p>
-      <p><b>Fans (${fa}%).</b> Fans choose among the top 3 by stats. Every browser has one vote, and it is final. The most-voted of the three gets 100. Fan votes only count once ${min} votes are in, so a few early votes cannot decide the race${on ? ' (that threshold is reached)' : ''}.</p>
-      <p><b>Score</b> = ${s}% stats + ${fa}% fans. When voting closes at the deadline, the best score is crowned phase MVP.</p>`,
+    mvpHow: () => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
+      <p><b>Stats race.</b> Ranks every candidate by average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. It shows the best player so far and decides nothing.</p>
+      <p><b>Fan vote (100%).</b> The Phase 1 MVP is decided by the fans’ votes alone. Fans choose among the top 3 of the stats race; every browser has one vote, and it is final. The most-voted player wins; a tie goes to the better stats.</p>
+      <p>When voting closes at the deadline, the player with the most votes is crowned Phase 1 MVP.</p>`,
     seasonMvp: s => `★ SEASON MVP · ${s}`, qualRule: n => `≥ ${n}% of team games`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
     playersSub: s => `${s} · per-game averages`, standingsSub: s => `${s} · regular season · phase 1 complete (J1–J11)`,
@@ -293,13 +326,12 @@ const SENT = {
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
-    provisional: (s, fa) => `Meilleur joueur selon les statistiques pour l’instant. La décision finale est ${s} % statistiques et ${fa} % vote des fans, annoncée à la clôture du vote.`,
-    ballotIntro: n => `Choisissez votre MVP parmi les ${n} meilleurs joueurs selon les statistiques. Une seule voix par personne, et elle est définitive.`,
+    ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} premiers de la course aux statistiques. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
     votesN: n => `${n} vote${n > 1 ? 's' : ''}`, allCands: n => `Voir les ${n} candidats`,
-    mvpHow: (s, fa, min, on) => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
-      <p><b>Statistiques (${s} %).</b> L’impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Le meilleur candidat obtient 100, les autres sont ramenés à lui.</p>
-      <p><b>Fans (${fa} %).</b> Les fans choisissent parmi les 3 premiers selon les statistiques. Chaque navigateur a une seule voix, définitive. Le plus voté des trois obtient 100. Les votes des fans ne comptent qu’à partir de ${min} votes, pour que quelques votes précoces ne décident pas la course${on ? ' (ce seuil est atteint)' : ''}.</p>
-      <p><b>Score</b> = ${s} % statistiques + ${fa} % fans. À la clôture du vote, à l’échéance, le meilleur score est couronné MVP de la phase.</p>`,
+    mvpHow: () => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
+      <p><b>Course aux statistiques.</b> Classe chaque candidat selon son impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Elle montre le meilleur joueur à ce jour et ne décide rien.</p>
+      <p><b>Vote des fans (100 %).</b> Le MVP de la phase 1 est décidé par le seul vote des fans. Les fans choisissent parmi les 3 premiers de la course aux statistiques ; chaque navigateur a une seule voix, définitive. Le joueur le plus voté gagne ; en cas d’égalité, les meilleures statistiques départagent.</p>
+      <p>À la clôture du vote, à l’échéance, le joueur ayant le plus de voix est couronné MVP de la phase 1.</p>`,
     seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, qualRule: n => `≥ ${n} % des matchs de l’équipe`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
     playersSub: s => `${s} · moyennes par match`, standingsSub: s => `${s} · saison régulière · phase 1 terminée (J1–J11)`,
@@ -377,10 +409,11 @@ async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings' }[r.page] || r.page)));
   const app = $('#app');
-  courtData = null; pageMeta = null;
+  courtData = null; pageMeta = null; clearInterval(nbTimer);
   try {
     app.innerHTML = await ({ home, standings, players, games, planning, mvp, team, player, game }[r.page] || home)(r.arg);
     bind();
+    startBanner();
     drawCourt();
     if (pageMeta) setMeta(...pageMeta);
     track();
@@ -405,21 +438,13 @@ const META = {
 };
 
 async function home() {
-  const d = await api('overview');
+  const [d, plan] = await Promise.all([api('overview'), fetch('/api/planning').then(r => r.json()).catch(() => null)]);
   pageMeta = META.home[LANG];
   if (!d.games) return `<div class="empty"><h1>${_('No games yet')}</h1>${_('Box scores appear here as soon as they are added.')}</div>`;
-  const m = d.mvp;
   return `
-  <div class="card hero">
-    <svg class="herobg" viewBox="0 0 500 470" aria-hidden="true">${halfLines(false)}</svg>
-    <img class="watermark" src="/img/teams/${esc(m.team)}.png" alt="" onerror="this.remove()">
-    ${ring(m.rating)}
-    <div style="position:relative"><div class="crown">${f('seasonMvp', esc(d.season))}</div>
-      <div class="nm tn" style="gap:12px">${logo(m.team, 44)}${plink(m)}</div>
-      <div class="who">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${esc(f('mvpTeam', m))}</div>
-      <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div></div>
+  ${nextBanner(plan, d.standings)}
   <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
-  ${phaseCard(d.phase_mvp)}
+  <div class="duo">${bestCard(d.mvp)}${phaseCard(d.phase_mvp)}</div>
   <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
   <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
@@ -474,15 +499,21 @@ const voterId = () => {   // random code kept in this browser: it makes "one vot
   return v;
 };
 function phaseCard(pm) {
-  if (!pm || !(pm.winner || pm.leader)) return '';
-  const m = pm.winner || pm.leader, best = Math.max(1, ...pm.runners.map(r => r.score));
-  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">🏆 ${pm.winner ? _('Phase 1 MVP') : _('Race leader')}</div>
-    <div class="pn">${logo(m.team, 52)}<span>${plink(m, esc(title(m.name)))}</span></div>
-    <div class="mut small">${esc(m.team)} · #${m.number} · ${m.pts} ${_('pts')} · ${m.reb} ${_('reb')} · ${m.ast} ${_('ast')} · PIR ${m.pir}</div>
-    ${pm.voting_open && pm.deadline_ts ? `<div class="mut small" style="margin-top:8px">⏳ ${deadlineLine(true, pm.deadline_ts)}</div>` : ''}
-    <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div>
-    <div class="runners"><div class="mut small" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">${_('MVP race')} · ${esc(f('votesN', pm.total_votes))}</div>
-    ${pm.runners.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.score / best)}%"></i></div></div><b>${r.score}</b></div>`).join('')}</div></div>`;
+  if (!pm || !pm.ballot.length) return '';
+  const W = pm.winner, top = Math.max(1, ...pm.ballot.map(r => r.votes));
+  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">${W ? '🏆 ' + _('Phase 1 MVP') : '🗳️ ' + _('Fan vote') + ' · ' + _('Phase 1 MVP')}</div>
+    ${W ? `<div class="pn">${logo(W.team, 44)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
+        : `<div class="mut small" style="margin:6px 0 2px">${esc(f('votesN', pm.total_votes))} · ${esc(_('Decided by the fans'))}</div>`}
+    ${pm.voting_open && pm.deadline_ts ? `<div class="mut small" style="margin-top:6px">⏳ ${deadlineLine(true, pm.deadline_ts)}</div>` : ''}</div>
+    <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div><b>${r.vote_share}%</b></div>`).join('')}
+    <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div></div>`;
+}
+function bestCard(m) {
+  if (!m) return '';
+  return `<div class="card bestnow" data-go="${url('mvp')}" style="cursor:pointer"><div class="crown">⭐ ${_('Best player so far')} · ${_('Stats race')}</div>
+    <div class="bn">${logo(m.team, 48)}<span>${plink(m, esc(title(m.name)))}</span></div>
+    <div class="mut small">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${m.gp} ${H('GP')}${m.team_rank ? ' · ' + esc(f('rankIn', m.team_rank)) : ''}</div>
+    <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
 }
 
 const fmtLeft = ms => { const m = Math.max(0, Math.floor(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60);
@@ -493,32 +524,30 @@ let mvpAll = false, voteMsg = null;
 async function mvp() {
   pageMeta = META.mvp[LANG];
   const r = await (await fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`)).json();
-  const c = r.candidates, shown = mvpAll ? c : c.slice(0, 10), W = r.winner, lead = W || r.leader;
+  const c = r.candidates, shown = mvpAll ? c : c.slice(0, 10), W = r.winner, best = r.leader;
   if (!c.length) return `<h1>${_('MVP race')}</h1><div class="empty">${_('No games yet')}</div>`;
-  const top = Math.max(1, ...c.map(x => x.votes));
   r.ballot.forEach((id, i) => { const x = c.find(y => y.id === id); if (x) x.stats_rank = i + 1; });
-  const winner = lead ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${W ? _('Phase 1 MVP') : _('Race leader')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
-      <div class="nm">${logo(lead.team, 48)}<span>${plink(lead, esc(title(lead.name)))}</span></div>
-      <div class="mut">${esc(lead.team)} · #${lead.number} · ${esc(posName(lead.pos))} · ${lead.gp} ${H('GP')}${lead.mvp_games ? ' · ' + esc(f('mvpCount', lead.mvp_games)) : ''}</div>
-      <div class="tiles">${[['PTS', lead.pts], ['REB', lead.reb], [H('AST'), lead.ast], [H('STL'), lead.stl], [H('BLK'), lead.blk], ['PIR', lead.pir], [_('Votes'), lead.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-      ${!W && r.voting_open ? `<p class="mut" style="margin:12px 0 0">${esc(f('provisional', r.weights.stats, r.weights.fans))}</p>` : ''}
+  const winner = W ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Phase 1 MVP')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
+      <div class="nm">${logo(W.team, 48)}<span>${plink(W, esc(title(W.name)))}</span></div>
+      <div class="mut">${esc(W.team)} · #${W.number} · ${esc(posName(W.pos))} · ${W.gp} ${H('GP')} · ${esc(f('votesN', W.votes))}</div>
+      <div class="tiles">${[['PTS', W.pts], ['REB', W.reb], [H('AST'), W.ast], [H('STL'), W.stl], [H('BLK'), W.blk], ['PIR', W.pir], [_('Votes'), W.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
   return `<h1>${_('MVP race')} <span class="mut" style="font-size:15px">${_('Phase 1')} · J1–J${PHASE * 11}${r.complete ? '' : ' · ' + _('in progress')}</span></h1>
   ${winner}
-  <h2>${_('The race')}</h2><div class="card">${raceChart(r)}</div>
   <h2>${_('Fan vote')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(f('votesN', r.total_votes))} · ${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span></h2>
   ${r.deadline_ts ? `<div class="votemsg" id="deadline" data-ts="${r.deadline_ts}" data-open="${r.voting_open ? 1 : 0}">⏳ ${deadlineLine(r.voting_open, r.deadline_ts)}</div>` : ''}
   <p class="mut" style="margin:0 0 12px">${esc(f('ballotIntro', r.ballot.length))}</p>
   ${voteMsg ? `<div class="votemsg${voteMsg.ok ? '' : ' bad'}" role="status">${esc(voteMsg.text)}</div>` : ''}
   <div class="ballot">${r.ballot.map(id => c.find(x => x.id === id)).filter(Boolean).map(x => ballotCard(x, r)).join('')}</div>
-  <h2>${_('The race')} · ${_('Ranking')}</h2>
-  <div class="card tablecard">${shown.map(x => `<div class="vrow${x.id === r.my_vote ? ' me' : ''}"><span class="rk">${x.rank}</span>${logo(x.team, 32)}
-      <a class="nmb" href="${playerUrl(x.id, x.name)}"><b>${esc(title(x.name))}</b><span>${esc(x.team)} · #${x.number} · ${x.gp} ${H('GP')} · ${x.pts} ${_('pts')} · PIR ${x.pir}</span></a>
-      <div class="bars"><div class="small mut">${_('Stats')} ${x.stats_score}</div><div class="meter"><i style="width:${x.stats_score}%"></i></div></div>
-      <div class="vv"><b>${x.votes}</b> <span>· ${x.vote_share}%</span><div class="meter"><i style="width:${Math.round(100 * x.votes / top)}%"></i></div></div>
-      <span class="sc">${x.score}</span></div>`).join('')}</div>
+  <h2>${_('Stats race')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('Best player so far')}${best ? ': ' + esc(title(best.name)) : ''}</span></h2>
+  <div class="card">${raceChart(r)}</div>
+  <h2>${_('Stats race')} · ${_('Ranking')}</h2>
+  <div class="card tablecard">${shown.map(x => `<div class="vrow"><span class="rk">${x.rank}</span>${logo(x.team, 32)}
+      <a class="nmb" href="${playerUrl(x.id, x.name)}"><b>${esc(title(x.name))}</b><span>${esc(x.team)} · #${x.number} · ${x.gp} ${H('GP')} · ${x.pts} ${_('pts')} · ${x.reb} ${_('reb')} · ${x.ast} ${_('ast')}</span></a>
+      <div class="bars"><div class="small mut">${_('Impact')} ${x.impact}</div><div class="meter"><i style="width:${x.stats_score}%"></i></div></div>
+      <span class="sc">${x.pir}</span></div>`).join('')}</div>
   ${c.length > 10 ? `<p style="text-align:center"><button id="mvpall">${mvpAll ? _('Show the top 10') : esc(f('allCands', c.length))}</button></p>` : ''}
-  <h2>${_('How it works')}</h2><div class="card how">${f('mvpHow', r.weights.stats, r.weights.fans, r.min_votes, r.fans_count)}</div>`;
+  <h2>${_('How it works')}</h2><div class="card how">${f('mvpHow')}</div>`;
 }
 function raceChart(r) {
   const rows = r.chart.map(id => r.candidates.find(c => c.id === id)).filter(Boolean), n = r.matchdays.length;
@@ -561,6 +590,76 @@ async function castVote(pid) {
     else if (j.reason === 'network') msg.text = _('Too many votes from this network. Try again later.');
   } catch (e) { /* keep the generic message */ }
   voteMsg = msg; await route(true);
+}
+
+
+// ---------------------------------------------------------------- next games banner and matchup comparison
+let nbTimer = null, nbIndex = 0;
+const fmtDay = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+function upcoming(plan) {
+  if (!plan) return [];
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Tunis' }), out = [];
+  for (const m of plan.matchdays) for (const g of m.games) if (!g.played && (!m.date || m.date >= today)) out.push({ ...g, md: m.matchday, date: m.date });
+  return out.slice(0, 12);
+}
+function nextBanner(plan, standings) {
+  const gs = upcoming(plan); if (!gs.length) return '';
+  const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
+  const slide = g => `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">
+      <div class="nbh">${g.date ? esc(fmtDay(g.date)) : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
+      <div class="nbm"><div class="nbtm">${logo(g.home, 76)}<span>${esc(plan.teams[g.home])}</span><small>${esc(rec(g.home))}</small></div><div class="nbvs">VS</div>
+        <div class="nbtm">${logo(g.away, 76)}<span>${esc(plan.teams[g.away])}</span><small>${esc(rec(g.away))}</small></div></div>
+      <span class="nbcta">${_('Compare the teams')} →</span></div>`;
+  return `<section class="nb" id="nextbanner" aria-roledescription="carousel" aria-label="${_('Next games')}"><div class="nbt"><div class="nbtrack">${gs.map(slide).join('')}</div></div>
+    ${gs.length > 1 ? `<button class="nbn p" aria-label="${_('Previous')}">‹</button><button class="nbn n" aria-label="${_('Next')}">›</button>` : ''}
+    <div class="nbd">${gs.map((g, i) => `<button aria-label="${i + 1}"></button>`).join('')}<span class="nbc"></span></div></section>`;
+}
+function startBanner() {
+  clearInterval(nbTimer); nbTimer = null;
+  const root = $('#nextbanner'); if (!root) return;
+  const track = root.querySelector('.nbtrack'), n = track.children.length, dots = [...root.querySelectorAll('.nbd button')];
+  let i = Math.min(nbIndex, n - 1), paused = false;
+  const go = k => { i = (k + n) % n; nbIndex = i; track.style.transform = `translateX(${-100 * i}%)`; dots.forEach((b, j) => b.classList.toggle('on', j === i)); root.querySelector('.nbc').textContent = `${i + 1}/${n}`; };
+  track.style.transition = 'none'; go(i); requestAnimationFrame(() => requestAnimationFrame(() => { track.style.transition = ''; }));
+  const p = root.querySelector('.nbn.p'), nx = root.querySelector('.nbn.n');
+  if (p) p.onclick = () => go(i - 1); if (nx) nx.onclick = () => go(i + 1);
+  dots.forEach((b, j) => b.onclick = () => go(j));
+  root.onmouseenter = () => { paused = true; }; root.onmouseleave = () => { paused = false; };
+  let x0 = null; root.ontouchstart = e => { x0 = e.touches[0].clientX; paused = true; };
+  root.ontouchend = e => { if (x0 != null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } x0 = null; paused = false; };
+  root.onkeydown = e => { if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'ArrowRight') go(i + 1); else if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.mu) { e.preventDefault(); openMatchup(e.target.dataset.mu); } };
+  root.querySelectorAll('.nbs').forEach(sl => sl.onclick = () => openMatchup(sl.dataset.mu));
+  if (n > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) nbTimer = setInterval(() => { if (!paused && !document.hidden && !$('#modal')) go(i + 1); }, 5500);
+}
+async function openMatchup(spec) {
+  const [home, away, md, date] = spec.split('|');
+  closeModal();
+  const el = document.createElement('div'); el.className = 'modal-bg'; el.id = 'modal';
+  el.innerHTML = `<div class="modal mu" role="dialog" aria-modal="true"><div class="muh"><div class="row"><b>${_('Compare the teams')}</b><span class="sp"></span><button class="x" aria-label="${_('Close')}">×</button></div><div class="mut small">${_('Based on the games played so far')}</div></div><div class="empty">…</div></div>`;
+  el.onclick = e => { if (e.target === el || e.target.closest('.x')) closeModal(); else if (e.target.closest('a')) closeModal(); };
+  document.body.appendChild(el); document.body.style.overflow = 'hidden';
+  let m; try { m = await (await fetch(`/api/matchup?home=${home}&away=${away}`)).json(); } catch (e) { el.querySelector('.empty').textContent = _('Could not load this page'); return; }
+  const A = m.home, B = m.away, nm = c => (c === home ? A : B).name;
+  const num = (a, b, low) => a === b ? [0, 0] : low ? [a < b, b < a] : [a > b, b > a];
+  const row = (label, fa, fb, a, b, low) => { const [aw, bw] = num(a, b, low), mx = Math.max(Math.abs(a), Math.abs(b), 0.0001), mn = Math.max(Math.min(Math.abs(a), Math.abs(b)), 0.0001);
+    const bar = v => low ? 100 * mn / Math.max(Math.abs(v), 0.0001) : 100 * Math.abs(v) / mx;   // where lower is better (rank, points allowed, turnovers) the better side gets the longer bar
+    return `<div class="cr"><b class="${aw ? 'win' : ''}">${fa}</b><div class="cb l"><i class="${aw ? 'win' : ''}" style="width:${bar(a)}%"></i></div><span>${label}</span><div class="cb r"><i class="${bw ? 'win' : ''}" style="width:${bar(b)}%"></i></div><b class="${bw ? 'win' : ''}">${fb}</b></div>`; };
+  const f1 = v => (Math.round(v * 10) / 10).toFixed(1), pc = v => f1(v) + '%', sg = v => (v > 0 ? '+' : '') + f1(v);
+  const rows = [
+    [_('Record'), `${A.w}${W}–${A.l}${Ls}`, `${B.w}${W}–${B.l}${Ls}`, A.w, B.w], [_('Standing'), '#' + A.rank, '#' + B.rank, A.rank, B.rank, 1],
+    [_('Points scored'), f1(A.ppg), f1(B.ppg), A.ppg, B.ppg], [_('Points allowed'), f1(A.opp_ppg), f1(B.opp_ppg), A.opp_ppg, B.opp_ppg, 1], [_('Margin / game'), sg(A.diff_pg), sg(B.diff_pg), A.diff_pg, B.diff_pg],
+    [_('FG %'), pc(A.fg_pct), pc(B.fg_pct), A.fg_pct, B.fg_pct], [_('3P %'), pc(A.p3_pct), pc(B.p3_pct), A.p3_pct, B.p3_pct], [_('Free throw %'), pc(A.ft_pct), pc(B.ft_pct), A.ft_pct, B.ft_pct],
+    [_('Rebounds'), f1(A.reb), f1(B.reb), A.reb, B.reb], [_('Assists'), f1(A.ast), f1(B.ast), A.ast, B.ast], [_('Steals'), f1(A.stl), f1(B.stl), A.stl, B.stl], [_('Blocks'), f1(A.blk), f1(B.blk), A.blk, B.blk], [_('Turnovers'), f1(A.tov), f1(B.tov), A.tov, B.tov, 1]];
+  const chips = c => `<div class="chips">${m.form[c].map(x => `<span class="chip2 ${x.won ? 'w' : 'l'}" title="J${x.matchday} ${esc(x.opp)}">${x.won ? W : Ls}</span>`).join('')}</div>`;
+  const pls = c => m.players[c].map(p => `<a class="pl" href="${playerUrl(p.id, p.name)}"><b>${esc(title(p.name))}</b><span>${p.pts} ${_('pts')} · ${p.reb} ${_('reb')} · ${p.ast} ${_('ast')}</span></a>`).join('');
+  el.querySelector('.modal').innerHTML = `<div class="muh"><div class="row"><span class="mut small">${date ? esc(fmtDay(date)) + ' · ' : ''}${_('Day')} ${md}</span><span class="sp"></span><button class="x" aria-label="${_('Close')}">×</button></div>
+      <div class="mut2"><a class="t" href="${teamUrl(home)}">${logo(home, 56)}<span>${esc(A.name)}</span></a><b style="color:var(--mut)">VS</b><a class="t" href="${teamUrl(away)}">${logo(away, 56)}<span>${esc(B.name)}</span></a></div>
+      <div class="mut small" style="margin-top:8px;text-align:center">${_('Based on the games played so far')}</div></div>
+    <div class="sec"><h4>${_('Last meeting')}</h4>${m.meetings.length ? m.meetings.map(x => `<div class="pl"><b>${_('Day')} ${x.matchday}</b><span>${esc(nm(x.home))} <b style="color:var(--txt)">${x.home_score}–${x.away_score}</b> ${esc(nm(x.away))}</span></div>`).join('') : `<div class="mut small">${_('No previous meeting this season.')}</div>`}</div>
+    <div class="sec"><h4>${_('Form (last 5)')}</h4><div class="two"><div class="row"><b>${esc(home)}</b>${chips(home)}</div><div class="row"><b>${esc(away)}</b>${chips(away)}</div></div></div>
+    <div class="sec"><h4>${_('Team stats')} · ${_('per game')}</h4>${rows.map(r => row(...r)).join('')}</div>
+    <div class="sec"><h4>${_('Key players')} · ${_('per game')}</h4><div class="two"><div>${pls(home)}</div><div>${pls(away)}</div></div></div>`;
+  el.querySelector('.x').focus();
 }
 
 function gameCard(g) {
@@ -822,7 +921,7 @@ async function planning() {
       <a href="${teamUrl(planTeam)}" class="mut small">${_('Team page')} ›</a></div>
       <div class="scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th><th>${_('Score')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
-  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b><span class="sp"></span><span class="mut small">${d.projected ? _('projected') : ''}</span></div>
+  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}<span class="sp"></span><span class="mut small">${d.projected ? _('projected') : ''}</span></div>
     ${m.games.map(g => `<div class="match" style="padding:6px 0;border-top:1px solid var(--line)">
       <a class="tn" href="${teamUrl(g.home)}">${logo(g.home, 22)}${esc(g.home)}</a>
       ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small">${_('vs')}</span>`}
