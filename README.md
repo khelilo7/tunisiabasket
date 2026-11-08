@@ -121,6 +121,9 @@ the proxy's forwarded address), not the proxy's.
 (`static/img/players/generic.svg`) with the team badge. Three photos ship with the code (`static/img/players/<id>.jpg`, `assets/player_photos.json`). The others are
 added from the admin panel, Players tab, 📷 on the player's row: the browser crops a square and the server stores it in `data/photos/` (outside the code, so deployments
 never touch it; listed in `data/player_photos.json`, included in the backups). Publish only photos you have the right to use.
+**Preview photos (local only).** `python tools/import_photos.py` imports every image dropped in `exports/photos_inbox/` (named by player id, `esg-41.jpg`, or by name, `Firas Lahyani.jpg`)
+the same way, and `python tools/photo_sources.py` lists search links for every player. Both write into `data/` and `exports/`, which git ignores and deployments never copy, so such photos
+stay on this computer until you decide otherwise: use them to show players a preview and ask for their consent first.
 **Match predictions.** The Predictions page (`predict.py`, `/pronostics`, `/en/predictions`) lets everybody pick the winner of each game of the next matchday: one final pick per game and
 browser, closing when the matchday's date starts (Tunisian time, nothing to set). What the crowd thinks is shown as percentages only (never counts or totals) and only for the games
 the visitor has picked; the server enforces it. The admin MVP tab shows the real counts. Picks live in `data/votes.db` with the MVP votes, and the database refuses to change
