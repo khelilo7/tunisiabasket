@@ -52,7 +52,7 @@ def _read(p):
 
 def settings(phase: int) -> dict:
     """{'winner': player id or None, 'voting_open': bool, 'note': str}. The live file overrides the repo file, key by key."""
-    out = {"winner": None, "voting_open": True, "note": "", "deadline": None}
+    out = {"winner": None, "voting_open": True, "note": "", "deadline": None, "ballot": None}
     for src in (_read(AWARDS_REPO), _read(AWARDS_LIVE)):
         out.update({k: v for k, v in (src.get(str(phase)) or {}).items() if k in out})
     return out
@@ -78,13 +78,28 @@ def voting_open(phase: int) -> bool:
     return bool(st["voting_open"]) and (dl is None or datetime.now(timezone.utc) < dl)
 
 
+_settings_lock = threading.Lock()
+
+
 def save_settings(phase: int, winner, voting_open: bool, note: str = "", deadline=None):
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
-    data = _read(AWARDS_LIVE)
-    dl = parse_deadline(deadline)
-    data[str(phase)] = {"winner": winner or None, "voting_open": bool(voting_open), "note": (note or "")[:200],
-                        "deadline": dl.astimezone(TUNIS).isoformat(timespec="minutes") if dl else None}
-    AWARDS_LIVE.write_text(json.dumps(data, indent=1))
+    with _settings_lock:
+        data = _read(AWARDS_LIVE)
+        dl = parse_deadline(deadline)
+        prev = data.get(str(phase), {})
+        data[str(phase)] = {"winner": winner or None, "voting_open": bool(voting_open), "note": (note or "")[:200],
+                            "deadline": dl.astimezone(TUNIS).isoformat(timespec="minutes") if dl else None,
+                            **({"ballot": prev["ballot"]} if prev.get("ballot") else {})}       # saving the other settings never unfreezes the ballot
+        AWARDS_LIVE.write_text(json.dumps(data, indent=1))
+
+
+def set_ballot(phase: int, ids):
+    """Freeze the ballot: exactly these players can be voted for from now on (changing it later is an explicit admin action)."""
+    config.DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with _settings_lock:
+        data = _read(AWARDS_LIVE)
+        data.setdefault(str(phase), {})["ballot"] = list(ids)
+        AWARDS_LIVE.write_text(json.dumps(data, indent=1))
 
 
 # ---------------------------------------------------------------- votes
@@ -140,7 +155,8 @@ def cast(request, phase: int, pid: str, vid: str):
         return False, "browser"
     if not voting_open(phase):
         return False, "closed"
-    if pid not in ballot(phase):
+    rows = candidates(phase)
+    if pid not in _frozen(phase, rows, True):                  # the first vote freezes the ballot as it is shown at that moment
         return False, "candidate"
     voter, net = _hash("vid", phase, vid), _hash("net", phase, auth.visitor_ip())
     with _lock:
@@ -178,8 +194,9 @@ def _phase_range(phase):
     return (phase - 1) * PHASE_LEN + 1, phase * PHASE_LEN
 
 
-def _race_data(phase: int):
-    """(rows, matchdays, complete) where rows = candidates with phase-only averages, best impact first."""
+def _race_data(phase: int, keep=()):
+    """(rows, matchdays, complete) where rows = candidates with phase-only averages, best impact first.
+    `keep` = players frozen on the ballot: they stay in the rows even if they no longer meet the qualification rules."""
     d = stats.build()
     lo, hi = _phase_range(phase)
     gid = {g["id"]: _md(g) for g in d["games"]}
@@ -197,7 +214,7 @@ def _race_data(phase: int):
         need = max(1, math.ceil(stats.QUALIFY_SHARE * avail))
         n = len(log)
         mins = sum(r["min"] for r in log) / n
-        if n < need or mins < stats.MIN_MINUTES_FOR_RANKING or (top and p["team"] not in top):
+        if (n < need or mins < stats.MIN_MINUTES_FOR_RANKING or (top and p["team"] not in top)) and p["id"] not in keep:
             continue
         avg = lambda k: round(sum(r[k] for r in log) / n, 1)
         by_md = defaultdict(list)
@@ -214,7 +231,7 @@ def _race_data(phase: int):
 
 
 def candidates(phase: int):
-    return _race_data(phase)[0]
+    return _race_data(phase, keep=settings(phase)["ballot"] or ())[0]
 
 
 def pick_ballot(rows):
@@ -230,8 +247,23 @@ def pick_ballot(rows):
     return out + [r["id"] for r in rows if r["id"] not in out][:BALLOT_SIZE - len(out)]
 
 
+def _frozen(phase: int, rows, votes_exist: bool):
+    """The ballot as fans see it. Frozen (settings) once set. Not yet set: it follows the stats, and freezes by itself as soon as the first vote
+    exists, to exactly what visitors are seeing then (a site that already has votes when this code arrives keeps its ballot untouched)."""
+    st = settings(phase)["ballot"]
+    ids = {r["id"] for r in rows}
+    if st:
+        out = [r["id"] for r in rows if r["id"] in st]                       # stats order; a frozen player stays even if he stops qualifying
+        return out + [i for i in pick_ballot(rows) if i not in out][:BALLOT_SIZE - len(out)] if len(out) < BALLOT_SIZE else out
+    out = pick_ballot(rows)
+    if votes_exist and len(out) == BALLOT_SIZE and all(i in ids for i in out):
+        set_ballot(phase, out)
+    return out
+
+
 def ballot(phase: int):
-    return pick_ballot(candidates(phase))
+    rows = candidates(phase)
+    return _frozen(phase, rows, bool(tally(phase)))
 
 
 def race(phase: int = 1) -> dict:
@@ -239,9 +271,9 @@ def race(phase: int = 1) -> dict:
     (votes and share per candidate). The phase MVP is decided by the votes alone."""
     if phase not in PHASES:
         raise ValueError("phase")
-    rows, matchdays, complete = _race_data(phase)       # best average impact first
+    rows, matchdays, complete = _race_data(phase, keep=settings(phase)["ballot"] or ())       # best average impact first
     votes = tally(phase)
-    ballot_ids = pick_ballot(rows)
+    ballot_ids = _frozen(phase, rows, bool(votes))
     total = sum(votes.get(r["id"], 0) for r in rows)
     best_impact = max((r["impact"] for r in rows), default=0) or 1
     for i, r in enumerate(rows, 1):
@@ -276,4 +308,4 @@ def race(phase: int = 1) -> dict:
             "total_votes": total, "decided_by": "fans",
             "winner": winner, "leader": rows[0] if rows else None, "vote_leader": vote_leader,
             "current": current, "current_by": current_by,         # the MVP right now: crowned, else most votes, else (no votes yet) the stats leader
-            "ballot": ballot_ids, "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}
+            "ballot": ballot_ids, "ballot_frozen": bool(settings(phase)["ballot"]), "suggested_ballot": pick_ballot(rows), "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}

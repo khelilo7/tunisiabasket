@@ -54,6 +54,18 @@ app; can write only inside `shared/data`). Reading the code or the data never gi
 - **New server:** do to-do 1 again, update `PROD_HOST` and `PROD_SSH_KNOWN_HOSTS`, restore a data backup into `/opt/proastats/shared/data`.
 - **Restore a backup:** see "Backups" below.
 
+## Changing the MVP ballot without losing a vote
+The three names fans can vote for are **frozen** at the first vote (stored in `data/mvp.json`, kept across deployments and in the backups). Votes are never changed or deleted
+(the database refuses it). To switch a name, in this order:
+1. **Before the push**: admin, MVP tab. Write down the three names on the ballot and each candidate's votes.
+2. **Push and approve the deploy.** A site that already has votes freezes its ballot on the first read after the deploy, exactly as visitors see it. Nothing changes on screen.
+3. **Check**: reload the admin MVP tab. It says "🔒 Frozen" and the three names are the ones you wrote down. If one differs, pick the right names and press "Save the ballot".
+4. **Only then** send new box scores (`python tools/send_games.py --site https://tunisiabasket.com`): the statistics move, the frozen ballot does not.
+5. **When you decide to switch** (for example Lahyani for Jackson, team-mates): admin, MVP tab, Ballot: choose the three players, "Save the ballot", confirm. It shows at once.
+   - The player taken off keeps every vote he had (shown in the list, 4th or lower, with his number) and cannot be voted for any more. People who voted for him stay counted and cannot vote again; they see "Your vote: … counted, and final".
+   - The player put on starts at zero. Votes are not moved between players.
+   - The list: ballot players first (by votes, then stats), then everybody else. If the player taken off still has the most votes when voting closes, he is still the fans' winner: votes cannot be deleted.
+
 ## Backups (votes, visit statistics, games, roster, admin settings)
 What is saved: the whole data folder `/opt/proastats/shared/data`, including `votes.db` (the fans' votes), `traffic.db` (visit statistics) and `traffic.key`. Deploys never touch it.
 - **Nightly, 03:17:** full backup `data-YYYYmmdd-HHMMSS.tgz`; kept 7 days, then the oldest of each month for a year.

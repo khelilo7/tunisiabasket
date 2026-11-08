@@ -364,6 +364,17 @@ async function loadTraffic() {
     </div>
     <p class="mut small" style="margin-top:12px">Private by design: no cookies, no IP address stored. “Visitors” are a hash that changes every day, so people are counted once per day. “People” use a random id kept in the browser (stored only as a hash): one person using a phone and a computer counts twice, and clearing the browser data makes them look new. Search-engine crawlers and your own admin visits are ignored. "Visitors" over several days adds up the people of each day.</p>`;
 }
+function ballotBlock(p) {
+  if (!p.candidates.length) return '';        // a phase with no games yet has nobody to choose from
+  const nm = id => { const c = p.candidates.find(x => x.id === id); return c ? `${c.name} · ${c.team}` : id; };
+  const opt = (sel, id0) => `<select data-bl="${sel}">${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === id0 ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} vote${c.votes === 1 ? '' : 's'}</option>`).join('')}</select>`;
+  return `<div class="card" style="margin:10px 0;background:rgba(255,255,255,.03)"><b>Ballot: who fans can vote for</b>
+    <div class="small mut" style="margin:4px 0 8px">${p.ballot_frozen ? '🔒 Frozen: it stays as it is until you change it here.' : 'Automatic: follows the stats (best player of each club) and freezes by itself at the first vote.'}
+      Suggested now (best of each club): <b>${esc(p.suggested_ballot.map(nm).join(' · '))}</b></div>
+    <div class="row">${[0, 1, 2].map(i => opt(i, p.ballot[i])).join('')}</div>
+    <div class="row" style="margin-top:8px"><button data-ballot-suggest>Use the suggestion</button> <button class="primary" data-ballot-save>Save the ballot</button> <span class="small mut" data-ballot-msg></span></div>
+    <p class="mut small" style="margin:8px 0 0">Changing it never touches a vote. A player taken off keeps his votes (shown in the list, 4th or lower) and cannot be voted for again; a player put on starts at zero; people who already voted stay counted and cannot vote twice.</p></div>`;
+}
 async function loadMvp() {
   const box = $('#mvpbox');
   const { ok, body } = await api('mvp');
@@ -371,6 +382,7 @@ async function loadMvp() {
   box.innerHTML = body.phases.map(p => `<div class="card" style="margin-top:12px" data-phase="${p.phase}">
     <h3 style="margin-top:0">Phase ${p.phase} MVP <span class="mut small">· ${p.complete ? 'phase complete' : 'phase in progress'}</span></h3>
     <div class="kpis"><div class="kpi"><b>${p.votes.total}</b><span>fan votes</span></div><div class="kpi"><b>${p.votes.networks}</b><span>different networks</span></div></div>
+    ${ballotBlock(p)}
     <div class="row" style="margin:10px 0"><label class="small mut">Crowned winner</label>
       <select data-f="winner"><option value="">None (the most-voted player wins when voting closes)</option>${p.candidates.map(c => `<option value="${esc(c.id)}" ${c.id === p.winner ? 'selected' : ''}>${esc(c.name)} · ${esc(c.team)} · ${c.votes} votes</option>`).join('')}</select></div>
  <div class="row" style="margin:8px 0"><label class="small mut">Voting deadline (Tunisia time)</label><input type="datetime-local" data-f="deadline" value="${esc((p.deadline || '').slice(0, 16))}"><span class="small mut">${p.open_now ? 'voting is open now' : 'voting is closed now'}</span></div>
@@ -385,6 +397,15 @@ async function loadMvp() {
       ${r ? `<table style="margin-top:10px"><thead><tr><th class="l">Game</th><th>Home picks</th><th>Away picks</th></tr></thead><tbody>${r.games.map(g => `<tr><td class="l"><b>${esc(g.home)}</b> – <b>${esc(g.away)}</b></td><td>${g.home_picks}</td><td>${g.away_picks}</td></tr>`).join('')}</tbody></table>` : ''}
       <p class="mut small" style="margin-bottom:0">Only you see these numbers: visitors get percentages, and only for the games they picked. Picks close when the matchday starts (no setting needed). One final pick per game and browser; picks and votes cannot be changed or deleted, not even from here.</p></div>`);
   }).catch(() => {});
+  box.querySelectorAll('[data-ballot-suggest]').forEach(b => b.onclick = () => { const p = body.phases.find(x => x.phase === +b.closest('[data-phase]').dataset.phase); b.closest('.card').querySelectorAll('[data-bl]').forEach((s, i) => { s.value = p.suggested_ballot[i]; }); });
+  box.querySelectorAll('[data-ballot-save]').forEach(b => b.onclick = async () => {
+    const card = b.closest('[data-phase]'), ids = [...b.closest('.card').querySelectorAll('[data-bl]')].map(s => s.value), msg = b.parentElement.querySelector('[data-ballot-msg]');
+    if (new Set(ids).size !== 3) { msg.textContent = 'Choose three different players.'; return; }
+    if (!confirm('Change the ballot now? Votes already cast stay as they are.')) return;
+    const r = await api('mvp/ballot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +card.dataset.phase, ballot: ids }) });
+    msg.textContent = r.ok ? 'Saved. The site shows the new ballot now.' : (r.body.error || 'Could not save.');
+    if (r.ok) loadMvp();
+  });
   box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
     const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
     const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value, deadline: g('deadline').value }) });

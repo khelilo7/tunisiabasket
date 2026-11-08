@@ -278,7 +278,8 @@ def mvp_admin():
     out = []
     for ph in mvp.PHASES:
         r = mvp.race(ph)
-        out.append({"phase": ph, "complete": r["complete"], **mvp.settings(ph), "votes": mvp.admin_votes(ph),
+        out.append({"phase": ph, "complete": r["complete"], **mvp.settings(ph), "ballot": r["ballot"], "ballot_frozen": r["ballot_frozen"], "suggested_ballot": r["suggested_ballot"],
+                    "votes": mvp.admin_votes(ph),
                     "open_now": mvp.voting_open(ph), "candidates": [{k: c[k] for k in ("id", "name", "team", "number", "votes", "stats_score", "impact")} for c in r["candidates"]]})
     return jsonify(phases=out)
 
@@ -299,6 +300,25 @@ def mvp_admin_save():
     mvp.save_settings(ph, winner, bool(b.get("voting_open")), str(b.get("note") or ""), b.get("deadline"))
     auth.audit("mvp", f"phase {ph} winner={winner} open={bool(b.get('voting_open'))}")
     return jsonify(ok=True)
+
+
+@bp.post("/admin/api/mvp/ballot")
+def mvp_admin_ballot():
+    """Body {"phase": 1, "ballot": [id, id, id]}: who fans can vote for. Votes already cast are never touched: a player taken off the ballot keeps his votes
+    (shown in the list), the player put on starts at zero, and people who already voted stay counted and cannot vote again."""
+    b = request.get_json(silent=True) or {}
+    ph = int(b.get("phase") or 0)
+    ids = b.get("ballot")
+    if ph not in mvp.PHASES:
+        return jsonify(error="Unknown phase."), 400
+    if not isinstance(ids, list) or len(ids) != mvp.BALLOT_SIZE or len(set(ids)) != mvp.BALLOT_SIZE:
+        return jsonify(error=f"Choose exactly {mvp.BALLOT_SIZE} different players."), 400
+    known = {c["id"] for c in mvp.candidates(ph)}
+    if any(i not in known for i in ids):
+        return jsonify(error="One of these players is not a candidate of this phase."), 400
+    mvp.set_ballot(ph, ids)
+    auth.audit("mvp-ballot", f"phase {ph}: {', '.join(ids)}")
+    return jsonify(ok=True, ballot=mvp.ballot(ph))
 
 
 # ---------------------------------------------------------------- roster: bios, new players, hiding, transfers

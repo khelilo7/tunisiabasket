@@ -281,7 +281,7 @@ const FR = {
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
   'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
   'Phase 1 MVP': 'MVP de la phase 1', 'Race leader': 'Leader de la course', 'Vote now': 'Voter maintenant', 'See the race': 'Voir la course', 'Phase 1': 'Phase 1',
-  'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
+  'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
   'No game to predict for now.': 'Aucun match à pronostiquer pour le moment.', 'Thanks! Your pick is saved. It is final.': 'Merci ! Votre pronostic est enregistré. Il est définitif.',
@@ -578,11 +578,12 @@ async function mvp() {
   ${r.deadline_ts ? `<div class="votemsg" id="deadline" data-ts="${r.deadline_ts}" data-open="${r.voting_open ? 1 : 0}">⏳ ${deadlineLine(r.voting_open, r.deadline_ts)}</div>` : ''}
   <p class="mut" style="margin:0 0 12px">${esc(f('ballotIntro', r.ballot.length))}</p>
   ${voteMsg ? `<div class="votemsg${voteMsg.ok ? '' : ' bad'}" role="status">${esc(voteMsg.text)}</div>` : ''}
+  ${r.my_vote && !r.ballot.includes(r.my_vote) && c.find(x => x.id === r.my_vote) ? `<div class="votemsg" role="status">${_('Your vote')}: <b>${esc(title(c.find(x => x.id === r.my_vote).name))}</b> · ${_('counted, and final')}</div>` : ''}
   <div class="ballot">${r.ballot.map(id => c.find(x => x.id === id)).filter(Boolean).map(x => ballotCard(x, r)).join('')}</div>
   <h2>${_('MVP ranking')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('Most votes first, then stats')}</span></h2>
   <div class="card tablecard scroll"><table class="rtable"><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${_('Votes')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>PIR</th></tr></thead><tbody>
     ${shown.map(x => `<tr data-go="${playerUrl(x.id, x.name)}"><td class="rk">${x.vote_rank}</td><td class="pl"><div class="pn2">${face(x, 34)}<div><b>${plink(x, esc(title(x.name)))}</b><span>${esc(x.team)} · #${x.number}</span></div></div></td>
-      <td>${r.ballot.includes(x.id) ? `<b>${x.votes}</b>` : '<span class="mut">–</span>'}</td><td>${x.gp}</td><td>${x.pts}</td><td>${x.reb}</td><td>${x.ast}</td><td>${x.stl}</td><td>${x.blk}</td><td><b>${x.pir}</b></td></tr>`).join('')}</tbody></table></div>
+      <td>${r.ballot.includes(x.id) || x.votes ? `<b>${x.votes}</b>` : '<span class="mut">–</span>'}</td><td>${x.gp}</td><td>${x.pts}</td><td>${x.reb}</td><td>${x.ast}</td><td>${x.stl}</td><td>${x.blk}</td><td><b>${x.pir}</b></td></tr>`).join('')}</tbody></table></div>
   ${c.length > 10 ? `<p style="text-align:center"><button id="mvpall">${mvpAll ? _('Show the top 10') : esc(f('allCands', c.length))}</button></p>` : ''}
   <details class="fold" id="statsfold" ${chartOpen ? 'open' : ''}><summary><span>${_('Stats race')}</span><span class="sub mut">${_('Best player so far')}${best ? ': ' + esc(title(best.name)) : ''}</span><span class="chev">▾</span></summary>
     <div class="card">${raceChart(r)}</div></details>
