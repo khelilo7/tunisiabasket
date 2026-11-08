@@ -451,7 +451,7 @@ function track() {
 
 async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings' }[r.page] || r.page)));
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings' }[r.page] || r.page)));
   const app = $('#app');
   courtData = null; pageMeta = null; clearInterval(nbTimer);
   try {
@@ -866,7 +866,7 @@ function spark(v) {
 async function games() {
   const d = await api('games');
   pageMeta = META.games[LANG];
-  return `<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1><div class="grid g2">${d.games.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+  return `${standNav('games')}<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1><div class="grid g2">${d.games.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
 }
 
 // ---------------------------------------------------------------- courts and lineups
@@ -985,7 +985,7 @@ function standTable(d, compact) {
   ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
-const standNav = on => `<div class="seg" role="tablist"><a role="tab" aria-selected="${on === 'standings'}" class="${on === 'standings' ? 'on' : ''}" href="${url('standings')}">${_('Standings')}</a><a role="tab" aria-selected="${on === 'planning'}" class="${on === 'planning' ? 'on' : ''}" href="${url('planning')}">📅 ${_('Planning')}</a></div>`;
+const standNav = on => `<div class="seg" role="tablist">${[['standings', _('Standings')], ['games', _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function standings() {
   const d = await api('overview');
   pageMeta = META.standings[LANG];

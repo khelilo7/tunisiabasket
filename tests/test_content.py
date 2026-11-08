@@ -62,12 +62,16 @@ check(c.get("/api/home").get_json()["recent"][0]["players"] == [], "a correction
 check(c.get("/api/home").headers.get("Cache-Control") == "no-cache", "the home data is never cached")
 
 # --- news
+nav0 = c.get("/").get_data(as_text=True)
+check('data-p="news"' not in nav0 and 'data-p="games"' not in nav0 and 'data-p="planning"' not in nav0 and 'data-p="standings"' in nav0, "menu: no News while there is none; Games and Calendar live inside Standings")
+check("/actualites" not in c.get("/sitemap.xml").get_data(as_text=True), "an empty news page is not in the sitemap")
 check(post("/admin/api/news", {"label": "injury", "title": "", "body": "x"}).status_code == 422, "a title is required")
 check(post("/admin/api/news", {"label": "gossip", "title": "x"}).status_code == 422, "unknown label refused")
 check(post("/admin/api/news", {"label": "info", "title": "x", "date": "yesterday"}).status_code == 422, "bad date refused")
 a = post("/admin/api/news", {"label": "injury", "title": "Player out 6 weeks", "body": "Knee injury", "date": "2026-11-05", "title_en": "Player out for 6 weeks"}).get_json()["item"]
 b = post("/admin/api/news", {"label": "official", "title": "Calendar published", "date": "2026-11-08"}).get_json()["item"]
 pin = post("/admin/api/news", {"label": "transfer", "title": "Pinned one", "date": "2026-10-01", "pinned": True}).get_json()["item"]
+check('data-p="news"' in c.get("/").get_data(as_text=True) and "/actualites" in c.get("/sitemap.xml").get_data(as_text=True), "the News button and sitemap entry appear with the first news")
 items = c.get("/api/news").get_json()["items"]
 check([n["id"] for n in items] == [pin["id"], b["id"], a["id"]], "pinned first, then newest first")
 check(a["label"] == "injury" and "injury" in c.get("/api/news").get_json()["labels"], "labels")

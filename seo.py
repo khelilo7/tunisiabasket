@@ -349,9 +349,14 @@ _template = {"mtime": 0, "text": ""}
 
 
 def nav_html(lang):
+    """The menu. Games and the calendar live inside the Standings page (a switch there); News only appears once there is some."""
+    import content
     t = T[lang]
-    return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in
-                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"]), ("news", t["nw_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"])))
+    items = [("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"])]
+    if content.load_news(1):
+        items.append(("news", t["nw_nav"]))
+    items += [("players", t["players"]), ("standings", t["standings"])]
+    return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in items)
 
 
 def shell(lang, page, m):
@@ -375,7 +380,10 @@ def sitemap_xml():
     files = [config.DATA_DIR / "official.json", *config.DATA_DIR.glob("games/*.json")]
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
-    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("news", None)]
+    import content
+    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None)]
+    if content.load_news(1):                       # an empty news page is not worth indexing
+        entries.append(("news", None))
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]
     entries += [("game", g["id"]) for g in d["games"]]
