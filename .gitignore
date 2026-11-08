@@ -16,3 +16,6 @@ static/_tmp/
 
 # local backups of live data
 backups/
+
+# lists you generate locally (photo sources...)
+exports/
