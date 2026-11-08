@@ -22,12 +22,12 @@ import stats
 DEFAULT = "fr"          # the main language: its addresses have no prefix (/equipe/CA); the others do (/en/team/CA)
 LANGS = ("fr", "en")
 SLUGS = {
-    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race",
+    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions",
            "team": "team", "player": "player", "game": "game"},
-    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp",
+    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics",
            "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "standings", "players", "games", "planning", "mvp")
+LIST_PAGES = ("home", "standings", "players", "games", "planning", "mvp", "predict")
 ITEM_PAGES = ("team", "player", "game")
 SITE = "Tunisia Basket"
 OG_LOCALE = {"en": "en_US", "fr": "fr_FR"}
@@ -58,6 +58,9 @@ T = {
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
         "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "MVP race – phase 1 (J1–J11)",
+        "pr_nav": "Predictions", "pr_h1": "Pro A predictions: who wins the next matchday?",
+        "pr_title": "Pro A predictions – pick the winners of the next matchday – Tunisia Basket",
+        "pr_desc": "Pick the winner of every game of the next Tunisian Pro A basketball matchday. One pick per game; see what the other fans think once you have picked.",
         "mv_title": "MVP race and fan vote – phase 1 – Tunisia Basket",
         "mv_desc": "Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans' vote. {who}",
         "mvp_game": " Game MVP: {name}.", "not_found": "Page not found – Tunisia Basket",
@@ -87,6 +90,9 @@ T = {
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
         "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Course au MVP – phase 1 (J1–J11)",
+        "pr_nav": "Pronostics", "pr_h1": "Pronostics Pro A : qui gagne la prochaine journée ?",
+        "pr_title": "Pronostics Pro A – choisissez les vainqueurs de la prochaine journée – Tunisia Basket",
+        "pr_desc": "Choisissez le vainqueur de chaque match de la prochaine journée de la Pro A tunisienne de basket. Un pronostic par match ; découvrez l’avis des autres fans une fois le vôtre donné.",
         "mv_title": "Course au MVP et vote des fans – phase 1 – Tunisia Basket",
         "mv_desc": "Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans. {who}",
         "mvp_game": " MVP du match : {name}.", "not_found": "Page introuvable – Tunisia Basket",
@@ -210,6 +216,8 @@ def meta(lang, page, arg=None):
         out.update(title=t["mv_title"], description=t["mv_desc"].format(who=who).strip(),
                    ssr=f'<h1>{t["mv_h1"]}</h1><p>{esc(who)}</p><table><thead><tr><th>#</th><th>{t["players"]}</th><th>{t["team"]}</th><th>PTS</th><th>{t["reb"]}</th>'
                        f'<th>{t["ast"]}</th><th>{t["mv_votes"]}</th><th>PIR</th></tr></thead><tbody>{rows}</tbody></table>')
+    elif page == "predict":
+        out.update(title=t["pr_title"], description=t["pr_desc"], ssr=f'<h1>{t["pr_h1"]}</h1><p>{esc(t["pr_desc"])}</p>')
     elif page == "standings":
         out.update(title=t["st_title"].format(season=season), description=t["st_desc"].format(season=season, lead=_lead(d)),
                    ssr=f'<h1>{t["standings"]} {season}</h1>{_standings_table(lang, d)}')
@@ -332,7 +340,7 @@ _template = {"mtime": 0, "text": ""}
 def nav_html(lang):
     t = T[lang]
     return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in
-                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"]), ("planning", t["planning"])))
+                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"]), ("planning", t["planning"])))
 
 
 def shell(lang, page, m):
@@ -355,7 +363,7 @@ def sitemap_xml():
     files = [config.DATA_DIR / "official.json", *config.DATA_DIR.glob("games/*.json")]
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
-    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None)]
+    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None)]
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]
     entries += [("game", g["id"]) for g in d["games"]]

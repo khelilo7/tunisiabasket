@@ -24,6 +24,7 @@ import auth
 import config
 import stats
 import mvp
+import predict
 import traffic
 from extractor import extract
 from ocr_parser import IMAGE_EXT, page_count
@@ -479,6 +480,11 @@ def photo_delete():
     _photo_index(pid, None)
     auth.audit("photo-delete", pid)
     return jsonify(ok=True, id=pid)
+
+
+@bp.get("/admin/api/predictions")
+def predictions_view():
+    return jsonify(predict.admin_view())
 
 
 @bp.get("/admin/api/team-stats")

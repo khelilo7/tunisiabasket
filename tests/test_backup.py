@@ -56,6 +56,13 @@ with tarfile.open(small[0]) as tf:
     sn = tf.getnames()
 check("data/votes.db" in sn and "data/traffic.db" in sn and "data/mvp.json" in sn and "data/games/g1.json" not in sn, f"small backup holds votes, visits and settings only: {sn}")
 
+# nothing changed -> the next small backup is skipped; a new vote -> it runs again
+r = run("--small")
+check(r.returncode == 0 and "skipped" in r.stdout, f"unchanged data: small backup skipped: {r.stdout}")
+w = sqlite3.connect(data / "votes.db"); w.execute("INSERT INTO votes VALUES (1, 'newer', 'n', 'ca-24', 3)"); w.commit(); w.close()
+r = run("--small")
+check(r.returncode == 0 and "skipped" not in r.stdout and "backup ok" in r.stdout, f"a new vote triggers a small backup: {r.stdout}")
+
 # restore goes next to the data, never over it, and the votes are all there
 r = run("--restore", str(full[0]))
 restored = sorted(work.glob("data-restored-*/data/votes.db"))
@@ -74,7 +81,7 @@ w.commit()
 w.close()
 check(r.returncode == 0, f"a backup during a pending write still verifies: {r.stdout} {r.stderr}")
 
-# pruning: small after 3 days; full after 14 days except one per month
+# pruning: small after 2 days; full after 7 days except one per month
 old_small = out / "small-20200101-0000.tgz"
 old_small.write_bytes(b"x"); os.utime(old_small, (time.time() - 5 * 86400,) * 2)
 a, b, c3 = out / "data-20250101-000000.tgz", out / "data-20250115-000000.tgz", out / "data-20261001-000000.tgz"

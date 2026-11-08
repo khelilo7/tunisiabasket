@@ -1,7 +1,8 @@
 """Back up the live data safely: votes, visit statistics, games, official results, roster, admin settings.
 
-    python tools/backup_data.py                 full backup     -> <out>/data-YYYYmmdd-HHMMSS.tgz   (kept 14 days + the first of each month for a year)
-    python tools/backup_data.py --small         votes + visits  -> <out>/small-YYYYmmdd-HHMM.tgz    (the databases and settings only; kept 3 days)
+    python tools/backup_data.py                 full backup     -> <out>/data-YYYYmmdd-HHMMSS.tgz   (kept 7 days + the first of each month for a year)
+    python tools/backup_data.py --small         votes + visits  -> <out>/small-YYYYmmdd-HHMM.tgz    (the databases and settings only; kept 2 days;
+                                                skipped when no vote and no setting changed since the last one)
     python tools/backup_data.py --restore FILE  unpack a backup into a new folder next to the data (never over the live data)
 
 SQLite files are copied with SQLite's own backup call, so a vote that arrives while the copy runs cannot corrupt it. Every backup is
@@ -23,6 +24,17 @@ import config  # noqa: E402
 
 SMALL_FILES = ("votes.db", "traffic.db", "traffic.key", "mvp.json", "roster.json", "players_info.json", "positions.json", "player_photos.json", "calendar.json", "admin_token.json")
 SKIP = {"admin.log.tmp"}
+WATCHED = ("votes.db", "mvp.json", "roster.json", "players_info.json", "positions.json", "player_photos.json", "calendar.json")   # what a small backup must never miss
+FULL_DAYS, SMALL_DAYS = 7, 2
+
+
+def fingerprint(src: Path) -> str:
+    """Changes whenever a vote or a setting changes (visit statistics are not watched: the nightly full backup keeps them)."""
+    parts = []
+    for n in WATCHED:
+        st = (src / n).stat() if (src / n).exists() else None
+        parts.append(f"{n}:{st.st_size}:{st.st_mtime_ns}" if st else f"{n}:-")
+    return "|".join(parts)
 
 
 def snapshot(src: Path, dst: Path):
@@ -78,15 +90,15 @@ def live_counts(src: Path) -> dict:
 
 
 def prune(out: Path):
-    """Small backups: 3 days. Full backups: everything from the last 14 days, then one per month (the oldest of the month) for a year."""
+    """Small backups: 2 days. Full backups: everything from the last 7 days, then one per month (the oldest of the month) for a year."""
     now = time.time()
     for f in out.glob("small-*.tgz"):
-        if now - f.stat().st_mtime > 3 * 86400:
+        if now - f.stat().st_mtime > SMALL_DAYS * 86400:
             f.unlink()
     seen_months = set()
     for f in sorted(out.glob("data-*.tgz")):
         age = (now - f.stat().st_mtime) / 86400
-        if age <= 14:
+        if age <= FULL_DAYS:
             continue
         month = time.strftime("%Y%m", time.localtime(f.stat().st_mtime))
         if age <= 365 and month not in seen_months:
@@ -112,6 +124,11 @@ def main():
         return
     out.mkdir(parents=True, exist_ok=True)
     os.chmod(out, 0o700)
+    state = out / ".small-state"
+    if a.small and state.exists() and state.read_text() == fingerprint(src):
+        print(f"{time.strftime('%F %T')} small backup skipped: no vote or setting changed since the last one")
+        return
+    fp = fingerprint(src)                                               # taken before the copy: a change during it is caught next time
     stamp = time.strftime("%Y%m%d-%H%M") if a.small else time.strftime("%Y%m%d-%H%M%S")
     target = out / (f"small-{stamp}.tgz" if a.small else f"data-{stamp}.tgz")
     before = live_counts(src)
@@ -131,6 +148,8 @@ def main():
     except Exception as e:
         target.unlink(missing_ok=True)
         sys.exit(f"BACKUP FAILED and was discarded: {e}")
+    if a.small:
+        state.write_text(fp)
     prune(out)
     rows = ", ".join(f"{db}: " + "/".join(f"{t}={n}" for t, n in t_.items()) for db, t_ in sorted(seen.items())) or "no databases yet"
     print(f"{time.strftime('%F %T')} backup ok -> {target} ({target.stat().st_size // 1024} KB; {rows})")

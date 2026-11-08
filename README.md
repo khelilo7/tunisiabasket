@@ -121,7 +121,11 @@ the proxy's forwarded address), not the proxy's.
 (`static/img/players/generic.svg`) with the team badge. Three photos ship with the code (`static/img/players/<id>.jpg`, `assets/player_photos.json`). The others are
 added from the admin panel, Players tab, 📷 on the player's row: the browser crops a square and the server stores it in `data/photos/` (outside the code, so deployments
 never touch it; listed in `data/player_photos.json`, included in the backups). Publish only photos you have the right to use.
-**Backups.** Votes, visits, games and settings are backed up nightly and the votes and visits hourly, verified and restorable (`tools/backup_data.py`, `python manage.py backup`,
+**Match predictions.** The Predictions page (`predict.py`, `/pronostics`, `/en/predictions`) lets everybody pick the winner of each game of the next matchday: one final pick per game and
+browser, closing when the matchday's date starts (Tunisian time, nothing to set). What the crowd thinks is shown as percentages only (never counts or totals) and only for the games
+the visitor has picked; the server enforces it. The admin MVP tab shows the real counts. Picks live in `data/votes.db` with the MVP votes, and the database refuses to change
+or delete any vote or pick (SQLite triggers), so nothing can erase them after a deployment.
+**Backups.** Votes, visits, games and settings are backed up nightly (kept 7 days, then one a month) and the votes and visits every 6 hours when something changed (kept 2 days), verified and restorable (`tools/backup_data.py`, `python manage.py backup`,
 `deploy/DEPLOY.md` > Backups).
 
 ## Home page: next games banner (assets/calendar.json)

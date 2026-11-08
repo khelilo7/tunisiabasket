@@ -93,6 +93,10 @@ def _db():
     con = sqlite3.connect(DB_FILE, timeout=10)
     if not _ready:
         con.execute("CREATE TABLE IF NOT EXISTS votes(phase INTEGER, voter TEXT, net TEXT, pid TEXT, ts INTEGER, PRIMARY KEY(phase, voter))")
+        con.execute("CREATE TABLE IF NOT EXISTS picks(game TEXT, voter TEXT, net TEXT, side TEXT, ts INTEGER, PRIMARY KEY(game, voter))")   # match predictions (predict.py)
+        for t in ("votes", "picks"):        # a vote is final: the database itself refuses to change or delete one, whatever code or command tries
+            for ev in ("UPDATE", "DELETE"):
+                con.execute(f"CREATE TRIGGER IF NOT EXISTS {t}_no_{ev.lower()} BEFORE {ev} ON {t} BEGIN SELECT RAISE(ABORT, 'votes are final and cannot be changed or deleted'); END")
         con.commit()
         try:
             os.chmod(DB_FILE, 0o600)

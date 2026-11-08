@@ -35,7 +35,7 @@ rsync code to  /opt/proastats/releases/<time>-<sha>/  on the OVH server ─► d
 | `/opt/proastats/shared/data` | **live data** (games, official results, admin hash, logs, uploads). Deploys never touch it | `proa` |
 | `/opt/proastats/history` | releases that went live and stayed healthy (rollbacks only go to these) | `deploy` |
 | `/etc/proastats.env` | settings (data folder, sync interval, Cloudflare trust) | root |
-| `/var/backups/proastats` | nightly full backup (14 days, then one per month for a year) + hourly votes/visits snapshot (3 days), all verified | root |
+| `/var/backups/proastats` | nightly full backup (7 days, then one per month for a year) + a votes/visits snapshot every 6 hours when something changed (2 days), all verified | root |
 
 Two users on purpose: **`deploy`** (what the pipeline logs in as; can write code and may restart only this one service) and **`proa`** (runs the
 app; can write only inside `shared/data`). Reading the code or the data never gives access to the other.
@@ -56,11 +56,11 @@ app; can write only inside `shared/data`). Reading the code or the data never gi
 
 ## Backups (votes, visit statistics, games, roster, admin settings)
 What is saved: the whole data folder `/opt/proastats/shared/data`, including `votes.db` (the fans' votes), `traffic.db` (visit statistics) and `traffic.key`. Deploys never touch it.
-- **Nightly, 03:17:** full backup `data-YYYYmmdd-HHMMSS.tgz`; kept 14 days, then the oldest of each month for a year.
-- **Hourly, minute 07:** `small-YYYYmmdd-HHMM.tgz` with only votes, visits and settings; kept 3 days. A vote is never more than an hour from a backup.
+- **Nightly, 03:17:** full backup `data-YYYYmmdd-HHMMSS.tgz`; kept 7 days, then the oldest of each month for a year.
+- **Every 6 hours (00:07, 06:07, 12:07, 18:07):** `small-YYYYmmdd-HHMM.tgz` with only votes, visits and settings; kept 2 days. It is skipped when no vote and no setting changed since the last one, so quiet days cost nothing. A vote is never more than 6 hours from a backup (and a visit never more than a day: the nightly full backup has them).
 - SQLite files are copied with SQLite's own backup call (safe while votes arrive) and every backup is re-opened and checked (integrity, row counts). A backup that fails the check is deleted and logged as `BACKUP FAILED` in `/var/backups/proastats/backup.log`.
-- **Servers set up before the hourly backup existed** need the hourly line once (the nightly one picks up the new script by itself after a deploy):
-  `echo '7 * * * * root /opt/proastats/current/deploy/backup.sh --small >> /var/backups/proastats/backup.log 2>&1' | sudo tee -a /etc/cron.d/proastats-backup`
+- **Servers that already have the hourly line** must replace it once with the 6-hourly one (the nightly one picks up the new script by itself after a deploy): `sudo sed -i 's|^7 \* \* \* \*|7 */6 * * *|' /etc/cron.d/proastats-backup`. A new server gets it from `setup.sh`. If the line is missing altogether:
+  `echo '7 */6 * * * root /opt/proastats/current/deploy/backup.sh --small >> /var/backups/proastats/backup.log 2>&1' | sudo tee -a /etc/cron.d/proastats-backup`
 - **Run one now:** `sudo /opt/proastats/current/deploy/backup.sh` (prints the vote and visit counts it saved).
 - **Restore:** `sudo /opt/proastats/venv/bin/python /opt/proastats/current/tools/backup_data.py --data /opt/proastats/shared/data --restore /var/backups/proastats/data-XXXX.tgz`
   unpacks into a new folder next to `data` and never overwrites the live data. Then `sudo systemctl stop proastats`, move the restored `data` folder into place (keep the old one aside), `sudo chown -R proa:proa /opt/proastats/shared/data`, `sudo systemctl start proastats`.

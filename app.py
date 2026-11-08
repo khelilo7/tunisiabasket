@@ -11,6 +11,7 @@ from flask import Flask, Response, abort, jsonify, make_response, redirect, requ
 import auth
 import config
 import mvp
+import predict
 import seo
 import stats
 import traffic
@@ -160,6 +161,22 @@ def mvp_vote():
     ph = _phase_arg()
     ok, why = mvp.cast(request, ph, str(body.get("player", ""))[:40], str(body.get("vid", ""))[:80])
     return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400))
+
+
+@app.get("/api/predict")
+def predict_view():
+    r = jsonify(predict.view(str(request.args.get("vid", ""))[:80]))
+    r.headers["Cache-Control"] = "no-store"          # personal: what I picked, what I may see
+    return r
+
+
+@app.post("/api/predict/pick")
+def predict_pick():
+    body = request.get_json(silent=True, force=True) or {}
+    ok, why = predict.cast(request, str(body.get("game", ""))[:60], str(body.get("side", ""))[:2], str(body.get("vid", ""))[:80])
+    r = jsonify(ok=ok, reason=why)
+    r.status_code = 200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400)
+    return r
 
 
 @app.get("/photo/<pid>.jpg")

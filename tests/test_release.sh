@@ -21,7 +21,8 @@ t.execute("CREATE TABLE hits(ts INTEGER, day TEXT, page TEXT, path TEXT, country
 t.executemany("INSERT INTO hits VALUES (1, date('now'), 'home', 'home', 'TN', '', 'mobile', 'fr', ?)", [("h%d" % i,) for i in range(77)])
 t.commit(); t.close()
 PY
-VOTES_SUM="$(shasum -a 256 "$ROOT/shared/data/votes.db" | cut -d' ' -f1)"
+vote_sum() { python3 -c "import sqlite3,hashlib,sys; print(hashlib.sha256(repr(sorted(sqlite3.connect(sys.argv[1]).execute('SELECT * FROM votes'))).encode()).hexdigest())" "$ROOT/shared/data/votes.db"; }
+VOTES_SUM="$(vote_sum)"      # the vote rows themselves (a release may add tables to the file; it must never change a vote)
 rows() { python3 -c "import sqlite3,sys; print(sqlite3.connect(sys.argv[1]).execute('SELECT COUNT(*) FROM '+sys.argv[2]).fetchone()[0])" "$ROOT/shared/data/$1" "$2"; }
 cat > "$ROOT/restart.sh" <<RS
 #!/usr/bin/env bash
@@ -82,7 +83,7 @@ check "history lists only healthy releases" test "$(tr '\n' ' ' < "$ROOT/history
 echo "6) live data untouched by deploys"
 check "shared/data still there" test -d "$ROOT/shared/data"
 check "all 123 votes survived good, refused and rolled-back releases" test "$(rows votes.db votes)" = 123
-check "votes.db is byte-for-byte unchanged" test "$(shasum -a 256 "$ROOT/shared/data/votes.db" | cut -d' ' -f1)" = "$VOTES_SUM"
+check "every vote row is identical" test "$(vote_sum)" = "$VOTES_SUM"
 check "all 77 page views survived" test "$(rows traffic.db hits)" = 77
 check "the running release reads the same votes" bash -c "curl -fsS -m 3 http://127.0.0.1:$PORT/api/mvp?phase=1 >/dev/null || true; test \"\$(python3 -c \"import sqlite3; print(sqlite3.connect('$ROOT/shared/data/votes.db').execute('SELECT COUNT(*) FROM votes').fetchone()[0])\")\" = 123"
 if [ "$fail" = 0 ]; then echo "release rehearsal: ok"; else echo "release rehearsal: FAILED"; exit 1; fi

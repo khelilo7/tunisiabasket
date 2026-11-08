@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Backup of everything that matters (votes, visit statistics, games, official results, roster, admin settings).
 #   backup.sh          full backup (nightly, from cron): consistent SQLite copies, verified, 14 days + one per month for a year
-#   backup.sh --small  votes + visits only (hourly, from cron): kept 3 days
+#   backup.sh --small  votes + visits only (every 6 hours, from cron; skipped when nothing changed): kept 2 days
 # Run as root by cron. A backup on the same machine does not survive losing the machine: also copy them off
 # (DEPLOY.md, "Backups") or switch on OVH's backup option.
 set -euo pipefail

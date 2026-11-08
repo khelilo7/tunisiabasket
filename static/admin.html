@@ -378,6 +378,13 @@ async function loadMvp() {
     <div class="row" style="margin:8px 0"><label class="small mut">Note on the winner card (optional)</label><input data-f="note" maxlength="200" style="flex:1;min-width:240px" value="${esc(p.note || '')}"></div>
     <button data-save="${p.phase}">Save</button> <span class="small mut" data-msg></span>
     <p class="mut small" style="margin-bottom:0">Fans choose among the top 3 by stats; each browser votes once and the vote is final; at most 8 browsers per network. Only hashes are stored. The phase MVP is decided by the votes alone.</p></div>`).join('');
+  api('predictions').then(({ body: pr }) => {
+    const r = pr.round;
+    box.insertAdjacentHTML('beforeend', `<div class="card" style="margin-top:12px"><h3 style="margin-top:0">🔮 Match predictions <span class="mut small">${r ? '· matchday ' + r.matchday + (r.date ? ' · ' + esc(r.date) : '') + (r.open ? ' · open' : ' · closed') : '· no upcoming matchday'}</span></h3>
+      <div class="kpis"><div class="kpi"><b>${pr.total_picks}</b><span>picks in total</span></div><div class="kpi"><b>${pr.people}</b><span>different browsers</span></div></div>
+      ${r ? `<table style="margin-top:10px"><thead><tr><th class="l">Game</th><th>Home picks</th><th>Away picks</th></tr></thead><tbody>${r.games.map(g => `<tr><td class="l"><b>${esc(g.home)}</b> – <b>${esc(g.away)}</b></td><td>${g.home_picks}</td><td>${g.away_picks}</td></tr>`).join('')}</tbody></table>` : ''}
+      <p class="mut small" style="margin-bottom:0">Only you see these numbers: visitors get percentages, and only for the games they picked. Picks close when the matchday starts (no setting needed). One final pick per game and browser; picks and votes cannot be changed or deleted, not even from here.</p></div>`);
+  }).catch(() => {});
   box.querySelectorAll('[data-save]').forEach(b => b.onclick = async () => {
     const card = b.closest('.card'), g = f => card.querySelector(`[data-f=${f}]`);
     const r = await api('mvp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phase: +b.dataset.save, winner: g('winner').value, voting_open: g('open').checked, note: g('note').value, deadline: g('deadline').value }) });
