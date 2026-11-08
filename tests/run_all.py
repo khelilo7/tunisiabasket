@@ -11,7 +11,7 @@ if not shutil.which("tesseract"):
     sys.exit("tesseract is not installed (macOS: brew install tesseract, Ubuntu: apt install tesseract-ocr)")
 env = {**os.environ, "DATA_DIR": tempfile.mkdtemp(prefix="proa-test-")}
 failed = []
-for name in ("smoke.py", "test_repo_hygiene.py", "test_stats.py", "test_positions.py", "test_bios.py", "test_traffic.py", "test_mvp.py", "test_roster.py", "test_live.py", "test_seo.py", "test_i18n.py", "test_security.py", "test_results_images.py", "test_ocr.py"):
+for name in ("smoke.py", "test_repo_hygiene.py", "test_stats.py", "test_positions.py", "test_bios.py", "test_traffic.py", "test_mvp.py", "test_roster.py", "test_seo.py", "test_i18n.py", "test_security.py", "test_results_images.py", "test_ocr.py"):
     print(f"\n=== {name}")
     if subprocess.run([sys.executable, str(root / "tests" / name)], cwd=root, env=env).returncode:
         failed.append(name)

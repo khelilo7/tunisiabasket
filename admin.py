@@ -23,7 +23,6 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 import auth
 import config
 import stats
-import live
 import mvp
 import traffic
 from extractor import extract
@@ -433,23 +432,6 @@ def roster_change_bio(pid, field, value):
         cur = {}
     cur.setdefault(pid, {})[field] = _bio_value(field, value)
     stats.BIOS_FILE.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
-
-
-@bp.get("/admin/api/live")
-def live_admin():
-    return jsonify(matches=live.all_matches(), teams=stats.load_official()["teams"])
-
-
-@bp.post("/admin/api/live")
-def live_admin_change():
-    b = request.get_json(silent=True) or {}
-    try:
-        m = live.apply(str(b.get("op") or ""), b)
-    except (ValueError, TypeError) as e:
-        return jsonify(error=str(e) or "Invalid value."), 422
-    if b.get("op") in ("create", "finish", "delete", "start"):
-        auth.audit("live", f"{b.get('op')} {m.get('home', '')}-{m.get('away', '')} {m.get('home_score', '')}-{m.get('away_score', '')}")
-    return jsonify(ok=True, match=m)
 
 
 @bp.get("/admin/api/team-stats")

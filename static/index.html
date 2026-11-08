@@ -150,24 +150,6 @@
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
-  /* live board and news */
-  .liveboard { display:grid; gap:12px; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); margin-bottom:14px; }
-  .lv { border-color:var(--bad); background:linear-gradient(135deg,rgba(255,93,108,.12),transparent 60%),var(--card); }
-  .lv.fin { border-color:var(--line); background:var(--card); }
-  .lv .lvh { display:flex; align-items:center; gap:8px; font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
-  .livepill { display:inline-flex; align-items:center; gap:6px; color:var(--bad); } .livepill::before { content:""; width:9px; height:9px; border-radius:50%; background:var(--bad); animation:pulse 1.2s infinite; }
-  @keyframes pulse { 50% { opacity:.25; transform:scale(.8); } }
-  .lv .lvs { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin:10px 0 6px; }
-  .lv .lvt { display:flex; flex-direction:column; align-items:center; gap:4px; text-align:center; font-weight:800; font-size:14px; } .lv .lvt.r { }
-  .lv .sc { font-size:clamp(28px,6vw,38px); font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.02em; white-space:nowrap; } .lv .sc small { color:var(--mut); font-weight:700; }
-  .lv .lvu { font-size:12px; color:var(--mut); border-top:1px solid var(--line); margin-top:8px; padding-top:6px; display:grid; gap:2px; }
-  .news { display:grid; gap:12px; }
-  .nw { padding:14px 16px; } .nw .nh { display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:8px; } .nw .nh b { font-size:15px; } .nw .nk { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--acc); }
-  .nw.vote { border-color:var(--acc); background:var(--mvp-grad); cursor:pointer; }
-  .nw .nr { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; padding:6px 0; border-top:1px solid var(--line); align-items:center; font-size:14px; }
-  .nw .nr .a { text-align:right; } .nw .nr b { font-variant-numeric:tabular-nums; } .nw .nr .w { font-weight:800; } .nw .nr .l { color:var(--mut); }
-  .nw .nr .nm { grid-column:1 / -1; font-size:12px; color:var(--mut); }
-  .nw .best { background:var(--mvp-in); border:1px solid var(--mvp-line); border-radius:10px; padding:8px 12px; margin-bottom:6px; font-size:14px; }
   /* phase MVP: banner on the home page, race page, fan vote */
   .phase { cursor:pointer; display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:center; margin-top:14px; background:var(--mvp-grad); border-color:var(--mvp-line); transition:border-color .15s, transform .15s; } .phase:hover { border-color:var(--acc); transform:translateY(-2px); }
   .phase .crown, .winner .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
@@ -253,7 +235,7 @@ const FR = {
   'You already voted: one vote per person.': 'Vous avez déjà voté : une seule voix par personne.', 'Ranking': 'Classement',
   'Voting is closed.': 'Le vote est clos.', 'Too many votes from this network. Try again later.': 'Trop de votes depuis ce réseau. Réessayez plus tard.',
   'Could not record your vote.': 'Impossible d’enregistrer votre vote.',
-  'Transfer': 'Transfert', 'Tip-off': 'Coup d’envoi', 'News': 'Actualités', 'LIVE': 'EN DIRECT', 'FINAL': 'TERMINÉ', 'Results': 'Résultats', 'Player of the matchday': 'Joueur de la journée',
+  'Transfer': 'Transfert',
   'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
@@ -289,9 +271,6 @@ const W = LANG === 'fr' ? 'V' : 'W', Ls = LANG === 'fr' ? 'D' : 'L';
 const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
-    endPeriod: (p, h, hs, as, a) => `${p === 'OT' ? 'End of overtime' : 'End of period ' + p}: ${h} ${hs}–${as} ${a}`, finalEv: (h, hs, as, a) => `Final: ${h} ${hs}–${as} ${a}`,
-    agoMin: m => `${m} min ago`, agoHour: h => `${h} h ago`, agoDay: d => `${d} d ago`,
-    newsVote: n => `Who is the Phase 1 MVP? ${n} leads on stats: cast your vote`, newsFinal: (a, sa, sb, b) => `${a} ${sa}–${sb} ${b}`, newsDay: n => `Matchday ${n} results`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
     provisional: (s, fa) => `Best player by the stats so far. The final decision is ${s}% stats and ${fa}% fans’ vote, announced when voting closes.`,
     ballotIntro: n => `Choose your MVP among the top ${n} players by stats. One vote per person, and it is final.`,
@@ -313,9 +292,6 @@ const SENT = {
   },
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
-    endPeriod: (p, h, hs, as, a) => `${p === 'OT' ? 'Fin de la prolongation' : 'Fin du quart-temps ' + p} : ${h} ${hs}–${as} ${a}`, finalEv: (h, hs, as, a) => `Terminé : ${h} ${hs}–${as} ${a}`,
-    agoMin: m => `il y a ${m} min`, agoHour: h => `il y a ${h} h`, agoDay: d => `il y a ${d} j`,
-    newsVote: n => `Qui est le MVP de la phase 1 ? ${n} mène aux statistiques : votez`, newsFinal: (a, sa, sb, b) => `${a} ${sa}–${sb} ${b}`, newsDay: n => `Résultats de la journée ${n}`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
     provisional: (s, fa) => `Meilleur joueur selon les statistiques pour l’instant. La décision finale est ${s} % statistiques et ${fa} % vote des fans, annoncée à la clôture du vote.`,
     ballotIntro: n => `Choisissez votre MVP parmi les ${n} meilleurs joueurs selon les statistiques. Une seule voix par personne, et elle est définitive.`,
@@ -401,11 +377,10 @@ async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
   document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings' }[r.page] || r.page)));
   const app = $('#app');
-  courtData = null; pageMeta = null; clearInterval(livePoll);
+  courtData = null; pageMeta = null;
   try {
     app.innerHTML = await ({ home, standings, players, games, planning, mvp, team, player, game }[r.page] || home)(r.arg);
     bind();
-    startLivePoll(r.page === 'home' && !!$('#livebox .livepill'));
     drawCourt();
     if (pageMeta) setMeta(...pageMeta);
     track();
@@ -430,12 +405,11 @@ const META = {
 };
 
 async function home() {
-  const [d, lv, nw] = await Promise.all([api('overview'), fetch('/api/live').then(r => r.json()).catch(() => null), fetch('/api/news').then(r => r.json()).catch(() => null)]);
+  const d = await api('overview');
   pageMeta = META.home[LANG];
   if (!d.games) return `<div class="empty"><h1>${_('No games yet')}</h1>${_('Box scores appear here as soon as they are added.')}</div>`;
   const m = d.mvp;
   return `
-  <div id="livebox">${liveHtml(lv)}</div>
   <div class="card hero">
     <svg class="herobg" viewBox="0 0 500 470" aria-hidden="true">${halfLines(false)}</svg>
     <img class="watermark" src="/img/teams/${esc(m.team)}.png" alt="" onerror="this.remove()">
@@ -454,51 +428,7 @@ async function home() {
   </tbody></table></div>
   <h2>${_('Standings')}</h2>${standTable(d, true)}
   <h2>${_('Latest games')}</h2>
-  <div class="grid g2">${d.recent.map(gameCard).join('')}</div>
-  ${nw && nw.items.length ? `<h2>${_('News')}</h2><div class="news">${nw.items.map(newsItem).join('')}</div>` : ''}`;
-}
-
-// ---- live board (polled every 15 s while a match is in play) and news feed
-let livePoll = null;
-const periodLabel = p => p === 'OT' ? (LANG === 'fr' ? 'PROL.' : 'OT') : (LANG === 'fr' ? 'QT' : 'Q') + p;
-const ago = ts => { const m = Math.max(0, Math.round((Date.now() / 1000 - ts) / 60)); return m < 60 ? esc(f('agoMin', m)) : m < 1440 ? esc(f('agoHour', Math.round(m / 60))) : esc(f('agoDay', Math.round(m / 1440))); };
-const liveEvent = (u, m) => u.kind === 'tipoff' ? _('Tip-off') : u.kind === 'end_period' ? f('endPeriod', u.period, m.home, u.home_score, u.away_score, m.away) : u.kind === 'final' ? f('finalEv', m.home, u.home_score, u.away_score, m.away) : u.text;
-function liveCard(m) {
-  const fin = m.status === 'final';
-  return `<div class="card lv${fin ? ' fin' : ''}"><div class="lvh">${fin ? `<span class="mut">${_('FINAL')}</span><span class="mut">· ${ago(m.finished)}</span>` : `<span class="livepill">${_('LIVE')}</span><span class="mut">${periodLabel(m.period)} · ${esc(m.clock)}</span>`}
-      <span class="sp"></span><span class="mut">${esc(m.matchday || '')}</span></div>
-    <div class="lvs"><a class="lvt" href="${teamUrl(m.home)}">${logo(m.home, 44)}<span>${esc(m.home_name)}</span></a>
-      <div class="sc">${m.home_score}<small> – </small>${m.away_score}</div>
-      <a class="lvt r" href="${teamUrl(m.away)}">${logo(m.away, 44)}<span>${esc(m.away_name)}</span></a></div>
-    ${m.updates && m.updates.length ? `<div class="lvu">${m.updates.slice(0, 3).map(u => `<span>${ago(u.ts)} · ${esc(liveEvent(u, m))}</span>`).join('')}</div>` : ''}</div>`;
-}
-function liveHtml(b) {
-  if (!b || (!b.live.length && !b.final.length)) return '';
-  return `<div class="liveboard">${[...b.live, ...b.final].map(liveCard).join('')}</div>`;
-}
-function startLivePoll(has) {
-  clearInterval(livePoll); livePoll = null;
-  if (!has) return;
-  livePoll = setInterval(async () => {
-    const box = $('#livebox'); if (!box || document.hidden) return;
-    try { const b = await (await fetch('/api/live')).json(); box.innerHTML = liveHtml(b); if (!b.live.length) { clearInterval(livePoll); route(true); } } catch (e) { /* keep the last picture */ }
-  }, 15000);
-}
-function newsItem(n) {
-  if (n.kind === 'vote') {
-    const l = n.leader;
-    return `<div class="card nw vote" data-go="${url('mvp')}"><div class="nh"><span class="nk">🗳️ ${_('Fan vote')}</span><b>${esc(f('newsVote', title(l.name)))}</b></div>
-      <div class="mut small">${esc(f('votesN', n.votes))}${n.deadline_ts ? ' · ' + deadlineLine(true, n.deadline_ts) : ''}</div></div>`;
-  }
-  if (n.kind === 'live_final') {
-    const m = n.match;
-    return `<div class="card nw"><div class="nh"><span class="nk">${_('FINAL')}</span><b>${esc(f('newsFinal', n.home_name, m.home_score, m.away_score, n.away_name))}</b><span class="mut small">${ago(n.ts)}</span></div></div>`;
-  }
-  const best = n.best;
-  return `<div class="card nw"><div class="nh"><span class="nk">${_('Results')}</span><b>${esc(f('newsDay', n.matchday))}</b>${n.date ? `<span class="mut small">${fmtDate(n.date)}</span>` : ''}</div>
-    ${best ? `<div class="best">⭐ ${_('Player of the matchday')}: <a href="${playerUrl(best.player_id, best.name)}"><b>${esc(title(best.name))}</b></a> <span class="mut">${esc(best.team)} · ${best.pts} ${_('pts')}, ${best.reb} ${_('reb')}, ${best.ast} ${_('ast')} · PIR ${best.pir}</span></div>` : ''}
-    ${n.results.map(r => `<a class="nr" href="${r.game_id ? gameUrl(r.game_id) : teamUrl(r.home)}"><span class="${r.home_score > r.away_score ? 'w' : 'l'} tn">${logo(r.home, 22)}${esc(r.home_name)}</span><b>${r.home_score} – ${r.away_score}</b><span class="a ${r.away_score > r.home_score ? 'w' : 'l'} tn" style="justify-content:flex-end">${esc(r.away_name)}${logo(r.away, 22)}</span>
-      ${r.mvp ? `<span class="nm">MVP ${esc(title(r.mvp.name))} · ${r.mvp.pts} ${_('pts')}, ${r.mvp.reb} ${_('reb')}, ${r.mvp.ast} ${_('ast')}</span>` : ''}</a>`).join('')}</div>`;
+  <div class="grid g2">${d.recent.map(gameCard).join('')}</div>`;
 }
 
 const LEAD = { pts: ['Top scorers', 'PTS', ''], reb: ['Top rebounders', 'REB', ''], ast: ['Top passers', 'AST', ''], stl: ['Top ball stealers', 'STL', ''],
