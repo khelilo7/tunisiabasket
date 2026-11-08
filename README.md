@@ -105,6 +105,8 @@ Page `/course-mvp` (`/en/mvp-race`). A phase is 11 matchdays (phase 1 = J1-J11).
 their team's games in the phase. Two separate things:
 - **Stats race**: every candidate ranked by average impact over the phase (PIR + 2 per win), with a chart of each leader's running average after every matchday.
   It shows the best player so far and decides nothing.
+- **Current MVP**: the crowned player, else the player with the most votes, else (no votes yet) the stats leader. It is the banner of the MVP page and a card on the home page,
+  which also names the best player by stats when that is someone else. The MVP page's list is ordered by votes first (only the three on the ballot can have any), then by stats.
 - **Fan vote**: fans choose among the top 3 of the stats race. **The phase MVP is decided by the votes alone** (most votes; a tie goes to the better stats; if nobody
   voted, the stats leader). One final vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused.
   Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from several browsers

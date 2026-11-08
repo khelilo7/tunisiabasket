@@ -57,7 +57,7 @@ T = {
         "p_desc": "{name}, {team} #{num}: {pts} points, {reb} rebounds and {ast} assists per game over {gp} games in the {season} Pro A season. Rating {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
-        "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_leader": "Best player so far", "mv_h1": "MVP race – phase 1 (J1–J11)",
+        "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "MVP race – phase 1 (J1–J11)",
         "mv_title": "MVP race and fan vote – phase 1 – Tunisia Basket",
         "mv_desc": "Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans' vote. {who}",
         "mvp_game": " Game MVP: {name}.", "not_found": "Page not found – Tunisia Basket",
@@ -86,7 +86,7 @@ T = {
         "p_desc": "{name}, {team} n°{num} : {pts} points, {reb} rebonds et {ast} passes décisives par match en {gp} matchs de Pro A {season}. Note {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
-        "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_leader": "Meilleur joueur à ce jour", "mv_h1": "Course au MVP – phase 1 (J1–J11)",
+        "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Course au MVP – phase 1 (J1–J11)",
         "mv_title": "Course au MVP et vote des fans – phase 1 – Tunisia Basket",
         "mv_desc": "Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans. {who}",
         "mvp_game": " MVP du match : {name}.", "not_found": "Page introuvable – Tunisia Basket",
@@ -203,10 +203,10 @@ def meta(lang, page, arg=None):
     elif page == "mvp":
         import mvp
         r = mvp.race(1)
-        top = r["winner"] or r["leader"]
-        who = f'{t["mv_phase1"] if r["winner"] else t["mv_leader"]}: {top["name"]} ({top["team"]}).' if top else ""
-        rows = "".join(f'<tr><td>{c["rank"]}</td><td><a href="{path(lang, "player", player_ref(c))}">{esc(c["name"])}</a></td><td>{esc(c["team"])}</td>'
-                       f'<td>{c["pts"]}</td><td>{c["reb"]}</td><td>{c["ast"]}</td><td>{c["votes"]}</td><td>{c["pir"]}</td></tr>' for c in r["candidates"][:10])
+        top = r["current"]
+        who = f'{t["mv_phase1"] if r["current_by"] == "winner" else t["mv_current"]}: {top["name"]} ({top["team"]}).' if top else ""
+        rows = "".join(f'<tr><td>{c["vote_rank"]}</td><td><a href="{path(lang, "player", player_ref(c))}">{esc(c["name"])}</a></td><td>{esc(c["team"])}</td>'
+                       f'<td>{c["pts"]}</td><td>{c["reb"]}</td><td>{c["ast"]}</td><td>{c["votes"]}</td><td>{c["pir"]}</td></tr>' for c in sorted(r["candidates"], key=lambda c: c["vote_rank"])[:10])
         out.update(title=t["mv_title"], description=t["mv_desc"].format(who=who).strip(),
                    ssr=f'<h1>{t["mv_h1"]}</h1><p>{esc(who)}</p><table><thead><tr><th>#</th><th>{t["players"]}</th><th>{t["team"]}</th><th>PTS</th><th>{t["reb"]}</th>'
                        f'<th>{t["ast"]}</th><th>{t["mv_votes"]}</th><th>PIR</th></tr></thead><tbody>{rows}</tbody></table>')

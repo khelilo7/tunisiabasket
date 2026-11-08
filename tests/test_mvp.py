@@ -40,6 +40,8 @@ check(r["complete"] and len(r["matchdays"]) == 11, "phase 1 is complete (J1-J11)
 check(all(len(x["series"]) == 11 for x in cands), "one race point per matchday")
 check(cands[0]["stats_score"] == 100 and r["total_votes"] == 0 and r["decided_by"] == "fans" and "weights" not in r, "stats race scaled to 100; the phase MVP is decided by the fans alone")
 check(r["vote_leader"] is None, "nobody voted yet: no fans' favourite")
+check(r["current"]["id"] == "ca-24" and r["current_by"] == "stats", "no votes yet: the current MVP is the stats leader")
+check([x["vote_rank"] for x in sorted(cands, key=lambda x: x["vote_rank"])] == list(range(1, len(cands) + 1)), "the list has a vote rank 1..n")
 check(all(x["gp"] >= x["need"] for x in cands), "candidates meet the 70% games rule")
 check(r["winner"] is None and r["leader"]["id"] == "ca-24", "nobody crowned while fans can still vote; Abada leads on stats")
 check(r["voting_open"] and r["deadline"] == "2026-11-11T12:00:00+01:00", f"deadline from the repo file: {r['deadline']}")
@@ -79,6 +81,10 @@ for n in range(100, 120):
 t = c.get("/api/mvp?phase=1").get_json()
 top = {x["id"]: x for x in t["candidates"]}
 check(t["vote_leader"]["id"] == b and top[b]["votes"] == 20, "most votes = the fans' favourite")
+check(t["current"]["id"] == b and t["current_by"] == "votes", "the current MVP is the vote leader, not the stats leader")
+lst = sorted(t["candidates"], key=lambda x: x["vote_rank"])
+check(lst[0]["id"] == b and lst[1]["id"] == cands[2]["id"] and lst[2]["id"] == a, "the list is ordered by votes (20, 12, 10), then stats")
+check(all(x["votes"] == 0 for x in lst[3:]) and [x["impact"] for x in lst[3:]] == sorted([x["impact"] for x in lst[3:]], reverse=True), "players without votes follow in stats order")
 check(t["leader"]["id"] == a and [x["id"] for x in t["candidates"]][0] == a, "the stats race is not changed by the votes")
 check(abs(sum(x["vote_share"] for x in t["candidates"]) - 100) < 0.3, "vote shares add up")
 
@@ -100,7 +106,7 @@ t = c.get("/api/mvp?phase=1").get_json()
 check(t["winner"] and t["winner"]["id"] == b, "no crown + voting closed + phase complete: most votes wins")
 check(c.get("/admin/api/mvp", headers=ADMIN).get_json()["phases"][0]["votes"]["total"] > 20, "admin sees vote totals")
 ov = c.get("/api/overview").get_json()["phase_mvp"]
-check(ov["winner"] and len(ov["ballot"]) == 3 and "log" not in ov["winner"] and ov["leader"]["id"] == a, "home summary")
+check(ov["current"]["id"] == b and ov["current_by"] == "winner" and ov["winner"] and len(ov["ballot"]) == 3 and "log" not in ov["winner"] and ov["leader"]["id"] == a, "home summary")
 
 # pages
 for p in ("/course-mvp", "/en/mvp-race"):

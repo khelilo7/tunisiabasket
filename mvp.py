@@ -250,8 +250,14 @@ def race(phase: int = 1) -> dict:
     winner = next((r for r in rows if r["id"] == st["winner"]), None)       # a crown set by the admin always wins
     if winner is None and not is_open and complete and rows:
         winner = vote_leader or rows[0]                                      # voting is over: the fans decide (no votes at all: the stats leader)
+    # the list shown to visitors: most votes first, a tie (and everybody without votes) by the stats race
+    for i, r in enumerate(sorted(rows, key=lambda r: (r["votes"], r["impact"], r["pts"]), reverse=True), 1):
+        r["vote_rank"] = i
+    current = winner or vote_leader or (rows[0] if rows else None)
+    current_by = "winner" if winner else "votes" if vote_leader else "stats"
     return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": is_open, "note": st["note"],
             "deadline": dl.isoformat() if dl else None, "deadline_ts": int(dl.timestamp()) if dl else None,
             "total_votes": total, "decided_by": "fans",
             "winner": winner, "leader": rows[0] if rows else None, "vote_leader": vote_leader,
+            "current": current, "current_by": current_by,         # the MVP right now: crowned, else most votes, else (no votes yet) the stats leader
             "ballot": ballot_ids, "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}
