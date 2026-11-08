@@ -136,7 +136,10 @@ ufw allow 443/tcp
 ufw --force enable
 systemctl enable --now fail2ban
 dpkg-reconfigure -f noninteractive unattended-upgrades || true
-echo "17 3 * * * root $APP/current/deploy/backup.sh >> /var/backups/proastats/backup.log 2>&1" > /etc/cron.d/proastats-backup
+cat > /etc/cron.d/proastats-backup <<CRON
+17 3 * * * root $APP/current/deploy/backup.sh >> /var/backups/proastats/backup.log 2>&1
+7 * * * * root $APP/current/deploy/backup.sh --small >> /var/backups/proastats/backup.log 2>&1
+CRON
 
 echo "==> 8/9 Admin helper (proastats-admin new-token | log | status)"
 cat > /usr/local/bin/proastats-admin <<'WRAP'

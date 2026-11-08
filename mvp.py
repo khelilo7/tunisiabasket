@@ -184,6 +184,7 @@ def _race_data(phase: int):
     played = {r["code"]: min(PHASE_LEN, max(0, r["j"] - (phase - 1) * PHASE_LEN)) for r in d["standings"]}
     top = set(d["top_teams"])
     rows = []
+    photos = stats.load_photos()
     for p in d["players"]:
         log = [r for r in p["log"] if r["game_id"] in in_phase]
         if not log:
@@ -198,7 +199,7 @@ def _race_data(phase: int):
         by_md = defaultdict(list)
         for r in log:
             by_md[gid[r["game_id"]]].append(r["impact"])
-        rows.append({"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"], "pos": p["pos"], "gp": n, "need": need,
+        rows.append({"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"], "pos": p["pos"], "gp": n, "need": need, "photo": photos.get(p["id"]),
                      "pts": avg("pts"), "reb": avg("reb"), "ast": avg("ast"), "stl": avg("stl"), "blk": avg("blk"), "pir": avg("pir"),
                      "impact": avg("impact"), "mvp_games": sum(r["is_mvp"] for r in log), "wins": sum(r["won"] for r in log),
                      "_by_md": dict(by_md)})

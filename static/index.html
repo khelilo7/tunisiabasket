@@ -150,6 +150,11 @@
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand img { height:34px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
+  .face { position:relative; display:inline-block; flex:none; } .face img.ph { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--acc); background:var(--bg); }
+  .face .tb { position:absolute; right:-4px; bottom:-4px; width:38%; height:38%; border-radius:50%; background:#fff; border:2px solid var(--card); display:grid; place-items:center; overflow:hidden; } .face .tb img { width:78%; height:78%; object-fit:contain; }
+  .bcard .face { margin-bottom:2px; }
+  .rtable th, .rtable td { padding:9px 8px; } .rtable td.pl { text-align:left; } .rtable .pn2 { display:flex; align-items:center; gap:10px; } .rtable .pn2 b { display:block; } .rtable .pn2 span { font-size:12px; color:var(--mut); }
+  .rtable tbody tr { cursor:pointer; } .rtable .rk { width:34px; text-align:center; color:var(--mut); font-weight:800; } .rtable tr:nth-child(-n+3) .rk { color:var(--acc); }
   /* next-games banner, matchup modal, home duo */
   .nb { position:relative; overflow:hidden; border-radius:18px; border:1px solid var(--mvp-line); background:var(--mvp-grad); box-shadow:var(--shadow); margin-bottom:14px; }
   .nbt { overflow:hidden; } .nbtrack { display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1); }
@@ -174,12 +179,12 @@
   .mu .cb i.win { opacity:1; }
   .mu .chips { display:flex; gap:5px; } .mu .chip2 { width:26px; height:26px; border-radius:7px; display:grid; place-items:center; font-size:12px; font-weight:800; } .mu .chip2.w { background:var(--pillw); color:var(--good); } .mu .chip2.l { background:var(--pilll); color:var(--bad); }
   .mu .two { display:grid; grid-template-columns:1fr 1fr; gap:14px; } .mu .pl { font-size:13px; padding:4px 0; display:flex; justify-content:space-between; gap:8px; } .mu .pl span { color:var(--mut); }
-  .duo { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; } .duo .phase { margin-top:0; grid-template-columns:1fr; }
+  .duo { display:grid; grid-template-columns:1fr; gap:14px; margin-top:14px; } .duo .phase { margin-top:0; }
   .bestnow { display:flex; flex-direction:column; gap:6px; } .bestnow .bn { display:flex; align-items:center; gap:12px; font-size:clamp(20px,3.5vw,26px); font-weight:800; line-height:1.15; }
   .bestnow .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
   .bestnow .tiles { display:flex; gap:8px; flex-wrap:wrap; margin-top:4px; } .bestnow .tile { background:var(--bg); border:1px solid var(--line); border-radius:10px; padding:6px 11px; min-width:56px; text-align:center; }
   .bestnow .tile b { display:block; font-size:19px; color:var(--acc); line-height:1.1; } .bestnow .tile span { font-size:10px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; }
-  @media (max-width:760px) { .duo { grid-template-columns:1fr; } .nbs { padding:18px 14px 16px; } .nbn { display:none; } .mu .cr { grid-template-columns:52px 1fr 90px 1fr 52px; } .mu .two { grid-template-columns:1fr; } }
+  @media (max-width:760px) { .nbs { padding:18px 14px 16px; } .nbn { display:none; } .mu .cr { grid-template-columns:52px 1fr 90px 1fr 52px; } .mu .two { grid-template-columns:1fr; } }
   /* phase MVP: banner on the home page, race page, fan vote */
   .phase { cursor:pointer; display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:center; margin-top:14px; background:var(--mvp-grad); border-color:var(--mvp-line); transition:border-color .15s, transform .15s; } .phase:hover { border-color:var(--acc); transform:translateY(-2px); }
   .phase .crown, .winner .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
@@ -378,6 +383,7 @@ const ring = r => `<div class="ring" style="--v:${r};--c:${rcol(r)}"><span>${r}<
 const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short' });
 const title = n => n.toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
 const signed = n => (n > 0 ? '+' : '') + n;
+const face = (p, px) => p && p.photo ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph" src="${esc(p.photo)}" alt="${esc(title(p.name))}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png" alt="" onerror="this.remove()"></span></span>` : logo(p.team, Math.min(px, 56));
 const logo = (code, px = 26) => `<img class="tlogo" src="/img/teams/${esc(code)}.png" alt="" width="${px}" height="${px}" loading="lazy" onerror="this.remove()">`;
 const named = (code, name, px = 24) => `<span class="tn">${logo(code, px)}<span>${esc(name)}</span></span>`;
 const plink = (p, text) => `<a href="${playerUrl(p.id, p.name)}">${text ?? esc(p.name)}</a>`;
@@ -444,7 +450,7 @@ async function home() {
   return `
   ${nextBanner(plan, d.standings)}
   <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
-  <div class="duo">${bestCard(d.mvp)}${phaseCard(d.phase_mvp)}</div>
+  <div class="duo">${phaseCard(d.phase_mvp)}${bestCard(d.mvp)}</div>
   <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
   <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
   <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
@@ -502,16 +508,16 @@ function phaseCard(pm) {
   if (!pm || !pm.ballot.length) return '';
   const W = pm.winner, top = Math.max(1, ...pm.ballot.map(r => r.votes));
   return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">${W ? '🏆 ' + _('Phase 1 MVP') : '🗳️ ' + _('Fan vote') + ' · ' + _('Phase 1 MVP')}</div>
-    ${W ? `<div class="pn">${logo(W.team, 44)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
+    ${W ? `<div class="pn">${face(W, 56)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
         : `<div class="mut small" style="margin:6px 0 2px">${esc(f('votesN', pm.total_votes))} · ${esc(_('Decided by the fans'))}</div>`}
     ${pm.voting_open && pm.deadline_ts ? `<div class="mut small" style="margin-top:6px">⏳ ${deadlineLine(true, pm.deadline_ts)}</div>` : ''}</div>
-    <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div><b>${r.vote_share}%</b></div>`).join('')}
+    <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div style="display:flex;gap:10px;align-items:center">${face(r, 36)}<div style="flex:1;min-width:0"><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div></div><b>${r.vote_share}%</b></div>`).join('')}
     <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div></div>`;
 }
 function bestCard(m) {
   if (!m) return '';
   return `<div class="card bestnow" data-go="${url('mvp')}" style="cursor:pointer"><div class="crown">⭐ ${_('Best player so far')} · ${_('Stats race')}</div>
-    <div class="bn">${logo(m.team, 48)}<span>${plink(m, esc(title(m.name)))}</span></div>
+    <div class="bn">${face(m, 64)}<span>${plink(m, esc(title(m.name)))}</span></div>
     <div class="mut small">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${m.gp} ${H('GP')}${m.team_rank ? ' · ' + esc(f('rankIn', m.team_rank)) : ''}</div>
     <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>`;
 }
@@ -528,7 +534,7 @@ async function mvp() {
   if (!c.length) return `<h1>${_('MVP race')}</h1><div class="empty">${_('No games yet')}</div>`;
   r.ballot.forEach((id, i) => { const x = c.find(y => y.id === id); if (x) x.stats_rank = i + 1; });
   const winner = W ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Phase 1 MVP')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
-      <div class="nm">${logo(W.team, 48)}<span>${plink(W, esc(title(W.name)))}</span></div>
+      <div class="nm">${face(W, 72)}<span>${plink(W, esc(title(W.name)))}</span></div>
       <div class="mut">${esc(W.team)} · #${W.number} · ${esc(posName(W.pos))} · ${W.gp} ${H('GP')} · ${esc(f('votesN', W.votes))}</div>
       <div class="tiles">${[['PTS', W.pts], ['REB', W.reb], [H('AST'), W.ast], [H('STL'), W.stl], [H('BLK'), W.blk], ['PIR', W.pir], [_('Votes'), W.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
@@ -542,10 +548,9 @@ async function mvp() {
   <h2>${_('Stats race')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('Best player so far')}${best ? ': ' + esc(title(best.name)) : ''}</span></h2>
   <div class="card">${raceChart(r)}</div>
   <h2>${_('Stats race')} · ${_('Ranking')}</h2>
-  <div class="card tablecard">${shown.map(x => `<div class="vrow"><span class="rk">${x.rank}</span>${logo(x.team, 32)}
-      <a class="nmb" href="${playerUrl(x.id, x.name)}"><b>${esc(title(x.name))}</b><span>${esc(x.team)} · #${x.number} · ${x.gp} ${H('GP')} · ${x.pts} ${_('pts')} · ${x.reb} ${_('reb')} · ${x.ast} ${_('ast')}</span></a>
-      <div class="bars"><div class="small mut">${_('Impact')} ${x.impact}</div><div class="meter"><i style="width:${x.stats_score}%"></i></div></div>
-      <span class="sc">${x.pir}</span></div>`).join('')}</div>
+  <div class="card tablecard scroll"><table class="rtable"><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>PIR</th><th>${_('Impact')}</th></tr></thead><tbody>
+    ${shown.map(x => `<tr data-go="${playerUrl(x.id, x.name)}"><td class="rk">${x.rank}</td><td class="pl"><div class="pn2">${face(x, 34)}<div><b>${plink(x, esc(title(x.name)))}</b><span>${esc(x.team)} · #${x.number}</span></div></div></td>
+      <td>${x.gp}</td><td>${x.pts}</td><td>${x.reb}</td><td>${x.ast}</td><td>${x.stl}</td><td>${x.blk}</td><td>${x.pir}</td><td><b>${x.impact}</b></td></tr>`).join('')}</tbody></table></div>
   ${c.length > 10 ? `<p style="text-align:center"><button id="mvpall">${mvpAll ? _('Show the top 10') : esc(f('allCands', c.length))}</button></p>` : ''}
   <h2>${_('How it works')}</h2><div class="card how">${f('mvpHow')}</div>`;
 }
@@ -574,7 +579,7 @@ function ballotCard(x, r) {
   const mine = x.id === r.my_vote, voted = !!r.my_vote, top = Math.max(1, ...r.ballot.map(id => (r.candidates.find(c => c.id === id) || {}).votes || 0));
   const btn = mine ? `<button class="vote on" disabled>✓ ${_('Your vote')}</button>`
     : `<button class="vote" data-vote="${x.id}" ${r.voting_open && !voted ? '' : 'disabled'}>${_('Vote')}</button>`;
-  return `<div class="bcard${mine ? ' me' : ''}"><span class="medal m${x.stats_rank}">${x.stats_rank}</span>${logo(x.team, 56)}
+  return `<div class="bcard${mine ? ' me' : ''}"><span class="medal m${x.stats_rank}">${x.stats_rank}</span>${face(x, 96)}
     <a class="bn" href="${playerUrl(x.id, x.name)}">${esc(title(x.name))}</a><div class="bs">${esc(x.team)} · #${x.number} · ${esc(posName(x.pos))} · ${x.gp} ${H('GP')}</div>
     <div class="tiles">${[['PTS', x.pts], ['REB', x.reb], [H('AST'), x.ast], ['PIR', x.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
     <div class="vv"><b>${esc(f('votesN', x.votes))}</b> · ${x.vote_share}%<div class="meter"><i style="width:${Math.round(100 * x.votes / top)}%"></i></div></div>${btn}</div>`;

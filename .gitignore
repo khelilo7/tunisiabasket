@@ -13,3 +13,6 @@ __pycache__/
 .idea/
 .vscode/
 static/_tmp/
+
+# local backups of live data
+backups/

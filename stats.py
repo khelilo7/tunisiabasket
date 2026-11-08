@@ -576,6 +576,18 @@ def load_bios():
     return out
 
 
+def load_photos() -> dict:
+    """{player id: image path}: assets/player_photos.json, single entries overridden by data/player_photos.json."""
+    out = {}
+    for path in (config.ASSETS_DIR / "player_photos.json", config.DATA_DIR / "player_photos.json"):
+        try:
+            raw = json.loads(path.read_text())
+        except (OSError, ValueError):
+            continue
+        out.update({k: v for k, v in raw.items() if not k.startswith("_") and isinstance(v, str) and v.startswith("/")})
+    return out
+
+
 def attach_bios(players):
     """Adds p['bio'] (or None). height may be a [min, max] pair; 'approx' names the estimated fields."""
     bios = load_bios()

@@ -44,6 +44,8 @@ check(all(x["gp"] >= x["need"] for x in cands), "candidates meet the 70% games r
 check(r["winner"] is None and r["leader"]["id"] == "ca-24", "nobody crowned while fans can still vote; Abada leads on stats")
 check(r["voting_open"] and r["deadline"] == "2026-11-11T12:00:00+01:00", f"deadline from the repo file: {r['deadline']}")
 check(c.get("/api/mvp?phase=9").status_code == 404, "unknown phase")
+check(all(c.get(x["photo"]).status_code == 200 for x in cands if x["photo"]) and {x["id"] for x in cands if x["photo"]} == {"ca-24", "usm-1", "jsk-7"}, "the three ballot players have a photo and the files are served")
+check(c.get("/api/overview").get_json()["mvp"]["photo"] == "/img/players/ca-24.jpg", "best player so far carries his photo")
 
 a, b = cands[0]["id"], cands[1]["id"]
 check(vote(a).status_code == 200, "a vote is accepted")

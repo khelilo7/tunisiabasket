@@ -107,7 +107,7 @@ def robots():
 
 def _phase_summary():
     r = mvp.race(1)
-    keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share")
+    keep = ("id", "name", "team", "number", "pos", "gp", "pts", "reb", "ast", "stl", "blk", "pir", "impact", "votes", "vote_share", "photo")
     pick = lambda c: {k: c[k] for k in keep} if c else None
     by = {c["id"]: c for c in r["candidates"]}
     return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "deadline_ts": r["deadline_ts"], "total_votes": r["total_votes"],
@@ -122,7 +122,7 @@ def overview():
     counts = stats.box_counts(d["games"])
     return jsonify(
         season=d["season"], seasons=d["seasons"], games=len(d["games"]), players=len(d["players"]),
-        mvp=slim(pool[0]) if pool else None,
+        mvp=({**slim(pool[0]), "photo": stats.load_photos().get(pool[0]["id"])} if pool else None),
         phase_mvp=_phase_summary(), top=[slim(p) for p in pool[:5]], top_teams=d["top_teams"], leaders=stats.leaders(d["players"]),
         facts={"games": len(d["games"]), "avg_points": round(sum(t["points"] for g in d["games"] for t in g["teams"]) / (2 * len(d["games"]) or 1), 1)},
         recent=[{k: g.get(k) for k in ("id", "date", "date_approx", "matchday", "mvp", "score_note")} | {

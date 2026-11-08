@@ -35,7 +35,7 @@ rsync code to  /opt/proastats/releases/<time>-<sha>/  on the OVH server ─► d
 | `/opt/proastats/shared/data` | **live data** (games, official results, admin hash, logs, uploads). Deploys never touch it | `proa` |
 | `/opt/proastats/history` | releases that went live and stayed healthy (rollbacks only go to these) | `deploy` |
 | `/etc/proastats.env` | settings (data folder, sync interval, Cloudflare trust) | root |
-| `/var/backups/proastats` | nightly backups of the data folder, 14 days | root |
+| `/var/backups/proastats` | nightly full backup (14 days, then one per month for a year) + hourly votes/visits snapshot (3 days), all verified | root |
 
 Two users on purpose: **`deploy`** (what the pipeline logs in as; can write code and may restart only this one service) and **`proa`** (runs the
 app; can write only inside `shared/data`). Reading the code or the data never gives access to the other.
@@ -52,7 +52,20 @@ app; can write only inside `shared/data`). Reading the code or the data never gi
 - **Official calendar** for J12–J22: upload it as `data/fixtures.json` (format in the README), no deploy needed.
 - **Rotate the deploy key:** make a new one, replace the line in `/home/deploy/.ssh/authorized_keys` and the GitHub secret.
 - **New server:** do to-do 1 again, update `PROD_HOST` and `PROD_SSH_KNOWN_HOSTS`, restore a data backup into `/opt/proastats/shared/data`.
-- **Restore a backup:** `sudo systemctl stop proastats; sudo tar -xzf data-YYYYMMDD.tgz -C /opt/proastats/shared; sudo chown -R proa:proa /opt/proastats/shared/data; sudo systemctl start proastats`
+- **Restore a backup:** see "Backups" below.
+
+## Backups (votes, visit statistics, games, roster, admin settings)
+What is saved: the whole data folder `/opt/proastats/shared/data`, including `votes.db` (the fans' votes), `traffic.db` (visit statistics) and `traffic.key`. Deploys never touch it.
+- **Nightly, 03:17:** full backup `data-YYYYmmdd-HHMMSS.tgz`; kept 14 days, then the oldest of each month for a year.
+- **Hourly, minute 07:** `small-YYYYmmdd-HHMM.tgz` with only votes, visits and settings; kept 3 days. A vote is never more than an hour from a backup.
+- SQLite files are copied with SQLite's own backup call (safe while votes arrive) and every backup is re-opened and checked (integrity, row counts). A backup that fails the check is deleted and logged as `BACKUP FAILED` in `/var/backups/proastats/backup.log`.
+- **Servers set up before the hourly backup existed** need the hourly line once (the nightly one picks up the new script by itself after a deploy):
+  `echo '7 * * * * root /opt/proastats/current/deploy/backup.sh --small >> /var/backups/proastats/backup.log 2>&1' | sudo tee -a /etc/cron.d/proastats-backup`
+- **Run one now:** `sudo /opt/proastats/current/deploy/backup.sh` (prints the vote and visit counts it saved).
+- **Restore:** `sudo /opt/proastats/venv/bin/python /opt/proastats/current/tools/backup_data.py --data /opt/proastats/shared/data --restore /var/backups/proastats/data-XXXX.tgz`
+  unpacks into a new folder next to `data` and never overwrites the live data. Then `sudo systemctl stop proastats`, move the restored `data` folder into place (keep the old one aside), `sudo chown -R proa:proa /opt/proastats/shared/data`, `sudo systemctl start proastats`.
+- **Off the machine:** copy the folder to your own computer now and then, for example `rsync -av ubuntu@SERVER_IP:/var/backups/proastats/ ~/proastats-backups/` (run it with sudo rights on the server side or from a user that can read the folder), or switch on OVH's backup option. A backup that lives only on the server is lost with the server.
+- **On your own computer:** `python manage.py backup` writes a verified backup into `./backups` (git-ignored); `python manage.py backup --small` for votes and visits only.
 
 ## If something goes wrong
 | Symptom | Likely cause / fix |

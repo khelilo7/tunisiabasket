@@ -114,6 +114,11 @@ saves to `data/mvp.json` and wins over the repo file). Nobody is crowned while v
 player becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the visitor's real address (`CF-Connecting-IP`, or
 the proxy's forwarded address), not the proxy's.
 
+**Photos.** The three players on the ballot have a photo (`static/img/players/<id>.jpg`, listed in `assets/player_photos.json`), shown on the MVP race only for now: the
+fan-vote card, the best-player card and the MVP page. They are face crops of images supplied by the site owner; publish only photos you have the right to use.
+**Backups.** Votes, visits, games and settings are backed up nightly and the votes and visits hourly, verified and restorable (`tools/backup_data.py`, `python manage.py backup`,
+`deploy/DEPLOY.md` > Backups).
+
 ## Home page: next games banner (assets/calendar.json)
 The banner at the top is a carousel of the next games (up to 12, one at a time, moving every few seconds; arrows, dots and swipe also work). The pairings come from the
 calendar (`stats.planning()`; for J12-J22 the mirror of phase 1, which matches the games already published) and the dates from `assets/calendar.json` (the federation

@@ -1,4 +1,4 @@
-"""Admin management.   python manage.py new-token   |   python manage.py status   |   python manage.py log"""
+"""Admin management.   python manage.py new-token   |   status   |   log   |   backup   (full, verified backup of the data folder into ./backups)"""
 import sys
 
 import auth
@@ -14,5 +14,8 @@ elif cmd == "status":
     print("admin token configured:", auth.token_configured())
 elif cmd == "log":
     print(auth.LOG_FILE.read_text() if auth.LOG_FILE.exists() else "(no admin activity yet)")
+elif cmd == "backup":
+    import subprocess
+    sys.exit(subprocess.call([sys.executable, str(__import__("pathlib").Path(__file__).parent / "tools" / "backup_data.py"), *sys.argv[2:]]))
 else:
     print(__doc__)
