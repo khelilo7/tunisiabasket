@@ -141,7 +141,7 @@ def overview():
 def home_data():
     """What the home page needs besides the calendar: the latest results (box scores and hand-entered results) and the latest news."""
     d = stats.build()
-    r = jsonify(recent=content.recent_results(8, d), news=content.load_news(4), facebook=content.FACEBOOK, standings=d["standings"])
+    r = jsonify(recent=content.recent_results(6, d), news=content.load_news(4), facebook=content.FACEBOOK, standings=d["standings"])
     r.headers["Cache-Control"] = "no-cache"          # a result or a news item saved in the admin shows at once
     return r
 

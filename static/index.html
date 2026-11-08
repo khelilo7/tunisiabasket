@@ -235,6 +235,7 @@
   .card.news .nh { display:flex; align-items:center; gap:10px; } .card.news p.nbody { margin:0; color:var(--mut); font-size:14px; white-space:pre-line; } .card.news p.clamp { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   .lbl { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:99px; background:var(--track); color:var(--txt); }
   .lb-injury { background:rgba(255,93,108,.18); color:var(--bad); } .lb-transfer { background:rgba(79,147,255,.18); color:#4f93ff; } .lb-official { background:rgba(62,207,142,.18); color:var(--good); } .lb-result { background:rgba(255,138,31,.18); color:var(--acc); } .lb-interview { background:rgba(196,91,240,.18); color:#c45bf0; }
+  .mvpcta { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; cursor:pointer; flex-wrap:wrap; background:var(--mvp-grad); border-color:var(--mvp-line); } .mvpcta .vote { white-space:nowrap; }
   .fbcard { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; flex-wrap:wrap; } .fbcard .vote { white-space:nowrap; text-decoration:none; }
   a.tiny { display:inline-block; margin-top:8px; font-size:11px; color:var(--mut); opacity:.7; text-decoration:none; } a.tiny:hover { opacity:1; text-decoration:underline; }
   footer .fbl { margin-left:auto; } footer .hint { display:block; flex-basis:100%; font-size:11px; opacity:.65; margin-top:4px; }
@@ -291,7 +292,7 @@ const FR = {
   'Featured': 'À la une', 'News': 'Actualités', 'All news': 'Toutes les actualités', 'No news yet.': 'Pas encore d’actualité.', 'Official': 'Officiel', 'Injury': 'Blessure', 'Transfer': 'Transfert', 'Result': 'Résultat', 'Info': 'Info', 'Interview': 'Interview',
   'All players': 'Tous les joueurs', 'Box score missing? Send it to us on Facebook': 'Feuille de match manquante ? Envoyez-la-nous sur Facebook', 'A tip, a correction, a missing result?': 'Une info, une correction, un résultat manquant ?',
   'Write to us on our Facebook page: we read everything.': 'Écrivez-nous sur notre page Facebook : nous lisons tout.', 'Contact us on Facebook': 'Nous contacter sur Facebook',
-  'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
+  'Vote for the phase MVP among the three finalists': 'Votez pour le MVP de la phase parmi les trois finalistes', 'See the race and vote': 'Voir la course et voter', 'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
   'No game to predict for now.': 'Aucun match à pronostiquer pour le moment.', 'Thanks! Your pick is saved. It is final.': 'Merci ! Votre pronostic est enregistré. Il est définitif.',
@@ -495,6 +496,7 @@ async function home() {
   predRound = pj && pj.round; pageMeta = META.home[LANG];
   return `
   ${nextBanner(plan, h.standings)}
+  <div class="card mvpcta" data-go="${url('mvp')}" role="link" tabindex="0"><div><b>🏆 ${_('MVP race')} · ${_('Phase 1')}</b><div class="mut small">${_('Vote for the phase MVP among the three finalists')}</div></div><span class="vote">${_('See the race and vote')} →</span></div>
   ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="newsgrid">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
   ${h.recent.length ? `<div class="grid g2">${h.recent.map(gameCard).join('')}</div>` : `<div class="empty">${_('Box scores appear here as soon as they are added.')}</div>`}
@@ -508,7 +510,7 @@ async function news() {
 
 const LEAD = { pts: ['Top scorers', 'PTS', ''], reb: ['Top rebounders', 'REB', ''], ast: ['Top passers', 'AST', ''], stl: ['Top ball stealers', 'STL', ''],
   blk: ['Top shot blockers', 'BLK', ''], p3m: ['Three-pointers made', '3P', ''], fg_pct: ['Best shooters (FG%)', 'FG%', '%'], pir: ['Most efficient (PIR)', 'PIR', ''] };
-let leadData = [];
+let leadData = [], leadOpen = false;
 const fmtVal = (key, v) => key === 'fg_pct' ? v + '%' : v;
 function leaderCard(c) {
   const [name, unit] = LEAD[c.key], top3 = c.top.slice(0, 3), best = top3[0] ? top3[0].value || 1 : 1;
@@ -792,8 +794,8 @@ async function players() {
   const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || q || p.qualified))
     .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
   return `<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
-  <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
-  <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
+  <details class="fold" id="leadfold" ${leadOpen ? 'open' : ''}><summary><span>${_('League leaders')}</span><span class="sub mut">${_('per game')}</span><span class="chev">▾</span></summary>
+    <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div></details>
   <h2>${_('All players')}</h2>
   <div class="toolbar"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
     <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
@@ -1051,6 +1053,7 @@ function bind() {
   document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => castVote(b.dataset.vote));
   document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => castPick(b.dataset.pick, b.dataset.side));
   const sf = $('#statsfold'); if (sf) sf.ontoggle = () => { chartOpen = sf.open; };
+  const lf = $('#leadfold'); if (lf) lf.ontoggle = () => { leadOpen = lf.open; };
   const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
