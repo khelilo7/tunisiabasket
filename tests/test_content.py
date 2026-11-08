@@ -78,6 +78,15 @@ check(a["label"] == "injury" and "injury" in c.get("/api/news").get_json()["labe
 check(len(c.get("/api/home").get_json()["news"]) == 3, "the home page gets the latest news")
 check(post("/admin/api/news", {"id": a["id"], "label": "injury", "title": "Back in 4 weeks", "date": "2026-11-05"}).status_code == 200 and c.get("/api/news").get_json()["items"][2]["title"] == "Back in 4 weeks", "a news item can be edited")
 check(post("/admin/api/news", {"id": "nope", "label": "info", "title": "x"}).status_code == 422, "editing a missing item is refused")
+check(post("/admin/api/news", {"label": "info", "title": "x", "team": "../x"}).status_code == 422 and post("/admin/api/news", {"label": "info", "title": "x", "player": "bad id"}).status_code == 422, "a picture must be a real club or player id")
+pl = post("/admin/api/news", {"label": "injury", "title": "About a player", "player": "usm-23", "player_name": "Firas Lahyani", "date": "2026-11-09"}).get_json()["item"]
+check(pl["team"] == "USM" and pl["player"] == "usm-23", "a player brings his club")
+check(post("/admin/api/news", {"label": "official", "title": "About a club", "team": "ca", "date": "2026-11-09"}).get_json()["item"]["team"] == "CA", "a club can be the picture instead")
+got = next(n for n in c.get("/api/news").get_json()["items"] if n["id"] == pl["id"])
+check("photo" in got and got["player_name"] == "Firas Lahyani", "the news API carries the player's photo (looked up when read)")
+for n in c.get("/api/news").get_json()["items"]:
+    if n["title"] in ("About a player", "About a club"):
+        post("/admin/api/news/delete", {"id": n["id"]})
 check(post("/admin/api/news/delete", {"id": b["id"]}).get_json()["ok"] and len(c.get("/api/news").get_json()["items"]) == 2, "a news item can be deleted")
 
 # --- the rest

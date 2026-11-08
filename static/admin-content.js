@@ -91,12 +91,20 @@
   }
 
   // ---------------------------------------------------------------- News
-  let N = [], editing = null, nMsg = null;
+  let N = [], editing = null, nMsg = null, imgItem = null;
   async function loadNews() {
     const { ok, body } = await api('news');
     if (!ok) { $('#newsbox').innerHTML = '<div class="problems">Could not load the news.</div>'; return; }
+    if (!players) players = await fetch('/api/players').then(r => r.json()).then(j => j.players).catch(() => []);
     N = body.items; renderNews();
   }
+  const playerOpts = cur => { const by = {}; players.forEach(p => (by[p.team] = by[p.team] || []).push(p)); return Object.keys(by).sort().map(t => `<optgroup label="${esc(t)}">${by[t].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${esc(p.id)}" data-name="${esc(p.name)}" ${p.id === cur ? 'selected' : ''}>${esc(p.name)} · #${p.number}</option>`).join('')}</optgroup>`).join(''); };
+  const teamOpts = cur => [...new Set(players.map(p => p.team))].sort().map(t => `<option ${t === cur ? 'selected' : ''}>${esc(t)}</option>`).join('');
+  const formItem = () => {   // what the form holds right now (for the image preview before publishing)
+    const pl = $('#n-player'), o = pl.selectedOptions[0], pid = pl.value, pp = players.find(x => x.id === pid);
+    return { label: $('#n-label').value, date: $('#n-date').value, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value,
+      team: pid ? pid.split('-')[0].toUpperCase() : $('#n-team').value, player: pid, player_name: pid ? o.dataset.name : '', photo: pp && pp.photo || null };
+  };
   function renderNews() {
     const e = editing === 'new' ? {} : N.find(n => n.id === editing) || null;
     $('#newsbox').innerHTML = `
@@ -104,24 +112,32 @@
       <div class="card" style="border-color:var(--acc)"><b>${e && e.id ? 'Edit the news' : 'Add news'}</b> <span class="mut small">for example “Player X is out for 6 weeks”</span>
         <div class="row" style="margin-top:8px"><select id="n-label">${Object.entries(LABELS).map(([k, v]) => `<option value="${k}" ${(e && e.label || 'info') === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
           <input id="n-date" type="date" value="${esc((e && e.date) || today())}"><label class="small mut"><input type="checkbox" id="n-pin" ${e && e.pinned ? 'checked' : ''}> 📌 pin on top</label></div>
+        <div class="row" style="margin-top:8px"><label class="small mut">Picture: a player</label><select id="n-player"><option value="">—</option>${playerOpts(e && e.player)}</select>
+          <label class="small mut">or a club</label><select id="n-team"><option value="">—</option>${teamOpts(e && !e.player && e.team)}</select></div>
         <input id="n-title" maxlength="140" placeholder="Title (French or the main language)" style="width:100%;margin-top:8px" value="${esc((e && e.title) || '')}">
         <textarea id="n-body" maxlength="2000" rows="3" placeholder="Text (optional)" style="width:100%;margin-top:6px;font:inherit">${esc((e && e.body) || '')}</textarea>
         <details style="margin-top:6px" ${e && (e.title_en || e.body_en) ? 'open' : ''}><summary class="small mut">English version (optional: shown to English visitors)</summary>
           <input id="n-title-en" maxlength="140" placeholder="English title" style="width:100%;margin-top:6px" value="${esc((e && e.title_en) || '')}">
           <textarea id="n-body-en" maxlength="2000" rows="2" placeholder="English text" style="width:100%;margin-top:6px;font:inherit">${esc((e && e.body_en) || '')}</textarea></details>
-        <div class="row" style="margin-top:10px"><button class="primary" id="n-save">${e && e.id ? 'Save changes' : 'Publish'}</button>${e ? '<button id="n-cancel">Cancel</button>' : ''}</div></div>
+        <div class="row" style="margin-top:10px"><button class="primary" id="n-save">${e && e.id ? 'Save changes' : 'Publish'}</button>${e ? '<button id="n-cancel">Cancel</button>' : ''}<button id="n-img">🖼 Facebook image from this form</button></div></div>
+      <div id="nimgbox"></div>
       <h3 class="sub" style="margin-top:18px">Published (${N.length})</h3>
-      ${N.length ? N.map(n => `<div class="card" data-nid="${n.id}"><div class="row"><span class="pill">${LABELS[n.label] || n.label}</span><span class="mut small">${esc(n.date)}</span>${n.pinned ? '<span class="pill acc">📌</span>' : ''}<span class="sp"></span><button data-act="edit">✎ Edit</button><button class="danger" data-act="del">🗑 Delete</button></div>
+      ${N.length ? N.map(n => `<div class="card" data-nid="${n.id}"><div class="row"><span class="pill">${LABELS[n.label] || n.label}</span><span class="mut small">${esc(n.date)}</span>${n.pinned ? '<span class="pill acc">📌</span>' : ''}<span class="sp"></span><button data-act="img">🖼 Facebook image</button><button data-act="edit">✎ Edit</button><button class="danger" data-act="del">🗑 Delete</button></div>
         <b>${esc(n.title)}</b>${n.body ? `<div class="mut small" style="white-space:pre-line">${esc(n.body)}</div>` : ''}</div>`).join('') : '<div class="mut small">Nothing yet.</div>'}
       <p class="mut small">News shows on the home page (the latest four) and on the News page, with its label. A deleted news item cannot be brought back.</p>`;
     $('#n-save').onclick = async () => {
-      const body = { id: e && e.id, label: $('#n-label').value, date: $('#n-date').value, pinned: $('#n-pin').checked, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value };
+      const body = { id: e && e.id, label: $('#n-label').value, date: $('#n-date').value, pinned: $('#n-pin').checked, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value,
+        player: $('#n-player').value, player_name: $('#n-player').selectedOptions[0].dataset.name || '', team: $('#n-team').value };
       try { const r = await post('news', body); nMsg = { t: r.ok ? 'Published.' : (r.body.error || 'Could not save.'), ok: r.ok }; if (r.ok) editing = null; } catch (x) { nMsg = { t: x.message, ok: false }; }
       loadNews();
     };
+    const showImg = item => { imgItem = item; const b = $('#nimgbox'); window.NewsImg.mount(b, item, () => { imgItem = null; }); b.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+    $('#n-img').onclick = () => { if (!$('#n-title').value.trim()) { nMsg = null; $('#n-title').focus(); return; } showImg(formItem()); };
+    if (imgItem) window.NewsImg.mount($('#nimgbox'), imgItem, () => { imgItem = null; });
     const c = $('#n-cancel'); if (c) c.onclick = () => { editing = null; renderNews(); };
     document.querySelectorAll('[data-nid]').forEach(card => {
       const id = card.dataset.nid;
+      card.querySelector('[data-act=img]').onclick = () => showImg(N.find(n => n.id === id));
       card.querySelector('[data-act=edit]').onclick = () => { editing = id; nMsg = null; renderNews(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
       card.querySelector('[data-act=del]').onclick = async () => { if (!confirm('Delete this news item? This cannot be undone.')) return; const r = await post('news/delete', { id }); nMsg = { t: r.ok ? 'Deleted.' : 'Could not delete.', ok: r.ok }; loadNews(); };
     });

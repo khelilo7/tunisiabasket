@@ -124,14 +124,30 @@ def _clean_news(b):
         raise ValueError("The title is required (140 characters at most).")
     if len(body) > 2000:
         raise ValueError("The text is limited to 2000 characters.")
+    team, player = str(b.get("team") or "").strip().upper(), str(b.get("player") or "").strip().lower()
+    if team and not re.fullmatch(r"[A-Z0-9]{2,6}", team):
+        raise ValueError("Unknown team.")
+    if player and not re.fullmatch(r"[a-z0-9]{2,6}-x?\d{1,3}", player):
+        raise ValueError("Unknown player.")
+    if player:                                   # a player brings his club
+        team = player.rsplit("-", 1)[0].upper()
     return {"label": label, "title": title, "body": body, "title_en": str(b.get("title_en") or "").strip()[:140], "body_en": str(b.get("body_en") or "").strip()[:2000],
-            "date": _iso(b.get("date") or datetime.now().date().isoformat()), "pinned": bool(b.get("pinned"))}
+            "date": _iso(b.get("date") or datetime.now().date().isoformat()), "pinned": bool(b.get("pinned")),
+            "team": team, "player": player, "player_name": str(b.get("player_name") or "").strip()[:60] if player else ""}
+
+
+def _with_photo(items):
+    """The picture of the player an item is about (shipped or uploaded), looked up when the item is read so a new photo shows at once."""
+    if not any(n.get("player") for n in items):
+        return items
+    photos = stats.load_photos()
+    return [{**n, "photo": photos.get(n["player"])} if n.get("player") else n for n in items]
 
 
 def load_news(limit=None):
     """Pinned first, then newest first."""
     items = sorted(_read(NEWS_FILE, []), key=lambda n: (bool(n.get("pinned")), n.get("date", ""), n.get("ts", 0)), reverse=True)
-    return items[:limit] if limit else items
+    return _with_photo(items[:limit] if limit else items)
 
 
 def save_news(b):

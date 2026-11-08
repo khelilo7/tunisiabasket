@@ -147,7 +147,8 @@ below it.
 - **📅 Games**: per game a kick-off time, its own date (only if it is not on the matchday's date) and a featured rank (1 first). *Enter result* writes the official result (standings,
   calendar and latest games update at once) with an optional note and up to four stat lines; a full box score uploaded later takes over. Files: `data/schedule.json`, `data/result_notes.json`.
 - **📰 News**: a title, text, a label (Official, Injury, Transfer, Result, Info, Interview), a date, pin on top, and an optional English version. Shown on the home page (latest four) and on the
-  News page. File: `data/news.json`. All three files live in the data folder: kept across deployments and in the backups.
+  News page (horizontal cards, a lead story, filter by label, “Read more”). Each item can carry a player (photo + club badge) or a club logo as its picture.
+  **🖼 Facebook image** (on each item, or from the form before publishing): a ready-to-post PNG (portrait, square or wide, French or English) and the post text to copy. File: `data/news.json`. All three files live in the data folder: kept across deployments and in the backups.
 - **Facebook**: the page link is in the footer, on the home page and the news page, with a discreet invitation to send missing box scores (footer line, and under results without a box score).
 
 ## Admin: players, rosters and images
