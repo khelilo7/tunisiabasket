@@ -8,6 +8,21 @@ ROOT="$(mktemp -d)"; PORT=5077
 export APP_ROOT="$ROOT" HEALTH_URL="http://127.0.0.1:$PORT/api/overview" KEEP=3
 mkdir -p "$ROOT/releases" "$ROOT/shared/data" "$ROOT/run"
 ln -s "$(python3 -c 'import sys; print(sys.prefix)')" "$ROOT/venv"
+# votes and visit statistics that exist BEFORE any deploy: they must come out of every release, failed release and rollback unchanged
+python3 - "$ROOT/shared/data" <<'PY'
+import sqlite3, sys
+d = sys.argv[1]
+c = sqlite3.connect(d + "/votes.db")
+c.execute("CREATE TABLE votes(phase INTEGER, voter TEXT, net TEXT, pid TEXT, ts INTEGER, PRIMARY KEY(phase, voter))")
+c.executemany("INSERT INTO votes VALUES (1, ?, 'n', 'ca-24', 1)", [("v%d" % i,) for i in range(123)])
+c.commit(); c.close()
+t = sqlite3.connect(d + "/traffic.db")
+t.execute("CREATE TABLE hits(ts INTEGER, day TEXT, page TEXT, path TEXT, country TEXT, ref TEXT, device TEXT, lang TEXT, visitor TEXT)")
+t.executemany("INSERT INTO hits VALUES (1, date('now'), 'home', 'home', 'TN', '', 'mobile', 'fr', ?)", [("h%d" % i,) for i in range(77)])
+t.commit(); t.close()
+PY
+VOTES_SUM="$(shasum -a 256 "$ROOT/shared/data/votes.db" | cut -d' ' -f1)"
+rows() { python3 -c "import sqlite3,sys; print(sqlite3.connect(sys.argv[1]).execute('SELECT COUNT(*) FROM '+sys.argv[2]).fetchone()[0])" "$ROOT/shared/data/$1" "$2"; }
 cat > "$ROOT/restart.sh" <<RS
 #!/usr/bin/env bash
 # stand-in for "systemctl restart proastats": stop the old server, start gunicorn from the 'current' release
@@ -66,4 +81,8 @@ check "rollback target r1 and current r1/r4 kept" test -d "$ROOT/releases/r1" -a
 check "history lists only healthy releases" test "$(tr '\n' ' ' < "$ROOT/history")" = "r1 r4 "
 echo "6) live data untouched by deploys"
 check "shared/data still there" test -d "$ROOT/shared/data"
+check "all 123 votes survived good, refused and rolled-back releases" test "$(rows votes.db votes)" = 123
+check "votes.db is byte-for-byte unchanged" test "$(shasum -a 256 "$ROOT/shared/data/votes.db" | cut -d' ' -f1)" = "$VOTES_SUM"
+check "all 77 page views survived" test "$(rows traffic.db hits)" = 77
+check "the running release reads the same votes" bash -c "curl -fsS -m 3 http://127.0.0.1:$PORT/api/mvp?phase=1 >/dev/null || true; test \"\$(python3 -c \"import sqlite3; print(sqlite3.connect('$ROOT/shared/data/votes.db').execute('SELECT COUNT(*) FROM votes').fetchone()[0])\")\" = 123"
 if [ "$fail" = 0 ]; then echo "release rehearsal: ok"; else echo "release rehearsal: FAILED"; exit 1; fi
