@@ -169,6 +169,11 @@
   .nbs .nbh { display:flex; justify-content:center; align-items:center; gap:10px; flex-wrap:wrap; font-size:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--acc); }
   .nbs .nbh .pill { letter-spacing:0; }
   .nbs .nbm { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; margin:14px 0 10px; }
+  .nbs .nbx { margin-top:0; } .nbs .nbtm { border:2px solid transparent; border-radius:14px; padding:8px 18px; justify-self:center; min-width:min(100%, 190px); background:none; color:inherit; font-family:inherit; }
+  .nbs button.nbpk { cursor:pointer; transition:border-color .15s, background .15s, transform .15s; } .nbs button.nbpk:hover, .nbs button.nbpk:focus-visible { border-color:var(--acc); background:var(--mvp-in); transform:translateY(-2px); outline:none; }
+  .nbs .nbtm.picked { border-color:var(--acc); background:var(--mvp-in); }
+  .nbs .nbhint { font-size:12px; color:var(--mut); margin:0 0 8px; } .nbs .nbhint b { color:var(--txt); } .nbs .nbhint.bad { color:var(--bad); }
+  .nbs .nbbar { display:flex; gap:3px; height:20px; max-width:340px; margin:0 auto 4px; border-radius:7px; overflow:hidden; font-size:12px; font-weight:800; } .nbs .nbbar span { display:grid; place-items:center; background:var(--track); color:var(--txt); } .nbs .nbbar span.mine { background:var(--acc); color:#10131c; }
   .nbs .nbtm { display:flex; flex-direction:column; align-items:center; gap:8px; font-size:clamp(15px,2.4vw,20px); font-weight:800; line-height:1.2; } .nbs .nbtm small { font-weight:600; color:var(--mut); font-size:12px; }
   .nbs .nbvs { font-size:clamp(20px,4vw,30px); font-weight:900; color:var(--mut); letter-spacing:.06em; }
   .nbs .nbcta { display:inline-block; margin-top:4px; padding:6px 16px; border-radius:99px; background:var(--acc); color:#10131c; font-weight:800; font-size:13px; }
@@ -226,7 +231,6 @@
   .pgt:not(:disabled):hover { border-color:var(--acc); transform:translateY(-2px); } .pgt:disabled { cursor:default; opacity:.7; } .pgt.on { border-color:var(--acc); opacity:1; background:var(--mvp-in); }
   .pgt b { font-size:14px; text-align:center; } .pgt small { color:var(--mut); }
   .pbar { display:flex; gap:3px; height:26px; border-radius:8px; overflow:hidden; font-size:13px; font-weight:800; } .pbar span { display:grid; place-items:center; background:var(--track); color:var(--txt); } .pbar span.mine { background:var(--acc); color:#111; }
-  .predcta { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; cursor:pointer; background:var(--mvp-grad); border-color:var(--mvp-line); } .predcta .vote { white-space:nowrap; }
   .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
   .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
   @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars { grid-column:3; } .vrow .sc { display:none; } }
@@ -277,7 +281,7 @@ const FR = {
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
   'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
   'Phase 1 MVP': 'MVP de la phase 1', 'Race leader': 'Leader de la course', 'Vote now': 'Voter maintenant', 'See the race': 'Voir la course', 'Phase 1': 'Phase 1',
-  'Predictions': 'Pronostics', 'Predict the next matchday': 'Pronostiquez la prochaine journée', 'Predict the next games': 'Pronostiquez les prochains matchs', 'Predict': 'Pronostiquer',
+  'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
   'No game to predict for now.': 'Aucun match à pronostiquer pour le moment.', 'Thanks! Your pick is saved. It is final.': 'Merci ! Votre pronostic est enregistré. Il est définitif.',
@@ -333,7 +337,7 @@ const SENT = {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
     ballotIntro: n => `Choose your Phase 1 MVP among the top ${n} of the stats race. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
-    predWins: n => `${n} wins`, predClose: d => `Predictions close when the matchday starts: ${d} (Tunisia time)`, predProg: (a, b) => `${a}/${b} games picked`, predGames: n => `${n} game${n > 1 ? 's' : ''} to predict`,
+    predWins: n => `${n} wins`, predClose: d => `Predictions close when the matchday starts: ${d} (Tunisia time)`, predProg: (a, b) => `${a}/${b} games picked`,
     votesN: n => `${n} vote${n === 1 ? '' : 's'}`, allCands: n => `Show all ${n} candidates`,
     mvpHow: () => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
       <p><b>Stats race.</b> Ranks every candidate by average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. It shows the best player so far and decides nothing.</p>
@@ -354,7 +358,7 @@ const SENT = {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
     ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} premiers de la course aux statistiques. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
-    predWins: n => `${n} gagne`, predClose: d => `Les pronostics se ferment au début de la journée : ${d} (heure de Tunis)`, predProg: (a, b) => `${a}/${b} matchs pronostiqués`, predGames: n => `${n} match${n > 1 ? 's' : ''} à pronostiquer`,
+    predWins: n => `${n} gagne`, predClose: d => `Les pronostics se ferment au début de la journée : ${d} (heure de Tunis)`, predProg: (a, b) => `${a}/${b} matchs pronostiqués`,
     votesN: n => `${n} vote${n > 1 ? 's' : ''}`, allCands: n => `Voir les ${n} candidats`,
     mvpHow: () => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
       <p><b>Course aux statistiques.</b> Classe chaque candidat selon son impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Elle montre le meilleur joueur à ce jour et ne décide rien.</p>
@@ -469,12 +473,11 @@ const META = {
 };
 
 async function home() {
-  const [d, plan] = await Promise.all([api('overview'), fetch('/api/planning').then(r => r.json()).catch(() => null)]);
-  pageMeta = META.home[LANG];
+  const [d, plan, pj] = await Promise.all([api('overview'), fetch('/api/planning').then(r => r.json()).catch(() => null), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
+  predRound = pj && pj.round; pageMeta = META.home[LANG];
   if (!d.games) return `<div class="empty"><h1>${_('No games yet')}</h1>${_('Box scores appear here as soon as they are added.')}</div>`;
   return `
   ${nextBanner(plan, d.standings)}
-  ${predCard(plan)}
   <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
   <div class="duo">${phaseCard(d.phase_mvp)}${currentCard(d.phase_mvp, d.mvp)}</div>
   <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
@@ -662,13 +665,6 @@ async function castPick(game, side) {
   } catch (e) { /* keep the generic message */ }
   predMsg = msg; await route(true);
 }
-function predCard(plan) {            // home: a call to action while predictions are open
-  const gs = upcoming(plan), today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Tunis' });
-  if (!gs.length || (gs[0].date && gs[0].date <= today)) return '';
-  const md = gs[0].md, n = gs.filter(g => g.md === md).length;
-  return `<div class="card predcta" data-go="${url('predict')}"><div><div class="crown">🔮 ${_('Predictions')} · ${_('Day')} ${md}</div><b>${_('Predict the next games')}</b>
-    <div class="mut small">${esc(f('predGames', n))}</div></div><span class="vote">${_('Predict')} →</span></div>`;
-}
 
 // ---------------------------------------------------------------- next games banner and matchup comparison
 let nbTimer = null, nbIndex = 0;
@@ -679,13 +675,46 @@ function upcoming(plan) {
   for (const m of plan.matchdays) for (const g of m.games) if (!g.played && (!m.date || m.date >= today)) out.push({ ...g, md: m.matchday, date: m.date });
   return out.slice(0, 12);
 }
+// Prediction inside the banner: tap the team you think wins; the crowd's split then appears under the match (only after your pick, as on the Predictions page).
+let predRound = null, nbCtx = null, nbHold = 0;
+const pickInfo = g => predRound && predRound.matchday === g.md ? predRound.games.find(x => x.home === g.home && x.away === g.away) || null : null;
+function slideBody(g, note) {
+  const { plan, rec } = nbCtx, pg = pickInfo(g), can = !!(pg && predRound.open && !pg.my);
+  const team = (c, side) => {
+    const inner = `${logo(c, 76)}<span>${esc(plan.teams[c])}</span><small>${esc(rec(c))}</small>`, cls = 'nbtm' + (pg && pg.my === side ? ' picked' : '');
+    return can ? `<button type="button" class="${cls} nbpk" data-pk="${esc(pg.key)}" data-side="${side}" aria-label="${esc(f('predWins', plan.teams[c]))}">${inner}</button>` : `<div class="${cls}">${inner}</div>`;
+  };
+  const sp = pg && pg.my && pg.split;
+  const low = note ? `<div class="nbhint bad">${esc(note)}</div>`
+    : sp ? `<div class="nbbar" aria-label="${_('Fans’ prediction')}"><span class="${pg.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 4)}">${sp.H}%</span><span class="${pg.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 4)}">${sp.A}%</span></div><div class="nbhint">${_('Fans’ prediction')} · ${_('Your pick')}: <b>${esc(plan.teams[pg.my === 'H' ? g.home : g.away])}</b></div>`
+    : can ? `<div class="nbhint">👆 ${_('Tap your winner to predict')}</div>` : '';
+  return `<div class="nbx" data-g="${g.home}|${g.away}|${g.md}"><div class="nbm">${team(g.home, 'H')}<div class="nbvs">VS</div>${team(g.away, 'A')}</div>${low}</div>`;
+}
+async function bannerPick(btn) {
+  const x = btn.closest('.nbx'), [home, away, md] = x.dataset.g.split('|'), g = { home, away, md: +md };
+  let note = _('Could not save your pick.');
+  nbHold = Date.now() + 9000;                       // keep the carousel still while the result is read
+  try {
+    const res = await fetch('/api/predict/pick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: btn.dataset.pk, side: btn.dataset.side, vid: voterId() }) });
+    const j = await res.json().catch(() => ({}));
+    note = res.ok && j.ok ? '' : j.reason === 'already' ? '' : j.reason === 'closed' ? _('Predictions are closed: the matchday has started.') : j.reason === 'network' ? _('Too many picks from this network. Try again later.') : note;
+    const pj = await fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
+    if (pj) predRound = pj.round;
+  } catch (e) { /* keep the generic note */ }
+  const tmp = document.createElement('div'); tmp.innerHTML = slideBody(g, note);
+  x.replaceWith(tmp.firstElementChild);
+  bindPicks();
+}
+function bindPicks() {
+  document.querySelectorAll('#nextbanner .nbpk').forEach(b => { b.onclick = e => { e.stopPropagation(); bannerPick(b); }; b.onkeydown = e => e.stopPropagation(); });
+}
 function nextBanner(plan, standings) {
   const gs = upcoming(plan); if (!gs.length) return '';
   const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
+  nbCtx = { plan, rec };
   const slide = g => `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">
       <div class="nbh">${g.date ? esc(fmtDay(g.date)) : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
-      <div class="nbm"><div class="nbtm">${logo(g.home, 76)}<span>${esc(plan.teams[g.home])}</span><small>${esc(rec(g.home))}</small></div><div class="nbvs">VS</div>
-        <div class="nbtm">${logo(g.away, 76)}<span>${esc(plan.teams[g.away])}</span><small>${esc(rec(g.away))}</small></div></div>
+      ${slideBody(g)}
       <span class="nbcta">${_('Compare the teams')} →</span></div>`;
   return `<section class="nb" id="nextbanner" aria-roledescription="carousel" aria-label="${_('Next games')}"><div class="nbt"><div class="nbtrack">${gs.map(slide).join('')}</div></div>
     ${gs.length > 1 ? `<button class="nbn p" aria-label="${_('Previous')}">‹</button><button class="nbn n" aria-label="${_('Next')}">›</button>` : ''}
@@ -706,7 +735,8 @@ function startBanner() {
   root.ontouchend = e => { if (x0 != null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } x0 = null; paused = false; };
   root.onkeydown = e => { if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'ArrowRight') go(i + 1); else if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.mu) { e.preventDefault(); openMatchup(e.target.dataset.mu); } };
   root.querySelectorAll('.nbs').forEach(sl => sl.onclick = () => openMatchup(sl.dataset.mu));
-  if (n > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) nbTimer = setInterval(() => { if (!paused && !document.hidden && !$('#modal')) go(i + 1); }, 5500);
+  bindPicks();
+  if (n > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) nbTimer = setInterval(() => { if (!paused && !document.hidden && !$('#modal') && Date.now() > nbHold) go(i + 1); }, 5500);
 }
 async function openMatchup(spec) {
   const [home, away, md, date] = spec.split('|');
