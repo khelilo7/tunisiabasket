@@ -1,0 +1,16 @@
+{
+ "_note": "Roster facts that ship with the code, so they apply to every copy of the site the moment it is deployed (the admin's own changes live in data/roster.json and are added to these). merges: 'alias id' -> 'player id' (one person whose name or number was printed differently on the sheets). transfers: a player moved to a new club. renames: the name the site shows.",
+ "merges": {
+  "jsm-0": "jsm-17",
+  "jsm-30": "jsm-17",
+  "sn-4": "sn-6"
+ },
+ "renames": {
+  "jsm-17": "Mosaab Ammari",
+  "sn-6": "Slimane Chelly"
+ },
+ "transfers": [
+  {"id": "usa-7", "from": "USA", "to": "DSG", "number": 2, "date": "2026-11-08", "note": "Dalia Sportive de Grombalia welcome poster (jersey 02)"},
+  {"id": "usa-10", "from": "USA", "to": "DSG", "number": null, "date": "2026-11-08", "note": "Jersey number at Dalia to be confirmed"}
+ ]
+}

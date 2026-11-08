@@ -358,7 +358,7 @@ def roster_view():
              "bio": p["bio"], "photo": p.get("photo"), "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
             for p in d["players"]]
     rows.sort(key=lambda r: (r["team"], r["number"]))
-    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(), positions=stats.POSITIONS)
+    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS)
 
 
 @bp.post("/admin/api/roster")
@@ -371,7 +371,7 @@ def roster_change():
     players = {p["id"]: p for p in stats.build(keep_hidden=True)["players"]}
     try:
         with _file_lock:
-            ro = stats.load_roster()
+            ro = stats.load_roster(include_base=False)
             if op == "bio":
                 p = players.get(pid)
                 if not p:

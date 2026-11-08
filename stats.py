@@ -144,7 +144,9 @@ def _canonicalise(games):
                     known = nums.get((t["code"], p["name"].title()))
                     p["pid"] = f"{t['code'].lower()}-{known.most_common(1)[0][0] if known else p['number']}"
     # A transfer marked by the admin says "the player now called jsk-9 is the one we knew as ca-24": same person, one profile.
-    alias = {t["alias"]: t["id"] for t in load_roster()["transfers"] if t.get("alias") and t["alias"] != t["id"]}
+    ro = load_roster()
+    alias = {t["alias"]: t["id"] for t in ro["transfers"] if t.get("alias") and t["alias"] != t["id"]}
+    alias.update({a: i for a, i in ro["merges"].items() if a != i})              # one person printed under several numbers or spellings
     if alias:
         for g in games:
             for t in g["teams"]:
@@ -152,14 +154,30 @@ def _canonicalise(games):
                     p["pid"] = alias.get(p["pid"], p["pid"])
 
 
-def load_roster():
-    """{'added': [{id,name,team,number,pos}], 'hidden': [ids], 'transfers': [{id,from,to,number,alias,date,note}], 'renames': {id: name}}"""
+ROSTER_BASE = config.ASSETS_DIR / "roster.json"      # roster facts that ship with the code (same shape as data/roster.json, plus 'merges')
+
+
+def _roster_raw(path):
     try:
-        raw = json.loads(ROSTER_FILE.read_text())
+        return json.loads(path.read_text())
     except (OSError, ValueError):
-        raw = {}
-    return {"added": list(raw.get("added") or []), "hidden": list(raw.get("hidden") or []),
-            "transfers": list(raw.get("transfers") or []), "renames": dict(raw.get("renames") or {})}
+        return {}
+
+
+def load_roster(include_base=True):
+    """{'added': [{id,name,team,number,pos}], 'hidden': [ids], 'transfers': [{id,from,to,number,alias,date,note}], 'renames': {id: name},
+    'merges': {alias id: player id}}. The admin's file (data/roster.json) comes on top of assets/roster.json; the admin only ever writes its own
+    (include_base=False), so what ships with the code can never be copied into, or undone from, the data folder."""
+    base, raw = (_roster_raw(ROSTER_BASE) if include_base else {}), _roster_raw(ROSTER_FILE)
+    seen, transfers = set(), []
+    for t in [*(base.get("transfers") or []), *(raw.get("transfers") or [])]:
+        k = (t.get("id"), t.get("to"))
+        if k not in seen:                                  # the same transfer in both files counts once
+            seen.add(k)
+            transfers.append(t)
+    return {"added": [*(base.get("added") or []), *(raw.get("added") or [])], "hidden": sorted({*(base.get("hidden") or []), *(raw.get("hidden") or [])}),
+            "transfers": transfers, "renames": {**(base.get("renames") or {}), **(raw.get("renames") or {})},
+            "merges": {**(base.get("merges") or {}), **(raw.get("merges") or {})}}
 
 
 def blank_player(a: dict) -> dict:

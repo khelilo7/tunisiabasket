@@ -142,6 +142,9 @@ scoring, shooting, rebounds, assists, steals, blocks, turnovers, form, the previ
 below it.
 
 ## Admin: players, rosters and images
+
+> **Roster facts that ship with the code** live in `assets/roster.json`: `merges` (one person printed under several numbers or spellings on the federation sheets), `renames` and `transfers`.
+> They apply on every copy of the site as soon as it is deployed. The admin's own changes stay in `data/roster.json` and are added on top; the admin never copies the shipped ones into it.
 Two more tabs in the admin panel (`/admin`).
 **👥 Players**: per team, edit height, weight and birth date (saved in `data/players_info.json`, which overrides `assets/players_info.json`; a typed value is
 official and drops the "estimated" mark; an empty field clears it). **Add a player** for a new signing with no box score yet (he shows on the team and Players
