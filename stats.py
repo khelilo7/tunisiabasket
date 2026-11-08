@@ -132,7 +132,10 @@ def _canonicalise(games):
                     p["name"] = c.most_common(1)[0][0]
                     p["pid"] = f"{t['code'].lower()}-{nums[(t['code'], p['name'])].most_common(1)[0][0]}"
                 else:
-                    p["pid"] = f"{t['code'].lower()}-{p['number']}"
+                    # A player listed as "did not play" under a mistyped jersey number is still the player we know by that name on this team:
+                    # without this, one misprinted number creates a second profile (and borrows the name of the real owner of that number).
+                    known = nums.get((t["code"], p["name"].title()))
+                    p["pid"] = f"{t['code'].lower()}-{known.most_common(1)[0][0] if known else p['number']}"
     # A transfer marked by the admin says "the player now called jsk-9 is the one we knew as ca-24": same person, one profile.
     alias = {t["alias"]: t["id"] for t in load_roster()["transfers"] if t.get("alias") and t["alias"] != t["id"]}
     if alias:
