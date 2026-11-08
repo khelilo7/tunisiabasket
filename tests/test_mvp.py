@@ -56,7 +56,12 @@ check(c.get("/api/mvp?phase=1&vid=" + vid(2)).get_json()["my_vote"] is None, "ot
 check(vote(b).status_code == 409, "a vote is final: no second vote, no change")
 t = c.get("/api/mvp?phase=1").get_json()
 check(t["total_votes"] == 1 and {x["id"]: x["votes"] for x in t["candidates"]}[a] == 1, "one vote counted once")
-check(t["ballot"] == [x["id"] for x in cands[:3]], "the ballot is the top 3 by stats")
+exp, seen = [], set()
+for x in cands:                                   # best by stats, one per club
+    if x["team"] not in seen:
+        exp.append(x["id"]); seen.add(x["team"])
+check(t["ballot"] == exp[:3] and len({next(x["team"] for x in cands if x["id"] == i) for i in t["ballot"]}) == 3, "the ballot is the best three by stats, one per club")
+check([x["id"] for x in sorted(cands, key=lambda x: x["vote_rank"])][:3] and set(x["id"] for x in sorted(cands, key=lambda x: x["vote_rank"])[:3]) == set(t["ballot"]), "the ballot players head the list")
 check(vote(cands[5]["id"], n=40).status_code == 400, "only the top 3 can be voted for")
 check(vote("nobody-0").status_code == 400, "unknown player refused")
 check(c.post("/api/mvp/vote", json={"phase": 1, "player": a, "vid": "short"}, headers={"User-Agent": UA}).status_code == 400, "bad browser code refused")

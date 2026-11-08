@@ -108,7 +108,7 @@ their team's games in the phase. Two separate things:
 - **Current MVP**: the crowned player, else the player with the most votes, else (no votes yet) the stats leader. It is the banner of the MVP page and a card on the home page,
   which also names the best player by stats when that is someone else. The MVP page's list is ordered by votes first (only the three on the ballot can have any), then by stats.
   On the page the current MVP is the banner at the top, the three ballot players sit under it, then the top-10 list; the stats-race chart is folded under the list and opens on click.
-- **Fan vote**: fans choose among the top 3 of the stats race. **The phase MVP is decided by the votes alone** (most votes; a tie goes to the better stats; if nobody
+- **Fan vote**: fans choose among the best 3 of the stats race, at most one player per club (the best of each club, walking down the stats ranking); the list shows those three first, then everybody else by votes and stats. **The phase MVP is decided by the votes alone** (most votes; a tie goes to the better stats; if nobody
   voted, the stats leader). One final vote per browser (a random code in the browser's storage, kept only as a hash), at most 8 browsers per network, crawlers refused.
   Stored in `data/votes.db` (mode 600); no address or browser string is saved. There are no accounts, so a determined person can still vote from several browsers
   or phones: treat the result as a popularity vote, not an audit.

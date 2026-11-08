@@ -3,7 +3,7 @@
 A phase is 11 matchdays (phase 1 = J1-J11, phase 2 = J12-J22). For a phase:
   * the RACE ranks the candidates (qualified players of the top teams, the same pool as the season MVP) by their average
     impact over the phase's games, and draws how each candidate's average moved matchday after matchday;
-  * the FANS' VOTE lets every visitor back one of the top 3 candidates by stats. One final vote per browser; a handful per network, because mobile
+  * the FANS' VOTE lets every visitor back one of three candidates: the best by stats, at most one per club. One final vote per browser; a handful per network, because mobile
     operators put many people behind one address. Only hashes are stored (no address, no browser string);
   * the phase MVP is decided by the FANS' VOTE ALONE (most votes; a tie goes to the better stats). The stats race is a separate
     ranking: it shows the best player so far and decides nothing;
@@ -217,9 +217,21 @@ def candidates(phase: int):
     return _race_data(phase)[0]
 
 
+def pick_ballot(rows):
+    """The ids fans can vote for: walking down the stats ranking (best first), the best player of each team until BALLOT_SIZE, so the three
+    names come from three different clubs. Never chosen by votes. With fewer clubs than seats, the best remaining players fill the rest."""
+    out, teams = [], set()
+    for r in rows:
+        if r["team"] not in teams:
+            out.append(r["id"])
+            teams.add(r["team"])
+        if len(out) == BALLOT_SIZE:
+            return out
+    return out + [r["id"] for r in rows if r["id"] not in out][:BALLOT_SIZE - len(out)]
+
+
 def ballot(phase: int):
-    """The ids fans can vote for: the best BALLOT_SIZE candidates by stats (never by votes, so the ballot cannot drift)."""
-    return [c["id"] for c in candidates(phase)[:BALLOT_SIZE]]
+    return pick_ballot(candidates(phase))
 
 
 def race(phase: int = 1) -> dict:
@@ -229,7 +241,7 @@ def race(phase: int = 1) -> dict:
         raise ValueError("phase")
     rows, matchdays, complete = _race_data(phase)       # best average impact first
     votes = tally(phase)
-    ballot_ids = [r["id"] for r in rows[:BALLOT_SIZE]]
+    ballot_ids = pick_ballot(rows)
     total = sum(votes.get(r["id"], 0) for r in rows)
     best_impact = max((r["impact"] for r in rows), default=0) or 1
     for i, r in enumerate(rows, 1):
@@ -254,8 +266,8 @@ def race(phase: int = 1) -> dict:
     winner = next((r for r in rows if r["id"] == st["winner"]), None)       # a crown set by the admin always wins
     if winner is None and not is_open and complete and rows:
         winner = vote_leader or rows[0]                                      # voting is over: the fans decide (no votes at all: the stats leader)
-    # the list shown to visitors: most votes first, a tie (and everybody without votes) by the stats race
-    for i, r in enumerate(sorted(rows, key=lambda r: (r["votes"], r["impact"], r["pts"]), reverse=True), 1):
+    # the list shown to visitors: the ballot first (one player per club), by votes then stats; then everybody else by votes (if any) then stats
+    for i, r in enumerate(sorted(rows, key=lambda r: (r["id"] in ballot_ids, r["votes"], r["impact"], r["pts"]), reverse=True), 1):
         r["vote_rank"] = i
     current = winner or vote_leader or (rows[0] if rows else None)
     current_by = "winner" if winner else "votes" if vote_leader else "stats"

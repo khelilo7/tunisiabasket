@@ -336,12 +336,12 @@ const SENT = {
   en: {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
-    ballotIntro: n => `Choose your Phase 1 MVP among the top ${n} of the stats race. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
+    ballotIntro: n => `Choose your Phase 1 MVP among the best ${n} of the stats race, one per club. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
     predWins: n => `${n} wins`, predClose: d => `Predictions close when the matchday starts: ${d} (Tunisia time)`, predProg: (a, b) => `${a}/${b} games picked`,
     votesN: n => `${n} vote${n === 1 ? '' : 's'}`, allCands: n => `Show all ${n} candidates`,
     mvpHow: () => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
       <p><b>Stats race.</b> Ranks every candidate by average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. It shows the best player so far and decides nothing.</p>
-      <p><b>Fan vote (100%).</b> The Phase 1 MVP is decided by the fans’ votes alone. Fans choose among the top 3 of the stats race; every browser has one vote, and it is final. The most-voted player wins; a tie goes to the better stats.</p>
+      <p><b>Fan vote (100%).</b> The Phase 1 MVP is decided by the fans’ votes alone. Fans choose among the best 3 of the stats race, at most one player per club; every browser has one vote, and it is final. The most-voted player wins; a tie goes to the better stats.</p>
       <p>When voting closes at the deadline, the player with the most votes is crowned Phase 1 MVP.</p>`,
     seasonMvp: s => `★ SEASON MVP · ${s}`, qualRule: n => `≥ ${n}% of team games`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
@@ -357,12 +357,12 @@ const SENT = {
   fr: {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
-    ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} premiers de la course aux statistiques. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
+    ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} meilleurs de la course aux statistiques, un seul par club. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
     predWins: n => `${n} gagne`, predClose: d => `Les pronostics se ferment au début de la journée : ${d} (heure de Tunis)`, predProg: (a, b) => `${a}/${b} matchs pronostiqués`,
     votesN: n => `${n} vote${n > 1 ? 's' : ''}`, allCands: n => `Voir les ${n} candidats`,
     mvpHow: () => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
       <p><b>Course aux statistiques.</b> Classe chaque candidat selon son impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Elle montre le meilleur joueur à ce jour et ne décide rien.</p>
-      <p><b>Vote des fans (100 %).</b> Le MVP de la phase 1 est décidé par le seul vote des fans. Les fans choisissent parmi les 3 premiers de la course aux statistiques ; chaque navigateur a une seule voix, définitive. Le joueur le plus voté gagne ; en cas d’égalité, les meilleures statistiques départagent.</p>
+      <p><b>Vote des fans (100 %).</b> Le MVP de la phase 1 est décidé par le seul vote des fans. Les fans choisissent parmi les 3 meilleurs de la course aux statistiques, un seul joueur par club ; chaque navigateur a une seule voix, définitive. Le joueur le plus voté gagne ; en cas d’égalité, les meilleures statistiques départagent.</p>
       <p>À la clôture du vote, à l’échéance, le joueur ayant le plus de voix est couronné MVP de la phase 1.</p>`,
     seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, qualRule: n => `≥ ${n} % des matchs de l’équipe`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
