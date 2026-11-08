@@ -238,6 +238,7 @@
   .fbcard { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; flex-wrap:wrap; } .fbcard .vote { white-space:nowrap; text-decoration:none; }
   a.tiny { display:inline-block; margin-top:8px; font-size:11px; color:var(--mut); opacity:.7; text-decoration:none; } a.tiny:hover { opacity:1; text-decoration:underline; }
   footer .fbl { margin-left:auto; } footer .hint { display:block; flex-basis:100%; font-size:11px; opacity:.65; margin-top:4px; }
+  .seg { display:inline-flex; gap:3px; padding:3px; margin-bottom:12px; border-radius:99px; background:var(--card); border:1px solid var(--line); } .seg a { padding:6px 16px; border-radius:99px; font-size:14px; font-weight:700; color:var(--mut); } .seg a.on { background:var(--acc); color:#10131c; } .seg a:not(.on):hover { color:var(--txt); }
   .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
   .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
   @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars { grid-column:3; } .vrow .sc { display:none; } }
@@ -450,7 +451,7 @@ function track() {
 
 async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings' }[r.page] || r.page)));
+  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings' }[r.page] || r.page)));
   const app = $('#app');
   courtData = null; pageMeta = null; clearInterval(nbTimer);
   try {
@@ -984,10 +985,11 @@ function standTable(d, compact) {
   ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
+const standNav = on => `<div class="seg" role="tablist"><a role="tab" aria-selected="${on === 'standings'}" class="${on === 'standings' ? 'on' : ''}" href="${url('standings')}">${_('Standings')}</a><a role="tab" aria-selected="${on === 'planning'}" class="${on === 'planning' ? 'on' : ''}" href="${url('planning')}">📅 ${_('Planning')}</a></div>`;
 async function standings() {
   const d = await api('overview');
   pageMeta = META.standings[LANG];
-  return `<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
+  return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
   <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>`;
 }
 
@@ -1029,7 +1031,7 @@ async function planning() {
   const d = await (await fetch('/api/planning')).json();
   pageMeta = META.planning[LANG];
   const codes = Object.keys(d.teams).sort((a, b) => d.teams[a].localeCompare(d.teams[b]));
-  const head = `<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
+  const head = `${standNav('planning')}<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
   ${d.projected ? `<div class="banner">${_('Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.')}</div>` : ''}
   <div class="row" style="margin-bottom:12px"><label class="mut small" for="pt">${_('Show one team')}</label>
     <select id="pt"><option value="">${_('All teams')}</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>`;

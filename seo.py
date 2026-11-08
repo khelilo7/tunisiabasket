@@ -351,7 +351,7 @@ _template = {"mtime": 0, "text": ""}
 def nav_html(lang):
     t = T[lang]
     return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in
-                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"]), ("news", t["nw_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"]), ("planning", t["planning"])))
+                   (("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"]), ("news", t["nw_nav"]), ("players", t["players"]), ("games", t["games"]), ("standings", t["standings"])))
 
 
 def shell(lang, page, m):
