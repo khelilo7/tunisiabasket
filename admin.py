@@ -613,6 +613,20 @@ def _check_results(games, o, md):
     return sorted(set(errs))
 
 
+@bp.post("/admin/api/game")
+def import_game():
+    """Body {"game": {...}}: a box score transcribed by hand (or by Claude) from a sheet the OCR cannot read. Same checks and storage as a reviewed upload;
+    sending the same game again just rewrites it. Used by tools/send_games.py."""
+    game = (request.get_json(silent=True) or {}).get("game")
+    if not isinstance(game, dict) or len(game.get("teams") or []) != 2:
+        return jsonify(error="Send {\"game\": {...}} with two teams."), 422
+    gid = str(game.get("id") or "")
+    if gid and not re.fullmatch(r"[A-Za-z0-9_-]{4,40}", gid):
+        return jsonify(error="Bad game id."), 422
+    resp, status = _save({"kind": "box", "result": game, "filename": game.get("source_file", "game"), "status": "done"}, {})
+    return resp, status
+
+
 @bp.post("/admin/api/jobs/<job_id>/items/<int:idx>/save")
 def save_item(job_id, idx):
     body = request.get_json(force=True)

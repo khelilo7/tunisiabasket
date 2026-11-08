@@ -9,16 +9,14 @@ the admin panel, a photo lives only in the site's data folder (never in git, kep
 `--remove` takes it down. Only the photos in data/photos are touched; nothing else on the site changes.
 """
 import argparse
-import getpass
 import json
-import os
 import sys
 from pathlib import Path
 
-import requests
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import config  # noqa: E402
+from _site import login  # noqa: E402
 
 
 def main():
@@ -38,12 +36,7 @@ def main():
     if a.dry_run:
         print(f"{len(mine)} photo(s) would be sent to {site}: {', '.join(mine)}")
         return
-    token = os.environ.get("ADMIN_TOKEN") or getpass.getpass(f"Admin token for {site} (not shown): ")
-    s = requests.Session()
-    s.headers["Origin"] = site
-    r = s.post(f"{site}/admin/api/login", json={"token": token}, timeout=30)
-    if r.status_code != 200:
-        sys.exit(f"Login refused ({r.status_code}): {r.json().get('error', '') if r.headers.get('content-type', '').startswith('application/json') else ''}")
+    s = login(site)
     if a.remove:
         live = s.get(f"{site}/admin/api/roster", timeout=30).json()["players"]
         gone = [p["id"] for p in live if (p.get("photo") or "").startswith("/photo/")]

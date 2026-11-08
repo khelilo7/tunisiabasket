@@ -17,4 +17,13 @@ games = [game(row(77, "NAIM DHIFALLAH"), row(5, "ALI BEN SALAH")),
 stats._canonicalise(games)
 pids = {p["pid"] for g in games for t in g["teams"] for p in t["players"] if "NAIM" in p["name"].upper()}
 print("identity:", "ok" if pids == {"esr-77"} else f"FAILED {pids}")
-sys.exit(0 if pids == {"esr-77"} else 1)
+
+# an unnamed row (the federation prints XX) must not outvote a real name, create a profile, or win the game MVP
+games = [game(row(20, "CHEBAANE NIDHAL"), row(5, "ALI BEN SALAH")), game(row(20, "NIDHAL CHEBAANE"), row(5, "ALI BEN SALAH")),
+         game(row(20, "XX"), row(5, "ALI BEN SALAH")), game(row(20, "XX"), row(5, "ALI BEN SALAH")), game(row(20, "XX"), row(0, "X X"))]
+stats._canonicalise(games)
+named = {p["name"] for g in games for t in g["teams"] for p in t["players"] if p["number"] == 20 and not p.get("unnamed")}
+unnamed = [p for g in games for t in g["teams"] for p in t["players"] if p.get("unnamed")]
+ok2 = len(named) == 1 and "Xx" not in named and len(unnamed) == 4 and all(p["pid"].startswith("esr-x") for p in unnamed)
+print("unnamed:", "ok" if ok2 else f"FAILED {named} {len(unnamed)}")
+sys.exit(0 if pids == {"esr-77"} and ok2 else 1)

@@ -101,6 +101,11 @@ def load_games():
     return games
 
 
+def _unnamed(name):
+    """The federation prints XX (or X X, ?) for a player whose name was not entered: no identity to build a profile on."""
+    return not re.sub(r"[X\s.?_-]", "", (name or "").upper())
+
+
 def _canonicalise(games):
     """Players are identified by (team, jersey number); spelling is the weighted-majority variant.
     Team names are the majority non-garbled variant per team code."""
@@ -111,14 +116,14 @@ def _canonicalise(games):
             if not _garbled(t["name"]):
                 tnames[t["code"]][t["name"]] += w
             for p in t["players"]:
-                if not p.get("dnp"):
+                if not p.get("dnp") and not _unnamed(p["name"]):
                     names[(t["code"], p["number"])][p["name"].title()] += w
     # Same team + same name but different jersey readings -> one player (most common number wins).
     nums = defaultdict(Counter)
     for g in games:
         for t in g["teams"]:
             for p in t["players"]:
-                if not p.get("dnp"):
+                if not p.get("dnp") and not _unnamed(p["name"]):
                     c = names.get((t["code"], p["number"]))
                     if c:
                         nums[(t["code"], c.most_common(1)[0][0])][p["number"]] += 1
@@ -128,7 +133,9 @@ def _canonicalise(games):
                 t["name"] = tnames[t["code"]].most_common(1)[0][0]
             for p in t["players"]:
                 c = names.get((t["code"], p["number"]))
-                if c and not p.get("dnp"):
+                if _unnamed(p["name"]):
+                    p["pid"], p["unnamed"] = f"{t['code'].lower()}-x{p['number']}", True     # counted in the box score and the team, but no profile (nobody to credit)
+                elif c and not p.get("dnp"):
                     p["name"] = c.most_common(1)[0][0]
                     p["pid"] = f"{t['code'].lower()}-{nums[(t['code'], p['name'])].most_common(1)[0][0]}"
                 else:
@@ -288,7 +295,7 @@ def enrich_game(g: dict) -> dict:
             p["pir"] = pir(p)
             p["rating"] = rating(p["pir"])
             p["impact"] = p["pir"] + (WIN_BONUS if t["won"] else 0)
-            if t["won"] and p["min"] >= MIN_MINUTES_FOR_RANKING:  # only the winning team can have the MVP
+            if t["won"] and not p.get("unnamed") and p["min"] >= MIN_MINUTES_FOR_RANKING:  # only the winning team can have the MVP
                 if best is None or (p["impact"], p["pts"]) > (best[0]["impact"], best[0]["pts"]):
                     best = (p, t)
     g["mvp"] = ({"player_id": best[0]["pid"], "name": best[0]["name"], "team": best[1]["code"],
@@ -320,6 +327,8 @@ def build(season=None, keep_hidden=False):
         for t in g["teams"]:
             opp = next(x for x in g["teams"] if x is not t)
             for p in t["players"]:
+                if p.get("unnamed"):
+                    continue
                 i = p["pid"]
                 meta.setdefault(i, {"id": i, "name": p["name"].title(), "teams": [], "numbers": set()})
                 if t["code"] not in meta[i]["teams"]:
@@ -658,7 +667,7 @@ def game_lineups(g, pos_by_id):
         rows = []
         for p in t["players"]:
             pos = pos_by_id.get(p.get("pid"), {"pos": "SF", "pos_value": 3.0, "pos_source": "auto"})
-            r = {"id": p.get("pid"), "name": p["name"], "number": p["number"], "dnp": bool(p.get("dnp")),
+            r = {"id": None if p.get("unnamed") else p.get("pid"), "name": p["name"], "number": p["number"], "dnp": bool(p.get("dnp")),
                  "starter": bool(p.get("starter")), "pos": pos["pos"], "pos_value": pos["pos_value"],
                  "pos_source": pos["pos_source"]}
             if not p.get("dnp"):
