@@ -113,6 +113,12 @@ check(manifest["name"] == "Tunisia Basket" and len(manifest["icons"]) >= 2, "web
 for f in ("favicon.ico", "img/logo-96.png", "img/logo.png", "img/favicon-32.png", "img/icon-192.png", "img/icon-512.png"):
     check(c.get("/" + f).status_code == 200, f"/{f} must be served")
 
+# Google shows a site's icon in its results only if it is square, a multiple of 48 px, and linked from the home page
+for n in (48, 96, 192):
+    check(Image.open(root / "static" / "img" / f"favicon-{n}.png").size == (n, n), f"favicon-{n}.png must be {n}x{n}")
+    check(f'sizes="{n}x{n}" href="/img/favicon-{n}.png"' in c.get("/").get_data(as_text=True), f"the home page links the {n}px icon")
+check("icon-512.png" in c.get("/").get_data(as_text=True) and "alternateName" in c.get("/").get_data(as_text=True), "the structured data names the logo and the site's other names")
+
 print("seo:", "FAILED" if fails else f"ok ({len(pages) * 2} pages checked, {len(urls)} sitemap urls)")
 for f in fails[:25]:
     print("  FAIL", f)

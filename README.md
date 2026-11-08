@@ -183,3 +183,13 @@ and are kept 400 days. For a second opinion, Cloudflare's free dashboard (Analyt
 ## Licence
 The source code is released under the **MIT licence** (`LICENSE`). The licence does not cover the Tunisia Basket name and emblem, the club names and logos
 (they belong to their owners), or the data from the federation: see `NOTICE.md`. Open-source libraries keep their own licences.
+
+## Getting found on Google (what the code does, and what only the owner can do)
+- **Code**: crawlable server-side pages in French and English with hreflang, a sitemap (players, teams, games), per-page titles/descriptions that start with the search words
+  (“Tunisian Basketball Stats…”, “Basket tunisien…”), structured data (WebSite with its other names, Organization with a square logo, SportsTeam, Person, SportsEvent), and the icon set:
+  `tools/make_favicons.py` rebuilds `favicon.ico` and `img/favicon-{16,32,48,96,192}.png` from the emblem of the logo (the full logo’s text is unreadable at 48 px).
+- **Owner, once** (Google Search Console, free): add `https://tunisiabasket.com` as a property (DNS record at the domain), submit `https://tunisiabasket.com/sitemap.xml`, then use *URL inspection →
+  Request indexing* on `/`, `/en/`, `/classement`, `/joueurs`. The search-result icon is refreshed only when Google re-fetches the home page: it can take days to weeks.
+  Do the same in Bing Webmaster Tools (it also feeds DuckDuckGo and others).
+- **Ranking** depends mostly on other sites linking to yours: link to tunisiabasket.com from the Facebook page (About / website field), clubs’ pages and groups, forums, sports bloggers,
+  anyone who shares a player’s stats page. Fresh content (results and box scores soon after each matchday) also helps.
