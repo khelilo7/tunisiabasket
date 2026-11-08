@@ -39,6 +39,8 @@ def main():
         index = json.loads(index_file.read_text())
     except (OSError, ValueError):
         index = {}
+    credit_file = out / "credits.txt"
+    credits = {l.split()[0]: l for l in credit_file.read_text(encoding="utf-8").splitlines() if l.strip()} if credit_file.exists() else {}
     done = 0
     for f in sorted(inbox.iterdir()):
         if f.suffix.lower() not in EXT:
@@ -60,11 +62,11 @@ def main():
         index[p["id"]] = f"/photo/{p['id']}.jpg?v={int(time.time())}"
         credit = f.with_suffix(".txt")
         if credit.exists():
-            with open(out / "credits.txt", "a", encoding="utf-8") as c:
-                c.write(f"{p['id']} {p['name']}: {credit.read_text().strip()}\n")
+            credits[p["id"]] = f"{p['id']} {p['name']}: {credit.read_text().strip()}"
         done += 1
         print(f"ok  {f.name} -> {p['name']} ({p['team']} #{p['number']})")
     index_file.write_text(json.dumps(index, indent=1))
+    credit_file.write_text("\n".join(sorted(credits.values())) + "\n", encoding="utf-8")
     print(f"{done} photo(s) imported into {out}")
 
 
