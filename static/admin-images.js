@@ -110,6 +110,7 @@
     if (l2) txt(ctx, l2, x + 22, y + h - 56, { size: 22, color: C.mut, maxW: w - 44 });
     if (l3) txt(ctx, l3, x + 22, y + h - 22, { size: 22, weight: 700, color: C.txt, maxW: w - 44 });
   }
+  const extra = {};    // image types added by other scripts (admin-matchday.js): { key: { label, controls() -> html, bind(redraw), draw() } }
   const download = name => { $('#imgdl').onclick = () => $('#imgcanvas').toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png'); $('#imgdl').disabled = false; };
 
   // ---------------------------------------------------------------- the four images
@@ -235,6 +236,7 @@
 
   function controls() {
     const m = mode;
+    if (extra[m]) { $('#imgctl').innerHTML = extra[m].controls(); extra[m].bind(draw); return; }
     $('#imgctl').innerHTML = m === 'players' ? `<select id="c-pa">${optsPlayers(sel.pa)}</select><span class="mut">vs</span><select id="c-pb">${optsPlayers(sel.pb)}</select>`
       : m === 'teams' ? `<select id="c-ta">${optsTeams(sel.ta)}</select><span class="mut">vs</span><select id="c-tb">${optsTeams(sel.tb)}</select>`
       : m === 'race' ? `<label class="small mut">Players shown</label><select id="c-rn">${[5, 8, 10].map(n => `<option ${n == sel.rn ? 'selected' : ''}>${n}</option>`).join('')}</select>`
@@ -246,7 +248,7 @@
   async function draw() {
     if (busy) { again = true; return; } busy = true;
     $('#imgdl').disabled = true;
-    try { await ({ players: drawPlayers, teams: drawTeams, race: drawRace, leaders: drawLeaders })[mode](); $('#imgerr').textContent = ''; }
+    try { await (extra[mode] ? extra[mode].draw() : ({ players: drawPlayers, teams: drawTeams, race: drawRace, leaders: drawLeaders })[mode]()); $('#imgerr').textContent = ''; }
     catch (e) { $('#imgerr').textContent = 'Could not draw the image: ' + e.message; }
     busy = false;
     if (again) { again = false; draw(); }
@@ -261,7 +263,7 @@
         D = { season: pl.season, players: pl.players.filter(p => p.gp > 0), teams: ts.teams, mvp: mv, leaders: ov.leaders };
       } catch (e) { box.innerHTML = '<div class="problems">Could not load the data for the images.</div>'; return; }
       sel = { pa: D.players[0].id, pb: D.players[1].id, ta: D.teams[0].code, tb: D.teams[1].code, rn: 8, lk: 'pts', ln: 10 };
-      box.innerHTML = `<div class="row" style="margin:12px 0"><div class="tabs" id="imgmodes" style="margin:0"><button data-m="players" class="on">Player vs player</button><button data-m="teams">Team vs team</button><button data-m="race">MVP race</button><button data-m="leaders">Leaders</button></div>
+      box.innerHTML = `<div class="row" style="margin:12px 0"><div class="tabs" id="imgmodes" style="margin:0;flex-wrap:wrap"><button data-m="players" class="on">Player vs player</button><button data-m="teams">Team vs team</button><button data-m="race">MVP race</button><button data-m="leaders">Leaders</button>${Object.entries(extra).map(([k, x]) => `<button data-m="${k}">${x.label}</button>`).join('')}</div>
           <span class="sp"></span><label class="small mut">Image language</label><select id="imglang"><option value="fr">Français</option><option value="en">English</option></select></div>
         <div class="row" id="imgctl" style="margin-bottom:12px"></div>
         <div class="row" style="margin-bottom:10px"><button class="primary" id="imgdl" disabled>⬇ Download PNG</button><span class="mut small">1080 px wide, ready to post. Drawn from today’s data.</span><span id="imgerr" class="small" style="color:var(--bad)"></span></div>
@@ -273,4 +275,5 @@
     draw();
   }
   window.loadImages = open;
+  window.ImgKit = { W, C, txt, rr, lines, logo, frame, f1, pct, nm, download, extra, loadImg, lang: () => lang, data: () => D, redraw: draw };
 })();

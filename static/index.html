@@ -709,7 +709,8 @@ function bindPicks() {
   document.querySelectorAll('#nextbanner .nbpk').forEach(b => { b.onclick = e => { e.stopPropagation(); bannerPick(b); }; b.onkeydown = e => e.stopPropagation(); });
 }
 function nextBanner(plan, standings) {
-  const gs = upcoming(plan); if (!gs.length) return '';
+  const all = upcoming(plan); if (!all.length) return '';
+  const gs = all.filter(g => g.md === all[0].md);     // the next matchday only: every slide can be predicted
   const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
   nbCtx = { plan, rec };
   const slide = g => `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">

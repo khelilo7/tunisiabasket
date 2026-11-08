@@ -108,8 +108,18 @@ check(ph and ph.startswith("/photo/ca-8.jpg"), f"photo attached to the player: {
 check(c.get("/photo/ca-8.jpg").data == jpg and c.get("/photo/..%2fx.jpg").status_code == 404 and c.get("/photo/zz-1.jpg").status_code == 404, "photo served, nothing else")
 check(c.post("/admin/api/photo/delete", json={"id": "ca-8"}, headers=H).status_code == 200 and players()["ca-8"]["photo"] is None, "photo removed")
 
+# --- matchday data for the Facebook images
+check(c.get("/admin/api/matchday").status_code == 401, "matchday data is admin only")
+mj = c.get("/admin/api/matchday", headers=H).get_json()
+check(mj["md"] and mj["matchdays"] and mj["results"] and mj["standings"], "matchday data has results and a table")
+r0 = mj["results"][0]
+check(all(k in r0 for k in ("home", "away", "home_name", "home_score", "away_score", "players", "mvp")), "result rows are complete")
+check(any(r["players"] for r in mj["results"]) and all({"name", "team", "opp", "pts", "reb", "ast", "pir"} <= set(p) for r in mj["results"] for p in r["players"]), "box-score players are listed with their stats")
+check(sorted(x["rank"] for x in mj["standings"]) == list(range(1, len(mj["standings"]) + 1)), "table ranks are 1..n")
+check(c.get("/admin/api/matchday?md=1", headers=H).get_json()["standings"][0]["prev_rank"] is None, "no previous rank before matchday 1")
+check(c.get("/admin/api/matchday?md=999", headers=H).get_json()["md"] is None, "unknown matchday: empty answer, no crash")
 # --- the admin pages and scripts exist
-for p in ("/admin-roster.js", "/admin-images.js"):
+for p in ("/admin-roster.js", "/admin-images.js", "/admin-matchday.js"):
     check(c.get(p).status_code == 200, f"{p} served")
 check(stats.ROSTER_FILE.exists(), "changes persist in data/roster.json")
 

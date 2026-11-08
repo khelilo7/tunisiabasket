@@ -147,6 +147,10 @@ Transfers can be undone. All of this lives in `data/roster.json` and is audited 
 **🖼️ Images**: draws 1080 px PNGs in the browser (nothing is uploaded) from the live numbers, in French or English: player vs player, team vs team (record, scoring,
 shooting, rebounds, assists, steals, blocks, turnovers; team shooting figures come from the box scores we have), the MVP race, and the league leaders (one
 category as a top 5/10, or the top 3 of every category in one image).
+**Facebook images by matchday** (same tab, `static/admin-matchday.js`, data from `/admin/api/matchday`): pick a matchday, then the results (with each game's MVP), the standings after it with
+the moves since the previous matchday (▲ ▼), the best players of the matchday on any stat (rating, points, rebounds, assists, steals, blocks, threes, +/-), the game MVPs, a game sheet
+(the score, then both teams' players ranked by the stat you choose), the next matchday's programme, and the fans' predictions (percentages only). Each image comes with a ready-to-paste
+post text that ends with a question, to get people commenting (French or English, with the hashtags).
 
 ## Visitor statistics
 The site counts its own visits, privately: no cookies and no IP address stored (`traffic.py`). Each page view records the page, the country

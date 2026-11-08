@@ -482,6 +482,50 @@ def photo_delete():
     return jsonify(ok=True, id=pid)
 
 
+@bp.get("/admin/api/matchday")
+def matchday_view():
+    """Everything the Facebook images of one matchday need: results, the table after it (with the moves), the box-score players, the next matchday."""
+    o, d = stats.load_official(), stats.build()
+    cal = stats.load_calendar()
+    played = sorted({r["matchday"] for r in o["results"]})
+    out = {"season": d["season"], "matchdays": [{"matchday": m, "date": cal.get(m)} for m in played], "md": None}
+    md = request.args.get("md", type=int) or (played[-1] if played else None)
+    if md not in played:
+        return jsonify(out)
+    names = o["teams"]
+    boxes = [g for g in d["games"] if stats.matchday_hint(g) == md]
+    results = []
+    for r in o["results"]:
+        if r["matchday"] != md:
+            continue
+        g = next((g for g in boxes if {t["code"] for t in g["teams"]} == {r["home"], r["away"]}), None)
+        row = {"home": r["home"], "away": r["away"], "home_name": names.get(r["home"], r["home"]), "away_name": names.get(r["away"], r["away"]),
+               "home_score": r["home_score"], "away_score": r["away_score"], "game_id": g["id"] if g else None, "mvp": None, "players": []}
+        if g:
+            row["mvp"] = g.get("mvp")
+            for t in g["teams"]:
+                opp = next(x["code"] for x in g["teams"] if x is not t)
+                row["players"] += [{"id": p.get("pid"), "name": p["name"], "number": p["number"], "team": t["code"], "opp": opp, "won": bool(t.get("won")),
+                                    **{k: p[k] for k in ("min", "pts", "reb", "ast", "stl", "blk", "p3m", "tov", "pm", "pir")}}
+                                   for p in t["players"] if not p.get("dnp")]
+        results.append(row)
+    upto = lambda n: stats.official_standings({"teams": names, "results": [r for r in o["results"] if r["matchday"] <= n]})
+    prev = {r["code"]: r["rank"] for r in upto(md - 1)} if md - 1 in played else {}
+    table = [{"code": r["code"], "name": r["name"], "rank": r["rank"], "prev_rank": prev.get(r["code"]), "j": r["j"], "w": r["w"], "l": r["l"],
+              "diff": r["diff"], "pts": r["pts"]} for r in upto(md)]
+    nxt = next((m for m in stats.planning(o)["matchdays"] if m["matchday"] > md and any(not g["played"] for g in m["games"])), None)
+    pr = predict.admin_view()["round"]
+    nxt_out = None
+    if nxt:
+        picks = {(g["home"], g["away"]): g for g in pr["games"]} if pr and pr["matchday"] == nxt["matchday"] else {}
+        nxt_out = {"matchday": nxt["matchday"], "date": nxt["date"], "open": bool(pr and pr["matchday"] == nxt["matchday"] and pr["open"]),
+                   "games": [{"home": g["home"], "away": g["away"], "home_name": names.get(g["home"], g["home"]), "away_name": names.get(g["away"], g["away"]),
+                              "home_picks": picks.get((g["home"], g["away"]), {}).get("home_picks", 0), "away_picks": picks.get((g["home"], g["away"]), {}).get("away_picks", 0)}
+                             for g in nxt["games"] if not g["played"]]}
+    out.update(md=md, date=cal.get(md), results=results, standings=table, next=nxt_out)
+    return jsonify(out)
+
+
 @bp.get("/admin/api/predictions")
 def predictions_view():
     return jsonify(predict.admin_view())
