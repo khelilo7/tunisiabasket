@@ -11,6 +11,13 @@ The names and logos of the Pro A clubs (in `assets/team-logos-src/` and `static/
 identify the teams in results and statistics. Tunisia Basket is an independent project and is not affiliated with the Tunisian Basketball Federation
 (FTBB) or with any club. A rights holder who wants a logo removed can ask and it will be taken down.
 
+## Player photos
+The player photos (`static/img/players/<player id>.jpg`, listed in `assets/player_photos.json`) are cropped from club announcements, federation and press pictures supplied by the
+site owner, and belong to their photographers, clubs and the players shown. They are published here as a **preview, so that players can see them and approve**: a player, a club or a
+rights holder who wants a photo removed can ask and it is taken down at once (delete the file and its line in `assets/player_photos.json`, or use the admin panel). They are not covered by the MIT licence.
+- `esg-41` (Bouguerra Abderahmen): photo by Zafer Batık on Wikimedia Commons, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), cropped from
+  [File:Abderahmen Bouguerra 78 20260826 (4).JPG](https://commons.wikimedia.org/wiki/File:Abderahmen_Bouguerra_78_20260826_(4).JPG). The crop is shared under the same licence.
+
 ## Competition data
 Results, standings and box scores come from the federation's public match sheets and result graphics (`seed/`, `tests/`). The statistics derived from them
 (ratings, MVP, positions, lineups) are our own calculations.
