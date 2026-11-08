@@ -235,7 +235,6 @@
   .card.news .nh { display:flex; align-items:center; gap:10px; } .card.news p.nbody { margin:0; color:var(--mut); font-size:14px; white-space:pre-line; } .card.news p.clamp { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   .lbl { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:99px; background:var(--track); color:var(--txt); }
   .lb-injury { background:rgba(255,93,108,.18); color:var(--bad); } .lb-transfer { background:rgba(79,147,255,.18); color:#4f93ff; } .lb-official { background:rgba(62,207,142,.18); color:var(--good); } .lb-result { background:rgba(255,138,31,.18); color:var(--acc); } .lb-interview { background:rgba(196,91,240,.18); color:#c45bf0; }
-  .mvpcta { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:14px; cursor:pointer; flex-wrap:wrap; background:var(--mvp-grad); border-color:var(--mvp-line); } .mvpcta .vote { white-space:nowrap; }
   .fbcard { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; flex-wrap:wrap; } .fbcard .vote { white-space:nowrap; text-decoration:none; }
   a.tiny { display:inline-block; margin-top:8px; font-size:11px; color:var(--mut); opacity:.7; text-decoration:none; } a.tiny:hover { opacity:1; text-decoration:underline; }
   footer .fbl { margin-left:auto; } footer .hint { display:block; flex-basis:100%; font-size:11px; opacity:.65; margin-top:4px; }
@@ -292,7 +291,7 @@ const FR = {
   'Featured': 'À la une', 'News': 'Actualités', 'All news': 'Toutes les actualités', 'No news yet.': 'Pas encore d’actualité.', 'Official': 'Officiel', 'Injury': 'Blessure', 'Transfer': 'Transfert', 'Result': 'Résultat', 'Info': 'Info', 'Interview': 'Interview',
   'All players': 'Tous les joueurs', 'Box score missing? Send it to us on Facebook': 'Feuille de match manquante ? Envoyez-la-nous sur Facebook', 'A tip, a correction, a missing result?': 'Une info, une correction, un résultat manquant ?',
   'Write to us on our Facebook page: we read everything.': 'Écrivez-nous sur notre page Facebook : nous lisons tout.', 'Contact us on Facebook': 'Nous contacter sur Facebook',
-  'Vote for the phase MVP among the three finalists': 'Votez pour le MVP de la phase parmi les trois finalistes', 'See the race and vote': 'Voir la course et voter', 'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
+  'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
   'No game to predict for now.': 'Aucun match à pronostiquer pour le moment.', 'Thanks! Your pick is saved. It is final.': 'Merci ! Votre pronostic est enregistré. Il est définitif.',
@@ -485,6 +484,17 @@ const META = {
               fr: ['Calendrier Pro A – prochains matchs – Tunisia Basket', 'Le calendrier de la Pro A tunisienne de basket, journée par journée.'] }
 };
 
+// The MVP card of the home page: the three finalists with the fans' share, clickable (opens the MVP page)
+function phaseCard(pm) {
+  if (!pm || !pm.ballot.length) return '';
+  const W = pm.winner, top = Math.max(1, ...pm.ballot.map(r => r.votes));
+  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">${W ? '🏆 ' + _('Phase 1 MVP') : '🗳️ ' + _('Fan vote') + ' · ' + _('Phase 1 MVP')}</div>
+    ${W ? `<div class="pn">${face(W, 56)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
+        : `<div class="mut small" style="margin:6px 0 2px">${esc(f('votesN', pm.total_votes))} · ${esc(_('Decided by the fans'))}</div>`}
+    ${pm.voting_open && pm.deadline_ts ? `<div class="mut small" style="margin-top:6px">⏳ ${deadlineLine(true, pm.deadline_ts)}</div>` : ''}</div>
+    <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div style="display:flex;gap:10px;align-items:center">${face(r, 36)}<div style="flex:1;min-width:0"><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div></div><b>${r.vote_share}%</b></div>`).join('')}
+    <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div></div>`;
+}
 const FB = 'https://www.facebook.com/people/Tunisia-Basket/61596371069928/';
 const fbCard = () => `<div class="card fbcard"><div><b>${_('A tip, a correction, a missing result?')}</b><div class="mut small">${_('Write to us on our Facebook page: we read everything.')}</div></div><a class="vote" href="${FB}" target="_blank" rel="noopener">${_('Contact us on Facebook')} →</a></div>`;
 const NEWS_LABEL = { official: 'Official', injury: 'Injury', transfer: 'Transfer', result: 'Result', info: 'Info', interview: 'Interview' };
@@ -496,7 +506,7 @@ async function home() {
   predRound = pj && pj.round; pageMeta = META.home[LANG];
   return `
   ${nextBanner(plan, h.standings)}
-  <div class="card mvpcta" data-go="${url('mvp')}" role="link" tabindex="0"><div><b>🏆 ${_('MVP race')} · ${_('Phase 1')}</b><div class="mut small">${_('Vote for the phase MVP among the three finalists')}</div></div><span class="vote">${_('See the race and vote')} →</span></div>
+  ${phaseCard(h.phase_mvp)}
   ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="newsgrid">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
   ${h.recent.length ? `<div class="grid g2">${h.recent.map(gameCard).join('')}</div>` : `<div class="empty">${_('Box scores appear here as soon as they are added.')}</div>`}
