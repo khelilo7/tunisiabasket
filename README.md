@@ -141,6 +141,15 @@ calendar; `data/calendar.json` can override single dates). Clicking a game opens
 scoring, shooting, rebounds, assists, steals, blocks, turnovers, form, the previous meeting and the key players. The "best player so far" card and the fan-vote card sit
 below it.
 
+## Home page, games, results and news (admin tabs 📅 Games and 📰 News)
+- **Home**: the next matchday's banner (featured games first by rank, with kick-off time and a ⭐ badge), the latest news with their label, the latest games (box scores and results typed by hand,
+  updated the moment they are saved), and the Facebook contact card. Standings and the MVP race have their own pages; the league leaders are at the top of the Players page.
+- **📅 Games**: per game a kick-off time, its own date (only if it is not on the matchday's date) and a featured rank (1 first). *Enter result* writes the official result (standings,
+  calendar and latest games update at once) with an optional note and up to four stat lines; a full box score uploaded later takes over. Files: `data/schedule.json`, `data/result_notes.json`.
+- **📰 News**: a title, text, a label (Official, Injury, Transfer, Result, Info, Interview), a date, pin on top, and an optional English version. Shown on the home page (latest four) and on the
+  News page. File: `data/news.json`. All three files live in the data folder: kept across deployments and in the backups.
+- **Facebook**: the page link is in the footer, on the home page and the news page, with a discreet invitation to send missing box scores (footer line, and under results without a box score).
+
 ## Admin: players, rosters and images
 
 > **Roster facts that ship with the code** live in `assets/roster.json`: `merges` (one person printed under several numbers or spellings on the federation sheets), `renames` and `transfers`.

@@ -10,6 +10,7 @@ from flask import Flask, Response, abort, jsonify, make_response, redirect, requ
 
 import auth
 import config
+import content
 import mvp
 import predict
 import seo
@@ -136,6 +137,22 @@ def overview():
     )
 
 
+@app.get("/api/home")
+def home_data():
+    """What the home page needs besides the calendar: the latest results (box scores and hand-entered results) and the latest news."""
+    d = stats.build()
+    r = jsonify(recent=content.recent_results(8, d), news=content.load_news(4), facebook=content.FACEBOOK, standings=d["standings"])
+    r.headers["Cache-Control"] = "no-cache"          # a result or a news item saved in the admin shows at once
+    return r
+
+
+@app.get("/api/news")
+def news_public():
+    r = jsonify(items=content.load_news(request.args.get("limit", type=int) or None), labels=list(content.LABELS))
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
 def _phase_arg():
     try:
         ph = int(request.args.get("phase") or (request.get_json(silent=True) or {}).get("phase") or 1)
@@ -191,7 +208,7 @@ def player_photo(pid):
 @app.get("/api/players")
 def players():
     d = stats.build(request.args.get("season"))
-    return jsonify(season=d["season"], players=[slim(p) for p in d["players"]])
+    return jsonify(season=d["season"], players=[slim(p) for p in d["players"]], leaders=stats.leaders(d["players"]))
 
 
 @app.get("/api/players/<pid>")

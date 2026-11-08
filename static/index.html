@@ -140,7 +140,7 @@
   .bp .n { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .bp .s { font-size:12px; color:var(--mut); display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:2px; }
   .legend { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--mut); margin-top:8px; }
   .sw { width:12px; height:12px; border-radius:50%; display:inline-block; }
-  footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
+  footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
   footer a:hover { color:var(--txt); }
   .brand { display:flex; align-items:center; gap:9px; } .brand img { display:block; height:42px; width:auto; }
   .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
@@ -231,6 +231,13 @@
   .pgt:not(:disabled):hover { border-color:var(--acc); transform:translateY(-2px); } .pgt:disabled { cursor:default; opacity:.7; } .pgt.on { border-color:var(--acc); opacity:1; background:var(--mvp-in); }
   .pgt b { font-size:14px; text-align:center; } .pgt small { color:var(--mut); }
   .pbar { display:flex; gap:3px; height:26px; border-radius:8px; overflow:hidden; font-size:13px; font-weight:800; } .pbar span { display:grid; place-items:center; background:var(--track); color:var(--txt); } .pbar span.mine { background:var(--acc); color:#111; }
+  .newsgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:14px; } .card.news { margin:0; display:flex; flex-direction:column; gap:6px; } .card.news h3 { margin:0; font-size:17px; line-height:1.25; }
+  .card.news .nh { display:flex; align-items:center; gap:10px; } .card.news p.nbody { margin:0; color:var(--mut); font-size:14px; white-space:pre-line; } .card.news p.clamp { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .lbl { font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:3px 9px; border-radius:99px; background:var(--track); color:var(--txt); }
+  .lb-injury { background:rgba(255,93,108,.18); color:var(--bad); } .lb-transfer { background:rgba(79,147,255,.18); color:#4f93ff; } .lb-official { background:rgba(62,207,142,.18); color:var(--good); } .lb-result { background:rgba(255,138,31,.18); color:var(--acc); } .lb-interview { background:rgba(196,91,240,.18); color:#c45bf0; }
+  .fbcard { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; flex-wrap:wrap; } .fbcard .vote { white-space:nowrap; text-decoration:none; }
+  a.tiny { display:inline-block; margin-top:8px; font-size:11px; color:var(--mut); opacity:.7; text-decoration:none; } a.tiny:hover { opacity:1; text-decoration:underline; }
+  footer .fbl { margin-left:auto; } footer .hint { display:block; flex-basis:100%; font-size:11px; opacity:.65; margin-top:4px; }
   .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
   .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
   @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars { grid-column:3; } .vrow .sc { display:none; } }
@@ -249,7 +256,7 @@
   <button id="syncbtn" hidden>⟳ Sync</button>
 </header>
 <main id="app"><!--SSR--></main>
-<footer><span>{{LEGAL}}</span><a href="/admin">Admin</a></footer>
+<footer><span>{{LEGAL}}</span><span><a class="fbl" href="{{FB}}" target="_blank" rel="noopener">Facebook</a> · <a href="/admin">Admin</a></span><span class="hint">{{FBHINT}}</span></footer>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -281,6 +288,9 @@ const FR = {
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
   'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
   'Phase 1 MVP': 'MVP de la phase 1', 'Race leader': 'Leader de la course', 'Vote now': 'Voter maintenant', 'See the race': 'Voir la course', 'Phase 1': 'Phase 1',
+  'Featured': 'À la une', 'News': 'Actualités', 'All news': 'Toutes les actualités', 'No news yet.': 'Pas encore d’actualité.', 'Official': 'Officiel', 'Injury': 'Blessure', 'Transfer': 'Transfert', 'Result': 'Résultat', 'Info': 'Info', 'Interview': 'Interview',
+  'All players': 'Tous les joueurs', 'Box score missing? Send it to us on Facebook': 'Feuille de match manquante ? Envoyez-la-nous sur Facebook', 'A tip, a correction, a missing result?': 'Une info, une correction, un résultat manquant ?',
+  'Write to us on our Facebook page: we read everything.': 'Écrivez-nous sur notre page Facebook : nous lisons tout.', 'Contact us on Facebook': 'Nous contacter sur Facebook',
   'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
@@ -380,8 +390,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -444,7 +454,7 @@ async function route(keepScroll) {
   const app = $('#app');
   courtData = null; pageMeta = null; clearInterval(nbTimer);
   try {
-    app.innerHTML = await ({ home, standings, players, games, planning, mvp, predict, team, player, game }[r.page] || home)(r.arg);
+    app.innerHTML = await ({ home, standings, players, games, planning, mvp, predict, news, team, player, game }[r.page] || home)(r.arg);
     bind();
     startBanner();
     drawCourt();
@@ -466,29 +476,34 @@ const META = {
            fr: ['Résultats et feuilles de match Pro A – Tunisia Basket', 'Tous les matchs de la Pro A tunisienne de basket avec le score final, la feuille de match et le MVP.'] },
   mvp: { en: ['MVP race and fan vote – phase 1 – Tunisia Basket', 'Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans’ vote.'],
          fr: ['Course au MVP et vote des fans – phase 1 – Tunisia Basket', 'Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans.'] },
+  news: { en: ['Pro A basketball news – injuries, transfers, announcements – Tunisia Basket', 'The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.'],
+          fr: ['Actualités Pro A basket – blessures, transferts, annonces – Tunisia Basket', 'Les dernières actualités de la Pro A tunisienne de basket : blessures, transferts, annonces officielles.'] },
   predict: { en: ['Pro A predictions – pick the winners of the next matchday – Tunisia Basket', 'Pick the winner of every game of the next Tunisian Pro A basketball matchday. One pick per game; see what the other fans think once you have picked.'],
             fr: ['Pronostics Pro A – choisissez les vainqueurs de la prochaine journée – Tunisia Basket', 'Choisissez le vainqueur de chaque match de la prochaine journée de la Pro A tunisienne de basket. Un pronostic par match ; découvrez l’avis des autres fans une fois le vôtre donné.'] },
   planning: { en: ['Pro A calendar – upcoming matches – Tunisia Basket', 'The Tunisian Pro A basketball calendar, matchday by matchday.'],
               fr: ['Calendrier Pro A – prochains matchs – Tunisia Basket', 'Le calendrier de la Pro A tunisienne de basket, journée par journée.'] }
 };
 
+const FB = 'https://www.facebook.com/people/Tunisia-Basket/61596371069928/';
+const fbCard = () => `<div class="card fbcard"><div><b>${_('A tip, a correction, a missing result?')}</b><div class="mut small">${_('Write to us on our Facebook page: we read everything.')}</div></div><a class="vote" href="${FB}" target="_blank" rel="noopener">${_('Contact us on Facebook')} →</a></div>`;
+const NEWS_LABEL = { official: 'Official', injury: 'Injury', transfer: 'Transfer', result: 'Result', info: 'Info', interview: 'Interview' };
+const nTitle = n => LANG === 'en' && n.title_en ? n.title_en : n.title, nBody = n => LANG === 'en' && n.body_en ? n.body_en : n.body;
+const newsCard = (n, full) => `<article class="card news"><div class="nh"><span class="lbl lb-${esc(n.label)}">${_(NEWS_LABEL[n.label] || 'Info')}</span><span class="mut small">${fmtDate(n.date)}</span>${n.pinned ? '<span class="pill acc">📌</span>' : ''}</div>
+  <h3>${esc(nTitle(n))}</h3>${nBody(n) ? `<p class="nbody${full ? '' : ' clamp'}">${esc(nBody(n))}</p>` : ''}</article>`;
 async function home() {
-  const [d, plan, pj] = await Promise.all([api('overview'), fetch('/api/planning').then(r => r.json()).catch(() => null), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
+  const [h, plan, pj] = await Promise.all([fetch('/api/home', { cache: 'no-cache' }).then(r => r.json()), fetch('/api/planning', { cache: 'no-cache' }).then(r => r.json()).catch(() => null), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
   predRound = pj && pj.round; pageMeta = META.home[LANG];
-  if (!d.games) return `<div class="empty"><h1>${_('No games yet')}</h1>${_('Box scores appear here as soon as they are added.')}</div>`;
   return `
-  ${nextBanner(plan, d.standings)}
-  <div class="facts"><span class="pill">${d.facts.games} ${_('games played')}</span><span class="pill">${d.facts.avg_points} ${_('avg points per team')}</span><span class="pill">${d.players} ${_('players')}</span></div>
-  <div class="duo">${phaseCard(d.phase_mvp)}${currentCard(d.phase_mvp, d.mvp)}</div>
-  <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
-  <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
-  <h2>${esc(f('mvpRace', d.top_teams.length, d.top_teams.join(', ')))}</h2>
-  <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th>${H('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${_('Rating')}</th></tr></thead><tbody>
-  ${d.top.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${i + 1}</td><td class="l">${plink(p)}</td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
-  </tbody></table></div>
-  <h2>${_('Standings')}</h2>${standTable(d, true)}
+  ${nextBanner(plan, h.standings)}
+  ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="newsgrid">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
-  <div class="grid g2">${d.recent.map(gameCard).join('')}</div>`;
+  ${h.recent.length ? `<div class="grid g2">${h.recent.map(gameCard).join('')}</div>` : `<div class="empty">${_('Box scores appear here as soon as they are added.')}</div>`}
+  ${fbCard()}`;
+}
+async function news() {
+  pageMeta = META.news[LANG];
+  const j = await (await fetch('/api/news', { cache: 'no-cache' })).json();
+  return `<h1>${_('News')}</h1>${j.items.length ? `<div class="newsgrid">${j.items.map(n => newsCard(n, true)).join('')}</div>` : `<div class="empty">${_('No news yet.')}</div>`}${fbCard()}`;
 }
 
 const LEAD = { pts: ['Top scorers', 'PTS', ''], reb: ['Top rebounders', 'REB', ''], ast: ['Top passers', 'AST', ''], stl: ['Top ball stealers', 'STL', ''],
@@ -533,26 +548,7 @@ const voterId = () => {   // random code kept in this browser: it makes "one vot
   if (!/^[a-f0-9]{32}$/.test(v || '')) { v = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('vid', v); }
   return v;
 };
-function phaseCard(pm) {
-  if (!pm || !pm.ballot.length) return '';
-  const W = pm.winner, top = Math.max(1, ...pm.ballot.map(r => r.votes));
-  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">${W ? '🏆 ' + _('Phase 1 MVP') : '🗳️ ' + _('Fan vote') + ' · ' + _('Phase 1 MVP')}</div>
-    ${W ? `<div class="pn">${face(W, 56)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
-        : `<div class="mut small" style="margin:6px 0 2px">${esc(f('votesN', pm.total_votes))} · ${esc(_('Decided by the fans'))}</div>`}
-    ${pm.voting_open && pm.deadline_ts ? `<div class="mut small" style="margin-top:6px">⏳ ${deadlineLine(true, pm.deadline_ts)}</div>` : ''}</div>
-    <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div style="display:flex;gap:10px;align-items:center">${face(r, 36)}<div style="flex:1;min-width:0"><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div></div><b>${r.vote_share}%</b></div>`).join('')}
-    <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div></div>`;
-}
 const mvpSub = (cur, by) => by === 'stats' ? _('No votes yet: shown by stats until the fans vote') : by === 'winner' ? esc(f('votesN', cur.votes)) + ' · ' + cur.vote_share + '%' : _('Most votes so far') + ' · ' + esc(f('votesN', cur.votes)) + ' · ' + cur.vote_share + '%';
-function currentCard(pm, best) {
-  const m = pm && pm.current; if (!m) return '';
-  const by = pm.current_by, showBest = best && best.id !== m.id;
-  return `<div class="card bestnow" data-go="${url('mvp')}" style="cursor:pointer"><div class="crown">🏆 ${by === 'winner' ? _('Phase 1 MVP') : _('Current MVP')}</div>
-    <div class="bn">${face(m, 64)}<span>${plink(m, esc(title(m.name)))}</span></div>
-    <div class="mut small">${esc(m.team)} · #${m.number} · ${esc(posName(m.pos))} · ${m.gp} ${H('GP')} · ${mvpSub(m, by)}</div>
-    <div class="tiles">${[['PTS', m.pts], ['REB', m.reb], [H('AST'), m.ast], [H('STL'), m.stl], [H('BLK'), m.blk], ['PIR', m.pir]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-    ${showBest ? `<div class="mut small" style="margin-top:6px">⭐ ${_('Best by stats')}: <b style="color:var(--txt)">${esc(title(best.name))}</b> · ${esc(best.team)} · PIR ${best.pir}</div>` : ''}</div>`;
-}
 
 const fmtLeft = ms => { const m = Math.max(0, Math.floor(ms / 60000)), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60);
   return d ? `${d} ${LANG === 'fr' ? 'j' : 'd'} ${h} h` : h ? `${h} h ${m % 60} min` : `${m} min`; };
@@ -673,7 +669,7 @@ const fmtDay = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' 
 function upcoming(plan) {
   if (!plan) return [];
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Tunis' }), out = [];
-  for (const m of plan.matchdays) for (const g of m.games) if (!g.played && (!m.date || m.date >= today)) out.push({ ...g, md: m.matchday, date: m.date });
+  for (const m of plan.matchdays) for (const g of m.games) { const dt = g.game_date || m.date; if (!g.played && (!dt || dt >= today)) out.push({ ...g, md: m.matchday, date: dt }); }
   return out.slice(0, 12);
 }
 // Prediction inside the banner: tap the team you think wins; the crowd's split then appears under the match (only after your pick, as on the Predictions page).
@@ -711,11 +707,12 @@ function bindPicks() {
 }
 function nextBanner(plan, standings) {
   const all = upcoming(plan); if (!all.length) return '';
-  const gs = all.filter(g => g.md === all[0].md);     // the next matchday only: every slide can be predicted
+  const gs = all.filter(g => g.md === all[0].md)     // the next matchday only: every slide can be predicted
+    .sort((a, b) => (a.featured ?? 999) - (b.featured ?? 999) || (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || ''));   // featured first, by the admin's rank
   const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
   nbCtx = { plan, rec };
   const slide = g => `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">
-      <div class="nbh">${g.date ? esc(fmtDay(g.date)) : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
+      <div class="nbh">${g.featured ? `<span class="pill acc">⭐ ${_('Featured')}</span>` : ''}${g.date ? esc(fmtDay(g.date)) : ''}${g.time ? ` · ${esc(g.time)}` : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
       ${slideBody(g)}
       <span class="nbcta">${_('Compare the teams')} →</span></div>`;
   return `<section class="nb" id="nextbanner" aria-roledescription="carousel" aria-label="${_('Next games')}"><div class="nbt"><div class="nbtrack">${gs.map(slide).join('')}</div></div>
@@ -772,10 +769,14 @@ async function openMatchup(spec) {
 }
 
 function gameCard(g) {
-  const [a, b] = g.teams;
-  return `<a class="card" href="${gameUrl(g.id)}"><div class="mut" style="font-size:12px">${g.date_approx ? esc(g.matchday || '') : fmtDate(g.date) + ' · ' + esc(g.matchday || '')}</div>
+  const [a, b] = g.teams, STL = { pts: 'PTS', reb: 'REB', ast: H('AST'), stl: H('STL'), blk: H('BLK') };
+  const inner = `<div class="mut" style="font-size:12px">${g.date_approx ? esc(g.matchday || '') : (g.date ? fmtDate(g.date) : '') + (g.time ? ' · ' + esc(g.time) : '') + ' · ' + esc(g.matchday || '')}</div>
     <div class="match"><span class="${a.points > b.points ? 'win' : 'lose'} tn">${logo(a.code, 26)}${esc(a.code)}</span><b>${a.points} – ${b.points}</b><span class="${b.points > a.points ? 'win' : 'lose'} tn">${esc(b.code)}${logo(b.code, 26)}</span></div>
-    ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}</a>`;
+    ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}`;
+  if (g.id) return `<a class="card" href="${gameUrl(g.id)}">${inner}</a>`;
+  const lines = (g.players || []).map(p => `<div class="mut" style="font-size:13px;margin-top:4px">⭐ <b style="color:var(--txt)">${esc(title(p.name))}</b>${p.team ? ' · ' + esc(p.team) : ''} · ${Object.keys(STL).filter(k => p[k] != null).map(k => `${p[k]} ${STL[k]}`).join(', ')}</div>`).join('');
+  return `<div class="card">${inner}${g.note ? `<div class="mut" style="font-size:13px;margin-top:6px">${esc(g.note)}</div>` : ''}${lines}
+    <a class="tiny" href="${FB}" target="_blank" rel="noopener">${_('Box score missing? Send it to us on Facebook')}</a></div>`;
 }
 
 let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = true;   // by default only ranked players; searching a name looks at everyone
@@ -791,6 +792,9 @@ async function players() {
   const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || q || p.qualified))
     .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
   return `<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
+  <h2>${_('League leaders')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${_('per game')}</span></h2>
+  <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div>
+  <h2>${_('All players')}</h2>
   <div class="toolbar"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
     <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>

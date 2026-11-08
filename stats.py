@@ -154,6 +154,7 @@ def _canonicalise(games):
                     p["pid"] = alias.get(p["pid"], p["pid"])
 
 
+SCHEDULE_FILE = config.DATA_DIR / "schedule.json"     # per game: {"12:CA-ESG": {"time": "18:30", "date": "2026-11-11", "featured": 1}} (admin)
 ROSTER_BASE = config.ASSETS_DIR / "roster.json"      # roster facts that ship with the code (same shape as data/roster.json, plus 'merges')
 
 
@@ -443,6 +444,20 @@ def load_calendar() -> dict:
     return out
 
 
+def _schedule():
+    try:
+        return json.loads(SCHEDULE_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _sched_fields(md, g, sched):
+    """key, kick-off time, own date and featured rank of a game (the admin's schedule overlay)."""
+    key = f"{md}:{g['home']}-{g['away']}"
+    s = sched.get(key) or sched.get(f"{md}:{g['away']}-{g['home']}") or {}
+    return {"key": key, "time": s.get("time"), "game_date": s.get("date"), "featured": s.get("featured")}
+
+
 def planning(official=None):
     """Matchdays after phase 1. If data/fixtures.json exists it is the official calendar; otherwise the
     calendar is PROJECTED as the mirror of phase 1 (same order, home/away swapped), the usual double
@@ -457,6 +472,7 @@ def planning(official=None):
     played = {(r["matchday"], frozenset([r["home"], r["away"]])): r for r in o["results"] if r["matchday"] > PHASE_LEN}
     by_md = defaultdict(list)
     seen = set()
+    sched = _schedule()
     for f in base:
         key = (f["matchday"], frozenset([f["home"], f["away"]]))
         r = played.get(key)
@@ -464,10 +480,12 @@ def planning(official=None):
         by_md[f["matchday"]].append({
             "home": r["home"] if r else f["home"], "away": r["away"] if r else f["away"],
             "played": bool(r), "home_score": r["home_score"] if r else None, "away_score": r["away_score"] if r else None})
+        by_md[f["matchday"]][-1].update(_sched_fields(f["matchday"], by_md[f["matchday"]][-1], sched))
     for key, r in played.items():  # results for games that were not in the calendar
         if key not in seen:
             by_md[r["matchday"]].append({"home": r["home"], "away": r["away"], "played": True,
                                          "home_score": r["home_score"], "away_score": r["away_score"]})
+            by_md[r["matchday"]][-1].update(_sched_fields(r["matchday"], by_md[r["matchday"]][-1], sched))
     return {"projected": projected, "teams": o["teams"],
             "matchdays": [{"matchday": md, "date": load_calendar().get(md), "games": sorted(gs, key=lambda g: g["home"])} for md, gs in sorted(by_md.items())]}
 

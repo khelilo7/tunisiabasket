@@ -76,8 +76,10 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="mvpbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-traffic" hidden>
@@ -414,11 +416,13 @@ async function loadMvp() {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  $('#tab-data').hidden = b.dataset.tab !== 'data'; $('#tab-traffic').hidden = b.dataset.tab !== 'traffic'; $('#tab-mvp').hidden = b.dataset.tab !== 'mvp'; $('#tab-roster').hidden = b.dataset.tab !== 'roster'; $('#tab-images').hidden = b.dataset.tab !== 'images';
+  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'mvp') loadMvp();
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
+  if (b.dataset.tab === 'games') loadGames();
+  if (b.dataset.tab === 'news') loadNews();
 });
 $('#tdays').onchange = loadTraffic;
 
@@ -435,5 +439,6 @@ boot();
 <script src="/admin-roster.js"></script>
 <script src="/admin-images.js"></script>
 <script src="/admin-matchday.js"></script>
+<script src="/admin-content.js"></script>
 </body>
 </html>

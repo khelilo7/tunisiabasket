@@ -734,3 +734,8 @@ def _save(it, body):
         auth.audit("save-game", game["id"])
         it["status"] = "saved"
         return jsonify(ok=True, message=msg), 200
+
+
+import admin_content  # noqa: E402
+
+admin_content.init()      # the schedule, result and news routes are registered on this blueprint when the module loads

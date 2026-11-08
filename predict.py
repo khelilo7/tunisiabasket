@@ -33,10 +33,11 @@ def _round():
     out = None
     for m in plan["matchdays"]:
         games = [g for g in m["games"] if not g["played"]]
-        if not games or (m["date"] and m["date"] < today):
+        day = min((g["game_date"] or m["date"] for g in games if g["game_date"] or m["date"]), default=None)      # the first game day of the matchday
+        if not games or (day and day < today):
             continue                                              # played, or already past
-        start = datetime.fromisoformat(m["date"] + "T00:00").replace(tzinfo=TUNIS) if m["date"] else None
-        out = {"matchday": m["matchday"], "date": m["date"], "deadline_ts": int(start.timestamp()) if start else None,
+        start = datetime.fromisoformat(day + "T00:00").replace(tzinfo=TUNIS) if day else None
+        out = {"matchday": m["matchday"], "date": day, "deadline_ts": int(start.timestamp()) if start else None,
                "open": start is None or datetime.now(TUNIS) < start, "season": season,
                "games": [{"key": f"{season}|{m['matchday']}|{g['home']}-{g['away']}", "home": g["home"], "away": g["away"],
                           "home_name": plan["teams"].get(g["home"], g["home"]), "away_name": plan["teams"].get(g["away"], g["away"])} for g in games]}
