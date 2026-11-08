@@ -1,13 +1,15 @@
 """Basketball stats web app. Run: python app.py  ->  http://localhost:5055"""
 import os
+import re
 import threading
 import time
 
 from functools import partial
 
-from flask import Flask, Response, abort, jsonify, make_response, redirect, request
+from flask import Flask, Response, abort, jsonify, make_response, redirect, request, send_from_directory
 
 import auth
+import config
 import mvp
 import seo
 import stats
@@ -158,6 +160,15 @@ def mvp_vote():
     ph = _phase_arg()
     ok, why = mvp.cast(request, ph, str(body.get("player", ""))[:40], str(body.get("vid", ""))[:80])
     return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400))
+
+
+@app.get("/photo/<pid>.jpg")
+def player_photo(pid):
+    """Photos uploaded from the admin panel (data/photos, outside the code so deployments never touch them)."""
+    if not re.match(r"^[a-z0-9]+-\d+$", pid):
+        abort(404)
+    r = send_from_directory(config.DATA_DIR / "photos", f"{pid}.jpg", max_age=3600)
+    return r
 
 
 @app.get("/api/players")

@@ -334,7 +334,7 @@ def roster_view():
     """Every player (hidden ones too) with bio, plus the roster changes made so far."""
     d = stats.build(keep_hidden=True)
     rows = [{"id": p["id"], "name": p["name"], "team": p["team"], "teams": p["teams"], "number": p["number"], "gp": p["gp"], "pos": p["pos"],
-             "bio": p["bio"], "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
+             "bio": p["bio"], "photo": p.get("photo"), "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
             for p in d["players"]]
     rows.sort(key=lambda r: (r["team"], r["number"]))
     return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(), positions=stats.POSITIONS)
@@ -432,6 +432,53 @@ def roster_change_bio(pid, field, value):
         cur = {}
     cur.setdefault(pid, {})[field] = _bio_value(field, value)
     stats.BIOS_FILE.write_text(json.dumps(cur, indent=1, ensure_ascii=False))
+
+
+# ---------------------------------------------------------------- player photos (square JPEG, made in the browser)
+PHOTO_DIR = config.DATA_DIR / "photos"
+PHOTO_ID = re.compile(r"^[a-z0-9]+-\d+$")
+PHOTO_MAX = 400 * 1024
+
+
+def _photo_index(pid, url):
+    f = config.DATA_DIR / "player_photos.json"
+    try:
+        cur = json.loads(f.read_text())
+    except (OSError, ValueError):
+        cur = {}
+    if url:
+        cur[pid] = url
+    else:
+        cur.pop(pid, None)
+    f.write_text(json.dumps(cur, indent=1))
+
+
+@bp.post("/admin/api/photo")
+def photo_set():
+    """multipart: id + image (JPEG, 260-1000 px square). Saved in data/photos (kept across deployments)."""
+    pid = request.form.get("id", "")
+    if not PHOTO_ID.match(pid) or pid not in {p["id"] for p in stats.build(keep_hidden=True)["players"]}:
+        return jsonify(error="Unknown player."), 422
+    f = request.files.get("image")
+    data = f.read(PHOTO_MAX + 1) if f else b""
+    if not data or len(data) > PHOTO_MAX or not data.startswith(b"\xff\xd8\xff"):
+        return jsonify(error="The photo must be a JPEG under 400 KB."), 422
+    PHOTO_DIR.mkdir(parents=True, exist_ok=True)
+    (PHOTO_DIR / f"{pid}.jpg").write_bytes(data)
+    _photo_index(pid, f"/photo/{pid}.jpg?v={int(time.time())}")
+    auth.audit("photo", pid)
+    return jsonify(ok=True, id=pid)
+
+
+@bp.post("/admin/api/photo/delete")
+def photo_delete():
+    pid = (request.get_json(silent=True) or {}).get("id", "")
+    if not PHOTO_ID.match(pid):
+        return jsonify(error="Unknown player."), 422
+    (PHOTO_DIR / f"{pid}.jpg").unlink(missing_ok=True)
+    _photo_index(pid, None)
+    auth.audit("photo-delete", pid)
+    return jsonify(ok=True, id=pid)
 
 
 @bp.get("/admin/api/team-stats")

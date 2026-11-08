@@ -117,8 +117,10 @@ saves to `data/mvp.json` and wins over the repo file). Nobody is crowned while v
 player becomes the phase MVP automatically; the admin can also crown a player by hand. The per-network cap uses the visitor's real address (`CF-Connecting-IP`, or
 the proxy's forwarded address), not the proxy's.
 
-**Photos.** The three players on the ballot have a photo (`static/img/players/<id>.jpg`, listed in `assets/player_photos.json`), shown on the MVP race only for now: the
-fan-vote card, the best-player card and the MVP page. They are face crops of images supplied by the site owner; publish only photos you have the right to use.
+**Photos.** Every player shows a round avatar (players list, player page, MVP race): the photo when there is one, otherwise a neutral silhouette
+(`static/img/players/generic.svg`) with the team badge. Three photos ship with the code (`static/img/players/<id>.jpg`, `assets/player_photos.json`). The others are
+added from the admin panel, Players tab, 📷 on the player's row: the browser crops a square and the server stores it in `data/photos/` (outside the code, so deployments
+never touch it; listed in `data/player_photos.json`, included in the backups). Publish only photos you have the right to use.
 **Backups.** Votes, visits, games and settings are backed up nightly and the votes and visits hourly, verified and restorable (`tools/backup_data.py`, `python manage.py backup`,
 `deploy/DEPLOY.md` > Backups).
 

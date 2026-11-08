@@ -590,8 +590,9 @@ def load_photos() -> dict:
 
 def attach_bios(players):
     """Adds p['bio'] (or None). height may be a [min, max] pair; 'approx' names the estimated fields."""
-    bios = load_bios()
+    bios, photos = load_bios(), load_photos()
     for p in players:
+        p["photo"] = photos.get(p["id"])
         b = bios.get(p["id"])
         p["bio"] = {k: b[k] for k in ("height", "weight", "birth", "approx") if k in b} if b else None
 

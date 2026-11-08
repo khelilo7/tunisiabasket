@@ -95,6 +95,19 @@ check(len(ts["teams"]) == 12 and all(k in ts["teams"][0] for k in ("ppg", "opp_p
 ca = next(x for x in ts["teams"] if x["code"] == "CA")
 check(ca["w"] + ca["l"] == ca["gp"] and 50 < ca["ppg"] < 130 and 20 < ca["fg_pct"] < 70, f"team stats look sane: {ca}")
 
+# --- photos: admin upload, public file, every player carries the field, removal
+import io  # noqa: E402
+jpg = b"\xff\xd8\xff\xe0" + b"0" * 500
+up = lambda pid, data: c.post("/admin/api/photo", data={"id": pid, "image": (io.BytesIO(data), "a.jpg")}, headers=H)
+check(c.post("/admin/api/photo", data={"id": "ca-8"}).status_code == 401, "photo upload is admin only")
+check(all("photo" in x for x in players().values()), "every player has a photo field (None = silhouette)")
+check(up("ca-8", b"not an image").status_code == 422 and up("nobody-9", jpg).status_code == 422 and up("ca-8", jpg + b"0" * 500000).status_code == 422, "bad / unknown / oversized photo refused")
+check(up("ca-8", jpg).status_code == 200, "photo uploaded")
+ph = players()["ca-8"]["photo"]
+check(ph and ph.startswith("/photo/ca-8.jpg"), f"photo attached to the player: {ph}")
+check(c.get("/photo/ca-8.jpg").data == jpg and c.get("/photo/..%2fx.jpg").status_code == 404 and c.get("/photo/zz-1.jpg").status_code == 404, "photo served, nothing else")
+check(c.post("/admin/api/photo/delete", json={"id": "ca-8"}, headers=H).status_code == 200 and players()["ca-8"]["photo"] is None, "photo removed")
+
 # --- the admin pages and scripts exist
 for p in ("/admin-roster.js", "/admin-images.js"):
     check(c.get(p).status_code == 200, f"{p} served")

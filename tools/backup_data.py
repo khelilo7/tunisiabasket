@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config  # noqa: E402
 
-SMALL_FILES = ("votes.db", "traffic.db", "traffic.key", "mvp.json", "roster.json", "players_info.json", "positions.json", "calendar.json", "admin_token.json")
+SMALL_FILES = ("votes.db", "traffic.db", "traffic.key", "mvp.json", "roster.json", "players_info.json", "positions.json", "player_photos.json", "calendar.json", "admin_token.json")
 SKIP = {"admin.log.tmp"}
 
 

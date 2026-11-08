@@ -25,6 +25,27 @@
     render();
   }
 
+  // Photo: pick a file, crop a square (centred, a little above the middle to keep the face), 320 px JPEG, upload.
+  function pickPhoto(id) {
+    const inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.onchange = async () => {
+      const file = inp.files[0]; if (!file) return;
+      try {
+        const bmp = await createImageBitmap(file), side = Math.min(bmp.width, bmp.height), N = 320;
+        const sx = (bmp.width - side) / 2, sy = (bmp.height - side) * 0.2;
+        const c = document.createElement('canvas'); c.width = c.height = N;
+        c.getContext('2d').drawImage(bmp, sx, sy, side, side, 0, 0, N, N);
+        const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.86));
+        const fd = new FormData(); fd.append('id', id); fd.append('image', blob, id + '.jpg');
+        const { ok, body } = await api('photo', { method: 'POST', body: fd });
+        say(ok ? 'Photo saved.' : (body.error || 'Could not save the photo.'), ok);
+      } catch (e) { say(e.message || 'That file is not a readable image.', false); }
+      load();
+    };
+    inp.click();
+  }
+
   function parseHeight(v) {
     v = String(v || '').trim();
     if (!v) return null;
@@ -45,8 +66,9 @@
         <input id="r-q" placeholder="Search any player…" value="${esc(query)}" style="min-width:200px">
         <label class="small mut"><input type="checkbox" id="r-hidden" ${showHidden ? 'checked' : ''}> show deleted</label>
         <span class="sp"></span><button class="primary" id="r-addbtn">➕ Add a player</button></div>
-      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th class="l">Player</th><th>Pos</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
+      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Pos</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
       ${rows.map(p => `<tr data-id="${esc(p.id)}" class="${p.hidden ? 'saved' : ''}"><td>${p.number}</td>
+        <td style="white-space:nowrap"><img src="${esc(p.photo || '/img/players/generic.svg')}" alt="" width="34" height="34" style="border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px"><button data-act="photo" title="Upload a photo (square crop, JPEG)">📷</button>${p.photo && p.photo.startsWith('/photo/') ? ' <button data-act="nophoto" class="danger" title="Remove the uploaded photo">✕</button>' : ''}</td>
         <td class="l"><b>${esc(p.name)}</b> <span class="mut small">${p.team}</span>${p.added && !p.gp ? ' <span class="pill acc">new</span>' : ''}${p.hidden ? ' <span class="pill bad">deleted</span>' : ''}
           ${p.transfers.map(t => `<span class="pill warn" title="${esc(t.date || '')}">⇄ ${esc(t.from)}→${esc(t.to)}</span>`).join(' ')}</td>
         <td>${esc(p.pos)}</td><td>${p.gp}</td>
@@ -56,8 +78,9 @@
         <td class="mut">${age(p.bio && p.bio.birth)}</td>
         <td style="white-space:nowrap">${p.hidden ? `<button data-act="restore">↺ Restore</button>` :
           `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
-        || '<tr><td colspan="9" class="mut" style="padding:14px">No players.</td></tr>'}
+        || '<tr><td colspan="10" class="mut" style="padding:14px">No players.</td></tr>'}
       </tbody></table></div>
+      <p class="mut small">Photos: 📷 crops a centred square from the image you pick (crop it beforehand for exact framing) and shows it on the player page, the players list and the MVP race. Players without a photo show a silhouette. Only upload photos you have the right to publish.</p>
       <p class="mut small">Height accepts <b>190</b> or a range <b>189-192</b>. Values you type are official; empty fields clear the value. “Delete” hides a player from the site (rankings, leaders, MVP race, pages) but keeps the box scores, and can be undone with Restore.</p>
       <div id="r-forms"></div>
       <h3 class="sub">Transfers marked</h3>
@@ -79,6 +102,12 @@
         const h = parseHeight(tr.querySelector('[data-f=height]').value), w = tr.querySelector('[data-f=weight]').value.trim(), b = tr.querySelector('[data-f=birth]').value;
         if (tr.querySelector('[data-f=height]').value.trim() && h === null) { say('Height: type 190 or a range like 189-192.', false); return render(); }
         if (await post({ op: 'bio', id, height: h, weight: w ? parseInt(w, 10) : null, birth: b || null })) load(); else render();
+      };
+      if (btn('photo')) btn('photo').onclick = () => pickPhoto(id);
+      if (btn('nophoto')) btn('nophoto').onclick = async () => {
+        if (!confirm('Remove the uploaded photo of ' + p.name + '?')) return;
+        try { const { ok } = await api('photo/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); say(ok ? 'Photo removed.' : 'Could not remove it.', ok); } catch (e) { say(e.message, false); }
+        load();
       };
       if (btn('rename')) btn('rename').onclick = () => {
         form(`<b>Rename ${esc(p.name)}</b> <span class="mut small">(how the name is shown on the site)</span>

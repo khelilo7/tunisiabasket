@@ -151,6 +151,7 @@
   @media (max-width:760px) { .brand img { height:34px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
   .face { position:relative; display:inline-block; flex:none; } .face img.ph { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--acc); background:var(--bg); }
+  .face img.ph.generic { border-color:var(--bd,#3b4966); }
   .face .tb { position:absolute; right:-4px; bottom:-4px; width:38%; height:38%; border-radius:50%; background:#fff; border:2px solid var(--card); display:grid; place-items:center; overflow:hidden; } .face .tb img { width:78%; height:78%; object-fit:contain; }
   .bcard .face { margin-bottom:2px; }
   .rtable th, .rtable td { padding:9px 8px; } .rtable td.pl { text-align:left; } .rtable .pn2 { display:flex; align-items:center; gap:10px; } .rtable .pn2 b { display:block; } .rtable .pn2 span { font-size:12px; color:var(--mut); }
@@ -390,7 +391,7 @@ const ring = r => `<div class="ring" style="--v:${r};--c:${rcol(r)}"><span>${r}<
 const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short' });
 const title = n => n.toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
 const signed = n => (n > 0 ? '+' : '') + n;
-const face = (p, px) => p && p.photo ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph" src="${esc(p.photo)}" alt="${esc(title(p.name))}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png" alt="" onerror="this.remove()"></span></span>` : logo(p.team, Math.min(px, 56));
+const face = (p, px) => p ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph${p.photo ? '' : ' generic'}" src="${esc(p.photo || '/img/players/generic.svg')}" alt="${p.photo ? esc(title(p.name)) : ''}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png" alt="" onerror="this.remove()"></span></span>` : '';
 const logo = (code, px = 26) => `<img class="tlogo" src="/img/teams/${esc(code)}.png" alt="" width="${px}" height="${px}" loading="lazy" onerror="this.remove()">`;
 const named = (code, name, px = 24) => `<span class="tn">${logo(code, px)}<span>${esc(name)}</span></span>`;
 const plink = (p, text) => `<a href="${playerUrl(p.id, p.name)}">${text ?? esc(p.name)}</a>`;
@@ -704,7 +705,7 @@ async function players() {
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
     <span class="mut small">${rows.length} ${_('players')} · ${_('per game')}</span></div>
   <div class="card tablecard"><div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th data-sort="gp">${H('GP')}${sortKey === 'gp' ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
+  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
     ${cols.map(([k, , fn]) => `<td>${fn ? fn(p) : p[k]}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
@@ -731,7 +732,7 @@ async function player(ref) {
   pageMeta = [f('metaPlayer', p.name, p.team, d.season), `${p.name}, ${p.team} #${p.number}: ${p.pts} ${_('pts')}, ${p.reb} ${_('reb')}, ${p.ast} ${_('ast')} · ${H('RTG')} ${p.rating}/99`];
   const pts = p.log.map(r => r.pir);
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
-  <div class="card row" style="margin-top:10px;gap:20px">${ring(p.rating)}
+  <div class="card row" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
