@@ -1,0 +1,27 @@
+{
+  "_note": "Games for which we only have a hand-kept sheet of ONE team. They never count as box scores (see stats.py, 'One-team box scores'): each listed player gets one row in his game log, stats the sheet does not give (minutes, turnovers, fouls, +/-) stay unknown instead of 0, and every average is taken over the games where the stat is known. Keys: id, matchday, home, away, recorded (the team on the sheet), date (date_approx if not certain), players with number, name, pts, fgm, fga, p3m, p3a, ftm, fta, oreb, dreb, ast, stl, blk. Attempts are only what the sheet proves (a '0 made, 0%' cell counts as no attempt). data/partial_games.json adds games of its own.",
+  "games": [
+    {
+      "id": "p-j1-esg-ca",
+      "matchday": 1,
+      "home": "ESG",
+      "away": "CA",
+      "recorded": "CA",
+      "competition": "CHAMPIONNAT PRO A",
+      "date": "2026-09-28",
+      "date_approx": true,
+      "source": "Hand-written sheet 'Stats Goulette G1' (Club Africain players only), typed 2026-11-10",
+      "note": "Club Africain players only. The sheet adds up to the official 80 points. Chennoufi: 15 pts with 7 FT means 4 field goals, but the sheet's 62.5% would be 5/8 (17 pts), so FG is stored as 4/8. Abada: sheet says 52% FG, 7/13 is 53.8%. 'Hamdi' on the sheet is read as Hadidane (#9), 'Plagne' as Diagne (#21), 'Gammoun' as Gannouni (#6), 'Apeda' as Abada (#24).",
+      "players": [
+        {"number": 24, "name": "Omar Abada",           "pts": 23, "fgm": 7, "fga": 13, "p3m": 1, "p3a": 3, "ftm": 8, "fta": 9, "oreb": 0, "dreb": 2, "ast": 6, "stl": 1, "blk": 0},
+        {"number": 10, "name": "Youssef Tarhouni",     "pts": 7,  "fgm": 3, "fga": 8,  "p3m": 0, "p3a": 0, "ftm": 1, "fta": 2, "oreb": 1, "dreb": 3, "ast": 5, "stl": 1, "blk": 0},
+        {"number": 5,  "name": "Zied Chennoufi",       "pts": 15, "fgm": 4, "fga": 8,  "p3m": 0, "p3a": 0, "ftm": 7, "fta": 8, "oreb": 0, "dreb": 3, "ast": 0, "stl": 1, "blk": 0},
+        {"number": 9,  "name": "Mohamed Hadidane",     "pts": 3,  "fgm": 1, "fga": 5,  "p3m": 1, "p3a": 5, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 4, "ast": 7, "stl": 2, "blk": 0},
+        {"number": 21, "name": "Mouhamadou Diagne",    "pts": 17, "fgm": 8, "fga": 11, "p3m": 0, "p3a": 0, "ftm": 1, "fta": 1, "oreb": 4, "dreb": 7, "ast": 0, "stl": 1, "blk": 5},
+        {"number": 6,  "name": "Achref Gannouni",      "pts": 6,  "fgm": 3, "fga": 6,  "p3m": 0, "p3a": 0, "ftm": 0, "fta": 0, "oreb": 1, "dreb": 2, "ast": 4, "stl": 0, "blk": 0},
+        {"number": 2,  "name": "Mortadha Ben Taher",   "pts": 5,  "fgm": 2, "fga": 5,  "p3m": 1, "p3a": 3, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 2, "ast": 2, "stl": 1, "blk": 0},
+        {"number": 31, "name": "Haythem Saada",        "pts": 4,  "fgm": 2, "fga": 4,  "p3m": 0, "p3a": 0, "ftm": 0, "fta": 0, "oreb": 1, "dreb": 3, "ast": 0, "stl": 0, "blk": 0}
+      ]
+    }
+  ]
+}

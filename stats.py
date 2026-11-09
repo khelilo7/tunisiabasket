@@ -143,15 +143,87 @@ def _canonicalise(games):
                     # without this, one misprinted number creates a second profile (and borrows the name of the real owner of that number).
                     known = nums.get((t["code"], p["name"].title()))
                     p["pid"] = f"{t['code'].lower()}-{known.most_common(1)[0][0] if known else p['number']}"
-    # A transfer marked by the admin says "the player now called jsk-9 is the one we knew as ca-24": same person, one profile.
-    ro = load_roster()
-    alias = {t["alias"]: t["id"] for t in ro["transfers"] if t.get("alias") and t["alias"] != t["id"]}
-    alias.update({a: i for a, i in ro["merges"].items() if a != i})              # one person printed under several numbers or spellings
+    alias = _pid_alias()
     if alias:
         for g in games:
             for t in g["teams"]:
                 for p in t["players"]:
                     p["pid"] = alias.get(p["pid"], p["pid"])
+
+
+def _pid_alias():
+    """{alias id: player id}. A transfer marked by the admin says "the player now called jsk-9 is the one we knew as ca-24": same person, one profile.
+    Merges say one person was printed under several numbers or spellings."""
+    ro = load_roster()
+    alias = {t["alias"]: t["id"] for t in ro["transfers"] if t.get("alias") and t["alias"] != t["id"]}
+    alias.update({a: i for a, i in ro["merges"].items() if a != i})
+    return alias
+
+
+# --- One-team box scores ------------------------------------------------------------------------------------------
+# Sometimes all we have is a hand-kept sheet for ONE team (no minutes, turnovers, fouls, +/-, and nothing for the opponent). Such a game is stored in
+# assets/partial_games.json (ships with the code; data/partial_games.json adds to it). It is NOT a box score of the site: it never enters
+# build()["games"], so standings, team averages, the home page, the MVP race and the fan vote are exactly what they were. It only adds ONE row to the game log of
+# each listed player, where every stat the sheet does not give is None (never 0), and every average is taken over the games where the stat is known.
+PARTIAL_FILES = (config.ASSETS_DIR / "partial_games.json", config.DATA_DIR / "partial_games.json")
+PARTIAL_UNKNOWN = ("min", "tov", "pf", "fd", "pm", "pir", "rating", "impact")
+
+
+def partial_games(games):
+    """The one-team games of the sheet files, linked to the official result (score, winner) and to the players we already know (same pid as in the
+    full box scores). A game with no official result, or a team that is not in it, is ignored. `games` = the canonical full games (pids set)."""
+    raw = []
+    for path in PARTIAL_FILES:
+        try:
+            raw += json.loads(path.read_text()).get("games") or []
+        except (OSError, ValueError, AttributeError):
+            continue
+    if not raw:
+        return []
+    official = load_official()
+    ident, names = defaultdict(Counter), {}
+    for g in games:
+        for t in g["teams"]:
+            for p in t["players"]:
+                if p.get("pid") and not p.get("dnp") and not p.get("unnamed"):
+                    ident[(t["code"], p["number"])][p["pid"]] += 1
+                    names[p["pid"]] = p["name"]
+    alias, out, seen = _pid_alias(), [], set()
+    for raw_g in raw:
+        if raw_g.get("id") in seen:
+            continue
+        seen.add(raw_g.get("id"))
+        r = next((r for r in official["results"] if r["matchday"] == raw_g.get("matchday") and {r["home"], r["away"]} == {raw_g.get("home"), raw_g.get("away")}), None)
+        rec = raw_g.get("recorded")
+        if not r or rec not in (r["home"], r["away"]) or not raw_g.get("date"):
+            continue
+        pair = frozenset([r["home"], r["away"]])
+        if any(matchday_hint(g) == r["matchday"] and frozenset(t["code"] for t in g["teams"]) == pair for g in games):
+            continue                                                  # the real box score of this game arrived: it replaces the sheet (no double counting)
+        score = {r["home"]: r["home_score"], r["away"]: r["away_score"]}
+        teams = []
+        for code in (r["home"], r["away"]):
+            players = []
+            if code == rec:
+                for p in raw_g.get("players") or []:
+                    pid = ident[(code, p["number"])].most_common(1)[0][0] if ident.get((code, p["number"])) else f"{code.lower()}-{p['number']}"
+                    pid = alias.get(pid, pid)
+                    row = {"number": p["number"], "name": names.get(pid) or p["name"], "pid": pid, "dnp": False, "starter": False, "partial": True,
+                           **{k: p.get(k, 0) for k in ("pts", "fgm", "fga", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "ast", "stl", "blk")},
+                           **{k: None for k in PARTIAL_UNKNOWN}}
+                    row["reb"], row["p2m"], row["p2a"] = row["oreb"] + row["dreb"], row["fgm"] - row["p3m"], row["fga"] - row["p3a"]
+                    players.append(row)
+            teams.append({"code": code, "name": official["teams"].get(code, code), "points": score[code], "box_points": score[code],
+                          "won": score[code] > score[r["away"] if code == r["home"] else r["home"]], "players": players, "recorded": code == rec})
+        out.append({"id": raw_g["id"], "partial": True, "date": raw_g["date"], "date_approx": bool(raw_g.get("date_approx")), "competition": raw_g.get("competition"),
+                    "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": None, "note": raw_g.get("note"), "source": raw_g.get("source"),
+                    "recorded": rec, "teams": teams})
+    return out
+
+
+def partial_game(gid):
+    """The API view of one one-team game (or None)."""
+    return next((g for g in partial_games(load_games()) if g["id"] == gid), None)
 
 
 SCHEDULE_FILE = config.DATA_DIR / "schedule.json"     # per game: {"12:CA-ESG": {"time": "18:30", "date": "2026-11-11", "featured": 1}} (admin)
@@ -324,6 +396,7 @@ def enrich_game(g: dict) -> dict:
 
 
 def _per36(rows, key):
+    rows = [r for r in rows if r.get("min") is not None]      # a one-team sheet has no minutes: it cannot say what a player does per 36
     m = sum(r["min"] for r in rows)
     return round(36 * sum(r[key] for r in rows) / m, 2) if m else 0.0
 
@@ -340,9 +413,10 @@ def build(season=None, keep_hidden=False):
         season = seasons[0]
     games = [g for g in all_games if season_of(g["date"]) == season]
 
+    partials = [g for g in partial_games(all_games) if season_of(g["date"]) == season]
     log = defaultdict(list)
     meta = {}
-    for g in games:
+    for g in sorted([*games, *partials], key=lambda g: (g["date"], g["id"])):
         for t in g["teams"]:
             opp = next(x for x in g["teams"] if x is not t)
             for p in t["players"]:
@@ -365,36 +439,40 @@ def build(season=None, keep_hidden=False):
     players = []
     for i, rows in log.items():
         n = len(rows)
-        tot = lambda k: sum(r[k] for r in rows)
+        # Every statistic is taken over the games where it is KNOWN: a one-team sheet counts for points, rebounds... but never as 0 minutes, 0 turnovers or a 0 rating.
+        known = lambda k: [r[k] for r in rows if r.get(k) is not None]
+        tot = lambda k: sum(known(k))
+        avg = lambda k: _avg(known(k))
+        full = [r for r in rows if r.get("min") is not None]           # the games with a complete box score
         fga, fta = tot("fga"), tot("fta")
         pts = tot("pts")
         players.append({
             **{k: v for k, v in meta[i].items() if k != "numbers"},
             "gp": n,
-            "min": _avg([r["min"] for r in rows]),
-            "pts": _avg([r["pts"] for r in rows]),
-            "reb": _avg([r["reb"] for r in rows]),
-            "ast": _avg([r["ast"] for r in rows]),
-            "stl": _avg([r["stl"] for r in rows]),
-            "blk": _avg([r["blk"] for r in rows]),
-            "tov": _avg([r["tov"] for r in rows]),
-            "pf": _avg([r["pf"] for r in rows]),
-            **{k: _avg([r[k] for r in rows]) for k in ("oreb", "dreb", "fd", "fgm", "fga", "p3m", "p3a", "ftm", "fta")},
-            "pm": _avg([r["pm"] for r in rows]),
+            "min": avg("min"),
+            "pts": avg("pts"),
+            "reb": avg("reb"),
+            "ast": avg("ast"),
+            "stl": avg("stl"),
+            "blk": avg("blk"),
+            "tov": avg("tov"),
+            "pf": avg("pf"),
+            **{k: avg(k) for k in ("oreb", "dreb", "fd", "fgm", "fga", "p3m", "p3a", "ftm", "fta")},
+            "pm": avg("pm"),
             "fg_pct": round(100 * tot("fgm") / tot("fga"), 1) if tot("fga") else 0,
             "p3_pct": round(100 * tot("p3m") / tot("p3a"), 1) if tot("p3a") else 0,
             "ft_pct": round(100 * tot("ftm") / fta, 1) if fta else 0,
             "ts_pct": round(100 * pts / (2 * (fga + 0.44 * fta)), 1) if (fga + fta) else 0,
-            "pir": _avg([r["pir"] for r in rows]),
-            "impact": _avg([r["impact"] for r in rows]),
+            "pir": avg("pir"),
+            "impact": avg("impact"),
             "wins": sum(r["won"] for r in rows),
             "mvp_games": sum(r["is_mvp"] for r in rows),
             "totals": {k: tot(k) for k in ("pts", "reb", "ast", "stl", "blk", "tov")},
             "total_min": round(tot("min"), 1),
             "reb36": _per36(rows, "reb"), "ast36": _per36(rows, "ast"), "blk36": _per36(rows, "blk"),
             "stl36": _per36(rows, "stl"),
-            "p3_share": round(tot("p3a") / tot("fga"), 3) if tot("fga") else 0.0,
-            "rating": rating(_avg([r["pir"] for r in rows])),
+            "p3_share": round(sum(r["p3a"] for r in full) / sum(r["fga"] for r in full), 3) if sum(r["fga"] for r in full) else 0.0,
+            "rating": rating(avg("pir")),
             "log": sorted(rows, key=lambda r: (r["date"], r["game_id"])),
         })
     players = apply_roster(players, keep_hidden)
@@ -418,7 +496,7 @@ def build(season=None, keep_hidden=False):
         # MVP pool: enough games AND plays for a top-N team (if no official table, everyone is eligible)
         p["mvp_eligible"] = p["qualified"] and (not table or p["team"] in top)
     players.sort(key=lambda p: (p["mvp_eligible"], p["qualified"], p["impact"], p["pts"]), reverse=True)
-    return {"season": season, "seasons": seasons, "games": games, "players": players,
+    return {"season": season, "seasons": seasons, "games": games, "partials": partials, "players": players,
             "standings": table, "top_teams": sorted(top, key=lambda c: rank[c]) if table else []}
 
 
@@ -553,6 +631,8 @@ def team_view(code, season=None):
     for g in d["games"]:
         if g.get("matchday_no"):
             gid[(g["matchday_no"], frozenset(t["code"] for t in g["teams"]))] = g["id"]
+    for g in d.get("partials", []):          # a one-team sheet has its own match page; a full box score of the same game wins
+        gid.setdefault((g["matchday_no"], frozenset(t["code"] for t in g["teams"])), g["id"])
     results = []
     for r in sorted(o["results"], key=lambda r: r["matchday"]):
         if code not in (r["home"], r["away"]):

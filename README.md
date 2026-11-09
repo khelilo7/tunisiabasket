@@ -57,6 +57,15 @@ Only the admin can upload, save data or run a sync; everything else in the app i
 - If you put the app on the internet, serve it over HTTPS (reverse proxy such as Caddy/nginx or the host's HTTPS);
   over plain HTTP anyone on the same network could read the token while you log in.
 
+## One-team sheets (assets/partial_games.json)
+Sometimes the only record of a game is a hand-kept sheet for ONE team (no minutes, turnovers, fouls, +/-, nothing for the opponent): J1 ES Goulette 68-80 Club Africain is one.
+It is **not** a box score: it never enters the games list, the standings, the home page, the team averages, the MVP race or the fan vote, so none of those numbers move.
+What it does: each player listed gets one row in his game log (marked "Partial box score"), the game has its own match page (linked from the two teams' pages), and his
+averages count it for points, rebounds, assists, steals, blocks and shooting. Anything the sheet does not give (minutes, turnovers, fouls, +/-, PIR, rating) stays **unknown, never 0**, and
+is averaged over the games where it is known. If a real box score of the same game is uploaded later, it replaces the sheet automatically (no double counting).
+To add one: a game in `assets/partial_games.json` (id, matchday, home, away, `recorded` = the team on the sheet, date, players with number, name and the counted stats; attempts only
+where the sheet proves them) or in `data/partial_games.json` (live data). It is ignored unless an official result for that matchday and pair exists. `tests/test_partial_game.py` checks all of this.
+
 ## Teams and calendar
 `/#/team/<CODE>`: standing, match history (click a match for its stats; matches without a box score show the
 result only), next matches and players. `/#/planning`: matchdays J12-J22. Until the official calendar is known it is

@@ -235,7 +235,10 @@ def games():
 def game(gid):
     g = next((g for g in stats.build_all_games() if g["id"] == gid), None)
     if not g:
-        abort(404)
+        g = stats.partial_game(gid)          # a game for which only one team's sheet exists
+        if not g:
+            abort(404)
+        return jsonify(g)
     pos = {p["id"]: p for p in stats.build(stats.season_of(g["date"]))["players"]}
     return jsonify({**g, "lineups": stats.game_lineups(g, pos)})
 

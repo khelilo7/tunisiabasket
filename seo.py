@@ -287,7 +287,7 @@ def meta(lang, page, arg=None):
                                                "url": b + path(lang, "player", ref), "memberOf": {"@type": "SportsTeam", "name": p["team"], "sport": "Basketball"}}],
                    ssr=f'<h1>{esc(p["name"])} ({esc(p["team"])})</h1><p>{esc(desc)}</p><h2>{t["game_log"]}</h2><ul>{log}</ul>')
     elif page == "game":
-        g = next((x for x in stats.build_all_games() if x["id"] == arg), None)
+        g = next((x for x in stats.build_all_games() if x["id"] == arg), None) or stats.partial_game(arg)   # the second: a one-team sheet (no minutes)
         if not g:
             return None
         a, bb = g["teams"]
@@ -297,7 +297,7 @@ def meta(lang, page, arg=None):
         desc = t["m_desc"].format(a=a["name"], b=bb["name"], sa=a["points"], sb=bb["points"], md=md, mvp=mvp)
 
         def box(team):
-            rows = "".join(f'<tr><td>{esc(p["name"].title())}</td><td>{round(p["min"])}</td><td>{p["pts"]}</td><td>{p["reb"]}</td><td>{p["ast"]}</td></tr>'
+            rows = "".join(f'<tr><td>{esc(p["name"].title())}</td><td>{"–" if p["min"] is None else round(p["min"])}</td><td>{p["pts"]}</td><td>{p["reb"]}</td><td>{p["ast"]}</td></tr>'
                            for p in team["players"] if not p.get("dnp"))
             return f'<h2>{esc(team["name"])} {team["points"]}</h2><table><thead><tr><th>{t["players"]}</th><th>{t["min"]}</th><th>PTS</th><th>{t["reb"]}</th><th>{t["ast"]}</th></tr></thead><tbody>{rows}</tbody></table>'
         event = {"@context": "https://schema.org", "@type": "SportsEvent", "name": f'{a["name"]} – {bb["name"]}', "sport": "Basketball",

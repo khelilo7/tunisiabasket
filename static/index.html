@@ -337,7 +337,8 @@ const FR = {
     'Les joueurs se placent selon leur poste (déduit de leurs statistiques : rebonds, contres, passes, interceptions, tirs à 3 points). Chaque équipe défend son panier ; les intérieurs sont sous le panier, les meneurs vers le milieu.',
   'The five players with the most minutes this season, standing where their position puts them. Positions are inferred from stats (rebounds, blocks, assists, steals, threes) because the box scores do not list them; the admin can correct any player.':
     'Les cinq joueurs ayant le plus de minutes cette saison, placés selon leur poste. Les postes sont déduits des statistiques (rebonds, contres, passes, interceptions, tirs à 3 points) car les feuilles de match ne les indiquent pas ; l’administrateur peut corriger chaque joueur.',
-  'Bench': 'Banc', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
+  'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
+  'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings, PIR or the MVP race.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes, le PIR ni la course au MVP.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
@@ -438,6 +439,7 @@ const ring = r => `<div class="ring" style="--v:${r};--c:${rcol(r)}"><span>${r}<
 const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short' });
 const title = n => n.toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
 const signed = n => (n > 0 ? '+' : '') + n;
+const dash = v => (v == null ? '–' : v);          // a stat a one-team sheet does not give is unknown, never 0
 const face = (p, px) => p ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph${p.photo ? '' : ' generic'}" src="${esc(p.photo || '/img/players/generic.svg')}" alt="${p.photo ? esc(title(p.name)) : ''}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png" alt="" onerror="this.remove()"></span></span>` : '';
 const logo = (code, px = 26) => `<img class="tlogo" src="/img/teams/${esc(code)}.png" alt="" width="${px}" height="${px}" loading="lazy" onerror="this.remove()">`;
 const named = (code, name, px = 24) => `<span class="tn">${logo(code, px)}<span>${esc(name)}</span></span>`;
@@ -870,7 +872,7 @@ async function player(ref) {
   const id = (ref.match(/^([a-z0-9]+-\d+)/) || [, ref])[1];
   const d = await api('players/' + id), p = d.player;
   pageMeta = [f('metaPlayer', p.name, p.team, d.season), `${p.name}, ${p.team} #${p.number}: ${p.pts} ${_('pts')}, ${p.reb} ${_('reb')}, ${p.ast} ${_('ast')} · ${H('RTG')} ${p.rating}/99`];
-  const pts = p.log.map(r => r.pir);
+  const pts = p.log.filter(r => r.pir != null).map(r => r.pir);
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
   <div class="card row" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
@@ -883,9 +885,9 @@ async function player(ref) {
   <h2>${_('Form (PIR per game)')}</h2><div class="card">${spark(pts)}</div>
   <h2>${_('Game log')}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Date')}</th><th class="l">${_('Opp')}</th><th>${_('Result')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-  ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}</td>
-    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${r.ast}</td><td>${r.stl}</td><td>${r.blk}</td><td>${r.tov}</td>
-    <td>${r.fgm}/${r.fga}</td><td>${r.p3m}/${r.p3a}</td><td>${r.ftm}/${r.fta}</td><td>${signed(r.pm)}</td><td>${r.pir}</td><td>${rate(r.rating)}</td></tr>`).join('')}
+  ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}${r.partial ? ` <span class="mut small">${_('Partial box score')}</span>` : ''}</td>
+    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${r.min == null ? '–' : Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${r.ast}</td><td>${r.stl}</td><td>${r.blk}</td><td>${dash(r.tov)}</td>
+    <td>${r.fgm}/${r.fga}</td><td>${r.p3m}/${r.p3a}</td><td>${r.ftm}/${r.fta}</td><td>${r.pm == null ? '–' : signed(r.pm)}</td><td>${dash(r.pir)}</td><td>${r.rating == null ? '–' : rate(r.rating)}</td></tr>`).join('')}
   </tbody></table></div>`;
 }
 
@@ -978,9 +980,32 @@ function drawCourt() {
 }
 
 // ---------------------------------------------------------------- match page
+// A game for which only one team's hand-kept sheet exists: points, rebounds, assists, steals, blocks and shooting, nothing invented for the rest.
+function partialGame(g) {
+  const [a, b] = g.teams, md = g.matchday || '';
+  courtData = null;
+  pageMeta = [f('metaGame', a.name, a.points, b.points, b.name, md), `${a.name} ${a.points}–${b.points} ${b.name} · ${md}`];
+  const frac = (m, t) => `${m}/${t}`;
+  const sheet = t => {
+    const rows = [...t.players].sort((x, y) => y.pts - x.pts || x.number - y.number), sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
+    return `<h2><span class="tn">${logo(t.code, 28)}${esc(t.name)}</span> <span class="${t.won ? 'good' : 'mut'}">${t.points}</span></h2>` + (!rows.length ? `<div class="card mut">${_('No player stats for this team.')}</div>` :
+     `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>PTS</th><th>REB</th><th>${H('OR')}</th><th>${H('DR')}</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('FG')}</th><th>${H('2P')}</th><th>${H('3P')}</th><th>${H('FT')}</th></tr></thead><tbody>
+     ${rows.map(p => `<tr data-go="${playerUrl(p.pid, p.name)}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.pid, name: p.name }, esc(title(p.name)))}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.oreb}</td><td>${p.dreb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td>
+       <td>${frac(p.fgm, p.fga)}</td><td>${frac(p.p2m, p.p2a)}</td><td>${frac(p.p3m, p.p3a)}</td><td>${frac(p.ftm, p.fta)}</td></tr>`).join('')}
+     <tr class="tot"><td></td><td class="l">${_('Team')}</td><td>${sum('pts')}</td><td>${sum('reb')}</td><td>${sum('oreb')}</td><td>${sum('dreb')}</td><td>${sum('ast')}</td><td>${sum('stl')}</td><td>${sum('blk')}</td>
+       <td>${frac(sum('fgm'), sum('fga'))}</td><td>${frac(sum('p2m'), sum('p2a'))}</td><td>${frac(sum('p3m'), sum('p3a'))}</td><td>${frac(sum('ftm'), sum('fta'))}</td></tr></tbody></table></div>`);
+  };
+  return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
+  <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
+   <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
+   <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${_('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings, PIR or the MVP race.')}</div></div>
+  ${sheet(a)}${sheet(b)}`;
+}
+
 async function game(id) {
   const g = await (await fetch('/api/games/' + encodeURIComponent(id))).json();
   if (!g.teams) throw new Error(_('Page not found'));
+  if (g.partial) return partialGame(g);
   const [a, b] = g.teams, L = g.lineups;
   courtData = { kind: 'game', g };
   const md = g.matchday || '';
