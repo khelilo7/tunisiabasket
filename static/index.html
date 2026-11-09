@@ -337,8 +337,8 @@ const FR = {
     'Les joueurs se placent selon leur poste (déduit de leurs statistiques : rebonds, contres, passes, interceptions, tirs à 3 points). Chaque équipe défend son panier ; les intérieurs sont sous le panier, les meneurs vers le milieu.',
   'The five players with the most minutes this season, standing where their position puts them. Positions are inferred from stats (rebounds, blocks, assists, steals, threes) because the box scores do not list them; the admin can correct any player.':
     'Les cinq joueurs ayant le plus de minutes cette saison, placés selon leur poste. Les postes sont déduits des statistiques (rebonds, contres, passes, interceptions, tirs à 3 points) car les feuilles de match ne les indiquent pas ; l’administrateur peut corriger chaque joueur.',
-  'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
-  'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings, PIR or the MVP race.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes, le PIR ni la course au MVP.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
+  'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).': 'Le MVP du match est choisi parmi les joueurs relevés de l’équipe gagnante, d’après les points, rebonds, passes, interceptions, contres et tirs uniquement (balles perdues et fautes inconnues).', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
+  'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes ni le PIR.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
@@ -897,10 +897,16 @@ function spark(v) {
   return `<svg class="spark" viewBox="0 0 ${Wd} ${Ht}" preserveAspectRatio="none" role="img" aria-label="PIR"><polyline fill="none" stroke="#ff8a1f" stroke-width="2.5" vector-effect="non-scaling-stroke" points="${v.map((n, i) => x(i) + ',' + y(n)).join(' ')}"/></svg>`;
 }
 
+let gamesTeam = '';
 async function games() {
   const d = await api('games');
   pageMeta = META.games[LANG];
-  return `${standNav('games')}<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1><div class="grid g2">${d.games.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+  const teams = [...new Map(d.games.flatMap(g => g.teams).map(t => [t.code, t.name]))].sort((a, b) => a[1].localeCompare(b[1]));
+  const list = d.games.filter(g => !gamesTeam || g.teams.some(t => t.code === gamesTeam));
+  return `${standNav('games')}<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>
+  <div class="toolbar"><select id="gt" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(([c, n]) => `<option value="${c}" ${c === gamesTeam ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+    <span class="mut small">${list.length} ${_('Games').toLowerCase()}</span></div>
+  <div class="grid g2">${list.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
 }
 
 // ---------------------------------------------------------------- courts and lineups
@@ -998,7 +1004,8 @@ function partialGame(g) {
   return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
    <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
-   <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${_('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings, PIR or the MVP race.')}</div></div>
+   ${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}
+   <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${_('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.')}${g.mvp ? ' ' + _('The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).') : ''}</div></div>
   ${sheet(a)}${sheet(b)}`;
 }
 
@@ -1175,6 +1182,7 @@ function bind() {
   const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
+  const gt = $('#gt'); if (gt) gt.onchange = () => { gamesTeam = gt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };
 }
 

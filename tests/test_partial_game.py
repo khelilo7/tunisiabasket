@@ -51,7 +51,15 @@ check(len(d["partials"]) == len(sheet), "build() exposes the one-team game")
 check(all(g["id"] != pg["id"] for g in d["games"]), "a one-team game never enters build()['games']")
 c = app.app.test_client()
 listed = [g for g in c.get("/api/games").get_json()["games"] if g["id"] == pg["id"]]
-check(len(listed) == 1 and listed[0]["partial"] is True and listed[0]["mvp"] is None, "listed once in the games list, marked partial, no game MVP")
+check(len(listed) == 1 and listed[0]["partial"] is True, "listed once in the games list, marked partial")
+mv = listed[0]["mvp"] if listed else None
+sheet_score = lambda p: p["pts"] + (p["oreb"] + p["dreb"]) + p["ast"] + p["stl"] + p["blk"] - (p["fga"] - p["fgm"]) - (p["fta"] - p["ftm"])
+rec_players = [{"oreb": 0, "dreb": 0, **p} for p in pg["players"]]
+best = max(rec_players, key=lambda p: (sheet_score(p), p["pts"]))
+winner = official[pg["recorded"]] == max(official.values())
+check((mv is None) == (not winner), "a game MVP only if the team on the sheet won")
+check(mv is None or (mv["name"].split()[0] in best["name"] or best["name"].split()[-1] in mv["name"]) and mv["pir"] is None and mv["team"] == pg["recorded"],
+      "game MVP = best of the winning team's sheet players (PIR without turnovers/fouls), and it carries no PIR")
 ov = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
 with without_sheets():
     ov0 = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
@@ -100,8 +108,9 @@ for i in B:
         check(json.dumps(A[i], sort_keys=True, default=str) == json.dumps(B[i], sort_keys=True, default=str), f"{i} (not on the sheet) is unchanged")
         continue
     # sheet player: the stats the sheet does not give are exactly what they were; the others include the new game
-    for k in ("min", "tov", "pf", "fd", "pm", "pir", "impact", "rating", "total_min", "reb36", "ast36", "blk36", "stl36", "p3_share", "mvp_games", "pos"):
+    for k in ("min", "tov", "pf", "fd", "pm", "pir", "impact", "rating", "total_min", "reb36", "ast36", "blk36", "stl36", "p3_share", "pos"):
         check(A[i][k] == B[i][k], f"{i}: {k} must not change (the sheet does not know it)")
+    check(B[i]["mvp_games"] == A[i]["mvp_games"] + (1 if mv and mv["player_id"] == i else 0), f"{i}: game MVP count changes only for the sheet's MVP")
     check(B[i]["gp"] == A[i]["gp"] + 1 and B[i]["wins"] == A[i]["wins"] + (1 if official[pg["recorded"]] == max(official.values()) else 0), f"{i}: one more game, one more win")
     rows = B[i]["log"]
     sheet_row = [r for r in rows if r.get("partial")]
@@ -119,6 +128,10 @@ tmp.write_text(json.dumps({"games": bad}))
 saved = stats.PARTIAL_FILES
 stats.PARTIAL_FILES = (tmp,)
 check(stats.build()["partials"] == [], "games without an official result / with a wrong team / without a date are ignored")
+lost = [{**pg, "id": "x4", "recorded": "ESG", "players": [{"number": 41, "name": "Somebody", "pts": 2, "fgm": 1, "fga": 2, "p3m": 0, "p3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 1, "ast": 0, "stl": 0, "blk": 0}]}]
+tmp.write_text(json.dumps({"games": lost}))
+got = stats.build()["partials"]
+check(len(got) == 1 and got[0]["mvp"] is None, "a sheet of the LOSING team has no game MVP")
 stats.PARTIAL_FILES = saved
 
 # 5. a full box score of the same game, uploaded later, replaces the sheet (never counted twice)

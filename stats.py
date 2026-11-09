@@ -169,6 +169,15 @@ PARTIAL_FILES = (config.ASSETS_DIR / "partial_games.json", config.DATA_DIR / "pa
 PARTIAL_UNKNOWN = ("min", "tov", "pf", "fd", "pm", "pir", "rating", "impact")
 
 
+def _sheet_mvp(team):
+    """Game MVP of a one-team sheet: only the WINNING team can have one, and only if it is the team on the sheet. Turnovers and fouls are unknown for every candidate,
+    so they are ranked by PIR without them (the same gap for all), then by points. The MVP carries no PIR: the real one cannot be computed."""
+    if not team["won"] or not team["players"]:
+        return None
+    best = max(team["players"], key=lambda p: (p["pts"] + p["reb"] + p["ast"] + p["stl"] + p["blk"] - (p["fga"] - p["fgm"]) - (p["fta"] - p["ftm"]), p["pts"]))
+    return {"player_id": best["pid"], "name": best["name"], "team": team["code"], "pir": None, "pts": best["pts"], "reb": best["reb"], "ast": best["ast"], "partial": True}
+
+
 def partial_games(games):
     """The one-team games of the sheet files, linked to the official result (score, winner) and to the players we already know (same pid as in the
     full box scores). A game with no official result, or a team that is not in it, is ignored. `games` = the canonical full games (pids set)."""
@@ -216,7 +225,7 @@ def partial_games(games):
             teams.append({"code": code, "name": official["teams"].get(code, code), "points": score[code], "box_points": score[code],
                           "won": score[code] > score[r["away"] if code == r["home"] else r["home"]], "players": players, "recorded": code == rec})
         out.append({"id": raw_g["id"], "partial": True, "date": raw_g["date"], "date_approx": bool(raw_g.get("date_approx")), "competition": raw_g.get("competition"),
-                    "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": None, "note": raw_g.get("note"), "source": raw_g.get("source"),
+                    "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": _sheet_mvp(next(t for t in teams if t["recorded"])), "note": raw_g.get("note"), "source": raw_g.get("source"),
                     "recorded": rec, "teams": teams})
     return out
 
