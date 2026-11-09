@@ -77,7 +77,9 @@
   </div>
 <div id="tool" hidden>
   <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button></div>
-  <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div>
+    <h2>Player positions</h2>
+    <div class="card" id="positions"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
@@ -110,9 +112,6 @@
 
   <h2>Needs review (from Drive sync)</h2>
   <div id="review"><div class="mut">Loading…</div></div>
-
-  <h2>Player positions</h2>
-  <div class="card" id="positions"><div class="mut">Loading…</div></div>
 
   <h2>Official results saved</h2>
   <div id="official" class="chips"></div>
@@ -279,13 +278,13 @@ async function loadPositions() {
     const teams = [...new Set(body.players.map(p => p.team))].sort();
     const cur = box.dataset.team && teams.includes(box.dataset.team) ? box.dataset.team : teams[0];
     box.dataset.team = cur;
-    box.innerHTML = `<p class="mut small" style="margin-top:0">Positions are guessed from each player's stats (the box scores do not list them) and decide where players stand on the court maps.
-      Correct any player here; "Auto" removes a correction. The five most-played players of a team are arranged PG, SG, SF, PF, C in the order of their position.</p>
+    box.innerHTML = `<p class="mut small" style="margin-top:0">The box scores do not list positions, so each one is guessed from the player's stats (shown as “guessed”). Pick another to correct it: it decides where the player stands on the court maps.
+      Choose the guessed one again to remove a correction.</p>
       <div class="row" style="margin-bottom:8px"><label class="mut small">Team</label><select id="postean">${teams.map(t => `<option ${t === cur ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
       <span class="sp"></span><span id="posmsg" class="small"></span><button class="primary" id="possave">Save corrections</button></div>
-      <table><thead><tr><th>#</th><th class="l">Player</th><th>GP</th><th>MIN</th><th>Guessed</th><th>Position</th></tr></thead><tbody>
-      ${body.players.filter(p => p.team === cur).map(p => `<tr data-pid="${esc(p.id)}" data-was="${esc(p.manual || '')}"><td>${esc(p.number)}</td><td class="l">${esc(p.name)}</td><td>${p.gp}</td><td>${Math.round(p.total_min)}</td><td class="mut">${esc(p.auto)}</td>
-        <td><select data-f="pos"><option value="">Auto (${esc(p.auto)})</option>${body.positions.map(x => `<option ${x === p.manual ? 'selected' : ''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
+      <table><thead><tr><th>#</th><th class="l">Player</th><th>GP</th><th>MIN</th><th>Position</th></tr></thead><tbody>
+      ${body.players.filter(p => p.team === cur).map(p => `<tr data-pid="${esc(p.id)}" data-was="${esc(p.manual || '')}"><td>${esc(p.number)}</td><td class="l">${esc(p.name)}</td><td>${p.gp}</td><td>${Math.round(p.total_min)}</td>
+        <td><select data-f="pos"><option value="">${esc(p.auto)} · guessed</option>${body.positions.map(x => `<option ${x === p.manual ? 'selected' : ''}>${x}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
     $('#postean').onchange = ev => { box.dataset.team = ev.target.value; loadPositions(); };
     $('#possave').onclick = async () => {
       const changes = {};
@@ -419,7 +418,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'mvp') loadMvp();
-  if (b.dataset.tab === 'roster') loadRoster();
+  if (b.dataset.tab === 'roster') { loadRoster(); loadPositions(); }
   if (b.dataset.tab === 'images') loadImages();
   if (b.dataset.tab === 'games') loadGames();
   if (b.dataset.tab === 'news') loadNews();
@@ -430,7 +429,7 @@ async function boot() {
   const me = await (await fetch('/admin/api/me', { credentials: 'same-origin' })).json();
   if (!me.admin) { showLogin(me.configured ? '' : 'No admin token is set yet. Run: python manage.py new-token'); return; }
   $('#login').hidden = true; $('#tool').hidden = false; $('#logout').hidden = false;
-  await loadOfficial(); loadReview(); loadPositions();
+  await loadOfficial(); loadReview();
 }
 $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
 $('#theme').onclick = () => { const t = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = t; localStorage.setItem('theme', t); $('#theme').textContent = t === 'dark' ? '☀️' : '🌙'; };
