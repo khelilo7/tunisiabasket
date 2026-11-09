@@ -33,6 +33,9 @@ check(vote(keep, 1, "203.0.113.1").status_code == 200, "first vote")
 r = get()
 check(r["ballot_frozen"] and r["ballot"] == b0, "the first vote froze the ballot exactly as it was shown")
 check(vote(drop, 2, "203.0.113.2").status_code == 200 and vote(drop, 3, "203.0.113.3").status_code == 200, "votes for the player who will leave")
+r = get()
+check(r["ballot_ranked"] == [drop, keep, b0[1]] and sorted(r["ballot_ranked"]) == sorted(b0) and r["ballot"] == b0, "the three finalists are shown most votes first (2, 1, 0), the ballot itself keeps its order")
+check(c.get("/api/home").get_json()["phase_mvp"]["ballot"][0]["id"] == drop, "the home card lists the finalist with the most votes first")
 before = rows()
 
 # the stats change under a frozen ballot: it does not move

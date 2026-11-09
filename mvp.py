@@ -301,6 +301,9 @@ def race(phase: int = 1) -> dict:
     # the list shown to visitors: the ballot first (one player per club), by votes then stats; then everybody else by votes (if any) then stats
     for i, r in enumerate(sorted(rows, key=lambda r: (r["id"] in ballot_ids, r["votes"], r["impact"], r["pts"]), reverse=True), 1):
         r["vote_rank"] = i
+    by_id = {r["id"]: r for r in rows}
+    # the three players fans can vote for, shown with the most votes first (a tie, e.g. before any vote, goes to the better stats); the ballot itself keeps its own order
+    ballot_ranked = sorted((i for i in ballot_ids if i in by_id), key=lambda i: (by_id[i]["votes"], by_id[i]["impact"], by_id[i]["pts"]), reverse=True)
     current = winner or vote_leader or (rows[0] if rows else None)
     current_by = "winner" if winner else "votes" if vote_leader else "stats"
     return {"phase": phase, "matchdays": matchdays, "complete": complete, "voting_open": is_open, "note": st["note"],
@@ -308,4 +311,4 @@ def race(phase: int = 1) -> dict:
             "total_votes": total, "decided_by": "fans",
             "winner": winner, "leader": rows[0] if rows else None, "vote_leader": vote_leader,
             "current": current, "current_by": current_by,         # the MVP right now: crowned, else most votes, else (no votes yet) the stats leader
-            "ballot": ballot_ids, "ballot_frozen": bool(settings(phase)["ballot"]), "suggested_ballot": pick_ballot(rows), "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}
+            "ballot": ballot_ids, "ballot_ranked": ballot_ranked, "ballot_frozen": bool(settings(phase)["ballot"]), "suggested_ballot": pick_ballot(rows), "candidates": rows, "chart": [r["id"] for r in rows[:RACE_LINES]]}

@@ -117,7 +117,7 @@ def _phase_summary():
     return {"phase": 1, "complete": r["complete"], "voting_open": r["voting_open"], "deadline_ts": r["deadline_ts"], "total_votes": r["total_votes"],
             "winner": pick(r["winner"]), "leader": pick(r["leader"]), "vote_leader": pick(r["vote_leader"]),
             "current": pick(r["current"]), "current_by": r["current_by"],
-            "ballot": [pick(by[i]) for i in r["ballot"] if i in by]}
+            "ballot": [pick(by[i]) for i in r["ballot_ranked"] if i in by]}
 
 
 @app.get("/api/overview")
