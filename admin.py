@@ -354,7 +354,9 @@ def _bio_value(field, v):
 def roster_view():
     """Every player (hidden ones too) with bio, plus the roster changes made so far."""
     d = stats.build(keep_hidden=True)
+    manual = stats.load_positions()
     rows = [{"id": p["id"], "name": p["name"], "team": p["team"], "teams": p["teams"], "number": p["number"], "gp": p["gp"], "pos": p["pos"],
+             "auto_pos": p.get("auto_pos") or p["pos"], "manual_pos": manual.get(p["id"]),
              "bio": p["bio"], "photo": p.get("photo"), "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
             for p in d["players"]]
     rows.sort(key=lambda r: (r["team"], r["number"]))

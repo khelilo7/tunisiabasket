@@ -66,12 +66,12 @@
         <input id="r-q" placeholder="Search any player…" value="${esc(query)}" style="min-width:200px">
         <label class="small mut"><input type="checkbox" id="r-hidden" ${showHidden ? 'checked' : ''}> show deleted</label>
         <span class="sp"></span><button class="primary" id="r-addbtn">➕ Add a player</button></div>
-      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Pos</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
+      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Position</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
       ${rows.map(p => `<tr data-id="${esc(p.id)}" class="${p.hidden ? 'saved' : ''}"><td>${p.number}</td>
         <td style="white-space:nowrap"><img src="${esc(p.photo || '/img/players/generic.svg')}" alt="" width="34" height="34" style="border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px"><button data-act="photo" title="Upload a photo (square crop, JPEG)">📷</button>${p.photo && p.photo.startsWith('/photo/') ? ' <button data-act="nophoto" class="danger" title="Remove the uploaded photo">✕</button>' : ''}</td>
         <td class="l"><b>${esc(p.name)}</b> <span class="mut small">${p.team}</span>${p.added && !p.gp ? ' <span class="pill acc">new</span>' : ''}${p.hidden ? ' <span class="pill bad">deleted</span>' : ''}
           ${p.transfers.map(t => `<span class="pill warn" title="${esc(t.date || '')}">⇄ ${esc(t.from)}→${esc(t.to)}</span>`).join(' ')}</td>
-        <td>${esc(p.pos)}</td><td>${p.gp}</td>
+        <td>${p.hidden ? esc(p.pos) : `<select data-f="pos" data-was="${esc(p.manual_pos || '')}" title="Guessed from the player’s stats. Pick another to correct it; pick the guessed one to go back."${p.manual_pos ? ' style="border-color:var(--acc)"' : ''}><option value="">${esc(p.auto_pos)} · guessed</option>${R.positions.map(x => `<option ${x === p.manual_pos ? 'selected' : ''}>${x}</option>`).join('')}</select>`}</td><td>${p.gp}</td>
         <td><input class="num" style="width:88px" data-f="height" value="${esc(hv(p.bio))}" placeholder="–"${approx(p.bio, 'height')}></td>
         <td><input class="num" style="width:72px" data-f="weight" value="${esc((p.bio && p.bio.weight) || '')}" placeholder="–"${approx(p.bio, 'weight')}></td>
         <td><input data-f="birth" type="date" value="${esc((p.bio && p.bio.birth) || '')}" style="width:140px"></td>
@@ -97,11 +97,19 @@
     $('#r-hidden').onchange = e => { showHidden = e.target.checked; render(); };
     document.querySelectorAll('#r-table tbody tr').forEach(tr => {
       const id = tr.dataset.id, p = R.players.find(x => x.id === id), btn = f => tr.querySelector(`[data-act=${f}]`);
-      tr.querySelectorAll('input').forEach(i => i.oninput = () => { if (btn('save')) btn('save').hidden = false; });
+      tr.querySelectorAll('input, select').forEach(i => i[i.tagName === 'SELECT' ? 'onchange' : 'oninput'] = () => { if (btn('save')) btn('save').hidden = false; });
       if (btn('save')) btn('save').onclick = async () => {
+        const sel = tr.querySelector('[data-f=pos]'), posChanged = sel && sel.value !== sel.dataset.was;
+        const bioInputs = ['height', 'weight', 'birth'].map(f => tr.querySelector(`[data-f=${f}]`)), bioChanged = bioInputs.some(i => i.value !== i.defaultValue);
         const h = parseHeight(tr.querySelector('[data-f=height]').value), w = tr.querySelector('[data-f=weight]').value.trim(), b = tr.querySelector('[data-f=birth]').value;
-        if (tr.querySelector('[data-f=height]').value.trim() && h === null) { say('Height: type 190 or a range like 189-192.', false); return render(); }
-        if (await post({ op: 'bio', id, height: h, weight: w ? parseInt(w, 10) : null, birth: b || null })) load(); else render();
+        if (bioChanged && tr.querySelector('[data-f=height]').value.trim() && h === null) { say('Height: type 190 or a range like 189-192.', false); return render(); }
+        let ok = true;
+        if (posChanged) {       // a correction of the guessed position (kept in data/positions.json; going back to the guessed one removes it)
+          try { const r = await api('positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: { [id]: sel.value || null } }) }); ok = r.ok; say(ok ? 'Saved.' : (r.body.error || 'Could not save the position.'), ok); } catch (e) { ok = false; say(e.message, false); }
+        }
+        // the bio is only sent when one of its fields changed (sending it again would turn an estimated value into an official one)
+        if (ok && bioChanged) ok = await post({ op: 'bio', id, height: h, weight: w ? parseInt(w, 10) : null, birth: b || null });
+        R = null; if (ok) load(); else render();
       };
       if (btn('photo')) btn('photo').onclick = () => pickPhoto(id);
       if (btn('nophoto')) btn('nophoto').onclick = async () => {
