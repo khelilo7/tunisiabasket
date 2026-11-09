@@ -87,6 +87,13 @@ check("photo" in got and got["player_name"] == "Firas Lahyani", "the news API ca
 for n in c.get("/api/news").get_json()["items"]:
     if n["title"] in ("About a player", "About a club"):
         post("/admin/api/news/delete", {"id": n["id"]})
+gm = post("/admin/api/news", {"label": "result", "title": "CA beat USM", "game": "abc123", "team": "CA", "date": "2026-11-09",
+                              "match": {"home": "ca", "away": "usm", "home_name": "Club Africain", "away_name": "US Monastir", "home_score": 78, "away_score": 59, "md": 11}})
+check(gm.status_code == 200 and gm.get_json()["item"]["match"]["home"] == "CA" and gm.get_json()["item"]["game"] == "abc123", "a news item can announce a game (score + box score link)")
+check(post("/admin/api/news", {"label": "result", "title": "x", "match": {"home": "CA", "away": "USM", "home_score": "x", "away_score": 1}}).status_code == 422, "a game needs numeric scores")
+check(post("/admin/api/news", {"label": "result", "title": "x", "game": "../etc"}).status_code == 422, "a game id is checked")
+check(next(n for n in c.get("/api/news").get_json()["items"] if n["title"] == "CA beat USM")["match"]["away_score"] == 59, "the public API carries the score")
+post("/admin/api/news/delete", {"id": gm.get_json()["item"]["id"]})
 check(post("/admin/api/news/delete", {"id": b["id"]}).get_json()["ok"] and len(c.get("/api/news").get_json()["items"]) == 2, "a news item can be deleted")
 
 # --- the rest

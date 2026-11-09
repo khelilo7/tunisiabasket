@@ -91,7 +91,7 @@
   }
 
   // ---------------------------------------------------------------- News
-  let N = [], editing = null, nMsg = null, imgItem = null;
+  let N = [], editing = null, nMsg = null, imgItem = null, draft = null, A = null, aGi = 0;
   async function loadNews() {
     const { ok, body } = await api('news');
     if (!ok) { $('#newsbox').innerHTML = '<div class="problems">Could not load the news.</div>'; return; }
@@ -100,15 +100,16 @@
   }
   const playerOpts = cur => { const by = {}; players.forEach(p => (by[p.team] = by[p.team] || []).push(p)); return Object.keys(by).sort().map(t => `<optgroup label="${esc(t)}">${by[t].sort((a, b) => a.name.localeCompare(b.name)).map(p => `<option value="${esc(p.id)}" data-name="${esc(p.name)}" ${p.id === cur ? 'selected' : ''}>${esc(p.name)} · #${p.number}</option>`).join('')}</optgroup>`).join(''); };
   const teamOpts = cur => [...new Set(players.map(p => p.team))].sort().map(t => `<option ${t === cur ? 'selected' : ''}>${esc(t)}</option>`).join('');
-  const formItem = () => {   // what the form holds right now (for the image preview before publishing)
+  const formItem = e => {   // what the form holds right now (for the image preview before publishing)
     const pl = $('#n-player'), o = pl.selectedOptions[0], pid = pl.value, pp = players.find(x => x.id === pid);
     return { label: $('#n-label').value, date: $('#n-date').value, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value,
-      team: pid ? pid.split('-')[0].toUpperCase() : $('#n-team').value, player: pid, player_name: pid ? o.dataset.name : '', photo: pp && pp.photo || null };
+      team: pid ? pid.split('-')[0].toUpperCase() : $('#n-team').value, player: pid, player_name: pid ? o.dataset.name : '', photo: pp && pp.photo || null, game: e && e.game || '', match: e && e.match || null };
   };
   function renderNews() {
-    const e = editing === 'new' ? {} : N.find(n => n.id === editing) || null;
+    const e = editing ? (editing === 'new' ? {} : N.find(n => n.id === editing) || null) : draft;
     $('#newsbox').innerHTML = `
       ${nMsg ? `<div class="${nMsg.ok ? 'okbox' : 'problems'}">${esc(nMsg.t)}</div>` : ''}
+      <div id="annbox"></div>
       <div class="card" style="border-color:var(--acc)"><b>${e && e.id ? 'Edit the news' : 'Add news'}</b> <span class="mut small">for example “Player X is out for 6 weeks”</span>
         <div class="row" style="margin-top:8px"><select id="n-label">${Object.entries(LABELS).map(([k, v]) => `<option value="${k}" ${(e && e.label || 'info') === k ? 'selected' : ''}>${v}</option>`).join('')}</select>
           <input id="n-date" type="date" value="${esc((e && e.date) || today())}"><label class="small mut"><input type="checkbox" id="n-pin" ${e && e.pinned ? 'checked' : ''}> 📌 pin on top</label></div>
@@ -126,21 +127,55 @@
         <b>${esc(n.title)}</b>${n.body ? `<div class="mut small" style="white-space:pre-line">${esc(n.body)}</div>` : ''}</div>`).join('') : '<div class="mut small">Nothing yet.</div>'}
       <p class="mut small">News shows on the home page (the latest four) and on the News page, with its label. A deleted news item cannot be brought back.</p>`;
     $('#n-save').onclick = async () => {
-      const body = { id: e && e.id, label: $('#n-label').value, date: $('#n-date').value, pinned: $('#n-pin').checked, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value,
+      const body = { id: e && e.id, label: $('#n-label').value, date: $('#n-date').value, pinned: $('#n-pin').checked, title: $('#n-title').value, body: $('#n-body').value, title_en: $('#n-title-en').value, body_en: $('#n-body-en').value, game: e && e.game || '', match: e && e.match || null,
         player: $('#n-player').value, player_name: $('#n-player').selectedOptions[0].dataset.name || '', team: $('#n-team').value };
-      try { const r = await post('news', body); nMsg = { t: r.ok ? 'Published.' : (r.body.error || 'Could not save.'), ok: r.ok }; if (r.ok) editing = null; } catch (x) { nMsg = { t: x.message, ok: false }; }
+      try { const r = await post('news', body); nMsg = { t: r.ok ? 'Published.' : (r.body.error || 'Could not save.'), ok: r.ok }; if (r.ok) { editing = null; draft = null; } } catch (x) { nMsg = { t: x.message, ok: false }; }
       loadNews();
     };
     const showImg = item => { imgItem = item; const b = $('#nimgbox'); window.NewsImg.mount(b, item, () => { imgItem = null; }); b.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
-    $('#n-img').onclick = () => { if (!$('#n-title').value.trim()) { nMsg = null; $('#n-title').focus(); return; } showImg(formItem()); };
+    $('#n-img').onclick = () => { if (!$('#n-title').value.trim()) { nMsg = null; $('#n-title').focus(); return; } showImg(formItem(e)); };
     if (imgItem) window.NewsImg.mount($('#nimgbox'), imgItem, () => { imgItem = null; });
-    const c = $('#n-cancel'); if (c) c.onclick = () => { editing = null; renderNews(); };
+    const c = $('#n-cancel'); if (c) c.onclick = () => { editing = null; draft = null; renderNews(); };
+    renderAnn();
     document.querySelectorAll('[data-nid]').forEach(card => {
       const id = card.dataset.nid;
       card.querySelector('[data-act=img]').onclick = () => showImg(N.find(n => n.id === id));
       card.querySelector('[data-act=edit]').onclick = () => { editing = id; nMsg = null; renderNews(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
       card.querySelector('[data-act=del]').onclick = async () => { if (!confirm('Delete this news item? This cannot be undone.')) return; const r = await post('news/delete', { id }); nMsg = { t: r.ok ? 'Deleted.' : 'Could not delete.', ok: r.ok }; loadNews(); };
     });
+  }
+
+
+  // ---------------------------------------------------------------- announce a game: pick a played game, then write the news, or make its score image or a photo of one player
+  async function loadAnn(md) {
+    const { ok, body } = await api('matchday' + (md ? '?md=' + md : ''));
+    if (ok) { A = body; aGi = 0; } else A = { results: [], matchdays: [] };
+    renderAnn();
+  }
+  const winner = r => r.home_score > r.away_score ? { w: r.home, wn: r.home_name, l: r.away, ln: r.away_name, ws: r.home_score, ls: r.away_score, away: false } : { w: r.away, wn: r.away_name, l: r.home, ln: r.home_name, ws: r.away_score, ls: r.home_score, away: true };
+  function gameDraft(r) {
+    const x = winner(r), m = r.mvp, line = m ? `${m.pts} pts, ${m.reb} reb, ${m.ast} pd` : '', lineEn = m ? `${m.pts} pts, ${m.reb} reb, ${m.ast} ast` : '';
+    const nm = n => String(n || '').toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
+    return { label: 'result', date: A.date || today(), team: x.w, game: r.game_id || '',
+      match: { home: r.home, away: r.away, home_name: r.home_name, away_name: r.away_name, home_score: r.home_score, away_score: r.away_score, md: A.md },
+      title: `${x.wn} ${x.away ? 's’impose chez' : 's’impose face à'} ${x.ln} (${x.ws}–${x.ls})`, title_en: `${x.wn} ${x.away ? 'win at' : 'beat'} ${x.ln} ${x.ws}–${x.ls}`,
+      body: `Journée ${A.md}.${m ? ` ${nm(m.name)} élu homme du match : ${line}.` : ''}`, body_en: `Matchday ${A.md}.${m ? ` ${nm(m.name)} is the game’s MVP: ${lineEn}.` : ''}` };
+  }
+  function renderAnn() {
+    const box = $('#annbox'); if (!box) return;
+    if (!A) { box.innerHTML = '<div class="mut small" style="margin-bottom:10px">Loading the games…</div>'; loadAnn(); return; }
+    const rs = A.results || [];
+    box.innerHTML = `<div class="card" style="margin-bottom:12px"><b>📣 Announce a game</b> <span class="mut small">a result for the news (“JSK beat USM”), a score image, or a photo of a player with his stats</span>
+      ${rs.length ? `<div class="row" style="margin-top:8px"><select id="a-md">${A.matchdays.map(m => `<option value="${m.matchday}" ${m.matchday === A.md ? 'selected' : ''}>J${m.matchday}${m.date ? ' · ' + m.date : ''}</option>`).join('')}</select>
+        <select id="a-g">${rs.map((r, i) => `<option value="${i}" ${i === aGi ? 'selected' : ''}>${esc(r.home)} ${r.home_score}–${r.away_score} ${esc(r.away)}</option>`).join('')}</select></div>
+        <div class="row" style="margin-top:8px"><button id="a-news">✍ Write the news</button><button id="a-score">🖼 Score image</button><button id="a-photo">📸 Player photo image</button></div>
+        <div id="spotbox"></div>` : '<div class="mut small" style="margin-top:6px">No played games yet.</div>'}</div>`;
+    if (!rs.length) return;
+    $('#a-md').onchange = e => loadAnn(+e.target.value);
+    $('#a-g').onchange = e => { aGi = +e.target.value; };
+    $('#a-news').onclick = () => { draft = gameDraft(rs[aGi]); editing = null; imgItem = null; nMsg = { t: 'Filled in from the game: check the text, then publish.', ok: true }; renderNews(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+    $('#a-score').onclick = () => { imgItem = { ...gameDraft(rs[aGi]), id: 'game' }; window.NewsImg.mount($('#nimgbox'), imgItem, () => { imgItem = null; }); $('#nimgbox').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
+    $('#a-photo').onclick = () => { window.Spotlight.mount($('#spotbox'), rs[aGi], A.md); $('#spotbox').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); };
   }
 
   window.loadGames = loadGames; window.loadNews = loadNews;

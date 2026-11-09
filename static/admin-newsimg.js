@@ -45,6 +45,31 @@
     }
   }
 
+  function pillAt(ctx, label, x, y, col, center) {
+    ctx.font = `900 26px ${FONT}`; ctx.letterSpacing = '3px'; const pw = ctx.measureText(label).width + 52; ctx.letterSpacing = '0px';
+    const px = center ? x - pw / 2 : x; ctx.fillStyle = col; rr(ctx, px, y, pw, 52, 26); ctx.fill(); txt(ctx, label, px + pw / 2, y + 36, { size: 26, weight: 900, color: '#10131c', align: 'center', space: '3px' });
+  }
+  // The score card of a game: both clubs, the score, the headline and the game MVP's line
+  async function scoreBody(ctx, W, H, item, st, col, title, body) {
+    const m = item.match, wide = st.fmt === 'wide', lang = st.lang, hw = m.home_score > m.away_score, sq = st.fmt === 'square', D = wide ? 190 : sq ? 220 : 270;
+    const dy = wide ? 0 : sq ? 24 : 120;                                // the block sits in the middle of the page
+    pillAt(ctx, `${LBL[lang][item.label] || LBL[lang].result}${m.md ? ' · ' + (lang === 'fr' ? 'J' : 'MD') + m.md : ''}`, W / 2, wide ? 118 : 150 + dy, col, true);
+    const ly = wide ? 325 : (sq ? 345 : 390) + dy, lx = wide ? 190 : W * 0.26;
+    await K.logo(ctx, m.home, lx - D / 2, ly - D / 2, D); await K.logo(ctx, m.away, W - lx - D / 2, ly - D / 2, D);
+    const ny = ly + D / 2 + (wide ? 42 : 46), tw = wide ? 300 : 420;
+    txt(ctx, m.home_name, lx, ny, { size: 32, weight: 800, align: 'center', maxW: tw }); txt(ctx, m.away_name, W - lx, ny, { size: 32, weight: 800, align: 'center', maxW: tw });
+    const ss = wide ? 150 : sq ? 130 : 170, sb = wide ? 345 : ny + 40 + ss * 0.74;
+    txt(ctx, String(m.home_score), W / 2 - 46, sb, { size: ss, weight: 900, color: hw ? C.txt : C.mut, align: 'right' });
+    txt(ctx, '–', W / 2, sb - ss * 0.12, { size: ss * 0.5, weight: 700, color: C.mut, align: 'center' });
+    txt(ctx, String(m.away_score), W / 2 + 46, sb, { size: ss, weight: 900, color: hw ? C.mut : C.txt });
+    ctx.fillStyle = col; const wx = hw ? lx : W - lx; rr(ctx, wx - 70, ly + D / 2 + (wide ? 56 : 62), 140, 6, 3); ctx.fill();   // a bar under the winner
+    const cw = wide ? W - 2 * (190 + D / 2 + 40) : W - 140, top = wide ? 390 : sb + 56, bottom = H - 78 - 30;
+    const bl = st.text && body ? wrap(ctx, body, cw, 30, 500).slice(0, wide ? 1 : 2) : [], bh = bl.length * 42;
+    const head = fit(ctx, title, cw, wide ? 3 : 3, Math.max(100, bottom - top - bh - 18), wide ? 40 : 60, 34, 900, 1.15);
+    head.lines.forEach((l, i) => txt(ctx, l, W / 2, top + head.size * (1.15 * i + 0.9), { size: head.size, weight: 900, align: 'center' }));
+    bl.forEach((l, i) => txt(ctx, l, W / 2, top + head.h + 18 + 30 + i * 42, { size: 30, weight: 500, color: C.mut, align: 'center' }));
+  }
+
   async function draw(cv, item, st) {
     const [W, H] = FORMATS[st.fmt], wide = st.fmt === 'wide', lang = st.lang, col = COL[item.label] || C.acc, { title, body } = pick(item, lang);
     cv.width = W; cv.height = H; const ctx = cv.getContext('2d');
@@ -59,6 +84,7 @@
     txt(ctx, 'tunisiabasket.com', 48, H - 36, { size: 26, weight: 800, color: C.acc });
     txt(ctx, dateText(item.date, lang), W - 48, H - 36, { size: 22, color: C.mut, align: 'right' });
 
+    if (st.style === 'score' && item.match) { await scoreBody(ctx, W, H, item, st, col, title, body); return; }
     // the picture, then the text column (centred under it; to its right on the wide format)
     const D = wide ? 280 : st.fmt === 'square' ? 230 : 320, mcx = wide ? 70 + D / 2 + 10 : W / 2, mcy = wide ? H / 2 + 6 : 130 + D / 2 + 10;
     await media(ctx, item, mcx, mcy, D, col);
@@ -87,10 +113,10 @@
   }
 
   function mount(el, item, onClose) {
-    const st = { fmt: 'portrait', lang: 'fr', text: true }; let busy = false, again = false;
+    const st = { fmt: 'portrait', lang: 'fr', text: true, style: item.match ? 'score' : 'headline' }; let busy = false, again = false;
     el.innerHTML = `<div class="card" style="margin:12px 0;border-color:var(--acc)"><div class="row"><b>🖼 Facebook image</b><span class="sp"></span>
         <select id="ni-fmt">${Object.entries(FORMATS).map(([k, v]) => `<option value="${k}">${v[2]}</option>`).join('')}</select>
-        <select id="ni-lang"><option value="fr">Français</option><option value="en">English</option></select>
+        ${item.match ? `<select id="ni-style"><option value="score">Score card</option><option value="headline">Headline card</option></select>` : ''}<select id="ni-lang"><option value="fr">Français</option><option value="en">English</option></select>
         <label class="small mut"><input type="checkbox" id="ni-body" checked> show the text</label><button id="ni-close" title="Close">✕</button></div>
       <div class="row" style="margin:10px 0"><button class="primary" id="ni-dl" disabled>⬇ Download PNG</button><span class="mut small">Ready to post. Drawn from the news as it is now.</span><span id="ni-err" class="small" style="color:var(--bad)"></span></div>
       <canvas id="ni-cv" width="1080" height="1350" style="width:100%;max-width:560px;height:auto;border-radius:14px;border:1px solid var(--line);display:block"></canvas>
@@ -103,6 +129,7 @@
     }
     q('#ni-fmt').onchange = e => { st.fmt = e.target.value; run(); };
     q('#ni-lang').onchange = e => { st.lang = e.target.value; q('#ni-cap').value = postText(item, st.lang); run(); };
+    if (q('#ni-style')) q('#ni-style').onchange = e => { st.style = e.target.value; run(); };
     q('#ni-body').onchange = e => { st.text = e.target.checked; run(); };
     q('#ni-close').onclick = () => { el.innerHTML = ''; if (onClose) onClose(); };
     q('#ni-dl').onclick = () => cv.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `tunisia-basket-news-${(item.id || 'draft')}-${st.fmt}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, 'image/png');

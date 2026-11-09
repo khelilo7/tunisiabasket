@@ -115,6 +115,21 @@ def load_notes():
 
 
 # ---------------------------------------------------------------- news
+def _clean_match(m):
+    """The game a news item announces: both clubs and the score, kept on the item so its card and its image need no other lookup."""
+    if not isinstance(m, dict):
+        return None
+    home, away = str(m.get("home") or "").strip().upper(), str(m.get("away") or "").strip().upper()
+    try:
+        hs, as_, md = int(m.get("home_score")), int(m.get("away_score")), int(m.get("md") or 0)
+    except (TypeError, ValueError):
+        raise ValueError("The game needs both scores.")
+    if not (re.fullmatch(r"[A-Z0-9]{2,6}", home) and re.fullmatch(r"[A-Z0-9]{2,6}", away)) or not (0 <= hs <= 300 and 0 <= as_ <= 300):
+        raise ValueError("Unknown game.")
+    return {"home": home, "away": away, "home_name": str(m.get("home_name") or home).strip()[:60], "away_name": str(m.get("away_name") or away).strip()[:60],
+            "home_score": hs, "away_score": as_, "md": md or None}
+
+
 def _clean_news(b):
     label = str(b.get("label") or "info")
     title, body = str(b.get("title") or "").strip(), str(b.get("body") or "").strip()
@@ -131,7 +146,10 @@ def _clean_news(b):
         raise ValueError("Unknown player.")
     if player:                                   # a player brings his club
         team = player.rsplit("-", 1)[0].upper()
-    return {"label": label, "title": title, "body": body, "title_en": str(b.get("title_en") or "").strip()[:140], "body_en": str(b.get("body_en") or "").strip()[:2000],
+    game = str(b.get("game") or "").strip()
+    if game and not re.fullmatch(r"[\w.:-]{1,80}", game):
+        raise ValueError("Unknown game.")
+    return {"label": label, "title": title, "body": body, "game": game, "match": _clean_match(b.get("match")), "title_en": str(b.get("title_en") or "").strip()[:140], "body_en": str(b.get("body_en") or "").strip()[:2000],
             "date": _iso(b.get("date") or datetime.now().date().isoformat()), "pinned": bool(b.get("pinned")),
             "team": team, "player": player, "player_name": str(b.get("player_name") or "").strip()[:60] if player else ""}
 

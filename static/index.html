@@ -245,6 +245,7 @@
   .nrow p.nbody { margin:0; color:var(--mut); font-size:14px; white-space:pre-line; } .nrow:not(.open) p.nbody { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
   .nmore { background:none; border:0; padding:6px 0 0; font:inherit; font-size:12px; font-weight:800; color:var(--acc); cursor:pointer; }
   .nrow.lead { padding:22px 24px 22px 20px; gap:24px; } .nrow.lead h3 { font-size:26px; margin:8px 0 6px; } .nrow.lead p.nbody { font-size:15.5px; }
+  .nscore { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:2px 0 6px; font-size:15px; } .nscore .w { color:var(--acc); font-weight:800; } .nscore a { margin-left:6px; font-size:12.5px; font-weight:700; }
   .nhero p { margin:-6px 0 0; max-width:60ch; }
   .nchips { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 18px; } .nchip { padding:6px 14px; border-radius:99px; border:1px solid var(--line); background:var(--card); color:var(--mut); font:inherit; font-size:13px; font-weight:700; cursor:pointer; } .nchip:hover { color:var(--txt); } .nchip.on { background:var(--acc); border-color:var(--acc); color:#10131c; }
   @media (max-width:560px) { .nrow { gap:12px; padding:12px 12px 12px 10px; } .nrow.lead { padding:16px 14px 16px 12px; } .nrow.lead h3 { font-size:21px; } }
@@ -304,7 +305,7 @@ const FR = {
   'Best shooters (FG%)': 'Meilleurs shooteurs (TIR%)', 'Most efficient (PIR)': 'Plus efficaces (PIR)', 'per game': 'par match',
   'games played': 'matchs joués', 'avg points per team': 'points par équipe et par match', 'players': 'joueurs',
   'Phase 1 MVP': 'MVP de la phase 1', 'Race leader': 'Leader de la course', 'Vote now': 'Voter maintenant', 'See the race': 'Voir la course', 'Phase 1': 'Phase 1',
-  'Featured': 'À la une', 'News': 'Actualités', 'All news': 'Toutes les actualités', 'Read more': 'Lire la suite', 'Show less': 'Réduire', 'All': 'Tout', 'Injuries, transfers, official decisions: everything that moves the league.': 'Blessures, transferts, décisions officielles : tout ce qui fait bouger le championnat.', 'No news yet.': 'Pas encore d’actualité.', 'Official': 'Officiel', 'Injury': 'Blessure', 'Transfer': 'Transfert', 'Result': 'Résultat', 'Info': 'Info', 'Interview': 'Interview',
+  'Featured': 'À la une', 'News': 'Actualités', 'All news': 'Toutes les actualités', 'Read more': 'Lire la suite', 'Box score': 'Feuille de match', 'Show less': 'Réduire', 'All': 'Tout', 'Injuries, transfers, official decisions: everything that moves the league.': 'Blessures, transferts, décisions officielles : tout ce qui fait bouger le championnat.', 'No news yet.': 'Pas encore d’actualité.', 'Official': 'Officiel', 'Injury': 'Blessure', 'Transfer': 'Transfert', 'Result': 'Résultat', 'Info': 'Info', 'Interview': 'Interview',
   'All players': 'Tous les joueurs', 'Box score missing? Send it to us on Facebook': 'Feuille de match manquante ? Envoyez-la-nous sur Facebook', 'A tip, a correction, a missing result?': 'Une info, une correction, un résultat manquant ?',
   'Write to us on our Facebook page: we read everything.': 'Écrivez-nous sur notre page Facebook : nous lisons tout.', 'Contact us on Facebook': 'Nous contacter sur Facebook',
   'counted, and final': 'comptée, et définitive', 'Tap your winner to predict': 'Touchez le vainqueur pour pronostiquer', 'Predictions': 'Pronostics', 
@@ -519,10 +520,11 @@ const NEWS_ICON = { official: '📢', injury: '🩹', transfer: '🔁', result: 
 const nMedia = (n, px) => n.player ? face({ photo: n.photo, name: n.player_name || '', team: n.team }, px)
   : n.team ? `<span class="nmedia tm" style="width:${px}px;height:${px}px"><img src="/img/teams/${esc(n.team)}.png" alt="" onerror="this.remove()"></span>`
   : `<span class="nmedia" style="width:${px}px;height:${px}px;font-size:${Math.round(px * .44)}px">${NEWS_ICON[n.label] || '📰'}</span>`;
+const nScore = n => { const m = n.match, hw = m.home_score > m.away_score; return `<div class="nscore">${logo(m.home, 22)}<span class="${hw ? 'w' : ''}">${esc(m.home)} <b>${m.home_score}</b></span><span class="mut">–</span><span class="${hw ? '' : 'w'}"><b>${m.away_score}</b> ${esc(m.away)}</span>${logo(m.away, 22)}${n.game ? `<a href="${gameUrl(n.game)}">${_('Box score')} →</a>` : ''}</div>`; };
 const newsCard = (n, lead) => {
   const body = nBody(n), long = body.length > 150 || body.split('\n').length > 2, px = innerWidth < 560 ? (lead ? 72 : 52) : (lead ? 116 : 72);
   return `<article class="card nrow nl-${esc(n.label)}${lead ? ' lead' : ''}" data-l="${esc(n.label)}">${nMedia(n, px)}<div class="nmain"><div class="nh"><span class="lbl lb-${esc(n.label)}">${_(NEWS_LABEL[n.label] || 'Info')}</span><span class="mut small">${fmtDate(n.date)}</span>${n.pinned ? '<span class="pill acc">📌</span>' : ''}</div>
-  <h3>${esc(nTitle(n))}</h3>${body ? `<p class="nbody">${esc(body)}</p>${long ? `<button class="nmore" data-nmore>${_('Read more')}</button>` : ''}` : ''}</div></article>`;
+  <h3>${esc(nTitle(n))}</h3>${n.match ? nScore(n) : ''}${body ? `<p class="nbody">${esc(body)}</p>${long ? `<button class="nmore" data-nmore>${_('Read more')}</button>` : ''}` : ''}</div></article>`;
 };
 document.addEventListener('click', e => {
   const m = e.target.closest('[data-nmore]'), c = e.target.closest('[data-nchip]');

@@ -148,6 +148,9 @@ below it.
   calendar and latest games update at once) with an optional note and up to four stat lines; a full box score uploaded later takes over. Files: `data/schedule.json`, `data/result_notes.json`.
 - **📰 News**: a title, text, a label (Official, Injury, Transfer, Result, Info, Interview), a date, pin on top, and an optional English version. Shown on the home page (latest four) and on the
   News page (horizontal cards, a lead story, filter by label, “Read more”). Each item can carry a player (photo + club badge) or a club logo as its picture.
+  **📣 Announce a game** (top of the News tab): pick a played game, then ✍ *Write the news* (a result item filled in with the score, the game MVP’s line and a box-score link),
+  🖼 *Score image* (both clubs, the score, the headline), or 📸 *Player photo image*: choose a player of that game, upload a recent photo (it becomes the background, nothing is uploaded to the server),
+  type a free headline (“Homme du match”, “Il a dominé”…), tick the stat tiles, place the photo (zoom, sliders or drag), download the PNG and copy the post text.
   **🖼 Facebook image** (on each item, or from the form before publishing): a ready-to-post PNG (portrait, square or wide, French or English) and the post text to copy. File: `data/news.json`. All three files live in the data folder: kept across deployments and in the backups.
 - **Facebook**: the page link is in the footer, on the home page and the news page, with a discreet invitation to send missing box scores (footer line, and under results without a box score).
 
