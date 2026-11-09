@@ -819,7 +819,7 @@ function gameCard(g) {
   const [a, b] = g.teams, STL = { pts: 'PTS', reb: 'REB', ast: H('AST'), stl: H('STL'), blk: H('BLK') };
   const inner = `<div class="mut" style="font-size:12px">${g.date_approx ? esc(g.matchday || '') : (g.date ? fmtDate(g.date) : '') + (g.time ? ' · ' + esc(g.time) : '') + ' · ' + esc(g.matchday || '')}</div>
     <div class="match"><span class="${a.points > b.points ? 'win' : 'lose'} tn">${logo(a.code, 26)}${esc(a.code)}</span><b>${a.points} – ${b.points}</b><span class="${b.points > a.points ? 'win' : 'lose'} tn">${esc(b.code)}${logo(b.code, 26)}</span></div>
-    ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}`;
+    ${g.mvp ? `<div class="mut" style="font-size:13px;margin-top:6px"><span class="pill mvp">MVP</span> ${esc(title(g.mvp.name))} · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}${g.partial ? `<div class="mut" style="font-size:12px;margin-top:6px">${_('Partial box score')}</div>` : ''}`;
   if (g.id) return `<a class="card" href="${gameUrl(g.id)}">${inner}</a>`;
   const lines = (g.players || []).map(p => `<div class="mut" style="font-size:13px;margin-top:4px">⭐ <b style="color:var(--txt)">${esc(title(p.name))}</b>${p.team ? ' · ' + esc(p.team) : ''} · ${Object.keys(STL).filter(k => p[k] != null).map(k => `${p[k]} ${STL[k]}`).join(', ')}</div>`).join('');
   return `<div class="card">${inner}${g.note ? `<div class="mut" style="font-size:13px;margin-top:6px">${esc(g.note)}</div>` : ''}${lines}

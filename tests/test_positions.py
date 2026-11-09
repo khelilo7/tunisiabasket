@@ -36,6 +36,8 @@ for code in stats.load_official()["teams"]:
 games = c.get("/api/games").get_json()["games"]
 checked = 0
 for gm in games:
+    if gm.get("partial"):
+        continue                                   # a one-team sheet has no lineups (no minutes, no starters)
     g = c.get("/api/games/" + gm["id"]).get_json()
     for code, l in g["lineups"].items():
         checked += 1

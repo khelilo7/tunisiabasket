@@ -500,12 +500,14 @@ def build(season=None, keep_hidden=False):
             "standings": table, "top_teams": sorted(top, key=lambda c: rank[c]) if table else []}
 
 
-def box_counts(games):
-    """How many box scores we have per team (the official table covers every game)."""
+def box_counts(games, partials=()):
+    """How many box scores we have per team (the official table covers every game). A one-team sheet counts for the team it covers only."""
     c = Counter()
     for g in games:
         for t in g["teams"]:
             c[t["code"]] += 1
+    for g in partials:
+        c[g["recorded"]] += 1
     return c
 
 

@@ -59,9 +59,8 @@ Only the admin can upload, save data or run a sync; everything else in the app i
 
 ## One-team sheets (assets/partial_games.json)
 Sometimes the only record of a game is a hand-kept sheet for ONE team (no minutes, turnovers, fouls, +/-, nothing for the opponent): J1 ES Goulette 68-80 Club Africain is one.
-It is **not** a box score: it never enters the games list, the standings, the home page, the team averages, the MVP race or the fan vote, so none of those numbers move.
-What it does: each player listed gets one row in his game log (marked "Partial box score"), the game has its own match page (linked from the two teams' pages), and his
-averages count it for points, rebounds, assists, steals, blocks and shooting. Anything the sheet does not give (minutes, turnovers, fouls, +/-, PIR, rating) stays **unknown, never 0**, and
+It is **not** a full box score: it is listed in the games list as "Partial box score", counts in the team's "Box scores" column and has its own match page (linked from the two teams' pages), but it never enters the standings, the team averages or ratings, and it gives no game MVP.
+Each player listed gets one row in his game log, and his averages (player page, leaders, MVP race) count it for points, rebounds, assists, steals, blocks and shooting; the race still ranks by PIR and impact, which come only from the games where they are known. Anything the sheet does not give (minutes, turnovers, fouls, +/-, PIR, rating) stays **unknown, never 0**, and
 is averaged over the games where it is known. If a real box score of the same game is uploaded later, it replaces the sheet automatically (no double counting).
 To add one: a game in `assets/partial_games.json` (id, matchday, home, away, `recorded` = the team on the sheet, date, players with number, name and the counted stats; attempts only
 where the sheet proves them) or in `data/partial_games.json` (live data). It is ignored unless an official result for that matchday and pair exists. `tests/test_partial_game.py` checks all of this.

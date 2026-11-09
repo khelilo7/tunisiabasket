@@ -387,7 +387,7 @@ def sitemap_xml():
         entries.append(("news", None))
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]
-    entries += [("game", g["id"]) for g in d["games"]]
+    entries += [("game", g["id"]) for g in [*d["games"], *d["partials"]]]
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">']
     for page, arg in entries:

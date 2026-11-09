@@ -124,7 +124,7 @@ def _phase_summary():
 def overview():
     d = stats.build(request.args.get("season"))
     pool = [p for p in d["players"] if p["mvp_eligible"]]
-    counts = stats.box_counts(d["games"])
+    counts = stats.box_counts(d["games"], d["partials"])
     return jsonify(
         season=d["season"], seasons=d["seasons"], games=len(d["games"]), players=len(d["players"]),
         mvp=({**slim(pool[0]), "photo": stats.load_photos().get(pool[0]["id"])} if pool else None),
@@ -225,10 +225,11 @@ def player(pid):
 @app.get("/api/games")
 def games():
     d = stats.build(request.args.get("season"))
+    allg = sorted([*d["games"], *d["partials"]], key=lambda g: (g["date"], g["id"]))      # one-team sheets are listed too, marked partial
     return jsonify(season=d["season"], games=[{
-        "id": g["id"], "date": g["date"], "date_approx": g.get("date_approx"), "matchday": g.get("matchday"), "mvp": g["mvp"],
+        "id": g["id"], "date": g["date"], "date_approx": g.get("date_approx"), "matchday": g.get("matchday"), "mvp": g["mvp"], "partial": bool(g.get("partial")),
         "teams": [{"code": t["code"], "name": t["name"], "points": t["points"], "won": t["won"]} for t in g["teams"]]}
-        for g in reversed(d["games"])])
+        for g in reversed(allg)])
 
 
 @app.get("/api/games/<gid>")

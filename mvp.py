@@ -199,9 +199,9 @@ def _race_data(phase: int, keep=()):
     `keep` = players frozen on the ballot: they stay in the rows even if they no longer meet the qualification rules."""
     d = stats.build()
     lo, hi = _phase_range(phase)
-    gid = {g["id"]: _md(g) for g in d["games"]}
+    gid = {g["id"]: _md(g) for g in [*d["games"], *d["partials"]]}               # a one-team sheet is a game of its team's players too
     in_phase = {i for i, m in gid.items() if m and lo <= m <= hi}
-    box = Counter(t["code"] for g in d["games"] if g["id"] in in_phase for t in g["teams"])
+    box = stats.box_counts([g for g in d["games"] if g["id"] in in_phase], [g for g in d["partials"] if g["id"] in in_phase])
     played = {r["code"]: min(PHASE_LEN, max(0, r["j"] - (phase - 1) * PHASE_LEN)) for r in d["standings"]}
     top = set(d["top_teams"])
     rows = []
@@ -213,13 +213,15 @@ def _race_data(phase: int, keep=()):
         avail = sum(max(box[c], played.get(c, 0)) for c in p["teams"])
         need = max(1, math.ceil(stats.QUALIFY_SHARE * avail))
         n = len(log)
-        mins = sum(r["min"] for r in log) / n
+        known = lambda k: [r[k] for r in log if r.get(k) is not None]       # a sheet row does not know minutes, PIR or impact: averages use the games where they are known
+        mins = sum(known("min")) / len(known("min")) if known("min") else 0.0
         if (n < need or mins < stats.MIN_MINUTES_FOR_RANKING or (top and p["team"] not in top)) and p["id"] not in keep:
             continue
-        avg = lambda k: round(sum(r[k] for r in log) / n, 1)
+        avg = lambda k: round(sum(known(k)) / len(known(k)), 1) if known(k) else 0.0
         by_md = defaultdict(list)
         for r in log:
-            by_md[gid[r["game_id"]]].append(r["impact"])
+            if r.get("impact") is not None:
+                by_md[gid[r["game_id"]]].append(r["impact"])
         rows.append({"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"], "pos": p["pos"], "gp": n, "need": need, "photo": photos.get(p["id"]),
                      "pts": avg("pts"), "reb": avg("reb"), "ast": avg("ast"), "stl": avg("stl"), "blk": avg("blk"), "pir": avg("pir"),
                      "impact": avg("impact"), "mvp_games": sum(r["is_mvp"] for r in log), "wins": sum(r["won"] for r in log),

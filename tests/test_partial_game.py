@@ -46,11 +46,16 @@ off = next(r for r in stats.load_official()["results"] if r["matchday"] == pg["m
 official = {off["home"]: off["home_score"], off["away"]: off["away_score"]}
 check(sum(p["pts"] for p in pg["players"]) == official[pg["recorded"]], "the players add up to the official score of their team")
 
-# 2. it is a game page, not a box score of the site
+# 2. it has its own match page and is listed as a partial game; it is not a full box score of the site
 check(len(d["partials"]) == len(sheet), "build() exposes the one-team game")
 check(all(g["id"] != pg["id"] for g in d["games"]), "a one-team game never enters build()['games']")
 c = app.app.test_client()
-check(all(g["id"] != pg["id"] for g in c.get("/api/games").get_json()["games"]), "not in the games list")
+listed = [g for g in c.get("/api/games").get_json()["games"] if g["id"] == pg["id"]]
+check(len(listed) == 1 and listed[0]["partial"] is True and listed[0]["mvp"] is None, "listed once in the games list, marked partial, no game MVP")
+ov = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
+with without_sheets():
+    ov0 = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
+check(ov[pg["recorded"]] == ov0[pg["recorded"]] + 1 and all(ov[k] == ov0[k] for k in ov if k != pg["recorded"]), "box scores column: +1 for the team on the sheet only")
 r = c.get("/api/games/" + pg["id"])
 v = r.get_json() if r.status_code == 200 else {}
 check(r.status_code == 200 and v.get("partial") is True, "its match page exists and says it is partial")
@@ -66,16 +71,22 @@ check(c.get("/match/" + pg["id"]).status_code == 200 and c.get("/en/game/" + pg[
 tv = {x["matchday"]: x for x in stats.team_view(pg["recorded"])["results"]}
 check(tv[pg["matchday"]]["game_id"] == pg["id"], "the team page links the result to the match page")
 
-# 3. nothing else moves: standings, games, MVP race, fan-vote ballot candidates, home page, all other players
+# 3. nothing else moves: standings, full games, team averages, ratings, every player who is not on the sheet
 with without_sheets():
     base = stats.build()
-    base_race = json.dumps(mvp._race_data(1)[0], sort_keys=True, default=str)
+    base_rows = mvp._race_data(1)[0]
     base_games = json.dumps(base["games"], sort_keys=True, default=str)
     base_stand = base["standings"]
     base_ts = stats.team_stats()
 check(json.dumps(d["games"], sort_keys=True, default=str) == base_games, "full box scores unchanged")
 check(d["standings"] == base_stand, "standings unchanged")
-check(json.dumps(mvp._race_data(1)[0], sort_keys=True, default=str) == base_race, "phase MVP race unchanged")
+rows = mvp._race_data(1)[0]
+check([r["id"] for r in rows] == [r["id"] for r in base_rows], "phase MVP race: same candidates, same order")
+for r, b in zip(rows, base_rows):
+    if r["id"] in {p["pid"] for p in by[pg["recorded"]]["players"]}:
+        check(r["gp"] == b["gp"] + 1 and r["pir"] == b["pir"] and r["impact"] == b["impact"], f"MVP race {r['id']}: one more game, PIR and impact still from known games")
+    else:
+        check(r == b, f"MVP race {r['id']} unchanged")
 ts = stats.team_stats()
 for a, b in zip(ts["teams"], base_ts["teams"]):
     a, b = {k: v for k, v in a.items() if k != "top_scorer"}, {k: v for k, v in b.items() if k != "top_scorer"}

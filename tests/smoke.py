@@ -18,7 +18,7 @@ for path, want in checks.items():
 if c.post("/api/sync").status_code != 401:
     bad += 1
     print("FAIL anonymous POST /api/sync must be 401")
-gid = c.get("/api/games").get_json()["games"][0]["id"]
+gid = next(g for g in c.get("/api/games").get_json()["games"] if not g.get("partial"))["id"]
 if "lineups" not in c.get("/api/games/" + gid).get_json():
     bad += 1
     print("FAIL game page data has no lineups")
