@@ -28,4 +28,15 @@ names = lambda t: set(re.findall(r"^\s*(\w+):\s", t, flags=re.M)) | set(re.finda
 diff = (names(en) ^ names(fr)) - {"en", "fr"}
 if diff:
     print("  FAIL sentence builders differ between languages:", sorted(diff))
+# the quiet stat notes exist in both languages for every key, and every label they attach to maps to a note
+tips = script[script.index("const TIPS = {"): script.index("const TIPKEY")]
+en_t, fr_t = tips.split("  fr: {")
+tk = lambda t: set(re.findall(r"(\w+): \['", t))
+if tk(en_t) != tk(fr_t) or not tk(en_t):
+    print("  FAIL stat notes differ between languages:", sorted(tk(en_t) ^ tk(fr_t)))
+    diff = diff | {"tips"}
+keys = set(re.findall(r"'?[^',{]+'?: '(\w+)'", script[script.index("const TIPKEY"): script.index("function decorateTips")]))
+if not keys <= tk(en_t):
+    print("  FAIL a stat label points to a missing note:", sorted(keys - tk(en_t)))
+    diff = diff | {"tipkey"}
 sys.exit(1 if missing or diff else 0)

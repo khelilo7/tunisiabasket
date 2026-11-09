@@ -234,6 +234,9 @@
   .pgt:not(:disabled):hover { border-color:var(--acc); transform:translateY(-2px); } .pgt:disabled { cursor:default; opacity:.7; } .pgt.on { border-color:var(--acc); opacity:1; background:var(--mvp-in); }
   .pgt b { font-size:14px; text-align:center; } .pgt small { color:var(--mut); }
   .pbar { display:flex; gap:3px; height:26px; border-radius:8px; overflow:hidden; font-size:13px; font-weight:800; } .pbar span { display:grid; place-items:center; background:var(--track); color:var(--txt); } .pbar span.mine { background:var(--acc); color:#111; }
+  .tip { border-bottom:1px dotted color-mix(in srgb, var(--mut) 65%, transparent); cursor:help; } .ring.tip { border-bottom:0; }
+  #tipbox { position:fixed; z-index:50; max-width:270px; padding:9px 12px; border-radius:10px; background:var(--card); color:var(--txt); border:1px solid var(--line); box-shadow:0 8px 28px rgba(0,0,0,.35); font:500 12.5px/1.45 inherit; text-transform:none; letter-spacing:0; text-align:left; pointer-events:none; opacity:0; transform:translateY(4px); transition:opacity .14s, transform .14s; }
+  #tipbox.on { opacity:1; transform:none; } #tipbox b { color:var(--acc); }
   .nlist { display:grid; gap:12px; } @media (min-width:1000px) { .nlist.two { grid-template-columns:1fr 1fr; } }
   .nrow { --lc:var(--acc); margin:0; position:relative; overflow:hidden; display:grid; grid-template-columns:auto 1fr; gap:16px; align-items:center; padding:14px 16px 14px 14px; border-left:5px solid var(--lc); }
   .nrow::before { content:''; position:absolute; inset:0; pointer-events:none; background:linear-gradient(90deg, color-mix(in srgb, var(--lc) 13%, transparent), transparent 60%); } .nrow > * { position:relative; }
@@ -297,8 +300,6 @@ const FR = {
   'Player stats only exist for games with a box score (last column).': 'Les statistiques des joueurs n’existent que pour les matchs avec feuille de match (dernière colonne).',
   'Back': 'Retour', 'Date': 'Date', 'Opp': 'Adv.', 'Opponent': 'Adversaire', 'Result': 'Résultat', 'Day': 'Journée', 'Score': 'Score',
   'Season': 'Saison', 'Form (PIR per game)': 'Forme (PIR par match)', 'Game log': 'Journal des matchs', 'Need at least 2 games for a trend.': 'Il faut au moins 2 matchs pour une tendance.',
-  'Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.':
-    'Note = indice de performance FIBA (PTS+REB+PD+INT+CTR+FP − tirs manqués − BP − fautes), ramené à 0–99. MVP du match = meilleur PIR + 2 dans l’équipe gagnante uniquement. MVP de la saison = meilleure moyenne parmi les joueurs des 4 premières équipes.',
   'Top 10': 'Top 10', 'Close': 'Fermer', 'Only players with enough games are ranked.': 'Seuls les joueurs avec assez de matchs sont classés.', 'All players, all stats': 'Tous les joueurs, toutes les stats',
   'League leaders': 'Leaders de la ligue', 'Top scorers': 'Meilleurs marqueurs', 'Top rebounders': 'Meilleurs rebondeurs', 'Top passers': 'Meilleurs passeurs',
   'Top ball stealers': 'Meilleurs intercepteurs', 'Top shot blockers': 'Meilleurs contreurs', 'Three-pointers made': 'Tirs à 3 points réussis',
@@ -879,7 +880,7 @@ async function player(ref) {
   <h2>${esc(f('avgTitle', p.gp))}</h2>
   <div class="grid g4">${[['PTS', p.pts], ['REB', p.reb], [H('AST'), p.ast], [H('STL'), p.stl], [H('BLK'), p.blk], [H('TOV'), p.tov], ['MIN', p.min], ['+/-', signed(p.pm)],
       [H('FG%'), p.fg_pct], [H('3P%'), p.p3_pct], [H('FT%'), p.ft_pct], [H('TS%'), p.ts_pct], ['PIR', p.pir]].map(([l, v]) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-  <h2>${_('Form (PIR per game)')}</h2><div class="card">${spark(pts)}<div class="note">${_('Rating = FIBA Performance Index (PTS+REB+AST+STL+BLK+FD − misses − TOV − fouls), scaled 0–99. Game MVP = best PIR + 2 on the winning team only. Season MVP = best average among players of the top 4 teams.')}</div></div>
+  <h2>${_('Form (PIR per game)')}</h2><div class="card">${spark(pts)}</div>
   <h2>${_('Game log')}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Date')}</th><th class="l">${_('Opp')}</th><th>${_('Result')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
   ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}</td>
@@ -1087,7 +1088,56 @@ async function planning() {
 }
 
 // ---------------------------------------------------------------- wiring
+// Quiet explanations: the less obvious stat labels (PIR, rating, TS%, +/-, fouls drawn, game MVP) get a dotted underline; hovering (or tapping) one shows a short note.
+// Nothing is added to the page itself, so it never reads like text to study.
+const TIPS = {
+  en: { pir: ['PIR', 'FIBA Performance Index Rating: everything good a player does (points, rebounds, assists, steals, blocks, fouls drawn) minus misses, turnovers and fouls. One number for the whole contribution.'],
+        rating: ['Rating', 'The PIR rescaled from 0 to 99 so players are easy to compare: around 70 is a solid player, 90 and above is elite.'],
+        ts: ['TS%', 'True shooting %: scoring efficiency, counting 2-pointers, 3-pointers and free throws together. Above 55% is good.'],
+        pm: ['+/-', 'Plus/minus: how the team’s score moved, in points, while he was on the court.'],
+        fd: ['Fouls drawn', 'Fouls the opponent committed on him.'],
+        mvpg: ['Game MVP', 'The best PIR (+2 for a win) among the winning team’s players only.'] },
+  fr: { pir: ['PIR', 'Indice de performance FIBA : tout ce qu’un joueur apporte (points, rebonds, passes, interceptions, contres, fautes provoquées) moins les tirs manqués, balles perdues et fautes. Un seul chiffre pour toute sa contribution.'],
+        rating: ['Note', 'Le PIR ramené de 0 à 99 pour comparer facilement les joueurs : autour de 70, un joueur solide ; 90 et plus, l’élite.'],
+        ts: ['%TR', 'Pourcentage réel au tir : l’efficacité au scoring, 2 points, 3 points et lancers francs réunis. Au-dessus de 55 %, c’est bon.'],
+        pm: ['+/-', '+/- : l’évolution du score de l’équipe, en points, pendant que le joueur était sur le terrain.'],
+        fd: ['Fautes provoquées', 'Fautes commises par l’adversaire sur lui.'],
+        mvpg: ['MVP du match', 'Le meilleur PIR (+2 pour une victoire) parmi les joueurs de l’équipe gagnante uniquement.'] } };
+const TIPKEY = { PIR: 'pir', RTG: 'rating', NOTE: 'rating', 'TS%': 'ts', '%TR': 'ts', '+/-': 'pm', FD: 'fd', FP: 'fd', 'GAME MVP': 'mvpg', 'MVP DU MATCH': 'mvpg' };
+function decorateTips() {
+  const mark = (el, k) => { el.classList.add('tip'); el.dataset.tip = k; el.tabIndex = 0; };
+  document.querySelectorAll('#app th, #app .tile span, #app .stat span, #app .pill.mvp, #app .rtable th').forEach(el => {
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3) continue;
+      const m = n.textContent.match(/^(\s*)(\S.*?)(\s*[▲▼]?\s*)$/), k = m && TIPKEY[m[2].toUpperCase()];
+      if (!k) continue;
+      const sp = document.createElement('span'); sp.textContent = m[2]; mark(sp, k);
+      n.replaceWith(m[1], sp, m[3]); break;
+    }
+  });
+  document.querySelectorAll('#app .ring').forEach(el => mark(el, 'rating'));
+}
+(function tipBox() {
+  const box = document.createElement('div'); box.id = 'tipbox'; box.setAttribute('role', 'tooltip'); document.body.appendChild(box);
+  let timer = null;
+  const hide = () => { box.classList.remove('on'); clearTimeout(timer); };
+  const show = el => {
+    const t = (TIPS[LANG] || TIPS.en)[el.dataset.tip]; if (!t) return;
+    box.innerHTML = `<b>${esc(t[0])}</b> · ${esc(t[1])}`; box.style.left = '0px'; box.style.top = '0px'; box.classList.add('on');
+    const r = el.getBoundingClientRect(), w = box.offsetWidth, h = box.offsetHeight;
+    box.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + 'px';
+    box.style.top = (r.top - h - 10 > 8 ? r.top - h - 10 : r.bottom + 10) + 'px';
+    clearTimeout(timer); timer = setTimeout(hide, 6000);
+  };
+  document.addEventListener('mouseover', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) show(t); });
+  document.addEventListener('mouseout', e => { if (e.target.closest && e.target.closest('.tip')) hide(); });
+  document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) show(t); });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('.tip'); if (t && matchMedia('(hover: none)').matches) show(t); else hide(); }, true);
+  window.addEventListener('scroll', hide, { passive: true });
+})();
 function bind() {
+  decorateTips();
   document.querySelectorAll('[data-go]').forEach(el => el.onclick = e => { if (e.target.closest('a')) return; go(el.dataset.go); });
   document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => { const k = th.dataset.sort; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; route(true); });
   const qi = $('#q'); if (qi) { qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; route(true).then(() => { const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); }); }; }
