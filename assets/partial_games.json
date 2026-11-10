@@ -1,5 +1,5 @@
 {
-  "_note": "Games for which we only have a hand-kept sheet of ONE team. They never count as box scores (see stats.py, 'One-team box scores'): each listed player gets one row in his game log, stats the sheet does not give (minutes, turnovers, fouls, +/-) stay unknown instead of 0, and every average is taken over the games where the stat is known. Keys: id, matchday, home, away, recorded (the team on the sheet), date (date_approx if not certain), players with number, name, pts, fgm, fga, p3m, p3a, ftm, fta, oreb, dreb, ast, stl, blk. Attempts are only what the sheet proves (a '0 made, 0%' cell counts as no attempt). data/partial_games.json adds games of its own.",
+  "_note": "Games for which we only have a hand-kept sheet of ONE team. They never count as box scores (see stats.py, 'One-team box scores'): each listed player gets one row in his game log, stats the sheet does not give (minutes, turnovers, fouls, +/-) stay unknown instead of 0, and every average is taken over the games where the stat is known. Keys: id, matchday, home, away, recorded (the team on the sheet), date (date_approx if not certain), players with number, name, pts, fgm, fga, p3m, p3a, ftm, fta, oreb, dreb, ast, stl, blk. Attempts are only what the sheet proves (a '0 made, 0%' cell counts as no attempt). A sheet of only some players (points not adding up to the team score) gets no team total and no game MVP. A player's \"est\" lists the values that are estimated, not on the sheet (shown with ~). data/partial_games.json adds games of its own.",
   "games": [
     {
       "id": "p-j1-esg-ca",
@@ -21,6 +21,54 @@
         {"number": 6,  "name": "Achref Gannouni",      "pts": 6,  "fgm": 3, "fga": 6,  "p3m": 0, "p3a": 0, "ftm": 0, "fta": 0, "oreb": 1, "dreb": 2, "ast": 4, "stl": 0, "blk": 0},
         {"number": 2,  "name": "Mortadha Ben Taher",   "pts": 5,  "fgm": 2, "fga": 5,  "p3m": 1, "p3a": 3, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 2, "ast": 2, "stl": 1, "blk": 0},
         {"number": 31, "name": "Haythem Saada",        "pts": 4,  "fgm": 2, "fga": 4,  "p3m": 0, "p3a": 0, "ftm": 0, "fta": 0, "oreb": 1, "dreb": 3, "ast": 0, "stl": 0, "blk": 0}
+      ]
+    },
+    {
+      "id": "p-j1-css-esr",
+      "matchday": 1,
+      "home": "CSS",
+      "away": "ESR",
+      "recorded": "CSS",
+      "competition": "CHAMPIONNAT PRO A",
+      "date": "2026-09-28",
+      "date_approx": true,
+      "source": "Mohamed Abbassi's own season spreadsheet (one player only)",
+      "note": "Only Mohamed Abbassi (#21) is recorded. His points (28) and rebounds (0 offensive, 5 defensive) come from his sheet; every value marked as estimated (shooting splits, assists, steals, blocks, turnovers, fouls) is NOT from the sheet: it is his average over his 7 full box scores, adjusted so that the points add up (2 x 2-pointers + 3 x 3-pointers + free throws = 28).",
+      "players": [
+        {"number": 21, "name": "Mohamed Abbassi", "pts": 28, "fgm": 11, "fga": 22, "p3m": 3, "p3a": 8, "ftm": 3, "fta": 3, "oreb": 0, "dreb": 5, "ast": 1, "stl": 1, "blk": 0, "tov": 1, "pf": 2,
+         "est": ["fgm", "fga", "p3m", "p3a", "ftm", "fta", "ast", "stl", "blk", "tov", "pf"]}
+      ]
+    },
+    {
+      "id": "p-j3-css-sn",
+      "matchday": 3,
+      "home": "CSS",
+      "away": "SN",
+      "recorded": "CSS",
+      "competition": "CHAMPIONNAT PRO A",
+      "date": "2026-10-04",
+      "date_approx": true,
+      "source": "Mohamed Abbassi's own season spreadsheet (one player only)",
+      "note": "Only Mohamed Abbassi (#21) is recorded. His points (23) and rebounds (1 offensive, 5 defensive) come from his sheet; every value marked as estimated is his average over his 7 full box scores, adjusted so that the points add up (2 x 2-pointers + 3 x 3-pointers + free throws = 23).",
+      "players": [
+        {"number": 21, "name": "Mohamed Abbassi", "pts": 23, "fgm": 9, "fga": 19, "p3m": 2, "p3a": 7, "ftm": 3, "fta": 3, "oreb": 1, "dreb": 5, "ast": 1, "stl": 1, "blk": 0, "tov": 1, "pf": 2,
+         "est": ["fgm", "fga", "p3m", "p3a", "ftm", "fta", "ast", "stl", "blk", "tov", "pf"]}
+      ]
+    },
+    {
+      "id": "p-j4-dsg-css",
+      "matchday": 4,
+      "home": "DSG",
+      "away": "CSS",
+      "recorded": "CSS",
+      "competition": "CHAMPIONNAT PRO A",
+      "date": "2026-10-07",
+      "date_approx": true,
+      "source": "Mohamed Abbassi's own season spreadsheet (one player only)",
+      "note": "Only Mohamed Abbassi (#21) is recorded. His points (27) and rebounds (4 offensive, 7 defensive) come from his sheet; every value marked as estimated is his average over his 7 full box scores, adjusted so that the points add up (2 x 2-pointers + 3 x 3-pointers + free throws = 27).",
+      "players": [
+        {"number": 21, "name": "Mohamed Abbassi", "pts": 27, "fgm": 11, "fga": 22, "p3m": 2, "p3a": 7, "ftm": 3, "fta": 3, "oreb": 4, "dreb": 7, "ast": 1, "stl": 2, "blk": 1, "tov": 1, "pf": 3,
+         "est": ["fgm", "fga", "p3m", "p3a", "ftm", "fta", "ast", "stl", "blk", "tov", "pf"]}
       ]
     }
   ]

@@ -64,6 +64,7 @@ Each player listed gets one row in his game log, and his averages (player page, 
 is averaged over the games where it is known. If a real box score of the same game is uploaded later, it replaces the sheet automatically (no double counting).
 To add one: a game in `assets/partial_games.json` (id, matchday, home, away, `recorded` = the team on the sheet, date, players with number, name and the counted stats; attempts only
 where the sheet proves them) or in `data/partial_games.json` (live data). It is ignored unless an official result for that matchday and pair exists. `tests/test_partial_game.py` checks all of this.
+A sheet can also cover only SOME players (e.g. one player's own spreadsheet, like Abbassi's J1, J3 and J4 for CS Sfaxien). It is *incomplete* when its players' points do not add up to the official score of the team: it then has no team total, **no game MVP** and does not count in the team's "Box scores" column. A player may carry `"est": [...]` (any of fgm, fga, p3m, p3a, ftm, fta, ast, stl, blk, tov, pf) for values that are NOT on the sheet but estimated (his average in his full box scores, adjusted so that 2 x 2P + 3 x 3P + FT = points): they are shown with a `~` and a tooltip on the match page and in his game log, and his averages include them. Points and rebounds are never estimated. `tests/test_partial_estimates.py` checks this.
 
 ## Teams and calendar
 `/#/team/<CODE>`: standing, match history (click a match for its stats; matches without a box score show the

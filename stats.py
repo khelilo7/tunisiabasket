@@ -167,12 +167,14 @@ def _pid_alias():
 # each listed player, where every stat the sheet does not give is None (never 0), and every average is taken over the games where the stat is known.
 PARTIAL_FILES = (config.ASSETS_DIR / "partial_games.json", config.DATA_DIR / "partial_games.json")
 PARTIAL_UNKNOWN = ("min", "tov", "pf", "fd", "pm", "pir", "rating", "impact")
+ESTIMABLE = ("fgm", "fga", "p3m", "p3a", "ftm", "fta", "ast", "stl", "blk", "tov", "pf")   # what a sheet may flag as "est" (points and rebounds are never estimated)
 
 
 def _sheet_mvp(team):
-    """Game MVP of a one-team sheet: only the WINNING team can have one, and only if it is the team on the sheet. Turnovers and fouls are unknown for every candidate,
+    """Game MVP of a one-team sheet: only the WINNING team can have one, and only if it is the team on the sheet AND the sheet covers the whole team (its players
+    add up to the official score): a sheet of one player says nothing about who was the best. Turnovers and fouls are unknown for every candidate,
     so they are ranked by PIR without them (the same gap for all), then by points. The MVP carries no PIR: the real one cannot be computed."""
-    if not team["won"] or not team["players"]:
+    if not team["won"] or not team["players"] or not team.get("complete"):
         return None
     best = max(team["players"], key=lambda p: (p["pts"] + p["reb"] + p["ast"] + p["stl"] + p["blk"] - (p["fga"] - p["fgm"]) - (p["fta"] - p["ftm"]), p["pts"]))
     return {"player_id": best["pid"], "name": best["name"], "team": team["code"], "pir": None, "pts": best["pts"], "reb": best["reb"], "ast": best["ast"], "partial": True}
@@ -220,13 +222,19 @@ def partial_games(games):
                     row = {"number": p["number"], "name": names.get(pid) or p["name"], "pid": pid, "dnp": False, "starter": False, "partial": True,
                            **{k: p.get(k, 0) for k in ("pts", "fgm", "fga", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "ast", "stl", "blk")},
                            **{k: None for k in PARTIAL_UNKNOWN}}
+                    for k in ("tov", "pf"):                           # only when the sheet (or an estimate flagged in "est") gives them
+                        if p.get(k) is not None:
+                            row[k] = p[k]
+                    row["est"] = [k for k in (p.get("est") or []) if k in ESTIMABLE]   # values that are NOT on the sheet but estimated from the player's other games
                     row["reb"], row["p2m"], row["p2a"] = row["oreb"] + row["dreb"], row["fgm"] - row["p3m"], row["fga"] - row["p3a"]
                     players.append(row)
             teams.append({"code": code, "name": official["teams"].get(code, code), "points": score[code], "box_points": score[code],
-                          "won": score[code] > score[r["away"] if code == r["home"] else r["home"]], "players": players, "recorded": code == rec})
+                          "won": score[code] > score[r["away"] if code == r["home"] else r["home"]], "players": players, "recorded": code == rec,
+                          "complete": bool(players) and sum(p["pts"] for p in players) == score[code]})
         out.append({"id": raw_g["id"], "partial": True, "date": raw_g["date"], "date_approx": bool(raw_g.get("date_approx")), "competition": raw_g.get("competition"),
                     "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": _sheet_mvp(next(t for t in teams if t["recorded"])), "note": raw_g.get("note"), "source": raw_g.get("source"),
-                    "recorded": rec, "teams": teams})
+                    "recorded": rec, "complete": next(t for t in teams if t["recorded"])["complete"],
+                    "estimated": any(p["est"] for t in teams for p in t["players"]), "teams": teams})
     return out
 
 
@@ -510,13 +518,15 @@ def build(season=None, keep_hidden=False):
 
 
 def box_counts(games, partials=()):
-    """How many box scores we have per team (the official table covers every game). A one-team sheet counts for the team it covers only."""
+    """How many box scores we have per team (the official table covers every game). A one-team sheet counts for the team it covers only, and only when it covers
+    the whole team (a sheet of a single player is not a box score)."""
     c = Counter()
     for g in games:
         for t in g["teams"]:
             c[t["code"]] += 1
     for g in partials:
-        c[g["recorded"]] += 1
+        if g.get("complete"):
+            c[g["recorded"]] += 1
     return c
 
 
@@ -661,7 +671,8 @@ def team_view(code, season=None):
             if code in (g["home"], g["away"]) and not g["played"]:
                 home = g["home"] == code
                 opp = g["away"] if home else g["home"]
-                upcoming.append({"matchday": md["matchday"], "opp": opp, "opp_name": o["teams"][opp], "home": home})
+                upcoming.append({"matchday": md["matchday"], "opp": opp, "opp_name": o["teams"][opp], "home": home,
+                                 "date": g.get("game_date") or md["date"], "time": g.get("time")})      # the official matchday date; the admin's own date/time of the game wins
     row = next((r for r in d["standings"] if r["code"] == code), None)
     team_players = [p for p in d["players"] if p["team"] == code]
     return {"code": code, "name": o["teams"][code], "standing": row, "results": results, "upcoming": upcoming,

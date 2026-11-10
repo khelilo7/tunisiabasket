@@ -31,9 +31,14 @@ def without_sheets():
     return _Ctx()
 
 
-sheet = json.loads(stats.PARTIAL_FILES[0].read_text())["games"]
-check(len(sheet) >= 1, "the shipped sheet file has a game")
+# this test is about the complete one-team sheet of the shipped file (CA, J1); the one-player sheets have their own test (test_partial_estimates.py)
+shipped = json.loads(stats.PARTIAL_FILES[0].read_text())["games"]
+sheet = [g for g in shipped if g["id"] == "p-j1-esg-ca"]
+check(len(sheet) == 1, "the shipped sheet file has the CA game")
 pg = sheet[0]
+_only = Path(tempfile.mkdtemp()) / "partial_games.json"
+_only.write_text(json.dumps({"games": sheet}))
+stats.PARTIAL_FILES = (_only,)
 
 # 1. the sheet itself is arithmetically sound and adds up to the official score
 for p in pg["players"]:

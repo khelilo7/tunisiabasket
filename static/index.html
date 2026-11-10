@@ -59,6 +59,7 @@
   .match { display:flex; align-items:center; gap:10px; justify-content:space-between; } .match b { font-size:18px; } .win { color:var(--txt); font-weight:700; } .lose { color:var(--mut); }
   .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .sp { flex:1; }
   svg.spark { width:100%; height:90px; } .note { color:var(--mut); font-size:12px; margin-top:8px; }
+  .est { font-style:italic; opacity:.75; text-decoration:underline dotted; text-underline-offset:3px; cursor:help; }
   .banner { background:var(--banner-bg); border:1px solid var(--banner-line); color:var(--banner-txt); padding:10px 14px; border-radius:10px; margin-bottom:14px; font-size:13px; }
   .empty { text-align:center; color:var(--mut); padding:40px; }
   .hl { background:var(--banner-bg); border-radius:6px; padding:0 4px; } tr.top { background:var(--hover); }
@@ -337,6 +338,12 @@ const FR = {
     'Les joueurs se placent selon leur poste (déduit de leurs statistiques : rebonds, contres, passes, interceptions, tirs à 3 points). Chaque équipe défend son panier ; les intérieurs sont sous le panier, les meneurs vers le milieu.',
   'The five players with the most minutes this season, standing where their position puts them. Positions are inferred from stats (rebounds, blocks, assists, steals, threes) because the box scores do not list them; the admin can correct any player.':
     'Les cinq joueurs ayant le plus de minutes cette saison, placés selon leur poste. Les postes sont déduits des statistiques (rebonds, contres, passes, interceptions, tirs à 3 points) car les feuilles de match ne les indiquent pas ; l’administrateur peut corriger chaque joueur.',
+  'Estimated, not from the sheet': 'Estimé, pas sur la feuille',
+  'Only some players of one team were recorded for this game, from a hand-kept sheet. Minutes and +/- are unknown, so it counts for points, rebounds and the values below, but not for ratings or PIR.': 'Seuls quelques joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes et le +/- sont inconnus : il compte pour les points, les rebonds et les valeurs ci-dessous, mais pas pour les notes ni le PIR.',
+  'The sheet does not cover the whole team, so there is no team total and no game MVP.': 'La feuille ne couvre pas toute l’équipe : pas de total d’équipe ni de MVP du match.',
+  'Values marked ~ are estimates, not from the sheet:': 'Les valeurs marquées ~ sont des estimations, pas de la feuille :',
+  'the player’s average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet.': 'la moyenne du joueur dans ses feuilles de match complètes, ajustée pour que les points correspondent. Les points et les rebonds viennent de la feuille.',
+  'Estimated, not from the sheet: his average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet. The averages above include these games.': 'Estimé, pas de la feuille : sa moyenne dans ses feuilles de match complètes, ajustée pour que les points correspondent. Les points et les rebonds viennent de la feuille. Les moyennes ci-dessus incluent ces matchs.',
   'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).': 'Le MVP du match est choisi parmi les joueurs relevés de l’équipe gagnante, d’après les points, rebonds, passes, interceptions, contres et tirs uniquement (balles perdues et fautes inconnues).', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
   'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes ni le PIR.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
@@ -886,9 +893,9 @@ async function player(ref) {
   <h2>${_('Game log')}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Date')}</th><th class="l">${_('Opp')}</th><th>${_('Result')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
   ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}${r.partial ? ` <span class="mut small">${_('Partial box score')}</span>` : ''}</td>
-    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${r.min == null ? '–' : Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${r.ast}</td><td>${r.stl}</td><td>${r.blk}</td><td>${dash(r.tov)}</td>
-    <td>${r.fgm}/${r.fga}</td><td>${r.p3m}/${r.p3a}</td><td>${r.ftm}/${r.fta}</td><td>${r.pm == null ? '–' : signed(r.pm)}</td><td>${dash(r.pir)}</td><td>${r.rating == null ? '–' : rate(r.rating)}</td></tr>`).join('')}
-  </tbody></table></div>`;
+    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${r.min == null ? '–' : Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${est(r, ['ast'], r.ast)}</td><td>${est(r, ['stl'], r.stl)}</td><td>${est(r, ['blk'], r.blk)}</td><td>${est(r, ['tov'], dash(r.tov))}</td>
+    <td>${est(r, ['fgm', 'fga'], r.fgm + '/' + r.fga)}</td><td>${est(r, ['p3m', 'p3a'], r.p3m + '/' + r.p3a)}</td><td>${est(r, ['ftm', 'fta'], r.ftm + '/' + r.fta)}</td><td>${r.pm == null ? '–' : signed(r.pm)}</td><td>${dash(r.pir)}</td><td>${r.rating == null ? '–' : rate(r.rating)}</td></tr>`).join('')}
+  </tbody></table></div>${p.log.some(r => r.est && r.est.length) ? `<div class="mut small" style="margin-top:6px"><i class="est">~</i> ${_('Estimated, not from the sheet: his average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet. The averages above include these games.')}</div>` : ''}`;
 }
 
 function spark(v) {
@@ -987,6 +994,8 @@ function drawCourt() {
 
 // ---------------------------------------------------------------- match page
 // A game for which only one team's hand-kept sheet exists: points, rebounds, assists, steals, blocks and shooting, nothing invented for the rest.
+// A value the sheet does not give but that was estimated (see 'est' in assets/partial_games.json) is shown with ~, in italics.
+const est = (r, ks, v) => r.est && ks.some(k => r.est.includes(k)) ? `<i class="est" title="${esc(_('Estimated, not from the sheet'))}">~${v}</i>` : v;
 function partialGame(g) {
   const [a, b] = g.teams, md = g.matchday || '';
   courtData = null;
@@ -996,16 +1005,16 @@ function partialGame(g) {
     const rows = [...t.players].sort((x, y) => y.pts - x.pts || x.number - y.number), sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
     return `<h2><span class="tn">${logo(t.code, 28)}${esc(t.name)}</span> <span class="${t.won ? 'good' : 'mut'}">${t.points}</span></h2>` + (!rows.length ? `<div class="card mut">${_('No player stats for this team.')}</div>` :
      `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>PTS</th><th>REB</th><th>${H('OR')}</th><th>${H('DR')}</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('FG')}</th><th>${H('2P')}</th><th>${H('3P')}</th><th>${H('FT')}</th></tr></thead><tbody>
-     ${rows.map(p => `<tr data-go="${playerUrl(p.pid, p.name)}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.pid, name: p.name }, esc(title(p.name)))}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.oreb}</td><td>${p.dreb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td>
-       <td>${frac(p.fgm, p.fga)}</td><td>${frac(p.p2m, p.p2a)}</td><td>${frac(p.p3m, p.p3a)}</td><td>${frac(p.ftm, p.fta)}</td></tr>`).join('')}
-     <tr class="tot"><td></td><td class="l">${_('Team')}</td><td>${sum('pts')}</td><td>${sum('reb')}</td><td>${sum('oreb')}</td><td>${sum('dreb')}</td><td>${sum('ast')}</td><td>${sum('stl')}</td><td>${sum('blk')}</td>
-       <td>${frac(sum('fgm'), sum('fga'))}</td><td>${frac(sum('p2m'), sum('p2a'))}</td><td>${frac(sum('p3m'), sum('p3a'))}</td><td>${frac(sum('ftm'), sum('fta'))}</td></tr></tbody></table></div>`);
+     ${rows.map(p => `<tr data-go="${playerUrl(p.pid, p.name)}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.pid, name: p.name }, esc(title(p.name)))}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.oreb}</td><td>${p.dreb}</td><td>${est(p, ['ast'], p.ast)}</td><td>${est(p, ['stl'], p.stl)}</td><td>${est(p, ['blk'], p.blk)}</td>
+       <td>${est(p, ['fgm', 'fga'], frac(p.fgm, p.fga))}</td><td>${est(p, ['fgm', 'fga', 'p3m', 'p3a'], frac(p.p2m, p.p2a))}</td><td>${est(p, ['p3m', 'p3a'], frac(p.p3m, p.p3a))}</td><td>${est(p, ['ftm', 'fta'], frac(p.ftm, p.fta))}</td></tr>`).join('')}
+     ${t.complete ? `<tr class="tot"><td></td><td class="l">${_('Team')}</td><td>${sum('pts')}</td><td>${sum('reb')}</td><td>${sum('oreb')}</td><td>${sum('dreb')}</td><td>${sum('ast')}</td><td>${sum('stl')}</td><td>${sum('blk')}</td>
+       <td>${frac(sum('fgm'), sum('fga'))}</td><td>${frac(sum('p2m'), sum('p2a'))}</td><td>${frac(sum('p3m'), sum('p3a'))}</td><td>${frac(sum('ftm'), sum('fta'))}</td></tr>` : ''}</tbody></table></div>`);
   };
   return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
    <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}
-   <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${_('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.')}${g.mvp ? ' ' + _('The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).') : ''}</div></div>
+   <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${g.estimated ? _('Only some players of one team were recorded for this game, from a hand-kept sheet. Minutes and +/- are unknown, so it counts for points, rebounds and the values below, but not for ratings or PIR.') : _('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.')}${g.complete ? '' : ' ' + _('The sheet does not cover the whole team, so there is no team total and no game MVP.')}${g.estimated ? ' <b>' + _('Values marked ~ are estimates, not from the sheet:') + '</b> ' + _('the player’s average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet.') : ''}${g.mvp ? ' ' + _('The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).') : ''}</div></div>
   ${sheet(a)}${sheet(b)}`;
 }
 
@@ -1081,8 +1090,8 @@ async function team(codeArg) {
   </tbody></table></div>
   <h2>${_('Next matches · calendar')}</h2>
   ${t.projected ? `<div class="banner">${_('The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.')}</div>` : ''}
-  <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th></tr></thead><tbody>
-  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('pairing projected') : ''}</td></tr>`).join('') || `<tr><td colspan="3" class="mut">${_('No upcoming matches.')}</td></tr>`}
+  <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Date')}</th><th class="l">${_('Opponent')}</th><th></th></tr></thead><tbody>
+  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l">${u.date ? esc(fmtDay(u.date)) : '–'}${u.time ? ' · ' + esc(u.time) : ''}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('pairing projected') : ''}</td></tr>`).join('') || `<tr><td colspan="4" class="mut">${_('No upcoming matches.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
