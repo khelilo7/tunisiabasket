@@ -21,7 +21,7 @@ import sqlite3
 import threading
 import time
 from datetime import datetime, timedelta, timezone
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
 
 import auth
