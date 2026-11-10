@@ -342,9 +342,9 @@ const FR = {
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
-  'At home': 'Domicile', 'Away': 'Extérieur', 'projected': 'projeté', 'Show one team': 'Afficher une équipe',
-  'Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.':
-    'Calendrier projeté : la deuxième phase est supposée reprendre la première (même ordre, domicile et extérieur inversés). Il sera remplacé par les dates officielles dès leur publication.',
+  'At home': 'Domicile', 'Away': 'Extérieur', 'pairing projected': 'affiche projetée', 'Show one team': 'Afficher une équipe',
+  'The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.':
+    'Les dates sont celles du calendrier officiel de la fédération. Les affiches de la deuxième phase (qui joue contre qui, domicile et extérieur) sont supposées reprendre la première phase, en attendant la publication du calendrier officiel.',
   'Team page': 'Page de l’équipe', 'Back to standings': 'Retour au classement', 'Back to players': 'Retour aux joueurs',
   // metrics
   'Points': 'Points', 'Rebounds': 'Rebonds', 'Assists': 'Passes décisives', 'Steals': 'Interceptions', 'Blocks': 'Contres', 'PIR (efficiency)': 'PIR (évaluation)',
@@ -1080,9 +1080,9 @@ async function team(codeArg) {
   ${dayRows || `<tr><td colspan="5" class="mut">${_('No matches played yet.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Next matches · calendar')}</h2>
-  ${t.projected ? `<div class="banner">${_('Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.')}</div>` : ''}
+  ${t.projected ? `<div class="banner">${_('The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.')}</div>` : ''}
   <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th></tr></thead><tbody>
-  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('projected') : ''}</td></tr>`).join('') || `<tr><td colspan="3" class="mut">${_('No upcoming matches.')}</td></tr>`}
+  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('pairing projected') : ''}</td></tr>`).join('') || `<tr><td colspan="3" class="mut">${_('No upcoming matches.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
@@ -1096,7 +1096,7 @@ async function planning() {
   pageMeta = META.planning[LANG];
   const codes = Object.keys(d.teams).sort((a, b) => d.teams[a].localeCompare(d.teams[b]));
   const head = `${standNav('planning')}<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
-  ${d.projected ? `<div class="banner">${_('Projected calendar: the second phase is assumed to mirror the first (same order, home and away swapped). It will be replaced by the official dates when they are added.')}</div>` : ''}
+  ${d.projected ? `<div class="banner">${_('The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.')}</div>` : ''}
   <div class="row" style="margin-bottom:12px"><label class="mut small" for="pt">${_('Show one team')}</label>
     <select id="pt"><option value="">${_('All teams')}</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>`;
   if (planTeam) {   // only this team's matches, one line per matchday
@@ -1106,13 +1106,13 @@ async function planning() {
       const home = g.home === planTeam, opp = home ? g.away : g.home;
       const res = g.played ? `<b>${home ? g.home_score : g.away_score} – ${home ? g.away_score : g.home_score}</b>` : '';
       return `<tr style="cursor:default"><td class="l">J${m.matchday}</td><td class="l"><span class="tn"><span class="mut small">${home ? _('vs') : '@'}</span>${logo(opp, 26)}${teamLink(opp, d.teams[opp])}</span></td>
-        <td class="mut small">${home ? _('At home') : _('Away')}${d.projected && !g.played ? ' · ' + _('projected') : ''}</td><td>${res}</td></tr>`;
+        <td class="mut small">${home ? _('At home') : _('Away')}${d.projected && !g.played ? ' · ' + _('pairing projected') : ''}</td><td>${res}</td></tr>`;
     }).join('');
     return head + `<div class="card"><div class="row" style="margin-bottom:6px"><span class="tn" style="font-size:18px;font-weight:800">${logo(planTeam, 40)}${esc(d.teams[planTeam])}</span><span class="sp"></span>
       <a href="${teamUrl(planTeam)}" class="mut small">${_('Team page')} ›</a></div>
       <div class="scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th><th>${_('Score')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
-  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}<span class="sp"></span><span class="mut small">${d.projected ? _('projected') : ''}</span></div>
+  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}<span class="sp"></span><span class="mut small">${d.projected ? _('pairing projected') : ''}</span></div>
     ${m.games.map(g => `<div class="match" style="padding:6px 0;border-top:1px solid var(--line)">
       <a class="tn" href="${teamUrl(g.home)}">${logo(g.home, 22)}${esc(g.home)}</a>
       ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small">${_('vs')}</span>`}

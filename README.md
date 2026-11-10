@@ -67,8 +67,8 @@ where the sheet proves them) or in `data/partial_games.json` (live data). It is 
 
 ## Teams and calendar
 `/#/team/<CODE>`: standing, match history (click a match for its stats; matches without a box score show the
-result only), next matches and players. `/#/planning`: matchdays J12-J22. Until the official calendar is known it is
-PROJECTED as the mirror of phase 1 (same order, home/away swapped). To use the real one, create `data/fixtures.json`:
+result only), next matches and players. `/#/planning`: matchdays J12-J22. The DATES are the federation's official ones (`assets/calendar.json`, confirmed for J11-J22).
+Until the official fixtures are known the PAIRINGS are PROJECTED as the mirror of phase 1 (same order, home/away swapped). To use the real ones, create `data/fixtures.json`:
 `{"fixtures": [{"matchday": 12, "home": "CA", "away": "ESG"}, ...]}`. Results for J12+ added in the admin replace their fixtures.
 
 ## Deploying
