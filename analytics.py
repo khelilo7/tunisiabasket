@@ -269,7 +269,10 @@ def change(gid, op):
                 return jsonify(error="Unknown player or action."), 422
             if len(g["events"]) >= MAX_EVENTS:
                 return jsonify(error="Too many actions in one game."), 422
-            g["events"].append({"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S")})
+            e = {"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S")}
+            if isinstance(b.get("q"), int) and 1 <= b["q"] <= 8 and isinstance(b.get("t"), int) and 0 <= b["t"] <= 3600:
+                e["q"], e["t"] = b["q"], b["t"]          # the game clock is an extra: quarter and seconds left, only when the analyst uses it
+            g["events"].append(e)
         elif op == "undo":
             if g["events"]:
                 g["events"].pop()
