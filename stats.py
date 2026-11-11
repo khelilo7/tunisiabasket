@@ -48,7 +48,7 @@ def rating(value: float) -> int:
     return max(0, min(99, round(45 + 2.5 * value)))
 
 
-SOURCE_WEIGHT = {"text": 3, "claude": 3, "ocr": 1}  # trust exact text over OCR when names disagree
+SOURCE_WEIGHT = {"text": 3, "claude": 3, "ocr": 1, "video": 1}  # trust exact text over OCR when names disagree
 
 
 def _garbled(name: str) -> bool:

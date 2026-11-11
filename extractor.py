@@ -13,6 +13,7 @@ import pdfplumber
 from ocr_parser import IMAGE_EXT, parse_scanned_pdf
 from text_parser import parse_text_pdf
 from validate import validate
+from video_sheet import is_video_sheet, parse_video_sheet
 
 SEASON_START = os.environ.get("SEASON_START", "2026-09-28")  # date of matchday 1, used only as a last-resort date
 MONTH_NAMES = {"janvier": 1, "jan": 1, "january": 1, "fevrier": 2, "février": 2, "feb": 2, "february": 2,
@@ -67,18 +68,21 @@ def extract(pdf_path, filename="", matchday="", page=0):
     """pdf_path may be a PDF (any page) or a PNG/JPG image of a box score."""
     season_start_year = int(SEASON_START[:4])
     source = "text" if _has_text_layer(pdf_path, page) else "ocr"
-    game = parse_text_pdf(pdf_path, page) if source == "text" else parse_scanned_pdf(pdf_path, page=page)
-    if game is None:  # looked like text but wasn't parseable
-        source, game = "ocr", parse_scanned_pdf(pdf_path, page=page)
+    if source == "text" and is_video_sheet(pdf_path, page):   # compiled from a broadcast video (video_sheet.py)
+        game = parse_video_sheet(pdf_path, page)
+    else:
+        game = parse_text_pdf(pdf_path, page) if source == "text" else parse_scanned_pdf(pdf_path, page=page)
+        if game is None:  # looked like text but wasn't parseable
+            source, game = "ocr", parse_scanned_pdf(pdf_path, page=page)
 
     problems = validate(game)
 
-    game["source"] = source
+    game["source"] = game.get("source") or source
     game["date_approx"] = False
     if not game.get("date"):
         game["date"] = date_from_filename(filename, season_start_year)
         if not game["date"]:
-            game["date"] = approx_date_from_matchday(matchday)
+            game["date"] = approx_date_from_matchday(matchday or game.get("matchday"))
             game["date_approx"] = True
     _strip_private(game)
     return game, problems
