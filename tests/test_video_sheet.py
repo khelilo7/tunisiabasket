@@ -59,6 +59,33 @@ harvey = next(p for p in d["players"] if p["team"] == "ESS" and p["number"] == 2
 check(any(row["game_id"] == "video-j3-ess-dsg" for row in harvey["log"]), "the player's game log has it")
 check(sum(1 for t in v["teams"] for p in t["players"]) == 18, "18 player rows, no 'unknown player'")
 
+# 3b. two more sheets of the same kind: J9 ESS 68-58 JSM, and J1 ESS 77-62 SN where 2 free-throw points could not be given to a player ("Player unknown" row)
+ids_ = {"video_ess_jsm_j9.pdf": "video-j9-ess-jsm", "video_ess_sn_j1.pdf": "video-j1-ess-sn"}
+n_before = len(stats.build()["games"])
+box_b = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
+for fx, gid in ids_.items():
+    gm, pr = extractor.extract(str(ROOT / "tests" / "fixtures" / fx), filename=fx)
+    check(pr == [], f"{fx}: consistency checks pass: {pr}")
+    codes = {t["code"] for t in gm["teams"]}
+    off = next((r for r in stats.load_official()["results"] if r["matchday"] == gm["matchday_no"] and {r["home"], r["away"]} == codes), None)
+    check(off is not None and {off["home"]: off["home_score"], off["away"]: off["away_score"]} == {t["code"]: t["points"] for t in gm["teams"]}, f"{fx}: same score as the official result")
+    check(gm["source"] == "video" and "ESS" in codes, f"{fx}: video source")
+    if fx == "video_ess_sn_j1.pdf":
+        e = next(t for t in gm["teams"] if t["code"] == "ESS")
+        check(e["not_attributed"]["pts"] == 2 and sum(p["pts"] for p in e["players"]) == 75 and e["points"] == 77,
+              "SN sheet: 75 points to players + 2 to nobody = the official 77, and the checks accept it")
+    gm.update(id=gid, uploaded=True)
+    r = c.post("/admin/api/game", json={"game": gm}, headers={"X-Admin-Token": "TEST-TOKEN-0000-1111"})
+    check(r.status_code == 200, f"{fx}: the admin accepts it: {r.status_code} {r.get_json()}")
+check(len(stats.build()["games"]) == n_before + 2, "two more games on the site")
+box_a = {r["code"]: r["box"] for r in c.get("/api/overview").get_json()["standings"]}
+check(box_a["ESS"] == box_b["ESS"] + 2 and box_a["JSM"] == box_b["JSM"] + 1 and box_a["SN"] == box_b["SN"] + 1, "box scores column: ESS +2, JSM +1, SN +1")
+bad_pts = copy.deepcopy(gm)
+bad_pts["id"] = "video-bad"
+next(t for t in bad_pts["teams"] if t["code"] == "ESS")["not_attributed"]["pts"] = 0
+r = c.post("/admin/api/game", json={"game": bad_pts}, headers={"X-Admin-Token": "TEST-TOKEN-0000-1111"})
+check(r.status_code == 422, "without the unattributed points the sheet no longer adds up: refused")
+
 # 4. a real box score of the same game replaces it, whichever file comes first; the other way round the real one is never replaced
 real = copy.deepcopy(game)
 real.update(source="text", date_approx=False)

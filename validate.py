@@ -14,8 +14,9 @@ def validate(game):
         nums = [p["number"] for p in played]  # DNP rows never enter the stats, so their numbers don't matter
         if any(n < 0 for n in nums) or len(set(nums)) != len(nums):
             problems.append(f"{c}: jersey numbers unreadable or duplicated {sorted(nums)}")
-        if sum(p["pts"] for p in played) != t["points"]:
-            problems.append(f"{c}: player points {sum(p['pts'] for p in played)} != team total {t['points']}")
+        unnamed = (t.get("not_attributed") or {}).get("pts", 0)   # points a video-compiled sheet could not give to a player (video_sheet.py)
+        if sum(p["pts"] for p in played) + unnamed != t["points"]:
+            problems.append(f"{c}: player points {sum(p['pts'] for p in played) + unnamed} != team total {t['points']}")
         for p in played:
             who = f"{c} #{p['number']} {p['name']}"
             if p["reb"] != p["oreb"] + p["dreb"]:

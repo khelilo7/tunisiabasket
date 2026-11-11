@@ -2,7 +2,8 @@
 
 Same columns as an official FIBA sheet, with three differences: no date (only "Journée N"), minutes and +/- are estimates, and two extra rows hold what could not be
 given to a player: "Player unknown" (shots whose shooter was not identified, turnovers) and "Team/Coach" (team rebounds). Those rows are not players: they never
-enter a profile, so a team's totals on the site are the sum of its named players (a few misses and team rebounds short of the sheet's own totals line).
+enter a profile, so a team's totals on the site are the sum of its named players (a few misses and team rebounds short of the sheet's own totals line, and in rare cases
+a few points: they are kept as not_attributed["pts"], and the points check of validate.py counts them).
 The game is stored with source "video": a real box score of the same game (text or OCR) replaces it, and the match page says where it comes from.
 """
 import re
@@ -44,7 +45,7 @@ def parse_video_sheet(path, page=0):
         h = TEAM.match(ln)
         if h:
             cur = {"code": h.group(2).upper(), "name": h.group(1).strip().title(), "coach": h.group(3).strip().title(), "players": [], "points": None,
-                   "not_attributed": {"fga": 0, "tov": 0, "team_reb": 0}}
+                   "not_attributed": {"fga": 0, "pts": 0, "tov": 0, "team_reb": 0}}
             teams.append(cur)
             continue
         if cur is None:
@@ -53,13 +54,17 @@ def parse_video_sheet(path, page=0):
             cur["points"] = int(ln.split()[-1])
             cur = None
             continue
-        if ln.startswith("Player unknown"):                      # "Player unknown (see notes) 0/2 0.0 0/2 0.0 0/0 0.0 0/0 0.0 OR DR TOT AS TO ..."
-            m = re.search(r"\)\s+(\d+)/(\d+)\s+[\d.]+\s+\d+/\d+\s+[\d.]+\s+\d+/\d+\s+[\d.]+\s+\d+/\d+\s+[\d.]+\s+(.*)$", ln)
+        if ln.startswith("Player unknown"):                      # "Player unknown (see notes) FG 2P 3P FT (made/att %) OR DR TOT AS TO ST BS PF FD +/-"
+            ma = r"(\d+)/(\d+)\s+[\d.]+\s+"
+            m = re.search(r"\)\s+" + ma * 4 + r"(.*)$", ln)
             if not m:
                 raise ValueError(f"unparsable row: {ln}")
-            tail = [int(x) for x in m.group(3).split()]
-            cur["not_attributed"]["fga"] += int(m.group(2))
-            cur["not_attributed"]["tov"] += tail[4]
+            fgm, fga, p2m, p2a, p3m, p3a, ftm, fta = (int(x) for x in m.groups()[:8])
+            tail = [int(x) for x in m.group(9).split()]
+            na = cur["not_attributed"]
+            na["fga"] += fga
+            na["pts"] += 2 * p2m + 3 * p3m + ftm                  # points scored by someone the video could not identify (they still count for the team)
+            na["tov"] += tail[4]
             continue
         if ln.startswith("Team/Coach"):                           # "Team/Coach OR DR TOT TO"
             nums = [int(x) for x in ln.split()[1:]]
