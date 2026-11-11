@@ -176,6 +176,7 @@
   .nbs .nbx { margin-top:0; } .nbs .nbtm { border:2px solid transparent; border-radius:14px; padding:8px 18px; justify-self:center; min-width:min(100%, 190px); background:none; color:inherit; font-family:inherit; }
   .nbs button.nbpk { cursor:pointer; transition:border-color .15s, background .15s, transform .15s; } .nbs button.nbpk:hover, .nbs button.nbpk:focus-visible { border-color:var(--acc); background:var(--mvp-in); transform:translateY(-2px); outline:none; }
   .nbs .nbtm.picked { border-color:var(--acc); background:var(--mvp-in); }
+  .nbs .nbtm.res .nbscore { font-size:clamp(30px,6vw,46px); font-weight:800; line-height:1; color:var(--mut); } .nbs .nbtm.res.won .nbscore { color:var(--good); } .nbs .nbtm.res:not(.won) > span { color:var(--mut); }
   .nbs .nbhint { font-size:12px; color:var(--mut); margin:0 0 8px; } .nbs .nbhint b { color:var(--txt); } .nbs .nbhint.bad { color:var(--bad); }
   .nbs .nbbar { display:flex; gap:3px; height:20px; max-width:340px; margin:0 auto 4px; border-radius:7px; overflow:hidden; font-size:12px; font-weight:800; } .nbs .nbbar span { display:grid; place-items:center; background:var(--track); color:var(--txt); } .nbs .nbbar span.mine { background:var(--acc); color:#10131c; }
   .nbs .nbtm { display:flex; flex-direction:column; align-items:center; gap:8px; font-size:clamp(15px,2.4vw,20px); font-weight:800; line-height:1.2; } .nbs .nbtm small { font-weight:600; color:var(--mut); font-size:12px; }
@@ -348,6 +349,7 @@ const FR = {
   'Estimated, not from the sheet: his average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet. The averages above include these games.': 'Estimé, pas de la feuille : sa moyenne dans ses feuilles de match complètes, ajustée pour que les points correspondent. Les points et les rebonds viennent de la feuille. Les moyennes ci-dessus incluent ces matchs.',
   'Compiled from the broadcast video': 'Compilée à partir de la vidéo du match', 'Stats compiled by Tunisia Basket from the TV broadcast, not from the official table sheet: minutes and +/- are estimates, and a few missed shots, turnovers and team rebounds could not be given to a player.': 'Statistiques compilées par Tunisia Basket à partir de la retransmission TV, pas de la feuille de marque officielle : les minutes et le +/- sont estimés, et quelques tirs manqués, balles perdues et rebonds d’équipe n’ont pu être attribués à aucun joueur.',
   'Expected starting five': 'Cinq de départ probable', 'Make your prediction to unlock the expected starting fives: close this window and tap the team you think will win.': 'Faites votre pronostic pour débloquer les cinq de départ probables : fermez cette fenêtre et touchez l’équipe que vous voyez gagner.', 'Expected from the starts so far and in the last games; players who are not available are left out.': 'Estimé d’après les débuts de match jusqu’ici et les derniers matchs ; les joueurs indisponibles sont écartés.',
+  'Final': 'Terminé', 'Full box score': 'Feuille de match complète',
   'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).': 'Le MVP du match est choisi parmi les joueurs relevés de l’équipe gagnante, d’après les points, rebonds, passes, interceptions, contres et tirs uniquement (balles perdues et fautes inconnues).', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
   'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes ni le PIR.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
@@ -724,12 +726,7 @@ async function castPick(game, side) {
 // ---------------------------------------------------------------- next games banner and matchup comparison
 let nbTimer = null, nbIndex = 0;
 const fmtDay = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
-function upcoming(plan) {
-  if (!plan) return [];
-  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Tunis' }), out = [];
-  for (const m of plan.matchdays) for (const g of m.games) { const dt = g.game_date || m.date; if (!g.played && (!dt || dt >= today)) out.push({ ...g, md: m.matchday, date: dt }); }
-  return out.slice(0, 12);
-}
+const navGo = path => go(path);          // startBanner has its own local `go` (carousel)
 // Prediction inside the banner: tap the team you think wins; the crowd's split then appears under the match (only after your pick, as on the Predictions page).
 let predRound = null, nbCtx = null, nbHold = 0;
 const pickInfo = g => predRound && predRound.matchday === g.md ? predRound.games.find(x => x.home === g.home && x.away === g.away) || null : null;
@@ -764,12 +761,20 @@ function bindPicks() {
   document.querySelectorAll('#nextbanner .nbpk').forEach(b => { b.onclick = e => { e.stopPropagation(); bannerPick(b); }; b.onkeydown = e => e.stopPropagation(); });
 }
 function nextBanner(plan, standings) {
-  const all = upcoming(plan); if (!all.length) return '';
-  const gs = all.filter(g => g.md === all[0].md)     // the next matchday only: every slide can be predicted
+  const B = plan && plan.banner; if (!B || !B.games.length) return '';
+  const gs = B.games.map(g => ({ ...g, md: B.matchday }))     // chosen by the server (stats.banner): the next games, or the results of the matchday just played (kept one day), then the next matchday
     .sort((a, b) => (a.featured ?? 999) - (b.featured ?? 999) || (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || ''));   // featured first, by the admin's rank
   const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
   nbCtx = { plan, rec };
-  const slide = g => `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">
+  const resultSlide = g => {
+    const hw = g.home_score > g.away_score, url = g.game_id ? gameUrl(g.game_id) : '';
+    const side = (c, sc, win) => `<div class="nbtm res${win ? ' won' : ''}">${logo(c, 76)}<span>${esc(plan.teams[c])}</span><small>${esc(rec(c))}</small><b class="nbscore">${sc}</b></div>`;
+    return `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}"${url ? ` data-res="${esc(url)}"` : ''} aria-label="${esc(plan.teams[g.home])} ${g.home_score}–${g.away_score} ${esc(plan.teams[g.away])}">
+      <div class="nbh"><span class="pill acc">${_('Final')}</span>${g.date ? esc(fmtDay(g.date)) : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
+      <div class="nbm">${side(g.home, g.home_score, hw)}<div class="nbvs">–</div>${side(g.away, g.away_score, !hw)}</div>
+      <span class="nbcta">${url ? _('Full box score') : _('Compare the teams')} →</span></div>`;
+  };
+  const slide = g => g.played ? resultSlide(g) : `<div class="nbs" role="button" tabindex="0" data-mu="${g.home}|${g.away}|${g.md}|${g.date || ''}" aria-label="${esc(plan.teams[g.home])} – ${esc(plan.teams[g.away])}: ${_('Compare')}">
       <div class="nbh">${g.featured ? `<span class="pill acc">⭐ ${_('Featured')}</span>` : ''}${g.date ? esc(fmtDay(g.date)) : ''}${g.time ? ` · ${esc(g.time)}` : ''}<span class="pill">${_('Day')} ${g.md}</span></div>
       ${slideBody(g)}
       <span class="nbcta">${_('Compare the teams')} →</span></div>`;
@@ -790,8 +795,8 @@ function startBanner() {
   root.onmouseenter = () => { paused = true; }; root.onmouseleave = () => { paused = false; };
   let x0 = null; root.ontouchstart = e => { x0 = e.touches[0].clientX; paused = true; };
   root.ontouchend = e => { if (x0 != null) { const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 40) go(i + (dx < 0 ? 1 : -1)); } x0 = null; paused = false; };
-  root.onkeydown = e => { if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'ArrowRight') go(i + 1); else if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.mu) { e.preventDefault(); openMatchup(e.target.dataset.mu); } };
-  root.querySelectorAll('.nbs').forEach(sl => sl.onclick = () => openMatchup(sl.dataset.mu));
+  root.onkeydown = e => { if (e.key === 'ArrowLeft') go(i - 1); else if (e.key === 'ArrowRight') go(i + 1); else if ((e.key === 'Enter' || e.key === ' ') && e.target.dataset.mu) { e.preventDefault(); if (e.target.dataset.res) navGo(e.target.dataset.res); else openMatchup(e.target.dataset.mu); } };
+  root.querySelectorAll('.nbs').forEach(sl => sl.onclick = () => sl.dataset.res ? navGo(sl.dataset.res) : openMatchup(sl.dataset.mu));
   bindPicks();
   if (n > 1 && !matchMedia('(prefers-reduced-motion: reduce)').matches) nbTimer = setInterval(() => { if (!paused && !document.hidden && !$('#modal') && Date.now() > nbHold) go(i + 1); }, 5500);
 }

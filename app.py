@@ -280,7 +280,11 @@ def lineups_view():
 
 @app.get("/api/planning")
 def planning():
-    return jsonify(stats.planning())
+    plan = stats.planning()
+    plan["banner"] = stats.banner(plan)          # what the home banner shows today (Tunisian date): next games, or the results of the matchday that has just been played
+    r = jsonify(plan)
+    r.headers["Cache-Control"] = "no-store"
+    return r
 
 
 @app.post("/api/sync")

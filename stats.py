@@ -1,5 +1,6 @@
 """Aggregation, ratings and MVP logic. Pure functions over the stored game JSON files."""
 import bisect
+import datetime
 import difflib
 import json
 import math
@@ -587,6 +588,40 @@ def planning(official=None):
             by_md[r["matchday"]][-1].update(_sched_fields(r["matchday"], by_md[r["matchday"]][-1], sched))
     return {"projected": projected, "teams": o["teams"],
             "matchdays": [{"matchday": md, "date": load_calendar().get(md), "games": sorted(gs, key=lambda g: g["home"])} for md, gs in sorted(by_md.items())]}
+
+
+TUNIS = datetime.timezone(datetime.timedelta(hours=1))   # Tunisia has no daylight saving time
+RESULTS_DAYS = 1                                         # a matchday's results stay on the home banner this many days after the game date
+
+
+def banner(plan=None, today=None, days=RESULTS_DAYS):
+    """What the home banner shows: the first matchday that is not over for the banner.
+
+    A game that has NOT been played stays while its date has not passed (its day included): the visitors can predict it. A game that HAS been played (official result)
+    stays, as a result, until `days` day(s) after its date; then the banner moves on to the next matchday and its predictions. A game without a result whose date has
+    passed is dropped (nothing to show yet). Returns None when nothing is left, else {"matchday", "date", "mode": "next" | "results" | "mixed", "games": [...]} where each
+    game has home, away, played, scores, time, date, featured, key and game_id (the box score page, when the site has one)."""
+    plan = plan or planning()
+    today = today or datetime.datetime.now(TUNIS).date()
+    d = build()
+    ids = {}
+    for g in [*d["games"], *d.get("partials", [])]:
+        ids[(g["matchday_no"], frozenset(t["code"] for t in g["teams"]))] = g["id"]
+    iso = lambda v: datetime.date.fromisoformat(v) if v else None
+    for m in plan["matchdays"]:
+        games = []
+        for g in m["games"]:
+            dt = iso(g.get("game_date") or m.get("date"))
+            if g["played"]:
+                keep = dt is None or today <= dt + datetime.timedelta(days=days)
+            else:
+                keep = dt is None or dt >= today
+            if keep:
+                games.append({**g, "date": dt.isoformat() if dt else None, "game_id": ids.get((m["matchday"], frozenset((g["home"], g["away"]))))})
+        if games:
+            played = sum(1 for g in games if g["played"])
+            return {"matchday": m["matchday"], "date": m.get("date"), "mode": "results" if played == len(games) else "next" if not played else "mixed", "games": games}
+    return None
 
 
 def team_stats(season=None):
