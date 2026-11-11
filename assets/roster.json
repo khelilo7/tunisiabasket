@@ -1,5 +1,5 @@
 {
- "_note": "Roster facts that ship with the code, so they apply to every copy of the site the moment it is deployed (the admin's own changes live in data/roster.json and are added to these). merges: 'alias id' -> 'player id' (one person whose name or number was printed differently on the sheets). transfers: a player moved to a new club. renames: the name the site shows.",
+ "_note": "Roster facts that ship with the code, so they apply to every copy of the site the moment it is deployed (the admin's own changes live in data/roster.json and are added to these). merges: 'alias id' -> 'player id' (one person whose name or number was printed differently on the sheets). transfers: a player moved to a new club. renames: the name the site shows. numbers: a jersey-number rule says that from `from` to `to` (both optional, inclusive) the number `number` of `team` on the sheets is the player `id`: a player who changed number, or a newcomer who took the number of someone who left. `name` is how the newcomer is called when he has no other row.",
  "merges": {
   "jsm-0": "jsm-17",
   "jsm-30": "jsm-17",
@@ -7,10 +7,133 @@
  },
  "renames": {
   "jsm-17": "Mosaab Ammari",
-  "sn-6": "Slimane Chelly"
+  "sn-6": "Slimane Chelly",
+  "esr-7": "Mohamed Ali Jaha",
+  "ca-12": "Fedi Elair",
+  "usm-8": "Fedi Gharbi"
  },
  "transfers": [
-  {"id": "usa-7", "from": "USA", "to": "DSG", "number": 2, "date": "2026-11-08", "note": "Dalia Sportive de Grombalia welcome poster (jersey 02)"},
-  {"id": "usa-10", "from": "USA", "to": "DSG", "number": null, "date": "2026-11-08", "note": "Jersey number at Dalia to be confirmed"}
+  {
+   "id": "usa-7",
+   "from": "USA",
+   "to": "DSG",
+   "number": 2,
+   "date": "2026-11-08",
+   "note": "Dalia Sportive de Grombalia welcome poster (jersey 02)"
+  },
+  {
+   "id": "usa-10",
+   "from": "USA",
+   "to": "DSG",
+   "number": null,
+   "date": "2026-11-08",
+   "note": "Jersey number at Dalia to be confirmed"
+  }
+ ],
+ "numbers": [
+  {
+   "team": "CA",
+   "number": 8,
+   "id": "ca-3",
+   "from": "2026-11-11",
+   "note": "Chris Crawford took number 8 in phase 2 (Bilel Jaziri did not play)"
+  },
+  {
+   "team": "CSS",
+   "number": 3,
+   "id": "css-103",
+   "name": "Karl Da'Montez Jones",
+   "from": "2026-11-11",
+   "note": "newcomer on the number of Avadi Mchael Ikpeze"
+  },
+  {
+   "team": "DSG",
+   "number": 23,
+   "id": "dsg-123",
+   "name": "Ahmed Yazidi",
+   "from": "2026-10-14",
+   "note": "on the number of Lassad Chwaya since his first sheet"
+  },
+  {
+   "team": "ESR",
+   "number": 10,
+   "id": "esr-11",
+   "from": "2026-11-11",
+   "note": "Hamza Ben Turkia, who wore 11 before"
+  },
+  {
+   "team": "ESR",
+   "number": 11,
+   "id": "esr-7",
+   "name": "Mohamed Ali Jaha",
+   "from": "2026-11-11",
+   "note": "Mohamed Ali Jaha wears 11 again"
+  },
+  {
+   "team": "ESR",
+   "number": 11,
+   "id": "esr-7",
+   "name": "Mohamed Ali Jaha",
+   "to": "2026-10-13",
+   "note": "he was listed under 11 before Hamza Ben Turkia"
+  },
+  {
+   "team": "ESR",
+   "number": 25,
+   "id": "esr-125",
+   "name": "Hedi Ben Romdhane",
+   "from": "2026-11-11",
+   "note": "on the number of Alphousseyni Diedhiou"
+  },
+  {
+   "team": "ESR",
+   "number": 77,
+   "id": "esr-177",
+   "name": "Iyed Chahb",
+   "from": "2026-10-21",
+   "note": "on the number of Naim Dhifallah since his first sheet"
+  },
+  {
+   "team": "JSK",
+   "number": 3,
+   "id": "jsk-33",
+   "name": "Lemonte Turner",
+   "from": "2026-11-11",
+   "note": "wears 3 (added as 33 before his first game)"
+  },
+  {
+   "team": "JSM",
+   "number": 0,
+   "id": "jsm-100",
+   "name": "Abdelmomen Aouadi",
+   "from": "2026-11-11",
+   "note": "not Mosaab Ammari, who shared the number before"
+  },
+  {
+   "team": "USA",
+   "number": 88,
+   "id": "usa-188",
+   "name": "Ayoub Boukadida",
+   "from": "2026-11-07",
+   "note": "on the number of Aaron Tims"
+  },
+  {
+   "team": "SN",
+   "number": 10,
+   "id": "sn-40",
+   "name": "Jasson David Hobel",
+   "from": "2026-10-28",
+   "to": "2026-10-28",
+   "note": "Hobel, printed under 10 on that sheet"
+  },
+  {
+   "team": "SN",
+   "number": 23,
+   "id": "sn-40",
+   "name": "Jasson David Hobel",
+   "from": "2026-10-30",
+   "to": "2026-10-30",
+   "note": "Hobel, printed under 23 on that sheet"
+  }
  ]
 }

@@ -1,4 +1,4 @@
-// Admin: players and rosters. Edit height / weight / birth date, rename, add a player, delete (hide) a player, mark a transfer.
+// Admin: players and rosters. Edit height / weight / birth date, rename, change a jersey number (the statistics stay with the player), add a player, delete a player (his number is free again), mark a transfer.
 // Uses the helpers of admin.html ($, esc, api). Everything is saved on the server (data/roster.json, data/players_info.json).
 (function () {
   let R = null, A = {}, team = '', query = '', showHidden = false, msg = null;      // A: players marked as not playing {id: {note, since}}
@@ -88,12 +88,14 @@
         <td><input data-f="birth" type="date" value="${esc((p.bio && p.bio.birth) || '')}" style="width:140px"></td>
         <td class="mut">${age(p.bio && p.bio.birth)}</td>
         <td style="white-space:nowrap">${p.hidden ? `<button data-act="restore">↺ Restore</button>` :
-          `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="out" title="${A[p.id] ? 'Back in the squad' : 'Not playing (injured, suspended…): leave him out of the expected starting five'}"${A[p.id] ? ' class="primary"' : ''}>🤕</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
+          `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="number" title="Change his jersey number: his statistics stay with him">#</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="out" title="${A[p.id] ? 'Back in the squad' : 'Not playing (injured, suspended…): leave him out of the expected starting five'}"${A[p.id] ? ' class="primary"' : ''}>🤕</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
         || '<tr><td colspan="10" class="mut" style="padding:14px">No players.</td></tr>'}
       </tbody></table></div>
       <p class="mut small">Photos: 📷 crops a centred square from the image you pick (crop it beforehand for exact framing) and shows it on the player page, the players list and the MVP race. Players without a photo show a silhouette. Only upload photos you have the right to publish.</p>
-      <p class="mut small">Height accepts <b>190</b> or a range <b>189-192</b>. Values you type are official; empty fields clear the value. “Delete” hides a player from the site (rankings, leaders, MVP race, pages) but keeps the box scores, and can be undone with Restore.</p>
+      <p class="mut small">Height accepts <b>190</b> or a range <b>189-192</b>. Values you type are official; empty fields clear the value. “Delete” hides a player from the site (rankings, leaders, MVP race, pages) but keeps the box scores, and can be undone with Restore; his number is free for somebody else at once. <b>#</b> gives a player a new jersey number without touching his statistics.</p>
       <div id="r-forms"></div>
+      <h3 class="sub">Number changes</h3>
+      ${(R.changes.numbers || []).length ? `<div class="card"><table><tbody>${R.changes.numbers.map((n, i) => { const p = R.players.find(x => x.id === n.id); return `<tr><td class="l"><b>${esc(n.name || (p ? p.name : n.id))}</b></td><td>${esc(n.team)} #${n.number}</td><td class="mut">${n.from ? 'from ' + esc(n.from) : 'until the start'}${n.to ? ' to ' + esc(n.to) : ''}</td><td class="mut l">${esc(n.note || '')}</td><td><button data-undonum="${i}" class="danger">Undo</button></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="mut small">None yet. The ones that ship with the code (phase 2 of the season) are not listed here.</div>'}
       <h3 class="sub">Transfers marked</h3>
       ${R.changes.transfers.length ? `<div class="card"><table><tbody>${R.changes.transfers.map((t, i) => { const p = R.players.find(x => x.id === t.id); return `<tr><td class="l"><b>${esc(p ? p.name : t.id)}</b></td><td>${esc(t.from)} → ${esc(t.to)} #${t.number}</td><td class="mut">${esc(t.date || '')}</td><td class="mut l">${esc(t.note || '')}</td><td><button data-undo="${i}" class="danger">Undo</button></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="mut small">None yet.</div>'}`;
     wire();
@@ -134,7 +136,7 @@
         $('#f-no').onclick = () => { $('#r-forms').innerHTML = ''; };
         $('#f-go').onclick = async () => { if (await post({ op: 'rename', id, name: $('#f-name').value })) load(); else render(); };
       };
-      if (btn('hide')) btn('hide').onclick = async () => { if (confirm(`Delete ${p.name} (${p.team} #${p.number}) from the site?\n\nHe disappears from players, rankings and the MVP race. Box scores are kept and you can restore him later.`) && await post({ op: 'hide', id })) load(); };
+      if (btn('hide')) btn('hide').onclick = async () => { if (confirm(`Delete ${p.name} (${p.team} #${p.number}) from the site?\n\nHe disappears from players, rankings and the MVP race. Box scores are kept, his number is free for somebody else, and you can restore him later.`) && await post({ op: 'hide', id })) load(); };
       if (btn('out')) btn('out').onclick = async () => {
         if (A[id]) { if (await absent(id, false)) load(); return; }
         document.querySelectorAll('.r-note').forEach(x => x.remove());      // the note form opens right under the player's row (no scrolling)
@@ -146,6 +148,17 @@
         $('#f-go').onclick = async () => { if (await absent(id, true, $('#f-note').value)) load(); else render(); };
       };
       if (btn('restore')) btn('restore').onclick = async () => { if (await post({ op: 'restore', id })) load(); };
+      if (btn('number')) btn('number').onclick = () => {
+        form(`<b>New jersey number: ${esc(p.name)}</b> <span class="mut small">currently ${esc(p.team)} #${p.number}</span>
+          <div class="row" style="margin-top:8px"><label class="small mut">New number</label><input id="f-num" class="num" type="number" min="0" max="99" value="${p.number}">
+            <label class="small mut">From the games of</label><input id="f-since" type="date" value="${today()}"></div>
+          <details style="margin-top:8px"><summary class="small mut">Only for a period (correcting an old sheet)</summary>
+            <div class="row" style="margin-top:6px"><label class="small mut">Until</label><input id="f-until" type="date"><span class="mut small">leave empty for “from now on”</span></div></details>
+          <div class="row" style="margin-top:10px"><button class="primary" id="f-go">Change the number</button><button id="f-no">Cancel</button></div>
+          <p class="mut small" style="margin-bottom:0">His past games and statistics stay with him. From that date on, the sheets that print this number for ${esc(p.team)} are his (for a game played on that day, pick that day: e.g. 2026-11-11 for J12). The number he leaves is free for somebody else.</p>`);
+        $('#f-no').onclick = () => $('#r-forms').innerHTML = '';
+        $('#f-go').onclick = async () => { if (await post({ op: 'renumber', id, number: +$('#f-num').value, since: $('#f-since').value, until: $('#f-until').value || null })) load(); else render(); };
+      };
       if (btn('transfer')) btn('transfer').onclick = () => {
         form(`<b>Transfer: ${esc(p.name)}</b> <span class="mut small">currently ${esc(p.team)} #${p.number}</span>
           <div class="row" style="margin-top:8px"><label class="small mut">To</label><select id="f-to">${codes.filter(c => c !== p.team).map(c => `<option value="${c}">${esc(teams[c])} (${c})</option>`).join('')}</select>
@@ -160,6 +173,7 @@
       };
     });
     document.querySelectorAll('[data-back]').forEach(b => b.onclick = async () => { if (await absent(b.dataset.back, false)) load(); });
+    document.querySelectorAll('[data-undonum]').forEach(b => b.onclick = async () => { if (confirm('Undo this number change?') && await post({ op: 'undo_number', index: +b.dataset.undonum })) load(); });
     document.querySelectorAll('[data-undo]').forEach(b => b.onclick = async () => { if (confirm('Undo this transfer?') && await post({ op: 'undo_transfer', index: +b.dataset.undo })) load(); });
     $('#r-addbtn').onclick = () => {
       form(`<b>Add a player</b> <span class="mut small">for a new signing who has no box score yet. Once a box score exists with the same team and number, the real statistics take over.</span>
@@ -167,12 +181,13 @@
           <input id="f-name" placeholder="Full name" style="min-width:220px"><input id="f-num" class="num" type="number" min="0" max="99" placeholder="#">
           <select id="f-pos"><option value="">Position (auto)</option>${R.positions.map(x => `<option>${x}</option>`).join('')}</select></div>
         <div class="row" style="margin-top:8px"><input id="f-h" class="num" placeholder="cm"><input id="f-w" class="num" placeholder="kg"><input id="f-b" type="date" title="Birth date"></div>
+        <div class="row" style="margin-top:8px"><label class="small mut">Wears the number from the games of</label><input id="f-since" type="date" value="${today()}"><span class="mut small">only matters if somebody wore this number before</span></div>
         <div class="row" style="margin-top:10px"><button class="primary" id="f-go">Add the player</button><button id="f-no">Cancel</button></div>`);
       $('#f-no').onclick = () => $('#r-forms').innerHTML = '';
       $('#f-go').onclick = async () => {
         const h = parseHeight($('#f-h').value), w = $('#f-w').value.trim();
         const body = { op: 'add', team: $('#f-team').value, name: $('#f-name').value, number: $('#f-num').value, pos: $('#f-pos').value };
-        if (h) body.height = h; if (w) body.weight = parseInt(w, 10); if ($('#f-b').value) body.birth = $('#f-b').value;
+        if (h) body.height = h; if (w) body.weight = parseInt(w, 10); if ($('#f-b').value) body.birth = $('#f-b').value; if ($('#f-since').value) body.since = $('#f-since').value;
         if (await post(body)) { team = body.team; load(); } else render();
       };
     };

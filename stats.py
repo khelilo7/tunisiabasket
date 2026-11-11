@@ -14,7 +14,8 @@ GAMES_DIR = config.DATA_DIR / "games"
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
 BIOS_FILE = config.DATA_DIR / "players_info.json"  # optional corrections to assets/players_info.json
-ROSTER_FILE = config.DATA_DIR / "roster.json"  # admin roster changes: added / hidden players, transfers, renames
+ROSTER_FILE = config.DATA_DIR / "roster.json"  # admin roster changes: added / hidden players, transfers, renames, jersey numbers
+GAME_DATES_FILES = (config.ASSETS_DIR / "game_dates.json", config.DATA_DIR / "game_dates.json")   # {"<game id>": "YYYY-MM-DD"}: the real day of a game whose sheet prints another
 POSITIONS_FILE = config.DATA_DIR / "positions.json"  # manual position corrections: {"<player id>": "PG"}
 POSITIONS = ["PG", "SG", "SF", "PF", "C"]
 PHASE_LEN = 11  # 12 teams, each plays every other team once per phase
@@ -77,11 +78,25 @@ def _fix_codes(raw):
                     t["code"] = known[m[0]].most_common(1)[0][0]
 
 
+def game_dates():
+    """{game id: date}: sheets often print the wrong day (the scoreboard clock was off); the admin (data/game_dates.json) or the code (assets/game_dates.json) says the real one."""
+    out = {}
+    for path in GAME_DATES_FILES:
+        try:
+            out.update({k: v for k, v in json.loads(path.read_text()).items() if isinstance(v, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", v)})
+        except (OSError, ValueError, AttributeError):
+            continue
+    return out
+
+
 def load_games():
     raw = []
+    fixed = game_dates()
     for f in sorted(GAMES_DIR.glob("*.json")):
         g = json.loads(f.read_text())
         g["id"] = g.get("id") or f.stem
+        if g["id"] in fixed:
+            g["date"], g["date_approx"] = fixed[g["id"]], False
         raw.append(g)
     _fix_codes(raw)
     games, by_key = [], {}
@@ -107,9 +122,33 @@ def _unnamed(name):
     return not re.sub(r"[X\s.?_-]", "", (name or "").upper())
 
 
+def number_rule(rules, code, number, date):
+    """The jersey-number rule that applies to team `code`, number `number` on `date`, or None. A rule says "from `from` to `to` (both optional, inclusive) the
+    sheets' number N of this team is the player `id`" (a player who changed number, or a newcomer who took the number of someone who left): the latest `from` wins."""
+    best = None
+    for r in rules:
+        if r["team"] != code or r["number"] != number:
+            continue
+        if (r.get("from") and (date or "") < r["from"]) or (r.get("to") and (date or "") > r["to"]):
+            continue
+        if best is None or (r.get("from") or "") >= (best.get("from") or ""):
+            best = r
+    return best
+
+
 def _canonicalise(games):
     """Players are identified by (team, jersey number); spelling is the weighted-majority variant.
-    Team names are the majority non-garbled variant per team code."""
+    Team names are the majority non-garbled variant per team code.
+    Jersey-number rules (roster.json "numbers") come first: a row they cover belongs to the player the rule names, whatever the number's usual owner is,
+    and it takes no part in naming the others (so a newcomer who takes a number never borrows the name, or the statistics, of the player who left it)."""
+    rules = load_roster()["numbers"]
+    for g in games:
+        for t in g["teams"]:
+            for p in t["players"]:
+                p.pop("_rule", None)
+                r = number_rule(rules, t["code"], p["number"], g.get("date")) if rules else None
+                if r:
+                    p["_rule"] = r
     names, tnames = defaultdict(Counter), defaultdict(Counter)
     for g in games:
         w = SOURCE_WEIGHT.get(g.get("source"), 3)
@@ -117,14 +156,14 @@ def _canonicalise(games):
             if not _garbled(t["name"]):
                 tnames[t["code"]][t["name"]] += w
             for p in t["players"]:
-                if not p.get("dnp") and not _unnamed(p["name"]):
+                if not p.get("dnp") and not _unnamed(p["name"]) and not p.get("_rule"):
                     names[(t["code"], p["number"])][p["name"].title()] += w
     # Same team + same name but different jersey readings -> one player (most common number wins).
     nums = defaultdict(Counter)
     for g in games:
         for t in g["teams"]:
             for p in t["players"]:
-                if not p.get("dnp") and not _unnamed(p["name"]):
+                if not p.get("dnp") and not _unnamed(p["name"]) and not p.get("_rule"):
                     c = names.get((t["code"], p["number"]))
                     if c:
                         nums[(t["code"], c.most_common(1)[0][0])][p["number"]] += 1
@@ -134,7 +173,10 @@ def _canonicalise(games):
                 t["name"] = tnames[t["code"]].most_common(1)[0][0]
             for p in t["players"]:
                 c = names.get((t["code"], p["number"]))
-                if _unnamed(p["name"]):
+                if p.get("_rule"):
+                    p["pid"] = p["_rule"]["id"]
+                    p.pop("unnamed", None)
+                elif _unnamed(p["name"]):
                     p["pid"], p["unnamed"] = f"{t['code'].lower()}-x{p['number']}", True     # counted in the box score and the team, but no profile (nobody to credit)
                 elif c and not p.get("dnp"):
                     p["name"] = c.most_common(1)[0][0]
@@ -144,6 +186,21 @@ def _canonicalise(games):
                     # without this, one misprinted number creates a second profile (and borrows the name of the real owner of that number).
                     known = nums.get((t["code"], p["name"].title()))
                     p["pid"] = f"{t['code'].lower()}-{known.most_common(1)[0][0] if known else p['number']}"
+    # the rows of a rule: the name is the one the rule gives, else the name his other rows carry, else the sheet's own
+    by_pid = defaultdict(Counter)
+    for g in games:
+        for t in g["teams"]:
+            for p in t["players"]:
+                if not p.get("_rule") and not p.get("dnp") and not p.get("unnamed"):
+                    by_pid[p["pid"]][p["name"]] += 1
+    added = {a["id"]: a["name"] for a in load_roster()["added"]}
+    renames = load_roster()["renames"]
+    for g in games:
+        for t in g["teams"]:
+            for p in t["players"]:
+                r = p.pop("_rule", None)
+                if r:
+                    p["name"] = r.get("name") or renames.get(r["id"]) or (by_pid[r["id"]].most_common(1)[0][0] if by_pid.get(r["id"]) else None) or added.get(r["id"]) or p["name"].title()
     alias = _pid_alias()
     if alias:
         for g in games:
@@ -200,7 +257,7 @@ def partial_games(games):
                 if p.get("pid") and not p.get("dnp") and not p.get("unnamed"):
                     ident[(t["code"], p["number"])][p["pid"]] += 1
                     names[p["pid"]] = p["name"]
-    alias, out, seen = _pid_alias(), [], set()
+    alias, out, seen, rules = _pid_alias(), [], set(), load_roster()["numbers"]
     for raw_g in raw:
         if raw_g.get("id") in seen:
             continue
@@ -218,7 +275,8 @@ def partial_games(games):
             players = []
             if code == rec:
                 for p in raw_g.get("players") or []:
-                    pid = ident[(code, p["number"])].most_common(1)[0][0] if ident.get((code, p["number"])) else f"{code.lower()}-{p['number']}"
+                    rule = number_rule(rules, code, p["number"], raw_g["date"])
+                    pid = rule["id"] if rule else ident[(code, p["number"])].most_common(1)[0][0] if ident.get((code, p["number"])) else f"{code.lower()}-{p['number']}"
                     pid = alias.get(pid, pid)
                     row = {"number": p["number"], "name": names.get(pid) or p["name"], "pid": pid, "dnp": False, "starter": False, "partial": True,
                            **{k: p.get(k, 0) for k in ("pts", "fgm", "fga", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "ast", "stl", "blk")},
@@ -255,9 +313,24 @@ def _roster_raw(path):
         return {}
 
 
+def _number_rules(raw):
+    """The well-formed jersey-number rules (see number_rule), in the order they were written."""
+    out = []
+    for r in raw:
+        try:
+            if not (isinstance(r, dict) and isinstance(r.get("team"), str) and isinstance(r.get("id"), str) and r["id"] and 0 <= int(r["number"]) <= 99):
+                continue
+            if not all(r.get(k) is None or re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(r[k])) for k in ("from", "to")):
+                continue
+            out.append({**r, "number": int(r["number"])})
+        except (TypeError, ValueError, KeyError):
+            continue
+    return out
+
+
 def load_roster(include_base=True):
     """{'added': [{id,name,team,number,pos}], 'hidden': [ids], 'transfers': [{id,from,to,number,alias,date,note}], 'renames': {id: name},
-    'merges': {alias id: player id}}. The admin's file (data/roster.json) comes on top of assets/roster.json; the admin only ever writes its own
+    'merges': {alias id: player id}, 'numbers': [{team,number,id,from,to,name,note}]}. The admin's file (data/roster.json) comes on top of assets/roster.json; the admin only ever writes its own
     (include_base=False), so what ships with the code can never be copied into, or undone from, the data folder."""
     base, raw = (_roster_raw(ROSTER_BASE) if include_base else {}), _roster_raw(ROSTER_FILE)
     seen, transfers = set(), []
@@ -268,7 +341,8 @@ def load_roster(include_base=True):
             transfers.append(t)
     return {"added": [*(base.get("added") or []), *(raw.get("added") or [])], "hidden": sorted({*(base.get("hidden") or []), *(raw.get("hidden") or [])}),
             "transfers": transfers, "renames": {**(base.get("renames") or {}), **(raw.get("renames") or {})},
-            "merges": {**(base.get("merges") or {}), **(raw.get("merges") or {})}}
+            "merges": {**(base.get("merges") or {}), **(raw.get("merges") or {})},
+            "numbers": _number_rules([*(base.get("numbers") or []), *(raw.get("numbers") or [])])}
 
 
 def blank_player(a: dict) -> dict:
@@ -301,6 +375,10 @@ def apply_roster(players: list, keep_hidden: bool = False) -> list:
     for pid, name in ro["renames"].items():
         if pid in byid:
             byid[pid]["name"] = name
+    for r in sorted(ro["numbers"], key=lambda r: r.get("from") or ""):    # a rule newer than his last game: that is his number now, even before he plays with it
+        p = byid.get(r["id"])
+        if p and p["team"] == r["team"] and (r.get("from") or "") > (p["log"][-1]["date"] if p["log"] else ""):
+            p["number"] = r["number"]
     hidden = set(ro["hidden"])
     if keep_hidden:
         for p in players:

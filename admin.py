@@ -363,9 +363,28 @@ def roster_view():
     return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS)
 
 
+def _date(v, default=None):
+    """YYYY-MM-DD from a request value (empty -> default)."""
+    if v in (None, ""):
+        return default
+    return time.strftime("%Y-%m-%d", time.strptime(str(v)[:10], "%Y-%m-%d"))
+
+
+def _all_pids():
+    """Every player id the sheets, the roster files and the rules already use: a newcomer's id must be none of them."""
+    ro = stats.load_roster()
+    used = {p["pid"] for g in stats.build_all_games() for t in g["teams"] for p in t["players"] if p.get("pid")}
+    return used | {a["id"] for a in ro["added"]} | {r["id"] for r in ro["numbers"]} | set(ro["merges"]) | set(ro["merges"].values()) | {t.get("alias") for t in ro["transfers"]}
+
+
+def _number_holder(players, team, num, skip=None):
+    """The player of `team` who wears `num` now (a deleted player wears nothing), or None."""
+    return next((p for p in players.values() if p["id"] != skip and p["team"] == team and p["number"] == num and not p.get("hidden")), None)
+
+
 @bp.post("/admin/api/roster")
 def roster_change():
-    """Body {"op": ..., ...}. ops: bio, add, hide, restore, rename, transfer, undo_transfer."""
+    """Body {"op": ..., ...}. ops: bio, add, hide, restore, rename, transfer, undo_transfer, renumber, undo_number."""
     b = request.get_json(silent=True) or {}
     op = b.get("op")
     pid = str(b.get("id") or "")
@@ -396,9 +415,20 @@ def roster_change():
                 num = int(b.get("number"))
                 if team not in teams or not name or not 0 <= num <= 99:
                     return jsonify(error="Choose a team, a name and a jersey number (0-99)."), 422
-                pid = f"{team.lower()}-{num}"
-                if pid in players and not players[pid].get("added") or pid in {a["id"] for a in ro["added"]}:
-                    return jsonify(error=f"{team} #{num} already exists ({players.get(pid, {}).get('name', 'added earlier')})."), 409
+                holder = _number_holder(players, team, num)
+                if holder:
+                    return jsonify(error=f"{team} #{num} is worn by {holder['name']}. Delete him, or give him another number, first."), 409
+                # A number somebody wore before is free again once he is deleted or renumbered; the newcomer gets an id of his own (the old one keeps its games),
+                # and a number rule makes the sheets from `since` on his, not his predecessor's.
+                used, pid, k = _all_pids(), f"{team.lower()}-{num}", 0
+                history = pid in used or any(r["team"] == team and r["number"] == num for r in ro["numbers"]) or \
+                    any(p["number"] == num and t["code"] == team for g in stats.build_all_games() for t in g["teams"] for p in t["players"])
+                while pid in used:
+                    k += 1
+                    pid = f"{team.lower()}-{num + 100 * k}"
+                if history:
+                    ro["numbers"].append({"team": team, "number": num, "id": pid, "name": name, "from": _date(b.get("since"), time.strftime("%Y-%m-%d")),
+                                          "note": "newcomer on a number used before"})
                 ro["added"].append({"id": pid, "name": name, "team": team, "number": num})
                 if b.get("pos") in stats.POSITIONS:
                     pos = stats.load_positions()
@@ -411,7 +441,12 @@ def roster_change():
             elif op in ("hide", "restore"):
                 if pid not in players:
                     return jsonify(error="Unknown player."), 404
-                ro["hidden"] = [x for x in ro["hidden"] if x != pid] + ([pid] if op == "hide" else [])
+                if op == "hide" and players[pid].get("added") and not players[pid]["gp"] and any(a["id"] == pid for a in ro["added"]):
+                    ro["added"] = [a for a in ro["added"] if a["id"] != pid]          # a signing who never played: really removed, his number and id are free at once
+                    ro["numbers"] = [r for r in ro["numbers"] if r["id"] != pid]
+                    ro["hidden"] = [x for x in ro["hidden"] if x != pid]
+                else:
+                    ro["hidden"] = [x for x in ro["hidden"] if x != pid] + ([pid] if op == "hide" else [])
             elif op == "rename":
                 name = " ".join(str(b.get("name") or "").split()).title()
                 if pid not in players or not name:
@@ -433,6 +468,24 @@ def roster_change():
                     ro["added"] = [a for a in ro["added"] if a["id"] != alias]           # the placeholder is replaced by the transfer
                 ro["transfers"].append({"id": pid, "from": p["team"], "to": to, "number": num, "alias": alias,
                                         "date": str(b.get("date") or time.strftime("%Y-%m-%d"))[:10], "note": str(b.get("note") or "")[:200]})
+            elif op == "renumber":
+                p = players.get(pid)
+                num = int(b.get("number"))
+                if not p or not 0 <= num <= 99:
+                    return jsonify(error="Choose a player and a jersey number (0-99)."), 422
+                since, until = _date(b.get("since"), time.strftime("%Y-%m-%d")), _date(b.get("until"))
+                if until and until < since:
+                    return jsonify(error="The end date is before the start date."), 422
+                holder = _number_holder(players, p["team"], num, skip=pid)
+                if holder and not until:
+                    return jsonify(error=f"{p['team']} #{num} is worn by {holder['name']}. Delete him, or give him another number, first."), 409
+                ro["numbers"].append({"team": p["team"], "number": num, "id": pid, "from": since, **({"to": until} if until else {}),
+                                      "note": str(b.get("note") or "")[:200]})
+            elif op == "undo_number":
+                i = int(b.get("index", -1))
+                if not 0 <= i < len(ro["numbers"]):
+                    return jsonify(error="Unknown number change."), 404
+                ro["numbers"].pop(i)
             elif op == "undo_transfer":
                 i = int(b.get("index", -1))
                 if not 0 <= i < len(ro["transfers"]):
@@ -647,6 +700,35 @@ def import_game():
         return jsonify(error="Bad game id."), 422
     resp, status = _save({"kind": "box", "result": game, "filename": game.get("source_file", "game"), "status": "done"}, {})
     return resp, status
+
+
+@bp.post("/admin/api/game-date")
+def set_game_date():
+    """Body {"id": game id, "date": "YYYY-MM-DD"}: the real day of a game whose sheet prints another (data/game_dates.json; the game file itself is not touched).
+    An empty date removes the correction."""
+    b = request.get_json(silent=True) or {}
+    gid = str(b.get("id") or "")
+    if not any(g["id"] == gid for g in stats.load_games()):
+        return jsonify(error="Unknown game."), 404
+    try:
+        date = _date(b.get("date"))
+    except ValueError:
+        return jsonify(error="Date as YYYY-MM-DD."), 422
+    with _file_lock:
+        f = config.DATA_DIR / "game_dates.json"
+        try:
+            cur = json.loads(f.read_text())
+        except (OSError, ValueError):
+            cur = {}
+        if date:
+            cur[gid] = date
+        else:
+            cur.pop(gid, None)
+        tmp = f.with_suffix(".tmp")
+        tmp.write_text(json.dumps(cur, indent=1))
+        tmp.replace(f)
+    auth.audit("game-date", f"{gid} {date or 'removed'}")
+    return jsonify(ok=True, id=gid, date=date)
 
 
 @bp.post("/admin/api/jobs/<job_id>/items/<int:idx>/save")
