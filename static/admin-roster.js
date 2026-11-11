@@ -22,7 +22,7 @@
       const { ok, body: r } = await api('absences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, absent: on, note }) });
       say(ok ? (on ? 'Marked as not playing: left out of the expected starting five.' : 'Back in the squad.') : (r.error || 'Could not save.'), ok);
       return ok;
-    } catch (e) { say(e.message, false); return false; }
+    } catch (e) { say(e.message + (/\b404\b/.test(e.message) ? ' (this server does not know the feature yet: restart it after updating the code)' : ''), false); return false; }
   }
 
   async function load() {
@@ -137,8 +137,13 @@
       if (btn('hide')) btn('hide').onclick = async () => { if (confirm(`Delete ${p.name} (${p.team} #${p.number}) from the site?\n\nHe disappears from players, rankings and the MVP race. Box scores are kept and you can restore him later.`) && await post({ op: 'hide', id })) load(); };
       if (btn('out')) btn('out').onclick = async () => {
         if (A[id]) { if (await absent(id, false)) load(); return; }
-        const note = prompt(`${p.name} (${p.team} #${p.number}) is not playing.\n\nOptional note (only you see it), e.g. knee injury:`, '');
-        if (note !== null && await absent(id, true, note)) load();
+        document.querySelectorAll('.r-note').forEach(x => x.remove());      // the note form opens right under the player's row (no scrolling)
+        const nr = document.createElement('tr'); nr.className = 'r-note';
+        nr.innerHTML = `<td colspan="10" style="text-align:left;background:var(--card);border-bottom:1px solid var(--acc)"><div class="row"><b>🤕 ${esc(p.name)} is not playing</b><input id="f-note" maxlength="120" placeholder="Optional note, only you see it: knee injury, suspended, left the club…" style="flex:1;min-width:240px"><button class="primary" id="f-go">Mark as not playing</button><button id="f-no">Cancel</button></div><div class="mut small" style="margin-top:4px">He will be left out of the expected starting five on the home page.</div></td>`;
+        tr.after(nr);
+        $('#f-note').focus();
+        $('#f-no').onclick = () => nr.remove();
+        $('#f-go').onclick = async () => { if (await absent(id, true, $('#f-note').value)) load(); else render(); };
       };
       if (btn('restore')) btn('restore').onclick = async () => { if (await post({ op: 'restore', id })) load(); };
       if (btn('transfer')) btn('transfer').onclick = () => {

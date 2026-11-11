@@ -1,4 +1,5 @@
 """Phase MVP: race, fan vote (one per browser, network cap, closed voting, bots), winner, admin settings, no personal data stored."""
+import json
 import os
 import sqlite3
 import sys
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import app  # noqa: E402
 import auth  # noqa: E402
 import config  # noqa: E402
+import mvp  # noqa: E402
 
 auth.time.sleep = lambda s: None
 fails = []
@@ -22,6 +24,8 @@ def check(cond, msg):
 
 
 c = app.app.test_client()
+shipped = json.loads((config.ASSETS_DIR / "mvp_awards.json").read_text())["1"]["deadline"]
+mvp.save_settings(1, None, True, "", "2099-01-01T12:00")      # the shipped deadline is a date (it passes): the vote is open here whatever the clock says
 ADMIN = {"X-Admin-Token": "TEST-TOKEN-0000-1111"}
 UA = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148"
 vid = lambda n: f"{n:032x}"
@@ -44,7 +48,7 @@ check(r["current"]["id"] == "ca-24" and r["current_by"] == "stats", "no votes ye
 check([x["vote_rank"] for x in sorted(cands, key=lambda x: x["vote_rank"])] == list(range(1, len(cands) + 1)), "the list has a vote rank 1..n")
 check(all(x["gp"] >= x["need"] for x in cands), "candidates meet the 70% games rule")
 check(r["winner"] is None and r["leader"]["id"] == "ca-24", "nobody crowned while fans can still vote; Abada leads on stats")
-check(r["voting_open"] and r["deadline"] == "2026-11-11T12:00:00+01:00", f"deadline from the repo file: {r['deadline']}")
+check(mvp.parse_deadline(shipped) is not None and r["voting_open"] and r["deadline"] == "2099-01-01T12:00:00+01:00", f"the repo file has a deadline ({shipped}); the test uses its own open one: {r['deadline']}")
 check(c.get("/api/mvp?phase=9").status_code == 404, "unknown phase")
 check(all(c.get(x["photo"]).status_code == 200 for x in cands if x["photo"]) and {"ca-24", "usm-1", "jsk-7"} <= {x["id"] for x in cands if x["photo"]}, "the three ballot players have a photo and every listed photo file is served")
 check(c.get("/api/overview").get_json()["mvp"]["photo"] == "/img/players/ca-24.jpg", "best player so far carries his photo")

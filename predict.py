@@ -3,7 +3,7 @@
   * One pick per game and per browser, final (same rules as the MVP vote: a random id kept in the browser, only hashes stored,
     a few browsers per network, crawlers refused). Picks live in data/votes.db (table `picks`), so they are backed up with the votes
     and protected the same way: the database refuses to change or delete them.
-  * The deadline is the matchday itself: picks close when the matchday's date starts (Tunisian time). Nothing to set.
+  * The deadline is noon (12:00, Tunisian time) on the first game day of the matchday: after that the banner no longer shows predictions. Nothing to set.
   * The crowd's split is shown only to someone who has picked THAT game, as percentages: no counts, no total. The server enforces it:
     a request without a pick never receives the split.
 """
@@ -18,31 +18,39 @@ import traffic
 MAX_PER_NETWORK = 8
 SIDES = {"H": "home", "A": "away"}
 TUNIS = timezone(timedelta(hours=1))
+CLOSE_HOUR = 12                       # predictions close at 12:00 on the first game day
 _cache = {"t": 0.0, "round": None}
 
 
-def _round():
+def closes_at(day):
+    """When predictions for a matchday whose first game day is `day` ('YYYY-MM-DD') close: noon, Tunisian time."""
+    return datetime.fromisoformat(f"{day}T{CLOSE_HOUR:02d}:00").replace(tzinfo=TUNIS)
+
+
+def _round(now=None):
     """The next matchday with unplayed games: {matchday, date, deadline_ts, open, season, games:[{key, home, away, home_name, away_name}]} or None.
-    Cached for 30 seconds: the calendar changes a few times a day at most."""
-    now = time.time()
-    if now - _cache["t"] < 30 and _cache["round"] is not None:
+    Cached for 30 seconds: the calendar changes a few times a day at most. `now` (an aware datetime) is for tests: no cache."""
+    t = time.time()
+    if now is None and t - _cache["t"] < 30 and _cache["round"] is not None:
         return _cache["round"][0]
+    stamp = now or datetime.now(TUNIS)
     plan = stats.planning()
     season = stats.load_official().get("season") or ""
-    today = datetime.now(TUNIS).date().isoformat()
+    today = stamp.astimezone(TUNIS).date().isoformat()
     out = None
     for m in plan["matchdays"]:
         games = [g for g in m["games"] if not g["played"]]
         day = min((g["game_date"] or m["date"] for g in games if g["game_date"] or m["date"]), default=None)      # the first game day of the matchday
         if not games or (day and day < today):
             continue                                              # played, or already past
-        start = datetime.fromisoformat(day + "T00:00").replace(tzinfo=TUNIS) if day else None
-        out = {"matchday": m["matchday"], "date": day, "deadline_ts": int(start.timestamp()) if start else None,
-               "open": start is None or datetime.now(TUNIS) < start, "season": season,
+        closes = closes_at(day) if day else None
+        out = {"matchday": m["matchday"], "date": day, "deadline_ts": int(closes.timestamp()) if closes else None,
+               "open": closes is None or stamp < closes, "season": season,
                "games": [{"key": f"{season}|{m['matchday']}|{g['home']}-{g['away']}", "home": g["home"], "away": g["away"],
                           "home_name": plan["teams"].get(g["home"], g["home"]), "away_name": plan["teams"].get(g["away"], g["away"])} for g in games]}
         break
-    _cache.update(t=now, round=(out,))
+    if now is None:
+        _cache.update(t=t, round=(out,))
     return out
 
 

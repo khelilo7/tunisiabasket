@@ -8,6 +8,7 @@ from pathlib import Path
 os.environ["DATA_DIR"] = tempfile.mkdtemp()
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import app  # noqa: E402
+import predict  # noqa: E402
 import stats  # noqa: E402
 
 fails = []
@@ -67,6 +68,23 @@ j = resp.get_json()
 check("banner" in j and resp.headers.get("Cache-Control") == "no-store", "/api/planning carries the banner, uncached")
 today = datetime.datetime.now(stats.TUNIS).date()
 check(j["banner"] is None or (j["banner"]["games"] and all(g["date"] is None or D(g["date"]) >= today - datetime.timedelta(days=1) for g in j["banner"]["games"])), "nothing older than yesterday on the banner today")
+
+# 6. predictions close at 12:00 (Tunisian time) on the first game day; the next day the next matchday opens
+saved = stats.planning
+stats.planning = lambda *a, **k: nxt
+at = lambda s: datetime.datetime.fromisoformat(s).replace(tzinfo=predict.TUNIS)
+try:
+    r = predict._round(at("2026-11-11T11:59"))
+    check(r and r["matchday"] == 12 and r["open"] is True, "11:59 on game day: still open")
+    check(r["deadline_ts"] == int(at("2026-11-11T12:00").timestamp()), "the deadline is noon on the game day")
+    r = predict._round(at("2026-11-11T12:00"))
+    check(r["matchday"] == 12 and r["open"] is False, "12:00 on game day: closed (J12 is still the round: its games are on the banner without predictions)")
+    check(predict._round(at("2026-11-11T23:30"))["open"] is False, "closed all evening")
+    r = predict._round(at("2026-11-12T08:00"))
+    check(r["matchday"] == 13 and r["open"] is True, "the next day J13 opens")
+    check(predict._round(at("2026-11-05T09:00"))["open"] is True, "days before: open")
+finally:
+    stats.planning = saved
 
 print("banner:", "FAILED" if fails else "ok")
 for m in fails:

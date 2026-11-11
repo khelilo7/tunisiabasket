@@ -317,7 +317,7 @@ const FR = {
   'Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.': 'Choisissez le vainqueur de chaque match. Un seul pronostic par match, définitif. L’avis des autres fans apparaît dès que vous avez choisi ce match.',
   'Pick to see what the fans think': 'Choisissez pour voir l’avis des fans', 'Fans’ prediction': 'Avis des fans', 'Your pick': 'Votre choix', 'Picks are closed': 'Les pronostics sont clos',
   'No game to predict for now.': 'Aucun match à pronostiquer pour le moment.', 'Thanks! Your pick is saved. It is final.': 'Merci ! Votre pronostic est enregistré. Il est définitif.',
-  'You already picked this game.': 'Vous avez déjà pronostiqué ce match.', 'Predictions are closed: the matchday has started.': 'Les pronostics sont clos : la journée a commencé.',
+  'You already picked this game.': 'Vous avez déjà pronostiqué ce match.', 'Predictions are closed: they closed at noon on game day.': 'Les pronostics sont clos : ils ont fermé à midi le jour du match.',
   'Too many picks from this network. Try again later.': 'Trop de pronostics depuis ce réseau. Réessayez plus tard.', 'Could not save your pick.': 'Impossible d’enregistrer votre pronostic.',
   'in progress': 'en cours', 'The race': 'La course', 'Fan vote': 'Vote des fans', 'Voting is open': 'Le vote est ouvert', 'Voting is closed': 'Le vote est clos', 'Votes': 'Votes',
   'Stats': 'Stats', 'Vote': 'Voter', 'Your vote': 'Votre vote', 'Show the top 10': 'Voir le top 10', 'How it works': 'Comment ça marche',
@@ -350,6 +350,7 @@ const FR = {
   'Compiled from the broadcast video': 'Compilée à partir de la vidéo du match', 'Stats compiled by Tunisia Basket from the TV broadcast, not from the official table sheet: minutes and +/- are estimates, and a few missed shots, turnovers and team rebounds could not be given to a player.': 'Statistiques compilées par Tunisia Basket à partir de la retransmission TV, pas de la feuille de marque officielle : les minutes et le +/- sont estimés, et quelques tirs manqués, balles perdues et rebonds d’équipe n’ont pu être attribués à aucun joueur.',
   'Expected starting five': 'Cinq de départ probable', 'Make your prediction to unlock the expected starting fives: close this window and tap the team you think will win.': 'Faites votre pronostic pour débloquer les cinq de départ probables : fermez cette fenêtre et touchez l’équipe que vous voyez gagner.', 'Expected from the starts so far and in the last games; players who are not available are left out.': 'Estimé d’après les débuts de match jusqu’ici et les derniers matchs ; les joueurs indisponibles sont écartés.',
   'Final': 'Terminé', 'Full box score': 'Feuille de match complète',
+  'Predictions are closed': 'Pronostics clos', 'Tap the game for the expected starting fives': 'Touchez le match pour voir les cinq de départ probables',
   'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).': 'Le MVP du match est choisi parmi les joueurs relevés de l’équipe gagnante, d’après les points, rebonds, passes, interceptions, contres et tirs uniquement (balles perdues et fautes inconnues).', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
   'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes ni le PIR.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
@@ -379,7 +380,7 @@ const SENT = {
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
     ballotIntro: n => `Choose your Phase 1 MVP among the best ${n} of the stats race, one per club. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
-    predWins: n => `${n} wins`, predClose: d => `Predictions close when the matchday starts: ${d} (Tunisia time)`, predProg: (a, b) => `${a}/${b} games picked`,
+    predWins: n => `${n} wins`, predClose: d => `Predictions close at noon on game day: ${d} (Tunisia time)`, predProg: (a, b) => `${a}/${b} games picked`,
     votesN: n => `${n} vote${n === 1 ? '' : 's'}`, allCands: n => `Show all ${n} candidates`,
     mvpHow: () => `<p><b>Who can win?</b> Players who played at least ${QUAL}% of their team’s games in the phase and whose team is in the top 4 of the standings.</p>
       <p><b>Stats race.</b> Ranks every candidate by average impact over the phase: the FIBA performance index (PIR) plus 2 for every win. It shows the best player so far and decides nothing.</p>
@@ -400,7 +401,7 @@ const SENT = {
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
     ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} meilleurs de la course aux statistiques, un seul par club. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
-    predWins: n => `${n} gagne`, predClose: d => `Les pronostics se ferment au début de la journée : ${d} (heure de Tunis)`, predProg: (a, b) => `${a}/${b} matchs pronostiqués`,
+    predWins: n => `${n} gagne`, predClose: d => `Les pronostics se ferment à midi le jour du match : ${d} (heure de Tunis)`, predProg: (a, b) => `${a}/${b} matchs pronostiqués`,
     votesN: n => `${n} vote${n > 1 ? 's' : ''}`, allCands: n => `Voir les ${n} candidats`,
     mvpHow: () => `<p><b>Qui peut gagner ?</b> Les joueurs ayant disputé au moins ${QUAL} % des matchs de leur équipe dans la phase, dont l’équipe est dans le top 4 du classement.</p>
       <p><b>Course aux statistiques.</b> Classe chaque candidat selon son impact moyen sur la phase : l’indice de performance FIBA (PIR) plus 2 par victoire. Elle montre le meilleur joueur à ce jour et ne décide rien.</p>
@@ -706,7 +707,7 @@ async function predict() {
   const when = r.date ? fmtDay(r.date) : '';
   return `<h1>${_('Predictions')} <span class="mut" style="font-size:15px">${_('Day')} ${r.matchday}${when ? ' · ' + esc(when) : ''}</span></h1>
   <p class="mut" style="margin:0 0 10px">${_('Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.')}</p>
-  <div class="votemsg">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: the matchday has started.'))} · ${esc(f('predProg', r.picked, r.of))}</div>
+  <div class="votemsg">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: they closed at noon on game day.'))} · ${esc(f('predProg', r.picked, r.of))}</div>
   ${predMsg ? `<div class="votemsg${predMsg.ok ? '' : ' bad'}" role="status">${esc(predMsg.text)}</div>` : ''}
   <div class="pgrid">${r.games.map(g => predGame(g, r.open)).join('')}</div>`;
 }
@@ -717,7 +718,7 @@ async function castPick(game, side) {
     const j = await res.json().catch(() => ({}));
     if (res.ok && j.ok) { msg.ok = true; msg.text = _('Thanks! Your pick is saved. It is final.'); }
     else if (j.reason === 'already') msg.text = _('You already picked this game.');
-    else if (j.reason === 'closed') msg.text = _('Predictions are closed: the matchday has started.');
+    else if (j.reason === 'closed') msg.text = _('Predictions are closed: they closed at noon on game day.');
     else if (j.reason === 'network') msg.text = _('Too many picks from this network. Try again later.');
   } catch (e) { /* keep the generic message */ }
   predMsg = msg; await route(true);
@@ -726,20 +727,26 @@ async function castPick(game, side) {
 // ---------------------------------------------------------------- next games banner and matchup comparison
 let nbTimer = null, nbIndex = 0;
 const fmtDay = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+const legacyBanner = plan => {       // only if the server is older than this page (no plan.banner): the first matchday with games still to play
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Tunis' });
+  for (const m of plan.matchdays) { const gs = m.games.filter(g => !g.played && (g.game_date || m.date || today) >= today).map(g => ({ ...g, date: g.game_date || m.date, game_id: null })); if (gs.length) return { matchday: m.matchday, date: m.date, mode: 'next', games: gs }; }
+  return null;
+};
 const navGo = path => go(path);          // startBanner has its own local `go` (carousel)
 // Prediction inside the banner: tap the team you think wins; the crowd's split then appears under the match (only after your pick, as on the Predictions page).
 let predRound = null, nbCtx = null, nbHold = 0;
 const pickInfo = g => predRound && predRound.matchday === g.md ? predRound.games.find(x => x.home === g.home && x.away === g.away) || null : null;
 function slideBody(g, note) {
-  const { plan, rec } = nbCtx, pg = pickInfo(g), can = !!(pg && predRound.open && !pg.my);
+  const { plan, rec } = nbCtx, pg = pickInfo(g), open = !!(pg && predRound.open), can = open && !pg.my;      // after noon on game day: no prediction, just the game
   const team = (c, side) => {
-    const inner = `${logo(c, 76)}<span>${esc(plan.teams[c])}</span><small>${esc(rec(c))}</small>`, cls = 'nbtm' + (pg && pg.my === side ? ' picked' : '');
+    const inner = `${logo(c, 76)}<span>${esc(plan.teams[c])}</span><small>${esc(rec(c))}</small>`, cls = 'nbtm' + (open && pg.my === side ? ' picked' : '');
     return can ? `<button type="button" class="${cls} nbpk" data-pk="${esc(pg.key)}" data-side="${side}" aria-label="${esc(f('predWins', plan.teams[c]))}">${inner}</button>` : `<div class="${cls}">${inner}</div>`;
   };
-  const sp = pg && pg.my && pg.split;
+  const sp = open && pg.my && pg.split;
   const low = note ? `<div class="nbhint bad">${esc(note)}</div>`
     : sp ? `<div class="nbbar" aria-label="${_('Fans’ prediction')}"><span class="${pg.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 4)}">${sp.H}%</span><span class="${pg.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 4)}">${sp.A}%</span></div><div class="nbhint">${_('Fans’ prediction')} · ${_('Your pick')}: <b>${esc(plan.teams[pg.my === 'H' ? g.home : g.away])}</b></div>`
-    : can ? `<div class="nbhint">👆 ${_('Tap your winner to predict')}</div>` : '';
+    : can ? `<div class="nbhint">👆 ${_('Tap your winner to predict')}</div>`
+    : pg && !open ? `<div class="nbhint">🔒 ${_('Predictions are closed')} · ${_('Tap the game for the expected starting fives')}</div>` : '';
   return `<div class="nbx" data-g="${g.home}|${g.away}|${g.md}"><div class="nbm">${team(g.home, 'H')}<div class="nbvs">VS</div>${team(g.away, 'A')}</div>${low}</div>`;
 }
 async function bannerPick(btn) {
@@ -749,7 +756,7 @@ async function bannerPick(btn) {
   try {
     const res = await fetch('/api/predict/pick', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ game: btn.dataset.pk, side: btn.dataset.side, vid: voterId() }) });
     const j = await res.json().catch(() => ({}));
-    note = res.ok && j.ok ? '' : j.reason === 'already' ? '' : j.reason === 'closed' ? _('Predictions are closed: the matchday has started.') : j.reason === 'network' ? _('Too many picks from this network. Try again later.') : note;
+    note = res.ok && j.ok ? '' : j.reason === 'already' ? '' : j.reason === 'closed' ? _('Predictions are closed: they closed at noon on game day.') : j.reason === 'network' ? _('Too many picks from this network. Try again later.') : note;
     const pj = await fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
     if (pj) predRound = pj.round;
   } catch (e) { /* keep the generic note */ }
@@ -761,7 +768,7 @@ function bindPicks() {
   document.querySelectorAll('#nextbanner .nbpk').forEach(b => { b.onclick = e => { e.stopPropagation(); bannerPick(b); }; b.onkeydown = e => e.stopPropagation(); });
 }
 function nextBanner(plan, standings) {
-  const B = plan && plan.banner; if (!B || !B.games.length) return '';
+  const B = plan && ('banner' in plan ? plan.banner : legacyBanner(plan)); if (!B || !B.games.length) return '';
   const gs = B.games.map(g => ({ ...g, md: B.matchday }))     // chosen by the server (stats.banner): the next games, or the results of the matchday just played (kept one day), then the next matchday
     .sort((a, b) => (a.featured ?? 999) - (b.featured ?? 999) || (a.date || '').localeCompare(b.date || '') || (a.time || '').localeCompare(b.time || ''));   // featured first, by the admin's rank
   const st = Object.fromEntries((standings || []).map(r => [r.code, r])), rec = c => st[c] ? `${st[c].w}${W}–${st[c].l}${Ls} · ${f('rankIn', st[c].rank)}` : '';
