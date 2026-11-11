@@ -5,6 +5,7 @@ from flask import jsonify, request
 import absences
 import auth
 import content
+import rounds
 import stats
 from admin import _add_result, _check_results, _file_lock, _official, _write_official, bp
 
@@ -105,3 +106,23 @@ def absences_save():
     cur = absences.set_absent(pid, bool(b.get("absent")), b.get("note") or "")
     auth.audit("absence", f"{pid} {'out' if pid in cur else 'back'}")
     return jsonify(ok=True, absences=cur)
+
+
+@bp.get("/admin/api/rounds")
+def rounds_view():
+    """Player of the round: every recent matchday with the state of its vote and whether it can be opened (all results in, at least one player of the game)."""
+    return jsonify(rounds.admin_view())
+
+
+@bp.post("/admin/api/rounds")
+def rounds_act():
+    """Body {op: open | close | refresh | crown, round, deadline, winner, note}."""
+    b = request.get_json(silent=True) or {}
+    try:
+        md = int(b.get("round"))
+    except (TypeError, ValueError):
+        return jsonify(error="Choose a matchday."), 422
+    ok, msg = rounds.act(str(b.get("op") or ""), md, b.get("deadline") or None, b.get("winner") or None, b.get("note"))
+    if ok:
+        auth.audit("round", f"J{md} {b.get('op')} {b.get('winner') or ''}".strip())
+    return (jsonify(ok=True, message=msg) if ok else (jsonify(error=msg), 422))

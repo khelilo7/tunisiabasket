@@ -109,7 +109,8 @@ def _db():
     if not _ready:
         con.execute("CREATE TABLE IF NOT EXISTS votes(phase INTEGER, voter TEXT, net TEXT, pid TEXT, ts INTEGER, PRIMARY KEY(phase, voter))")
         con.execute("CREATE TABLE IF NOT EXISTS picks(game TEXT, voter TEXT, net TEXT, side TEXT, ts INTEGER, PRIMARY KEY(game, voter))")   # match predictions (predict.py)
-        for t in ("votes", "picks"):        # a vote is final: the database itself refuses to change or delete one, whatever code or command tries
+        con.execute("CREATE TABLE IF NOT EXISTS round_votes(round INTEGER, voter TEXT, net TEXT, pid TEXT, ts INTEGER, PRIMARY KEY(round, voter))")   # player of the round (rounds.py)
+        for t in ("votes", "picks", "round_votes"):        # a vote is final: the database itself refuses to change or delete one, whatever code or command tries
             for ev in ("UPDATE", "DELETE"):
                 con.execute(f"CREATE TRIGGER IF NOT EXISTS {t}_no_{ev.lower()} BEFORE {ev} ON {t} BEGIN SELECT RAISE(ABORT, 'votes are final and cannot be changed or deleted'); END")
         con.commit()

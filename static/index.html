@@ -207,6 +207,7 @@
   /* phase MVP: banner on the home page, race page, fan vote */
   .phase { cursor:pointer; display:grid; grid-template-columns:1.1fr 1fr; gap:20px; align-items:center; margin-top:14px; background:var(--mvp-grad); border-color:var(--mvp-line); transition:border-color .15s, transform .15s; } .phase:hover { border-color:var(--acc); transform:translateY(-2px); }
   .phase .crown, .winner .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+  .hrow { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); } .hrow:last-child { border-bottom:0; } .hrow > b { min-width:78px; color:var(--mut); font-size:13px; }
   .phase .pn { display:flex; align-items:center; gap:12px; margin:6px 0 4px; font-size:clamp(22px,4vw,30px); font-weight:800; line-height:1.1; }
   .phase .runners { display:grid; gap:7px; } .phase .rn { display:grid; grid-template-columns:22px 1fr auto; gap:9px; align-items:center; font-size:13px; }
   .phase .meter, .vrow .meter { height:6px; border-radius:4px; background:var(--track); overflow:hidden; } .meter i { display:block; height:100%; background:var(--acc); border-radius:4px; }
@@ -351,6 +352,8 @@ const FR = {
   'Expected starting five': 'Cinq de départ probable', 'Make your prediction to unlock the expected starting fives: close this window and tap the team you think will win.': 'Faites votre pronostic pour débloquer les cinq de départ probables : fermez cette fenêtre et touchez l’équipe que vous voyez gagner.', 'Expected from the starts so far and in the last games; players who are not available are left out.': 'Estimé d’après les débuts de match jusqu’ici et les derniers matchs ; les joueurs indisponibles sont écartés.',
   'Final': 'Terminé', 'Full box score': 'Feuille de match complète',
   'Predictions are closed': 'Pronostics clos', 'Tap the game for the expected starting fives': 'Touchez le match pour voir les cinq de départ probables',
+  'Player of the round': 'Joueur de la journée', 'Best player of the matchday': 'Meilleur joueur de la journée', 'See the votes': 'Voir les votes', 'Previous players of the round': 'Joueurs des journées précédentes', 'Player of the game': 'Joueur du match',
+  'Vote for the best player of the matchday, among the players of the game of this matchday. One vote per person, and it is final.': 'Votez pour le meilleur joueur de la journée, parmi les joueurs du match de cette journée. Une seule voix par personne, définitive.',
   'Bench': 'Banc', 'Partial box score': 'Feuille partielle', 'The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).': 'Le MVP du match est choisi parmi les joueurs relevés de l’équipe gagnante, d’après les points, rebonds, passes, interceptions, contres et tirs uniquement (balles perdues et fautes inconnues).', 'No player stats for this team.': 'Aucune statistique de joueur pour cette équipe.',
   'Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.': 'Seuls les joueurs d’une équipe ont été relevés pour ce match, sur une feuille tenue à la main. Les minutes, balles perdues, fautes et +/- sont inconnus : il compte pour les points, rebonds, passes, interceptions, contres et tirs, mais pas pour les notes ni le PIR.', 'No bench players.': 'Aucun joueur sur le banc.', 'full stat sheet': 'feuille de statistiques complète', 'Team': 'Équipe', 'Did not play': 'N’a pas joué',
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
@@ -529,6 +532,53 @@ function phaseCard(pm) {
     <div class="runners">${pm.ballot.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div style="display:flex;gap:10px;align-items:center">${face(r, 36)}<div style="flex:1;min-width:0"><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div></div><b>${r.vote_share}%</b></div>`).join('')}
     <span class="cta">${pm.voting_open ? _('Vote now') : _('See the race')} →</span></div></div>`;
 }
+// Player of the round (rounds.py): the home card (replaces the phase MVP card once that vote is over) and the section of the MVP page
+function roundCard(rv) {
+  if (!rv || !rv.round || !rv.candidates.length) return '';
+  const W = rv.winner && !rv.open ? rv.winner : null, rows = rv.candidates.slice(0, 3), top = Math.max(1, ...rows.map(r => r.votes));
+  return `<div class="card phase" data-go="${url('mvp')}"><div><div class="crown">${W ? '🏆 ' : '🗳️ ' + _('Fan vote') + ' · '}${_('Player of the round')} · ${_('Day')} ${rv.round}</div>
+    ${W ? `<div class="pn">${face(W, 56)}<span>${plink(W, esc(title(W.name)))}</span></div><div class="mut small">${esc(W.team)} · ${esc(f('votesN', W.votes))}</div>`
+        : `<div class="mut small" style="margin:6px 0 2px">${esc(f('votesN', rv.total_votes))} · ${esc(_('Best player of the matchday'))}</div>`}
+    ${rv.open && rv.deadline_ts ? `<div class="mut small" style="margin-top:6px">⏳ ${deadlineLine(true, rv.deadline_ts)}</div>` : ''}</div>
+    <div class="runners">${rows.map((r, i) => `<div class="rn"><span class="medal m${i + 1}">${i + 1}</span><div style="display:flex;gap:10px;align-items:center">${face(r, 36)}<div style="flex:1;min-width:0"><b>${esc(title(r.name))}</b> <span class="mut small">${esc(r.team)}</span><div class="meter"><i style="width:${Math.round(100 * r.votes / top)}%"></i></div></div></div><b>${r.vote_share}%</b></div>`).join('')}
+    <span class="cta">${rv.open ? _('Vote now') : _('See the votes')} →</span></div></div>`;
+}
+let roundMsg = null;
+function roundBallotCard(x, pos, rv) {
+  const mine = x.id === rv.my_vote, voted = !!rv.my_vote, top = Math.max(1, ...rv.candidates.map(c => c.votes));
+  const btn = mine ? `<button class="vote on" disabled>✓ ${_('Your vote')}</button>` : `<button class="vote" data-rvote="${x.id}" data-round="${rv.round}" ${rv.open && !voted ? '' : 'disabled'}>${_('Vote')}</button>`;
+  return `<div class="bcard${mine ? ' me' : ''}"><span class="medal m${Math.min(pos, 3)}">${pos}</span>${face(x, 96)}
+    <div class="bi"><a class="bn" href="${playerUrl(x.id, x.name)}">${esc(title(x.name))}</a><div class="bs">${esc(x.team)} · #${x.number} · ${esc(posName(x.pos))}</div>
+    <div class="bs">${_('Player of the game')} ${_('vs')} ${esc(x.game.opp)} · <b>${esc(x.game.score)}</b></div>
+    <div class="tiles">${[['PTS', x.pts], ['REB', x.reb], [H('AST'), x.ast], ['PIR', x.pir ?? '–']].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div></div>
+    <div class="bv"><div class="vv"><b>${esc(f('votesN', x.votes))}</b> · ${x.vote_share}%<div class="meter"><i style="width:${Math.round(100 * x.votes / top)}%"></i></div></div>${btn}</div></div>`;
+}
+function roundSection(rv) {
+  if (!rv || (!rv.round && !rv.history.length)) return '';
+  const W = rv.round && rv.winner && !rv.open ? rv.winner : null;
+  const cur = rv.round ? `<h2>${_('Player of the round')} · ${_('Day')} ${rv.round} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(f('votesN', rv.total_votes))} · ${rv.open ? _('Voting is open') : _('Voting is closed')}</span></h2>
+    ${rv.deadline_ts ? `<div class="votemsg">⏳ ${deadlineLine(rv.open, rv.deadline_ts)}</div>` : ''}
+    ${W ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Player of the round')} · ${_('Day')} ${rv.round}</div><div class="nm">${face(W, 72)}<span>${plink(W, esc(title(W.name)))}</span></div>
+      <div class="mut">${esc(W.team)} · #${W.number} · ${esc(f('votesN', W.votes))} · ${W.vote_share}%</div></div></div>` : ''}
+    ${rv.open ? `<p class="mut" style="margin:0 0 12px">${_('Vote for the best player of the matchday, among the players of the game of this matchday. One vote per person, and it is final.')}</p>` : ''}
+    ${rv.note ? `<p class="mut">${esc(rv.note)}</p>` : ''}
+    ${roundMsg ? `<div class="votemsg${roundMsg.ok ? '' : ' bad'}" role="status">${esc(roundMsg.text)}</div>` : ''}
+    <div class="ballot">${rv.candidates.map((x, i) => roundBallotCard(x, i + 1, rv)).join('')}</div>` : '';
+  const hist = rv.history.length ? `<h2>${_('Previous players of the round')}</h2><div class="card">${rv.history.map(h => `<div class="hrow"><b>${_('Day')} ${h.round}</b>${face(h.winner, 30)}<span>${plink(h.winner, esc(title(h.winner.name)))} <span class="mut small">${esc(h.winner.team)} · ${esc(f('votesN', h.winner.votes))}</span></span></div>`).join('')}</div>` : '';
+  return cur + hist;
+}
+async function castRoundVote(md, pid) {
+  const msg = { ok: false, text: _('Could not record your vote.') };
+  try {
+    const res = await fetch('/api/round/vote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ round: md, player: pid, vid: voterId() }) });
+    const j = await res.json().catch(() => ({}));
+    if (res.ok && j.ok) { msg.ok = true; msg.text = _('Thanks! Your vote is counted. It is final.'); }
+    else if (j.reason === 'already') msg.text = _('You already voted: one vote per person.');
+    else if (j.reason === 'closed') msg.text = _('Voting is closed.');
+    else if (j.reason === 'network') msg.text = _('Too many votes from this network. Try again later.');
+  } catch (e) { /* keep the generic message */ }
+  roundMsg = msg; await route(true);
+}
 const FB = 'https://www.facebook.com/people/Tunisia-Basket/61596371069928/';
 const fbCard = () => `<div class="card fbcard"><div><b>${_('A tip, a correction, a missing result?')}</b><div class="mut small">${_('Write to us on our Facebook page: we read everything.')}</div></div><a class="vote" href="${FB}" target="_blank" rel="noopener">${_('Contact us on Facebook')} →</a></div>`;
 const NEWS_LABEL = { official: 'Official', injury: 'Injury', transfer: 'Transfer', result: 'Result', info: 'Info', interview: 'Interview' };
@@ -553,7 +603,7 @@ async function home() {
   predRound = pj && pj.round; pageMeta = META.home[LANG];
   return `
   ${nextBanner(plan, h.standings)}
-  ${phaseCard(h.phase_mvp)}
+  ${roundCard(h.round_vote)}${!h.round_vote || (h.phase_mvp && h.phase_mvp.voting_open) ? phaseCard(h.phase_mvp) : ''}
   ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="nlist two">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
   ${h.recent.length ? `<div class="grid g2">${h.recent.map(gameCard).join('')}</div>` : `<div class="empty">${_('Box scores appear here as soon as they are added.')}</div>`}
@@ -618,7 +668,7 @@ const deadlineLine = (open, ts) => ts ? esc(f(open ? 'closesAt' : 'closedAt', fm
 let mvpAll = false, voteMsg = null, chartOpen = false;
 async function mvp() {
   pageMeta = META.mvp[LANG];
-  const r = await (await fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`)).json();
+  const [r, rv] = await Promise.all([fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`).then(x => x.json()), fetch(`/api/round?vid=${voterId()}`, { cache: 'no-store' }).then(x => x.json()).catch(() => null)]);
   const c = r.candidates, ordered = [...c].sort((a, b) => a.vote_rank - b.vote_rank), shown = mvpAll ? ordered : ordered.slice(0, 10), cur = r.current, by = r.current_by, best = r.leader;
   if (!c.length) return `<h1>${_('MVP race')}</h1><div class="empty">${_('No games yet')}</div>`;
   r.ballot_ranked.forEach((id, i) => { const x = c.find(y => y.id === id); if (x) x.pos = i + 1; });   // 1 = the most votes
@@ -630,6 +680,7 @@ async function mvp() {
       ${best && best.id !== cur.id ? `<p class="mut" style="margin:10px 0 0">⭐ ${_('Best by stats')}: <b style="color:var(--txt)">${esc(title(best.name))}</b> · ${esc(best.team)} · PIR ${best.pir}</p>` : ''}
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
   return `<h1>${_('MVP race')} <span class="mut" style="font-size:15px">${_('Phase 1')} · J1–J${PHASE * 11}${r.complete ? '' : ' · ' + _('in progress')}</span></h1>
+  ${roundSection(rv)}
   ${banner}
   <h2>${_('Fan vote')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(f('votesN', r.total_votes))} · ${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span></h2>
   ${r.deadline_ts ? `<div class="votemsg" id="deadline" data-ts="${r.deadline_ts}" data-open="${r.voting_open ? 1 : 0}">⏳ ${deadlineLine(r.voting_open, r.deadline_ts)}</div>` : ''}
@@ -1209,6 +1260,7 @@ function bind() {
   document.querySelectorAll('[data-lead]').forEach(c => c.onclick = e => { if (!e.target.closest('a')) openLeaders(c.dataset.lead); });
   const ql = $('#qual'); if (ql) { ql.onclick = () => { qualOnly = !qualOnly; route(true); }; ql.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); ql.click(); } }; }
   document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => castVote(b.dataset.vote));
+  document.querySelectorAll('[data-rvote]').forEach(b => b.onclick = () => castRoundVote(+b.dataset.round, b.dataset.rvote));
   document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => castPick(b.dataset.pick, b.dataset.side));
   const sf = $('#statsfold'); if (sf) sf.ontoggle = () => { chartOpen = sf.open; };
   const lf = $('#leadfold'); if (lf) lf.ontoggle = () => { leadOpen = lf.open; };

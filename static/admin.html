@@ -81,7 +81,7 @@
   <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
-  <div id="tab-mvp" hidden><div id="mvpbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-mvp" hidden><div id="roundbox"></div><div id="mvpbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-traffic" hidden>
     <div class="row" style="margin:12px 0"><b>Traffic</b><span class="sp"></span><label class="mut small">Period</label>
       <select id="tdays"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">1 year</option></select></div>
@@ -390,7 +390,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
   ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'traffic') loadTraffic();
-  if (b.dataset.tab === 'mvp') loadMvp();
+  if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
   if (b.dataset.tab === 'games') loadGames();
@@ -414,5 +414,6 @@ boot();
 <script src="/admin-newsimg.js"></script>
 <script src="/admin-spotlight.js"></script>
 <script src="/admin-content.js"></script>
+<script src="/admin-rounds.js"></script>
 </body>
 </html>

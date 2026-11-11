@@ -14,6 +14,7 @@ import content
 import lineups
 import mvp
 import predict
+import rounds
 import seo
 import stats
 import traffic
@@ -142,7 +143,9 @@ def overview():
 def home_data():
     """What the home page needs besides the calendar: the latest results (box scores and hand-entered results) and the latest news."""
     d = stats.build()
-    r = jsonify(recent=content.recent_results(6, d), news=content.load_news(4), facebook=content.FACEBOOK, standings=d["standings"], phase_mvp=_phase_summary())
+    rv = rounds.view()
+    r = jsonify(recent=content.recent_results(6, d), news=content.load_news(4), facebook=content.FACEBOOK, standings=d["standings"], phase_mvp=_phase_summary(),
+                round_vote=rv if rv.get("round") else None)
     r.headers["Cache-Control"] = "no-cache"          # a result or a news item saved in the admin shows at once
     return r
 
@@ -171,6 +174,25 @@ def mvp_race():
     out = mvp.race(ph)
     out["my_vote"] = mvp.my_vote(ph, request.args.get("vid", ""))
     return jsonify(out)
+
+
+@app.get("/api/round")
+def round_view():
+    """Player of the round: the vote that is open (or just ended) with the fans' shares, and the winners of earlier rounds. ?vid= adds the caller's own vote."""
+    r = jsonify(rounds.view(request.args.get("vid", "")))
+    r.headers["Cache-Control"] = "no-store"
+    return r
+
+
+@app.post("/api/round/vote")
+def round_vote():
+    body = request.get_json(silent=True, force=True) or {}
+    try:
+        md = int(body.get("round"))
+    except (TypeError, ValueError):
+        abort(400)
+    ok, why = rounds.cast(request, md, str(body.get("player", ""))[:40], str(body.get("vid", ""))[:80])
+    return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400))
 
 
 @app.post("/api/mvp/vote")
