@@ -76,9 +76,10 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button><button data-tab="analytics">📋 Analytics</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-analytics" hidden><div id="analyticsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="roundbox"></div><div id="mvpbox"><div class="mut">Loading…</div></div></div>
@@ -388,13 +389,14 @@ async function loadMvp() {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
+  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
   if (b.dataset.tab === 'games') loadGames();
   if (b.dataset.tab === 'news') loadNews();
+  if (b.dataset.tab === 'analytics' && window.loadAnalytics) loadAnalytics();
 });
 $('#tdays').onchange = loadTraffic;
 
@@ -415,5 +417,6 @@ boot();
 <script src="/admin-spotlight.js"></script>
 <script src="/admin-content.js"></script>
 <script src="/admin-rounds.js"></script>
+<script src="/admin-analytics.js"></script>
 </body>
 </html>

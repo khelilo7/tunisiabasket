@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Live stats · Tunisia Basket</title>
+<style>
+  :root { --bg:#0f1426; --panel:#1a2140; --panel2:#222b50; --text:#eef1fa; --muted:#8e99bd; --accent:#ff8a1f; --good:#1fa654; --bad:#d94452; --line:#2d3760; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:15px/1.35 -apple-system, "Helvetica Neue", Arial, sans-serif; }
+  button { font:inherit; color:inherit; cursor:pointer; border:0; border-radius:8px; background:var(--panel2); padding:8px 12px; }
+  button:hover { filter:brightness(1.25); } button:disabled { opacity:.4; cursor:default; filter:none; }
+  select, input { font:inherit; background:var(--panel2); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:8px; }
+  a { color:inherit; text-decoration:none; }
+  header { display:flex; align-items:center; gap:14px; padding:12px 20px; background:var(--panel); position:sticky; top:0; z-index:5; }
+  header h1 { font-size:18px; margin:0; color:var(--accent); letter-spacing:.5px; }
+  .sp { flex:1; } .muted { color:var(--muted); font-size:13px; }
+  main { padding:20px; max-width:1500px; margin:0 auto; }
+  h2 { font-size:15px; margin:26px 0 10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+  .matches { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:10px; }
+  .match { text-align:left; padding:14px; background:var(--panel); border:1px solid var(--line); }
+  .match b { font-size:17px; } .match.has { border-color:var(--accent); }
+  details { margin-top:10px; } summary { cursor:pointer; color:var(--muted); padding:6px 0; }
+  .row-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .saved { display:flex; gap:10px; align-items:center; padding:10px 14px; background:var(--panel); border-radius:10px; margin-bottom:8px; flex-wrap:wrap; }
+  .accent { background:var(--accent); color:#1a1205; font-weight:700; }
+  .pill { font-size:12px; padding:2px 8px; border-radius:99px; background:var(--panel2); color:var(--muted); }
+  .pill.submitted { background:#5a4a12; color:#ffd66b; } .pill.published { background:#17492c; color:#7be0a3; } .pill.rejected { background:#55222b; color:#ff9aa5; }
+  .login { max-width:380px; margin:12vh auto; background:var(--panel); padding:26px; border-radius:14px; }
+  .login input { width:100%; margin:12px 0; letter-spacing:2px; text-transform:uppercase; }
+  .bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .score { flex:1; text-align:center; font-size:30px; font-weight:800; }
+  .score small { display:block; font-size:12px; font-weight:500; color:var(--muted); }
+  .teams { display:grid; grid-template-columns:1fr; gap:18px; margin-top:16px; }
+  @media (min-width:1250px) { .teams { grid-template-columns:1fr 1fr; } }
+  .team h3 { margin:0 0 8px; font-size:16px; }
+  .p { display:flex; align-items:center; gap:6px; background:var(--panel); border-radius:10px; padding:5px 8px; margin-bottom:5px; }
+  .av { width:28px; height:28px; border-radius:50%; background:var(--panel2) center/cover; flex:none; display:grid; place-items:center; font-weight:700; font-size:12px; color:var(--muted); }
+  .nm { width:112px; flex:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; }
+  .nm small { color:var(--muted); font-weight:400; }
+  .pts { width:28px; text-align:right; font-size:19px; font-weight:800; flex:none; }
+  .pts.flash { color:var(--accent); }
+  .btns { display:flex; gap:2px; flex-wrap:wrap; margin-left:6px; }
+  .b { position:relative; min-width:32px; padding:8px 2px; font-weight:700; font-size:13px; border-radius:7px; user-select:none; }
+  .b.mk { background:#17492c; } .b.mk:hover { background:#1b6a3a; filter:none; }
+  .b.ms { background:#55222b; } .b.ms:hover { background:#7b2a37; filter:none; }
+  .b.ot { background:var(--panel2); min-width:34px; font-size:12px; }
+  .b i { position:absolute; top:-6px; right:-4px; min-width:16px; padding:0 4px; font-style:normal; font-size:11px; line-height:16px; border-radius:8px; background:var(--accent); color:#1a1205; }
+  .b:active { transform:scale(.92); }
+  .sep { width:4px; flex:none; }
+  .legend { margin-top:14px; }
+  .log div { display:flex; gap:10px; align-items:center; padding:4px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .log button { padding:2px 8px; background:transparent; color:var(--muted); }
+  .note { background:var(--panel); border-left:4px solid var(--accent); padding:10px 14px; border-radius:8px; margin-top:14px; }
+  .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bad); padding:10px 16px; border-radius:10px; z-index:9; }
+  .toast.ok { background:var(--good); }
+</style>
+</head>
+<body>
+<header>
+  <h1>LIVE STATS</h1>
+  <span class="muted">Tunisia Basket · analytics</span>
+  <span class="sp"></span>
+  <button id="logout" hidden>Sign out</button>
+</header>
+<main id="app"></main>
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const BTNS = [
+  ["ft_m", "+1", "mk", "Free throw made"], ["p2_m", "+2", "mk", "2-pointer made"], ["p3_m", "+3", "mk", "3-pointer made"], null,
+  ["ft_x", "✗1", "ms", "Free throw missed"], ["p2_x", "✗2", "ms", "2-pointer missed"], ["p3_x", "✗3", "ms", "3-pointer missed"], null,
+  ["oreb", "OR", "ot", "Offensive rebound"], ["dreb", "DR", "ot", "Defensive rebound"], ["ast", "AST", "ot", "Assist"], ["stl", "STL", "ot", "Steal"],
+  ["blk", "BLK", "ot", "Block"], ["tov", "TOV", "ot", "Turnover"], ["pf", "PF", "ot", "Personal foul"],
+];
+const LABEL = Object.fromEntries(BTNS.filter(Boolean).map(b => [b[0], b[3]]));
+const STATE = { open: "Counting", submitted: "Waiting for approval", published: "Approved: on the site", rejected: "Sent back" };
+let S = { data: null, game: null };
+
+async function api(path, method = "GET", body) {
+  const r = await fetch("/analytics/api" + path, { method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  let j = {}; try { j = await r.json(); } catch {}
+  if (r.status === 401 && path !== "/login") { S.data = null; showLogin(); throw new Error("Please sign in."); }
+  if (!r.ok) { toast(j.error || r.statusText); throw new Error(j.error || r.statusText); }
+  return j;
+}
+function toast(msg, ok) { const t = document.createElement("div"); t.className = "toast" + (ok ? " ok" : ""); t.textContent = msg; document.body.append(t); setTimeout(() => t.remove(), 4000); }
+const tn = c => (S.data?.teams || {})[c] || c;
+
+function showLogin(err) {
+  $("#logout").hidden = true;
+  $("#app").innerHTML = `<form class="login" id="lf"><h2 style="margin:0">Sign in</h2><p class="muted">Enter the analytics token you were given.</p>
+    <input id="tok" autocomplete="off" autofocus placeholder="XXXX-XXXX-XXXX-XXXX"><button class="accent" style="width:100%">Sign in</button><p class="muted" id="err">${esc(err || "")}</p></form>`;
+  $("#lf").onsubmit = async e => {
+    e.preventDefault();
+    const r = await fetch("/analytics/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: $("#tok").value }) });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok) load(); else $("#err").textContent = j.error || "Could not sign in.";
+  };
+}
+$("#logout").onclick = async () => { await fetch("/analytics/api/logout", { method: "POST" }); location.hash = ""; showLogin(); };
+
+async function load() {
+  const me = await (await fetch("/analytics/api/me")).json();
+  if (!me.analyst) return showLogin(me.configured ? "" : "No analytics token has been set yet.");
+  $("#logout").hidden = false;
+  S.data = await api("/data");
+  const id = location.hash.startsWith("#game=") ? location.hash.slice(6) : null;
+  S.game = null;
+  if (id) { try { S.game = await api("/games/" + id); } catch { location.hash = ""; } }
+  S.game ? renderGame() : renderHome();
+}
+
+/* ---- home ---- */
+function renderHome() {
+  const D = S.data, app = $("#app");
+  const byId = Object.fromEntries(D.games.map(g => [g.id, g]));
+  const days = [...new Set(D.matches.map(m => m.matchday))].sort((a, b) => a - b);
+  const next = days.find(d => D.matches.some(m => m.matchday === d && !m.played)) ?? days[0];
+  const order = [next, ...days.filter(d => d > next).slice(0, 2)];
+  const card = m => {
+    const g = byId[`j${m.matchday}-${m.home.toLowerCase()}-${m.away.toLowerCase()}`];
+    return `<button class="match ${g ? "has" : ""}" data-md="${m.matchday}" data-home="${m.home}" data-away="${m.away}" data-date="${m.date || ""}">
+      <b>${esc(tn(m.home))}</b> <span class="muted">vs</span> <b>${esc(tn(m.away))}</b><br><span class="muted">${esc([m.date, m.time].filter(Boolean).join(" · "))}</span>
+      ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
+  };
+  const opts = Object.keys(D.roster).sort((a, b) => tn(a).localeCompare(tn(b))).map(c => `<option value="${c}">${esc(tn(c))}</option>`).join("");
+  app.innerHTML = `
+    ${order.map((d, i) => `${i ? `<details><summary>Matchday ${d}</summary>` : `<h2>Matchday ${d}</h2>`}<div class="matches">${D.matches.filter(m => m.matchday === d).map(card).join("")}</div>${i ? "</details>" : ""}`).join("")}
+    <h2>Any other game</h2>
+    <div class="row-actions"><select id="h">${opts}</select> <span class="muted">vs</span> <select id="a">${opts}</select><button class="accent" id="go">Start</button></div>
+    ${D.games.length ? `<h2>Your games</h2>${D.games.map(g => `<div class="saved"><b>${esc(tn(g.home))} ${g.home_score} – ${g.away_score} ${esc(tn(g.away))}</b>
+      <span class="pill ${g.status}">${STATE[g.status]}</span><span class="muted">${esc(g.created)} · ${g.events} actions</span><span class="sp"></span>
+      <button data-open="${g.id}">Open</button><a href="/analytics/api/games/${g.id}/export.csv"><button>CSV</button></a>${g.status === "published" ? "" : `<button data-del="${g.id}">Delete</button>`}</div>`).join("")}` : ""}`;
+  $("#a").selectedIndex = 1;
+  app.querySelectorAll(".match").forEach(b => b.onclick = () => start({ home: b.dataset.home, away: b.dataset.away, matchday: +b.dataset.md, date: b.dataset.date }));
+  $("#go").onclick = () => start({ home: $("#h").value, away: $("#a").value });
+  app.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+  app.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (confirm("Delete this game and everything counted in it?")) { await api("/games/" + b.dataset.del, "DELETE"); load(); } });
+}
+async function start(body) { const g = await api("/games", "POST", body); open(g.id); }
+function open(id) { location.hash = "#game=" + id; load(); }
+
+/* ---- game ---- */
+const ptsOf = r => (r?.ft_m || 0) + 2 * (r?.p2_m || 0) + 3 * (r?.p3_m || 0);
+function tally(game) { const t = {}; game.events.forEach(e => { const r = (t[e.pid] ||= {}); r[e.stat] = (r[e.stat] || 0) + 1; }); return t; }
+const editable = g => g.status === "open" || g.status === "rejected";
+
+function renderGame() {
+  const g = S.game, app = $("#app"), t = tally(g), ed = editable(g);
+  const photos = Object.fromEntries(Object.values(S.data.roster).flat().map(p => [p.id, p.photo]));
+  const total = code => g.players[code].reduce((n, p) => n + ptsOf(t[p.id]), 0);
+  const row = p => {
+    const r = t[p.id] || {}, ph = photos[p.id];
+    return `<div class="p" data-pid="${p.id}"><div class="av" ${ph ? `style="background-image:url('${esc(ph)}')"` : ""}>${ph ? "" : p.number}</div>
+      <div class="nm" title="${esc(p.name)}"><small>#${p.number}</small> ${esc(p.name)}</div><div class="pts" id="pts-${p.id}">${ptsOf(r)}</div>
+      <div class="btns">${BTNS.map(b => b ? `<button class="b ${b[2]}" data-stat="${b[0]}" title="${b[3]}" ${ed ? "" : "disabled"}>${b[1]}${r[b[0]] ? `<i>${r[b[0]]}</i>` : ""}</button>` : `<span class="sep"></span>`).join("")}</div></div>`;
+  };
+  const byId = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p]));
+  const last = [...g.events].reverse().slice(0, 8);
+  app.innerHTML = `
+    <div class="bar"><button id="back">← Matches</button>
+      <div class="score">${total(g.home)} – ${total(g.away)}<small>${esc(tn(g.home))} – ${esc(tn(g.away))} · <span class="pill ${g.status}">${STATE[g.status]}</span></small></div>
+      <button id="undo" ${ed ? "" : "disabled"} title="Undo the last action (Ctrl/Cmd + Z)">↶ Undo</button><a href="/analytics/api/games/${g.id}/export.csv"><button>Download CSV</button></a>
+      ${ed ? `<button class="accent" id="submit" title="Send to the admin, who decides if it goes on the site">Send for approval</button>` : ""}${g.status === "submitted" ? `<button id="reopen">Take back to edit</button>` : ""}</div>
+    ${g.status === "rejected" && g.note ? `<div class="note"><b>The admin sent it back:</b> ${esc(g.note)}</div>` : ""}
+    ${g.status === "submitted" ? `<div class="note">Sent for approval. You can still take it back to edit it until the admin decides.</div>` : ""}
+    ${g.status === "published" ? `<div class="note">Approved: these stats are on the site.</div>` : ""}
+    <div class="teams">${[g.home, g.away].map(c => `<div class="team"><h3>${esc(tn(c))}</h3>${g.players[c].map(row).join("") || '<span class="muted">No players for this team.</span>'}</div>`).join("")}</div>
+    <div class="muted legend">Click a button to add it to that player. Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound. The orange number is how many that player has. Wrong click? Undo, or remove it below.</div>
+    <div class="log"><h2>Last actions</h2>${last.map(e => `<div><span class="muted">${e.at}</span><b>${esc(byId[e.pid]?.name || e.pid)}</b> ${esc(LABEL[e.stat])}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>`).join("") || '<span class="muted">Nothing yet.</span>'}</div>`;
+  $("#back").onclick = () => { location.hash = ""; load(); };
+  $("#undo").onclick = undo;
+  if ($("#submit")) $("#submit").onclick = submit;
+  if ($("#reopen")) $("#reopen").onclick = async () => { S.game = await api(`/games/${g.id}/reopen`, "POST", {}); renderGame(); };
+  app.querySelectorAll(".b").forEach(b => b.onclick = () => add(b.closest(".p").dataset.pid, b.dataset.stat));
+  app.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { S.game = await api(`/games/${g.id}/remove`, "POST", { n: +b.dataset.rm }); renderGame(); });
+}
+async function add(pid, stat) {
+  const y = scrollY;
+  S.game = await api(`/games/${S.game.id}/event`, "POST", { pid, stat });
+  renderGame(); scrollTo(0, y);
+  const el = document.getElementById("pts-" + pid); if (el) { el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 500); }
+}
+async function undo() { if (!editable(S.game)) return; const y = scrollY; S.game = await api(`/games/${S.game.id}/undo`, "POST", {}); renderGame(); scrollTo(0, y); }
+async function submit() {
+  const g = S.game;
+  const md = prompt("Matchday number of this game (e.g. 12):", g.matchday || ""); if (md === null) return;
+  const date = prompt("Date of the game (YYYY-MM-DD):", g.date || new Date().toISOString().slice(0, 10)); if (date === null) return;
+  S.game = await api(`/games/${g.id}/submit`, "POST", { matchday: parseInt(md, 10), date: date.trim() });
+  toast("Sent to the admin.", true); renderGame();
+}
+addEventListener("keydown", e => { if (S.game && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); } });
+addEventListener("hashchange", load);
+load();
+</script>
+</body>
+</html>

@@ -199,7 +199,7 @@ def add_security_headers(resp):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "DENY")
     resp.headers.setdefault("Referrer-Policy", "same-origin")
-    if request.path.startswith("/admin") or request.path.startswith("/api/sync"):
+    if request.path.startswith(("/admin", "/analytics", "/api/sync")):
         resp.headers["Cache-Control"] = "no-store"
         resp.headers["X-Robots-Tag"] = "noindex, nofollow"
     return resp
