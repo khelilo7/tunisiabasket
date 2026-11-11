@@ -2,6 +2,7 @@
 Registered on the admin blueprint (every route needs the admin login, like the rest of the panel)."""
 from flask import jsonify, request
 
+import absences
 import auth
 import content
 import stats
@@ -86,3 +87,21 @@ def news_delete():
     n = content.delete_news(nid)
     auth.audit("news-delete", str(nid))
     return jsonify(ok=bool(n))
+
+
+@bp.get("/admin/api/absences")
+def absences_view():
+    """Players marked as not playing: {player id: {note, since}}. They are left out of the expected starting five on the home page."""
+    return jsonify(absences=absences.load())
+
+
+@bp.post("/admin/api/absences")
+def absences_save():
+    """Body {id, absent: true|false, note}: mark a player as not playing (injured, suspended...) or put him back."""
+    b = request.get_json(silent=True) or {}
+    pid = str(b.get("id") or "")
+    if pid not in {p["id"] for p in stats.build()["players"]}:
+        return jsonify(error="Unknown player."), 422
+    cur = absences.set_absent(pid, bool(b.get("absent")), b.get("note") or "")
+    auth.audit("absence", f"{pid} {'out' if pid in cur else 'back'}")
+    return jsonify(ok=True, absences=cur)

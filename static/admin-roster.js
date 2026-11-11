@@ -1,7 +1,7 @@
 // Admin: players and rosters. Edit height / weight / birth date, rename, add a player, delete (hide) a player, mark a transfer.
 // Uses the helpers of admin.html ($, esc, api). Everything is saved on the server (data/roster.json, data/players_info.json).
 (function () {
-  let R = null, team = '', query = '', showHidden = false, msg = null;
+  let R = null, A = {}, team = '', query = '', showHidden = false, msg = null;      // A: players marked as not playing {id: {note, since}}
   const today = () => new Date().toISOString().slice(0, 10);
   const age = b => b ? Math.floor((Date.now() - new Date(b + 'T12:00')) / 31557600000) : '';
   const hv = b => !b || !b.height ? '' : Array.isArray(b.height) ? b.height.join('-') : String(b.height);
@@ -17,10 +17,19 @@
     } catch (e) { say(e.message, false); return false; }
   }
 
+  async function absent(id, on, note) {
+    try {
+      const { ok, body: r } = await api('absences', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, absent: on, note }) });
+      say(ok ? (on ? 'Marked as not playing: left out of the expected starting five.' : 'Back in the squad.') : (r.error || 'Could not save.'), ok);
+      return ok;
+    } catch (e) { say(e.message, false); return false; }
+  }
+
   async function load() {
     const { ok, body } = await api('roster');
     if (!ok) { $('#rosterbox').innerHTML = '<div class="problems">Could not load the roster.</div>'; return; }
     R = body;
+    try { A = (await api('absences')).body.absences || {}; } catch (e) { A = {}; }
     if (!team) team = Object.keys(R.teams).sort()[0];
     render();
   }
@@ -61,6 +70,8 @@
     const opts = (sel, skip) => codes.filter(c => c !== skip).map(c => `<option value="${c}" ${c === sel ? 'selected' : ''}>${esc(teams[c])} (${c})</option>`).join('');
     $('#rosterbox').innerHTML = `
       ${msg ? `<div class="${msg.ok ? 'okbox' : 'problems'}">${esc(msg.t)}</div>` : ''}
+      <div class="card" style="margin:12px 0"><b>🤕 Not playing</b> <span class="mut small">(injured, suspended…): left out of the <b>expected starting five</b> shown on the home page. Use the 🤕 button of a player below.</span>
+        ${Object.keys(A).length ? Object.entries(A).map(([id, a]) => { const p = R.players.find(x => x.id === id); return `<div class="row" style="margin-top:6px"><b>${esc(p ? p.name : id)}</b> <span class="mut small">${esc(p ? p.team : '')}${a.note ? ' · ' + esc(a.note) : ''}${a.since ? ' · since ' + esc(a.since) : ''}</span><span class="sp"></span><button data-back="${esc(id)}">Back in the squad</button></div>`; }).join('') : '<div class="mut small" style="margin-top:6px">Nobody is marked as out.</div>'}</div>
       <div class="row" style="margin:12px 0">
         <select id="r-team" ${q ? 'disabled' : ''}>${opts(team)}</select>
         <input id="r-q" placeholder="Search any player…" value="${esc(query)}" style="min-width:200px">
@@ -69,7 +80,7 @@
       <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Position</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
       ${rows.map(p => `<tr data-id="${esc(p.id)}" class="${p.hidden ? 'saved' : ''}"><td>${p.number}</td>
         <td style="white-space:nowrap"><img src="${esc(p.photo || '/img/players/generic.svg')}" alt="" width="34" height="34" style="border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px"><button data-act="photo" title="Upload a photo (square crop, JPEG)">📷</button>${p.photo && p.photo.startsWith('/photo/') ? ' <button data-act="nophoto" class="danger" title="Remove the uploaded photo">✕</button>' : ''}</td>
-        <td class="l"><b>${esc(p.name)}</b> <span class="mut small">${p.team}</span>${p.added && !p.gp ? ' <span class="pill acc">new</span>' : ''}${p.hidden ? ' <span class="pill bad">deleted</span>' : ''}
+        <td class="l"><b>${esc(p.name)}</b> <span class="mut small">${p.team}</span>${p.added && !p.gp ? ' <span class="pill acc">new</span>' : ''}${p.hidden ? ' <span class="pill bad">deleted</span>' : ''}${A[p.id] ? ` <span class="pill bad" title="${esc(A[p.id].note || 'Not playing')}">🤕 out</span>` : ''}
           ${p.transfers.map(t => `<span class="pill warn" title="${esc(t.date || '')}">⇄ ${esc(t.from)}→${esc(t.to)}</span>`).join(' ')}</td>
         <td>${p.hidden ? esc(p.pos) : `<select data-f="pos" data-was="${esc(p.manual_pos || '')}" title="Guessed from the player’s stats. Pick another to correct it; pick the guessed one to go back."${p.manual_pos ? ' style="border-color:var(--acc)"' : ''}><option value="">${esc(p.auto_pos)} · guessed</option>${R.positions.map(x => `<option ${x === p.manual_pos ? 'selected' : ''}>${x}</option>`).join('')}</select>`}</td><td>${p.gp}</td>
         <td><input class="num" style="width:88px" data-f="height" value="${esc(hv(p.bio))}" placeholder="–"${approx(p.bio, 'height')}></td>
@@ -77,7 +88,7 @@
         <td><input data-f="birth" type="date" value="${esc((p.bio && p.bio.birth) || '')}" style="width:140px"></td>
         <td class="mut">${age(p.bio && p.bio.birth)}</td>
         <td style="white-space:nowrap">${p.hidden ? `<button data-act="restore">↺ Restore</button>` :
-          `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
+          `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="out" title="${A[p.id] ? 'Back in the squad' : 'Not playing (injured, suspended…): leave him out of the expected starting five'}"${A[p.id] ? ' class="primary"' : ''}>🤕</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
         || '<tr><td colspan="10" class="mut" style="padding:14px">No players.</td></tr>'}
       </tbody></table></div>
       <p class="mut small">Photos: 📷 crops a centred square from the image you pick (crop it beforehand for exact framing) and shows it on the player page, the players list and the MVP race. Players without a photo show a silhouette. Only upload photos you have the right to publish.</p>
@@ -124,6 +135,11 @@
         $('#f-go').onclick = async () => { if (await post({ op: 'rename', id, name: $('#f-name').value })) load(); else render(); };
       };
       if (btn('hide')) btn('hide').onclick = async () => { if (confirm(`Delete ${p.name} (${p.team} #${p.number}) from the site?\n\nHe disappears from players, rankings and the MVP race. Box scores are kept and you can restore him later.`) && await post({ op: 'hide', id })) load(); };
+      if (btn('out')) btn('out').onclick = async () => {
+        if (A[id]) { if (await absent(id, false)) load(); return; }
+        const note = prompt(`${p.name} (${p.team} #${p.number}) is not playing.\n\nOptional note (only you see it), e.g. knee injury:`, '');
+        if (note !== null && await absent(id, true, note)) load();
+      };
       if (btn('restore')) btn('restore').onclick = async () => { if (await post({ op: 'restore', id })) load(); };
       if (btn('transfer')) btn('transfer').onclick = () => {
         form(`<b>Transfer: ${esc(p.name)}</b> <span class="mut small">currently ${esc(p.team)} #${p.number}</span>
@@ -138,6 +154,7 @@
         $('#f-go').onclick = async () => { if (await post({ op: 'transfer', id, to: $('#f-to').value, number: +$('#f-num').value, date: $('#f-date').value, note: $('#f-note').value, same_person: $('#f-same').checked })) load(); else render(); };
       };
     });
+    document.querySelectorAll('[data-back]').forEach(b => b.onclick = async () => { if (await absent(b.dataset.back, false)) load(); });
     document.querySelectorAll('[data-undo]').forEach(b => b.onclick = async () => { if (confirm('Undo this transfer?') && await post({ op: 'undo_transfer', index: +b.dataset.undo })) load(); });
     $('#r-addbtn').onclick = () => {
       form(`<b>Add a player</b> <span class="mut small">for a new signing who has no box score yet. Once a box score exists with the same team and number, the real statistics take over.</span>

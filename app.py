@@ -11,6 +11,7 @@ from flask import Flask, Response, abort, jsonify, make_response, redirect, requ
 import auth
 import config
 import content
+import lineups
 import mvp
 import predict
 import seo
@@ -264,6 +265,17 @@ def matchup():
     if not m:
         abort(404)
     return jsonify(m)
+
+
+@app.get("/api/lineups")
+def lineups_view():
+    """The EXPECTED starting five of both teams of a game (lineups.py): players the admin marked as absent are left out. Used by the next-games banner."""
+    home, away = str(request.args.get("home", "")).upper(), str(request.args.get("away", "")).upper()
+    if not re.fullmatch(r"[A-Z0-9]{2,6}", home) or not re.fullmatch(r"[A-Z0-9]{2,6}", away) or home == away:
+        abort(404)
+    r = jsonify(lineups.view(stats.build(), home, away))
+    r.headers["Cache-Control"] = "no-store"          # follows the admin's absences at once
+    return r
 
 
 @app.get("/api/planning")
