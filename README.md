@@ -25,7 +25,15 @@ Check OCR accuracy any time: `.venv/bin/python tests/test_ocr.py`.
 ## Ratings (stats.py)
 PIR = PTS+REB+AST+STL+BLK+FD - missed FG - missed FT - TOV - fouls. Rating 0-99 = 45 + 2.5 x PIR.
 Game MVP = best PIR (+2 if the team won) among the WINNING team's players. Season MVP = best average among the top 4 teams' players who played at least 70% of their team's games (the NBA rule; the same rule decides who appears in the league leaders).
-Players are identified by team + jersey number, so spelling differences between PDFs don't split them.
+Players are identified by team + jersey number, so spelling differences between PDFs don't split them. When numbers change (phase 2 re-registered many players) see "Jersey numbers" below.
+
+## Jersey numbers that change (roster.json `numbers`, admin Players tab `#`)
+The sheets print a number, not a person, so a player who changes number, or a newcomer who takes the number of somebody who left, would be mixed up with the number's old owner (his games, his name). A **number rule** settles it: *from `from` to `to` (both optional, inclusive), number N of team T on the sheets is the player `id`*. Rows it covers take that player's id and name and **take no part in naming anybody else**, so nobody's past statistics move.
+- **Change a player's number:** Players tab, `#` on his row, new number and the date of the first game with it (a game of 11 Nov: 2026-11-11). His statistics and profile stay; the number he leaves is free.
+- **Add a player on a number somebody wore:** delete the old player first (🗑: a deleted player wears nothing, his number is free at once; a signing who never played is removed completely), then "Add a player". The newcomer gets an id of his own (`usm-108` for a second #8) and a rule from the date you give, so the old player keeps his games.
+- The rules made in the admin are in `data/roster.json` (listed under "Number changes", with Undo). Rules that ship with the code, like the phase 2 corrections of J12, are in `assets/roster.json` (`numbers`) and apply on every deploy.
+- **A game printed with the wrong day** (the scoreboard clock): `POST /admin/api/game-date {"id": ..., "date": "YYYY-MM-DD"}` writes `data/game_dates.json`; `assets/game_dates.json` ships corrections with the code (J12 ESR-CSS and JSM-USA are 11 Nov, not 10).
+`tests/test_numbers.py` checks all of this.
 
 ## Official data (data/official.json)
 Federation results for matchdays 1-11 and team names. The standings page is computed from it (2 pts win, 1 pt loss)
