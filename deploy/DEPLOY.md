@@ -14,7 +14,7 @@ Names below: server `SERVER_IP`, domain `tunisiabasket.com`, GitHub repository `
 5. **Wire up GitHub:** `brew install gh && gh auth login`, then `bash deploy/configure-github.sh OWNER/REPO SERVER_IP tunisiabasket.com`. It creates the
    `production` environment with you as required reviewer, stores the secrets and variables, and turns on secret scanning.
 6. **First deploy:** GitHub > Actions > Deploy > Re-run all jobs, then Review deployments > Approve. Afterwards every push to `main` runs the tests and waits for your approval.
-7. **Admin token:** `ssh ubuntu@SERVER_IP` then `sudo proastats-admin new-token` (shown once).
+7. **Admin token:** `ssh ubuntu@SERVER_IP` then `sudo proastats-admin new-token` (shown once). Optional, for the people who count games by hand at `/analytics`: `sudo proastats-admin new-analytics-token` (a separate token that never opens `/admin`; nothing to change on the server).
 8. **Go live behind Cloudflare:** switch both DNS records to Proxied (orange cloud), SSL/TLS = Full (strict), Always Use HTTPS = on, then on the server
    `sudo bash /opt/proastats/current/deploy/firewall-cloudflare.sh` so only Cloudflare can reach the web ports.
 

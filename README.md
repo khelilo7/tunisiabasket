@@ -221,3 +221,11 @@ The source code is released under the **MIT licence** (`LICENSE`). The licence d
   Do the same in Bing Webmaster Tools (it also feeds DuckDuckGo and others).
 - **Ranking** depends mostly on other sites linking to yours: link to tunisiabasket.com from the Facebook page (About / website field), clubs’ pages and groups, forums, sports bloggers,
   anyone who shares a player’s stats page. Fresh content (results and box scores soon after each matchday) also helps.
+
+## Analytics: counting a game by hand (/analytics)
+A second role, weaker than the admin: an **analyst** signs in at `/analytics` with their own token and counts a game while watching it. Every player of both clubs is on screen
+(the players of the site); one click adds a made shot (+1 / +2 / +3), a missed one (✗1 / ✗2 / ✗3), an offensive or defensive rebound, an assist, a steal, a block, a turnover or a foul.
+Undo, a list of the last actions with "remove", the score on top, and a CSV of the box score. Every click is saved at once in `data/analytics/<game>.json`.
+- **Token:** `sudo proastats-admin new-analytics-token` on the server (or `python manage.py new-analytics-token`): shown once, only its hash is stored (`data/analytics_token.json`; `ANALYTICS_TOKEN` in the environment overrides it). It opens `/analytics` and nothing else: never `/admin`. Same protections as the admin login (lockout, HttpOnly cookie, cross-site refusal). A logged-in admin can use `/analytics` too. The page and its answers are `noindex` and `robots.txt` disallows them.
+- **Nothing an analyst enters is public.** "Send for approval" (matchday and date) puts the game in the admin's **Analytics** tab, with the box score and a check against the official result. The admin approves (it is published), sends it back with a reason (the analyst edits and sends it again) or removes it from the site later.
+- **What approval publishes:** two one-team sheets in `data/partial_games.json` (see "One-team sheets"): minutes, +/- and fouls drawn stay unknown (never 0), the game never enters standings, team totals, the MVP race or the fan vote, and a real box score of the same game replaces it. It is ignored until the official result of that matchday exists. `tests/test_analytics.py` checks all of this.

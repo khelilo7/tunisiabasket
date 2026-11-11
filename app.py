@@ -26,6 +26,8 @@ if os.environ.get("BEHIND_PROXY") == "1":  # Caddy/nginx in front: trust its X-F
 app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # admin uploads (PDF/image stacks, ZIPs)
 import admin  # noqa: E402  (registers the /admin tool)
 app.register_blueprint(admin.bp)
+import analytics  # noqa: E402  (/analytics: analysts count games by hand; the admin approves them)
+app.register_blueprint(analytics.bp)
 SYNC_EVERY_MIN = float(os.environ.get("SYNC_INTERVAL_MIN", "10"))
 status = {"running": False, "last": None, "error": None, "enabled": True}
 _lock = threading.Lock()

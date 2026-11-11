@@ -404,4 +404,4 @@ def sitemap_xml():
 
 
 def robots_txt():
-    return f"User-agent: *\nDisallow: /admin\nAllow: /\n\nSitemap: {base_url()}/sitemap.xml\n"
+    return f"User-agent: *\nDisallow: /admin\nDisallow: /analytics\nAllow: /\n\nSitemap: {base_url()}/sitemap.xml\n"
