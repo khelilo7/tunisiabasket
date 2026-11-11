@@ -57,6 +57,12 @@ ev = lambda pid, stat: analyst.post(f"/analytics/api/games/{gid}/event", json={"
 a, b, c_ = ca[0]["id"], ca[1]["id"], esg[0]["id"]
 for pid, stat in [(a, "p3_m"), (a, "p2_m"), (a, "ft_m"), (a, "p2_x"), (a, "oreb"), (a, "ast"), (b, "p2_m"), (b, "dreb"), (b, "tov"), (b, "pf"), (c_, "p3_m"), (c_, "p3_x"), (c_, "stl"), (c_, "blk")]:
     check(ev(pid, stat).status_code == 200, f"event {pid} {stat}")
+r = analyst.post(f"/analytics/api/games/{gid}/event", json={"pid": a, "stat": "stl", "q": 2, "t": 392}).get_json()["events"][-1]
+check(r["q"] == 2 and r["t"] == 392, "an action may carry the game clock (quarter, seconds left)")
+r = analyst.post(f"/analytics/api/games/{gid}/event", json={"pid": a, "stat": "stl", "q": 99, "t": -5}).get_json()["events"][-1]
+check("q" not in r and "t" not in r, "a bad clock stamp is ignored, the action is still counted")
+for _ in range(2):
+    analyst.post(f"/analytics/api/games/{gid}/undo", json={})
 check(ev("nobody-1", "ast").status_code == 422 and ev(a, "dunk").status_code == 422, "unknown player or action refused")
 g = analyst.get(f"/analytics/api/games/{gid}").get_json()
 s = analytics.scores(g)

@@ -24,7 +24,13 @@ jobs:
           cache: pip
 
       - name: Install Tesseract (reads scanned box scores)
-        run: sudo apt-get update && sudo apt-get install -y tesseract-ocr
+        run: |
+          # the runner's Ubuntu mirror sometimes cannot be reached for a few minutes: try again instead of failing the whole run
+          for attempt in 1 2 3; do
+            sudo apt-get update && sudo apt-get install -y tesseract-ocr && break
+            echo "apt failed (attempt $attempt), trying again in 30 seconds"; sleep 30
+          done
+          command -v tesseract
 
       - name: Install Python packages
         run: pip install -r requirements.txt pyflakes
