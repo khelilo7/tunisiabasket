@@ -665,7 +665,7 @@ const fmtLeft = ms => { const m = Math.max(0, Math.floor(ms / 60000)), d = Math.
   return d ? `${d} ${LANG === 'fr' ? 'j' : 'd'} ${h} h` : h ? `${h} h ${m % 60} min` : `${m} min`; };
 const fmtDeadline = ts => new Date(ts * 1000).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Tunis' });
 const deadlineLine = (open, ts) => ts ? esc(f(open ? 'closesAt' : 'closedAt', fmtDeadline(ts), fmtLeft(ts * 1000 - Date.now()))) : '';
-let mvpAll = false, voteMsg = null, chartOpen = false;
+let mvpAll = false, voteMsg = null, chartOpen = false, phaseOpen = null;      // phaseOpen: null = the default (open while the vote is open, closed once it is over)
 async function mvp() {
   pageMeta = META.mvp[LANG];
   const [r, rv] = await Promise.all([fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`).then(x => x.json()), fetch(`/api/round?vid=${voterId()}`, { cache: 'no-store' }).then(x => x.json()).catch(() => null)]);
@@ -681,6 +681,7 @@ async function mvp() {
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
   return `<h1>${_('MVP race')} <span class="mut" style="font-size:15px">${_('Phase 1')} · J1–J${PHASE * 11}${r.complete ? '' : ' · ' + _('in progress')}</span></h1>
   ${roundSection(rv)}
+  <details class="fold" id="phasefold" ${(phaseOpen === null ? r.voting_open : phaseOpen) ? 'open' : ''}><summary><span>${_('Phase 1 MVP')}</span><span class="sub mut">${cur ? (by === 'winner' ? '🏆 ' : '') + esc(title(cur.name)) + ' · ' : ''}${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span><span class="chev">▾</span></summary>
   ${banner}
   <h2>${_('Fan vote')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">${esc(f('votesN', r.total_votes))} · ${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span></h2>
   ${r.deadline_ts ? `<div class="votemsg" id="deadline" data-ts="${r.deadline_ts}" data-open="${r.voting_open ? 1 : 0}">⏳ ${deadlineLine(r.voting_open, r.deadline_ts)}</div>` : ''}
@@ -693,6 +694,7 @@ async function mvp() {
     ${shown.map(x => `<tr data-go="${playerUrl(x.id, x.name)}"><td class="rk">${x.vote_rank}</td><td class="pl"><div class="pn2">${face(x, 34)}<div><b>${plink(x, esc(title(x.name)))}</b><span>${esc(x.team)} · #${x.number}</span></div></div></td>
       <td>${r.ballot.includes(x.id) || x.votes ? `<b>${x.votes}</b>` : '<span class="mut">–</span>'}</td><td>${x.gp}</td><td>${x.pts}</td><td>${x.reb}</td><td>${x.ast}</td><td>${x.stl}</td><td>${x.blk}</td><td><b>${x.pir}</b></td></tr>`).join('')}</tbody></table></div>
   ${c.length > 10 ? `<p style="text-align:center"><button id="mvpall">${mvpAll ? _('Show the top 10') : esc(f('allCands', c.length))}</button></p>` : ''}
+  </details>
   <details class="fold" id="statsfold" ${chartOpen ? 'open' : ''}><summary><span>${_('Stats race')}</span><span class="sub mut">${_('Best player so far')}${best ? ': ' + esc(title(best.name)) : ''}</span><span class="chev">▾</span></summary>
     <div class="card">${raceChart(r)}</div></details>
   <h2>${_('How it works')}</h2><div class="card how">${f('mvpHow')}</div>`;
@@ -1262,6 +1264,7 @@ function bind() {
   document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => castVote(b.dataset.vote));
   document.querySelectorAll('[data-rvote]').forEach(b => b.onclick = () => castRoundVote(+b.dataset.round, b.dataset.rvote));
   document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => castPick(b.dataset.pick, b.dataset.side));
+  const pf = $('#phasefold'); if (pf) pf.ontoggle = () => { phaseOpen = pf.open; };
   const sf = $('#statsfold'); if (sf) sf.ontoggle = () => { chartOpen = sf.open; };
   const lf = $('#leadfold'); if (lf) lf.ontoggle = () => { leadOpen = lf.open; };
   const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
