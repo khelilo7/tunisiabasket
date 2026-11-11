@@ -202,6 +202,27 @@ def _roster(codes):
     return {c: [{"id": p["id"], "name": p["name"], "number": p["number"]} for p in rows if p["team"] == c] for c in codes}
 
 
+def video_todo():
+    """The games that were played (official result) but have no full box score on the site: nothing at all ("none") or only a hand-kept sheet of one team or of some
+    players ("partial"). These are the ones an analyst can count from the video. Oldest matchday first."""
+    d = stats.build()
+    pair = lambda g: (stats.matchday_hint(g), frozenset(t["code"] for t in g["teams"]))
+    full = {pair(g) for g in d["games"]}
+    partial = {pair(g): g for g in d["partials"]}
+    cal = stats.load_calendar()
+    out = []
+    for r in sorted(stats.load_official()["results"], key=lambda r: (r["matchday"], r["home"])):
+        k = (r["matchday"], frozenset([r["home"], r["away"]]))
+        if k in full:
+            continue
+        pg = partial.get(k)
+        rec = next((t for t in pg["teams"] if t["recorded"]), None) if pg else None
+        out.append({"matchday": r["matchday"], "home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"],
+                    "date": (pg or {}).get("date") or cal.get(r["matchday"]), "status": "partial" if pg else "none",
+                    "recorded": rec["code"] if rec else None, "complete": bool(pg and pg["complete"])})
+    return out
+
+
 @bp.get("/analytics/api/data")
 def data():
     plan = stats.planning()
@@ -214,7 +235,7 @@ def data():
         ps.sort(key=lambda p: (-p["min"], p["number"]))
     matches = [{"key": f"{md['matchday']}:{g['home']}-{g['away']}", "matchday": md["matchday"], "date": g.get("game_date") or md.get("date"), "time": g.get("time"),
                 "home": g["home"], "away": g["away"], "played": g["played"]} for md in plan["matchdays"] for g in md["games"]]
-    return jsonify(teams=plan["teams"], roster=roster, matches=matches, games=games)
+    return jsonify(teams=plan["teams"], roster=roster, matches=matches, games=games, video=video_todo())
 
 
 @bp.post("/analytics/api/games")

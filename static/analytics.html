@@ -128,8 +128,19 @@ function renderHome() {
       <b>${esc(tn(m.home))}</b> <span class="muted">vs</span> <b>${esc(tn(m.away))}</b><br><span class="muted">${esc([m.date, m.time].filter(Boolean).join(" · "))}</span>
       ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
   };
+  const vcard = v => {
+    const g = byId[`j${v.matchday}-${v.home.toLowerCase()}-${v.away.toLowerCase()}`];
+    const why = v.status === "none" ? "No box score" : v.complete ? `Partial: only ${tn(v.recorded)} was recorded` : `Partial: some of ${tn(v.recorded)}'s players`;
+    return `<button class="match ${g ? "has" : ""}" data-md="${v.matchday}" data-home="${v.home}" data-away="${v.away}" data-date="${v.date || ""}">
+      <b>${esc(tn(v.home))}</b> <span class="muted">vs</span> <b>${esc(tn(v.away))}</b><br><span class="muted">J${v.matchday} · final ${v.home_score} – ${v.away_score}</span><br>
+      <span class="pill ${v.status === "none" ? "rejected" : "submitted"}">${why}</span>
+      ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
+  };
+  const todo = (D.video || []).length ? `<h2>🎥 To count from video <span class="muted" style="font-size:14px;font-weight:400">${D.video.length} games without a full box score</span></h2>
+    <div class="matches">${D.video.map(vcard).join("")}</div>` : "";
   const opts = Object.keys(D.roster).sort((a, b) => tn(a).localeCompare(tn(b))).map(c => `<option value="${c}">${esc(tn(c))}</option>`).join("");
   app.innerHTML = `
+    ${todo}
     ${order.map((d, i) => `${i ? `<details><summary>Matchday ${d}</summary>` : `<h2>Matchday ${d}</h2>`}<div class="matches">${D.matches.filter(m => m.matchday === d).map(card).join("")}</div>${i ? "</details>" : ""}`).join("")}
     <h2>Any other game</h2>
     <div class="row-actions"><select id="h">${opts}</select> <span class="muted">vs</span> <select id="a">${opts}</select><button class="accent" id="go">Start</button></div>

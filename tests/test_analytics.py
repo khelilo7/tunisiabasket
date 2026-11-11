@@ -47,6 +47,14 @@ check(analyst.get("/analytics/api/data").headers.get("X-Robots-Tag", "").startsw
 d = analyst.get("/analytics/api/data").get_json()
 check({"CA", "ESG"} <= set(d["roster"]) and d["roster"]["CA"][0]["id"].startswith("ca-") and d["matches"] and "CA" in d["teams"], "teams, players and matches come from the site")
 ca, esg = d["roster"]["CA"], d["roster"]["ESG"]
+# the games an analyst can count from the video: played, but no full box score (nothing at all, or a one-team / some-players sheet)
+built = stats.build()
+full = {(stats.matchday_hint(g), frozenset(t["code"] for t in g["teams"])) for g in built["games"]}
+todo = d["video"]
+check(all((v["matchday"], frozenset([v["home"], v["away"]])) not in full for v in todo), "no game with a full box score is offered for video")
+check(len(todo) + sum((r["matchday"], frozenset([r["home"], r["away"]])) in full for r in stats.load_official()["results"]) == len(stats.load_official()["results"]), "every other played game is offered")
+check(all(v["status"] in ("none", "partial") and isinstance(v["home_score"], int) for v in todo) and (not any(v["status"] == "partial" for v in todo) or all(v["recorded"] for v in todo if v["status"] == "partial")), "each says why: no box score, or partial with the team recorded")
+check(any(v["status"] == "partial" and v["recorded"] == "CA" for v in todo) or not built["partials"], "a hand-kept one-team sheet (J1 ESG-CA) is listed as partial")
 
 # 3. counting
 g = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 12, "date": "2026-11-11"}).get_json()
