@@ -56,6 +56,17 @@
   .clock { display:flex; align-items:center; gap:8px; background:var(--panel); padding:6px 10px; border-radius:10px; }
   .clock .t { font-size:24px; font-weight:800; font-variant-numeric:tabular-nums; min-width:68px; text-align:center; cursor:pointer; }
   .clock .t.run { color:var(--good); } .clock label { font-size:12px; color:var(--muted); display:flex; gap:4px; align-items:center; }
+  .p.on { box-shadow:inset 4px 0 0 var(--good); } .p.pick { cursor:pointer; } .p.picked { background:#173d2a; }
+  .cd { width:26px; height:26px; padding:0; border-radius:50%; flex:none; font-size:13px; line-height:1; background:var(--panel2); color:var(--muted); }
+  .cd.on { background:var(--good); color:#fff; } .cd.pk { background:transparent; border:2px solid var(--muted); } .cd.pk.picked { background:var(--accent); border-color:var(--accent); color:#1a1205; font-weight:800; }
+  .mn { width:44px; text-align:right; font-size:12px; color:var(--muted); font-variant-numeric:tabular-nums; flex:none; line-height:1.15; } .mn b { display:block; color:var(--text); font-size:13px; } .mn .pos { color:#7be0a3; } .mn .neg { color:#ff9aa5; }
+  .courtbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:0 0 10px; padding:8px; background:var(--panel); border-radius:10px; }
+  .courtbar .ch { display:flex; gap:6px; align-items:center; background:var(--panel2); border-radius:99px; padding:3px 10px 3px 4px; font-size:13px; } .courtbar .ch .av { width:22px; height:22px; font-size:10px; }
+  .courtbar .ch small { color:var(--muted); }
+  .courtbar .hint { color:var(--muted); font-size:13px; }
+  .pickbar { background:#173d2a; } .pickbar b { color:#7be0a3; }
+  #subm { position:fixed; inset:0; background:rgba(5,8,18,.6); display:grid; place-items:center; z-index:8; } #subm > div { background:var(--panel); border-radius:14px; padding:16px; width:min(380px, 92vw); max-height:84vh; overflow:auto; }
+  #subm h4 { margin:0 0 10px; font-size:15px; } #subm button.o { display:flex; gap:8px; width:100%; margin-bottom:6px; align-items:center; text-align:left; } #subm button.o small { color:var(--muted); margin-left:auto; }
   .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bad); padding:10px 16px; border-radius:10px; z-index:9; }
   .toast.ok { background:var(--good); }
 </style>
@@ -165,10 +176,14 @@ function renderGame() {
   const g = S.game, app = $("#app"), t = tally(g), ed = editable(g);
   const photos = Object.fromEntries(Object.values(S.data.roster).flat().map(p => [p.id, p.photo]));
   const total = code => g.players[code].reduce((n, p) => n + ptsOf(t[p.id]), 0);
-  const row = p => {
-    const r = t[p.id] || {}, ph = photos[p.id];
-    return `<div class="p" data-pid="${p.id}"><div class="av" ${ph ? `style="background-image:url('${esc(ph)}')"` : ""}>${ph ? "" : p.number}</div>
+  const cc = g.court, picking = S.pick;
+  const row = (p, code) => {
+    const r = t[p.id] || {}, ph = photos[p.id], on = cc.on[code].includes(p.id), pk = picking && picking.team === code, picked = pk && picking.sel.has(p.id);
+    return `<div class="p ${on && !pk ? "on" : ""} ${pk ? "pick" : ""} ${picked ? "picked" : ""}" data-pid="${p.id}" data-team="${code}">
+      ${ed ? `<button class="cd ${pk ? "pk" : on ? "on" : ""} ${picked ? "picked" : ""}" data-cd="${p.id}" title="${pk ? "Tap to put him in / out of the five" : on ? "On the court: tap to substitute him" : "On the bench: tap to bring him on"}">${pk ? (picked ? "✓" : "") : on ? "●" : "○"}</button>` : ""}
+      <div class="av" ${ph ? `style="background-image:url('${esc(ph)}')"` : ""}>${ph ? "" : p.number}</div>
       <div class="nm" title="${esc(p.name)}"><small>#${p.number}</small> ${esc(p.name)}</div><div class="pts" id="pts-${p.id}">${ptsOf(r)}</div>
+      ${cc.used ? `<div class="mn" data-mn="${p.id}" data-team="${code}"><b>${fmt(courtSecs(p.id, code))}</b><span class="${(cc.pm[p.id] || 0) >= 0 ? "pos" : "neg"}">${(cc.pm[p.id] || 0) > 0 ? "+" : ""}${cc.pm[p.id] || 0}</span></div>` : ""}
       <div class="btns">${BTNS.map(b => b ? `<button class="b ${b[2]}" data-stat="${b[0]}" title="${b[3]}" ${ed ? "" : "disabled"}>${b[1]}${r[b[0]] ? `<i>${r[b[0]]}</i>` : ""}</button>` : `<span class="sep"></span>`).join("")}</div></div>`;
   };
   const byId = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p]));
@@ -182,15 +197,21 @@ function renderGame() {
     ${g.status === "rejected" && g.note ? `<div class="note"><b>The admin sent it back:</b> ${esc(g.note)}</div>` : ""}
     ${g.status === "submitted" ? `<div class="note">Sent for approval. You can still take it back to edit it until the admin decides.</div>` : ""}
     ${g.status === "published" ? `<div class="note">Approved: these stats are on the site.</div>` : ""}
-    <div class="teams">${[g.home, g.away].map(c => `<div class="team"><h3>${esc(tn(c))}</h3>${g.players[c].map(row).join("") || '<span class="muted">No players for this team.</span>'}</div>`).join("")}</div>
-    <div class="muted legend">Click a button to add it to that player. Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound. The orange number is how many that player has. Wrong click? Undo, or remove it below.</div>
-    <div class="log"><h2>Last actions</h2>${last.map(e => `<div><span class="muted">${e.q ? qName(e.q) + " " + fmt(e.t) : e.at}</span><b>${esc(byId[e.pid]?.name || e.pid)}</b> ${esc(LABEL[e.stat])}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>`).join("") || '<span class="muted">Nothing yet.</span>'}</div>`;
+    <div class="teams">${[g.home, g.away].map(c => `<div class="team"><h3>${esc(tn(c))}</h3>${courtBar(c, ed)}${g.players[c].map(p => row(p, c)).join("") || '<span class="muted">No players for this team.</span>'}</div>`).join("")}</div>
+    <div class="muted legend">Click a button to add it to that player. Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound. The orange number is how many that player has. Wrong click? Undo, or remove it below.<br>
+      <b>On the court:</b> mark the five of each team (● = on the court, ○ = bench). To substitute, tap the player who comes on or goes off and choose who replaces him: his time on the court (it follows the game clock above) and his +/- are counted for you.</div>
+    <div class="log"><h2>Last actions</h2>${last.map(e => e.stat === "lineup" ? `<div><span class="muted">${e.q ? qName(e.q) + " " + fmt(e.t) : e.at}</span><b>${esc(tn(e.team))}</b> on the court: ${e.on.map(id => esc((byId[id]?.name || id).split(" ").slice(-1)[0])).join(", ") || "nobody"}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>` : `<div><span class="muted">${e.q ? qName(e.q) + " " + fmt(e.t) : e.at}</span><b>${esc(byId[e.pid]?.name || e.pid)}</b> ${esc(LABEL[e.stat])}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>`).join("") || '<span class="muted">Nothing yet.</span>'}</div>`;
   $("#back").onclick = () => { location.hash = ""; load(); };
   $("#undo").onclick = undo;
   if ($("#submit")) $("#submit").onclick = submit;
   if ($("#reopen")) $("#reopen").onclick = async () => { S.game = await api(`/games/${g.id}/reopen`, "POST", {}); renderGame(); };
   clockWire();
   app.querySelectorAll(".b").forEach(b => b.onclick = () => add(b.closest(".p").dataset.pid, b.dataset.stat));
+  app.querySelectorAll("[data-cd]").forEach(b => b.onclick = e => { e.stopPropagation(); cdClick(b.closest(".p").dataset.team, b.dataset.cd); });
+  app.querySelectorAll(".p.pick").forEach(r => r.onclick = e => { if (!e.target.closest(".b")) cdClick(r.dataset.team, r.dataset.pid); });
+  app.querySelectorAll("[data-pickstart]").forEach(b => b.onclick = () => { const c = b.dataset.pickstart; S.pick = { team: c, sel: new Set(S.game.court.on[c]) }; renderGame(); });
+  app.querySelectorAll("[data-pickok]").forEach(b => b.onclick = async () => { const pk = S.pick; S.pick = null; await setLineup(pk.team, [...pk.sel]); });
+  app.querySelectorAll("[data-pickno]").forEach(b => b.onclick = () => { S.pick = null; renderGame(); });
   app.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { S.game = await api(`/games/${g.id}/remove`, "POST", { n: +b.dataset.rm }); renderGame(); });
 }
 async function add(pid, stat) {
@@ -198,8 +219,57 @@ async function add(pid, stat) {
   const c = clk();
   const at = c.auto && !c.running && c.left > 0 ? (clkStart(c), clkNow(c)) : clkNow(c);     // the clock is an extra: it starts by itself on an action, stop it any time
   S.game = await api(`/games/${S.game.id}/event`, "POST", { pid, stat, q: c.q, t: at });
+  const co = S.game.court, code = Object.keys(S.game.players).find(k => S.game.players[k].some(p => p.id === pid));
+  if (co.used && co.on[code].length === 5 && !co.on[code].includes(pid)) toast(`${S.game.players[code].find(p => p.id === pid).name} is on the bench: tap ○ to bring him on.`);   // a hint, never a block
   renderGame(); scrollTo(0, y);
   const el = document.getElementById("pts-" + pid); if (el) { el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 500); }
+}
+/* ---- who is on the court: five per team, time on the court from the game clock, plus/minus ---- */
+const elapsed = (q, left) => { let s = 0; for (let i = 1; i < q; i++) s += len(i); return s + len(q) - left; };
+function nowAbs() { const g = S.game; if (!editable(g)) return g.court.end; const c = clk(); return elapsed(c.q, clkNow(c)); }
+function courtSecs(pid, code) {
+  const c = S.game.court, on = c.on[code].includes(pid);
+  return (c.base[pid] || 0) + (on ? Math.max(0, nowAbs() - (c.since[code] || 0)) : 0);
+}
+function updCourt() {
+  if (!S.game?.court?.used) return;
+  document.querySelectorAll("[data-mn]").forEach(el => { const b = el.querySelector("b"), v = fmt(courtSecs(el.dataset.mn, el.dataset.team)); if (b && b.textContent !== v) b.textContent = v; });
+}
+function courtBar(code, ed) {
+  const g = S.game, c = g.court, on = c.on[code], pl = Object.fromEntries(g.players[code].map(p => [p.id, p])), pk = S.pick && S.pick.team === code;
+  if (pk) return `<div class="courtbar pickbar"><b>Pick the players on the court: ${S.pick.sel.size}/5</b><span class="sp"></span>
+    <button class="accent" data-pickok ${S.pick.sel.size === 5 || (S.pick.sel.size && g.players[code].length < 5) ? "" : "disabled"}>Confirm</button><button data-pickno>Cancel</button></div>`;
+  if (!on.length) return ed ? `<div class="courtbar"><span class="hint">Who is on the court? Mark the five to get minutes and +/- (optional).</span><span class="sp"></span><button class="accent" data-pickstart="${code}">Pick the five</button></div>` : "";
+  return `<div class="courtbar"><span class="muted">On court</span>${on.map(id => `<span class="ch"><span class="av">${pl[id].number}</span>${esc(pl[id].name.split(" ").slice(-1)[0])}</span>`).join("")}${ed ? `<span class="sp"></span><button data-pickstart="${code}" title="Change several players at once">✎ Change the five</button>` : ""}</div>`;
+}
+function cdClick(code, pid) {
+  const g = S.game;
+  if (S.pick && S.pick.team === code) {                     // picking the five: tap players in and out, five at most
+    const sel = S.pick.sel;
+    if (sel.has(pid)) sel.delete(pid); else if (sel.size < 5) sel.add(pid); else return toast("Five players at most: tap one to take him off first.");
+    return renderGame();
+  }
+  const on = g.court.on[code], isOn = on.includes(pid), name = id => g.players[code].find(p => p.id === id)?.name || id;
+  if (!on.length) { S.pick = { team: code, sel: new Set([pid]) }; return renderGame(); }          // no five yet: the first tap starts picking it
+  const num = id => g.players[code].find(p => p.id === id)?.number ?? 0;
+  const others = (isOn ? g.players[code].filter(p => !on.includes(p.id)) : g.players[code].filter(p => on.includes(p.id))).sort((a, b) => a.number - b.number);
+  const swap = o => isOn ? on.map(x => x === pid ? o : x) : on.map(x => x === o ? pid : x);
+  const m = document.createElement("div"); m.id = "subm";
+  m.innerHTML = `<div><h4>${isOn ? `${esc(name(pid))} comes off: who comes on?` : `${esc(name(pid))} comes on: who goes off?`}</h4>
+    ${others.map(o => `<button class="o" data-o="${o.id}"><b>#${o.number}</b> ${esc(o.name)}<small>${fmt(courtSecs(o.id, code))}</small></button>`).join("")}
+    ${isOn ? `<button class="o" data-o="">Nobody comes on (he just leaves the court)</button>` : on.length < 5 ? `<button class="o" data-o="+">Just add him (the five is not full)</button>` : ""}
+    <button class="o" data-o="x" style="background:transparent;color:var(--muted)">Cancel</button></div>`;
+  document.body.append(m);
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  m.querySelectorAll("[data-o]").forEach(b => b.onclick = async () => {
+    const o = b.dataset.o; m.remove(); if (o === "x") return;
+    await setLineup(code, o === "" ? on.filter(x => x !== pid) : o === "+" ? [...on, pid] : swap(o));
+  });
+}
+async function setLineup(code, ids) {
+  const y = scrollY, c = clk();
+  S.game = await api(`/games/${S.game.id}/lineup`, "POST", { team: code, on: ids, q: c.q, t: clkNow(c) });      // stamped with the game clock, which is never started or stopped by this
+  renderGame(); scrollTo(0, y);
 }
 /* ---- game clock (optional: stats never need it). Kept in this browser; every action is stamped with the quarter and the time left. ---- */
 const QN = ["Q1", "Q2", "Q3", "Q4", "OT1", "OT2", "OT3", "OT4"], len = q => (q > 4 ? 300 : 600);
@@ -223,7 +293,7 @@ function clockHtml() {
 }
 function clockWire() {
   if (!$("#cgo")) return;
-  const c = clk(), paint = () => { const t = $("#ct"); if (!t) return; const n = clkNow(c); t.textContent = fmt(n); t.classList.toggle("run", c.running); $("#cgo").textContent = c.running ? "⏸ Stop" : "▶ Start";
+  const c = clk(), paint = () => { const t = $("#ct"); if (!t) return; updCourt(); const n = clkNow(c); t.textContent = fmt(n); t.classList.toggle("run", c.running); $("#cgo").textContent = c.running ? "⏸ Stop" : "▶ Start";
     if (c.running && n === 0) { clkStop(c); paint(); toast("End of " + qName(c.q), true); } };
   $("#cgo").onclick = () => { c.running ? clkStop(c) : clkStart(c); paint(); };
   $("#cq").onchange = e => { clkStop(c); c.q = +e.target.value; c.left = len(c.q); clkSave(); paint(); };
@@ -240,7 +310,8 @@ async function submit() {
   const g = S.game;
   const md = prompt("Matchday number of this game (e.g. 12):", g.matchday || ""); if (md === null) return;
   const date = prompt("Date of the game (YYYY-MM-DD):", g.date || new Date().toISOString().slice(0, 10)); if (date === null) return;
-  S.game = await api(`/games/${g.id}/submit`, "POST", { matchday: parseInt(md, 10), date: date.trim() });
+  const c = clk();
+  S.game = await api(`/games/${g.id}/submit`, "POST", { matchday: parseInt(md, 10), date: date.trim(), q: c.q, t: clkNow(c) });
   toast("Sent to the admin.", true); renderGame();
 }
 addEventListener("keydown", e => { if (S.game && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); } });

@@ -32,11 +32,16 @@
 
   async function load() {
     const box = $('#analyticsbox'); if (!box) return;
-    let games;
-    try { games = (await api('analytics')).body.games; } catch (e) { box.innerHTML = `<div class="problems">${esc(e.message)}</div>`; return; }
+    let games, counting = [];
+    try { const r = (await api('analytics')).body; games = r.games; counting = r.counting || []; } catch (e) { box.innerHTML = `<div class="problems">${esc(e.message)}</div>`; return; }
     box.innerHTML = `<h3 style="margin-top:16px">📋 Games counted by analysts</h3>
       <p class="mut small" style="margin:4px 0">Analysts sign in at <b>/analytics</b> with their own token (it never opens this panel) and count a game by hand. <b>Nothing is public until you approve it.</b> An approved game appears as a one-team sheet on each player's page, like the hand-kept sheets: minutes, +/- and fouls drawn stay unknown, it never changes standings or the MVP race, and a real box score of the same game replaces it. Check the score against the official result first.</p>
-      ${msg ? `<div class="${msg.ok ? 'okbox' : 'problems'}">${esc(msg.t)}</div>` : ''}${games.map(block).join('') || '<div class="mut">No game sent yet.</div>'}`;
+      ${msg ? `<div class="${msg.ok ? 'okbox' : 'problems'}">${esc(msg.t)}</div>` : ''}
+      <div class="card" style="margin-top:8px"><b>🔴 Being counted now</b> <span class="mut small">Switch a game to <b>Live</b> and the public can follow it on the site's Live page (score, clock, box score, last plays), updating every few seconds. It stops being live when the analyst sends it for approval.</span>
+        ${counting.length ? counting.map(g => `<div class="row" style="margin-top:8px"><b>${esc(g.score)}</b><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.events} actions</span>${g.live ? '<span class="pill bad">● LIVE</span>' : ''}<span class="sp"></span>
+          <button class="${g.live ? 'danger' : 'primary'}" data-live="${g.id}" data-on="${g.live ? 0 : 1}">${g.live ? 'Stop live' : '● Go live'}</button></div>`).join('') : '<div class="mut small" style="margin-top:6px">No game is being counted at the moment.</div>'}</div>
+      ${games.map(block).join('') || '<div class="mut">No game sent yet.</div>'}`;
+    box.querySelectorAll('[data-live]').forEach(b => b.onclick = async () => { await post(`${b.dataset.live}/live`, { on: b.dataset.on === '1' }); load(); });
     box.querySelectorAll('[data-act]').forEach(b => b.onclick = async () => {
       const card = b.closest('.card'), act = b.dataset.act, body = {};
       if (act === 'approve') { body.matchday = +card.querySelector('[data-md]').value; body.date = card.querySelector('[data-date]').value; }

@@ -135,9 +135,29 @@
   @media (max-width:760px) {
     .court-wide { display:none; } .court-narrow { display:block; } main { padding:12px; }
     header { padding:8px 12px; gap:8px; } header .logo { font-size:15px; }
-    nav { order:5; flex:1 0 100%; flex-wrap:nowrap; overflow-x:auto; gap:2px; } nav a { white-space:nowrap; padding:6px 10px; }
     #season { margin-left:auto; } h1 { font-size:20px; }
     .match { gap:6px; } .match a, .match span { font-size:15px; }
+  }
+  /* phone: a compact header (one row of controls, one swipeable row of pages), tables that keep their first columns in view, bigger tap targets */
+  .s1, .s2 { position:sticky; z-index:1; background:var(--card); } .s1 { left:0; } .s2 { left:var(--l2, 0); } @media (max-width:760px) { .s2 { max-width:46vw; overflow:hidden; text-overflow:ellipsis; } .s2 .tn { max-width:100%; } } thead .s1, thead .s2 { z-index:2; }
+  tr.top .s1, tr.top .s2, tr.tot .s1, tr.tot .s2, tbody tr:hover .s1, tbody tr:hover .s2 { background:var(--hover); }
+  @media (max-width:760px) {
+    body { font-size:15px; -webkit-text-size-adjust:100%; }
+    main { padding:12px 12px 24px; } .card { padding:14px; border-radius:12px; } h2 { margin:20px 0 8px; font-size:15px; }
+    button, select, input { min-height:38px; } .chip { padding:8px 14px; }
+    .seg { max-width:100%; overflow-x:auto; scrollbar-width:none; } .seg::-webkit-scrollbar { display:none; } .seg a, .seg button { padding:8px 14px; white-space:nowrap; }
+    .hm { display:none; }
+    /* wide tables slide sideways inside their card; shadows on the edges say there is more */
+    .scroll { -webkit-overflow-scrolling:touch; overscroll-behavior-x:contain; background:linear-gradient(90deg, var(--card) 30%, transparent) left center / 26px 100% no-repeat local, linear-gradient(-90deg, var(--card) 30%, transparent) right center / 26px 100% no-repeat local, radial-gradient(farthest-side at 0 50%, rgba(0,0,0,.35), transparent) left center / 10px 100% no-repeat scroll, radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,.35), transparent) right center / 10px 100% no-repeat scroll, var(--card); }
+    #app table { font-size:13.5px; } th, td { padding:9px 5px; } th:first-child, td:first-child { padding-left:8px; } th { font-size:11px; }
+    .tablecard .scroll { max-height:none; } #app table .tlogo { width:26px; height:26px; } #app table .tn { gap:6px; }
+    /* the scoreboard of a game: teams stacked over their score */
+    .scoreboard { display:grid !important; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; text-align:center; font-size:15px !important; }
+    .scoreboard .tn { flex-direction:column; justify-content:center; gap:4px; text-align:center; font-size:15px; line-height:1.2; } .scoreboard b { font-size:28px !important; white-space:nowrap; }
+    .phead { gap:12px 16px !important; } .phead .sp { flex:1 1 100%; } .phead .sp h1 { font-size:24px; }
+    .g4 { grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; } .g4 .stat { padding:10px 6px; }
+    .benchgrid { grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+    .row { gap:8px; } footer { padding:0 12px; }
   }
   .benchgrid { display:grid; gap:8px; grid-template-columns:repeat(auto-fill,minmax(172px,1fr)); }
   .bp { border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; } .bp:hover { border-color:var(--acc); }
@@ -262,24 +282,64 @@
   .fbcard { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:22px; flex-wrap:wrap; } .fbcard .vote { white-space:nowrap; text-decoration:none; }
   a.tiny { display:inline-block; margin-top:8px; font-size:11px; color:var(--mut); opacity:.7; text-decoration:none; } a.tiny:hover { opacity:1; text-decoration:underline; }
   footer .fbl { margin-left:auto; } footer .hint { display:block; flex-basis:100%; font-size:11px; opacity:.65; margin-top:4px; }
+  .seg button { padding:6px 16px; border:0; border-radius:99px; font-size:14px; font-weight:700; color:var(--mut); background:none; cursor:pointer; } .seg button.on { background:var(--acc); color:#10131c; } .seg button:not(.on):hover { color:var(--txt); }
+  .tsg table { width:100%; } .tsg td { padding:7px 6px; } .tsg td.l { text-align:left; } .tsg td.v { text-align:right; font-weight:700; white-space:nowrap; } .tsg td.r { text-align:right; width:54px; }
   .seg { display:inline-flex; gap:3px; padding:3px; margin-bottom:12px; border-radius:99px; background:var(--card); border:1px solid var(--line); } .seg a { padding:6px 16px; border-radius:99px; font-size:14px; font-weight:700; color:var(--mut); } .seg a.on { background:var(--acc); color:#10131c; } .seg a:not(.on):hover { color:var(--txt); }
   .votemsg { margin:0 0 12px; padding:10px 14px; border-radius:10px; border:1px solid var(--mvp-line); background:var(--mvp-in); font-size:14px; } .votemsg.bad { border-color:var(--bad); }
   .how { color:var(--mut); font-size:13px; line-height:1.55; } .how b { color:var(--txt); }
   @media (max-width:900px) { .vrow { grid-template-columns:24px 32px minmax(0,1fr); gap:8px 10px; } .vrow .bars { grid-column:3; } .vrow .sc { display:none; } }
   @media (max-width:760px) { .ballot { grid-template-columns:1fr; } .phase { grid-template-columns:1fr; } .winner { grid-template-columns:1fr; padding:18px; } .winner .trophy { font-size:48px; }
   }
+  /* menu: an icon and a word per page, a settings panel, and on a phone a bottom bar with a "More" sheet */
+  nav a { display:inline-flex; align-items:center; gap:7px; position:relative; } nav a span { white-space:nowrap; }
+  .ic { width:19px; height:19px; flex:none; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  nav .more { display:none; } .gear { padding:6px 8px; line-height:0; } .gear .ic { width:20px; height:20px; } .gear[aria-expanded=true] { border-color:var(--acc); color:var(--acc); }
+  .ldot { display:none; width:8px; height:8px; border-radius:50%; background:#ff3b4e; animation:pulse 1.6s infinite; } nav a.air .ldot { display:inline-block; } nav a[data-p=live].air { color:#ff6574; }
+  @keyframes pulse { 0% { box-shadow:0 0 0 0 rgba(255,59,78,.6); } 70% { box-shadow:0 0 0 7px rgba(255,59,78,0); } 100% { box-shadow:0 0 0 0 rgba(255,59,78,0); } }
+  #pop { position:absolute; right:16px; top:calc(100% + 6px); width:290px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; box-shadow:0 14px 40px rgba(0,0,0,.4); z-index:30; } #pop[hidden] { display:none; }
+  .popnav { display:none; } .popset { display:grid; gap:10px; } .popset label { display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:14px; color:var(--mut); } .popset select, .popset button { min-width:130px; }
+  #scrim { position:fixed; inset:0; background:rgba(5,8,18,.55); z-index:4; } #scrim[hidden] { display:none; }
+  @media (max-width:1000px) and (min-width:761px) { nav a:not(.on) span { display:none; } nav a { padding:7px 10px; } }
+  @media (max-width:760px) {
+    header { flex-wrap:nowrap; padding:6px 12px; min-height:50px; backdrop-filter:none; } header .brand { flex:1; min-width:0; } header .brand img { height:32px; } #phase, .gear { display:none; }
+    nav { position:fixed; left:0; right:0; bottom:0; z-index:25; margin:0; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); background:var(--hdr); border-top:1px solid var(--line); display:flex; gap:0; flex:none; }
+    nav a, nav .more { flex:1 1 0; min-width:0; flex-direction:column; justify-content:center; align-items:center; gap:3px; padding:7px 2px 5px; font-size:11px; font-weight:600; border-radius:10px; color:var(--mut); background:none; border:0; min-height:52px; }
+    nav a.sec { display:none; } nav .more { display:flex; cursor:pointer; font:inherit; font-size:11px; font-weight:600; }
+    nav a[data-p=home] { order:1; } nav a[data-p=standings] { order:2; } nav a[data-p=live] { order:3; } nav a[data-p=players] { order:4; } nav .more { order:5; }
+    nav .ic { width:24px; height:24px; } nav a.on, nav .more.on { color:var(--acc); background:none; box-shadow:none; border-radius:10px; } nav a:hover { background:none; }
+    nav a[data-p=live] .ldot { position:absolute; top:6px; left:calc(50% + 8px); }
+    main { padding-bottom:calc(86px + env(safe-area-inset-bottom)); } footer { padding-bottom:calc(70px + env(safe-area-inset-bottom)); }
+    #pop { position:fixed; left:0; right:0; top:auto; bottom:calc(64px + env(safe-area-inset-bottom)); width:auto; border-radius:16px 16px 0 0; padding:14px 16px 16px; max-height:75vh; overflow:auto; z-index:24; }
+    .popnav { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+    .popnav a { display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px; border-radius:12px; background:var(--bg); font-size:13px; font-weight:600; color:var(--txt); } .popnav a.on { color:var(--acc); box-shadow:inset 0 0 0 1px var(--acc); } .popnav .ic { width:24px; height:24px; }
+    .popset select, .popset button { min-height:40px; }
+  }
+  /* the Live page */
+  .livecard { margin-bottom:16px; } .liveboard { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:10px; margin:12px 0; text-align:center; }
+  .liveboard .tm { display:flex; flex-direction:column; align-items:center; gap:6px; font-weight:700; } .liveboard .big { font-size:40px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; } .liveboard .sep { font-size:24px; color:var(--mut); }
+  .onair { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; letter-spacing:.1em; color:#ff6574; background:rgba(255,59,78,.14); border-radius:99px; padding:3px 10px; } .onair i { width:8px; height:8px; border-radius:50%; background:#ff3b4e; animation:pulse 1.6s infinite; }
+  .fivebar { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; } .fivebar .ch { display:inline-flex; gap:6px; align-items:center; background:var(--bg); border-radius:99px; padding:3px 10px 3px 4px; font-size:13px; } .fivebar .ch .nn { width:22px; height:22px; border-radius:50%; background:var(--pill); display:grid; place-items:center; font-size:11px; font-weight:800; }
+  .plays { display:grid; gap:2px; margin:6px 0 0; padding:0; list-style:none; } .plays li { display:flex; gap:10px; align-items:baseline; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; } .plays li:last-child { border-bottom:0; } .plays .tm2 { width:64px; flex:none; color:var(--mut); font-size:12px; font-variant-numeric:tabular-nums; } .plays .pp { margin-left:auto; font-weight:800; color:var(--acc); }
+  .livecard tr.on td:first-child { box-shadow:inset 3px 0 0 var(--good); }
 </style>
 </head>
 <body>
 <header>
   <a class="brand" href="{{HOME}}"><img src="/img/logo-96.png" alt="Tunisia Basket" width="34" height="42"><span class="logo"><b>TUNISIA</b> BASKET</span></a>
   <span class="pill" id="phase">{{REGULAR}}</span>
-  <nav id="nav"><!--NAV--></nav>
-  <select id="season" aria-label="Season"></select>
-  <select id="lang" aria-label="Language"><option value="fr">Français</option><option value="en">English</option></select>
-  <button id="theme" aria-label="Switch between dark and light mode">☀️</button>
+  <nav id="nav"><!--NAV--><button class="more" id="morebtn" aria-expanded="false" aria-controls="pop"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg><span id="moretxt">More</span></button></nav>
+  <button class="gear" id="gear" aria-expanded="false" aria-controls="pop" aria-label="Settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.4a7.6 7.6 0 0 0-2.6 1.5l-2.4-.9-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-.9a7.6 7.6 0 0 0 2.6 1.5l.4 2.4h4l.4-2.4a7.6 7.6 0 0 0 2.6-1.5l2.4.9 2-3.4z"/></svg></button>
   <button id="syncbtn" hidden>⟳ Sync</button>
+  <div id="pop" role="dialog" aria-label="Settings" hidden>
+    <div class="popnav" id="popnav"></div>
+    <div class="popset">
+      <label><span id="lbseason">Season</span><select id="season" aria-label="Season"></select></label>
+      <label><span id="lblang">Language</span><select id="lang" aria-label="Language"><option value="fr">Français</option><option value="en">English</option></select></label>
+      <label><span id="lbtheme">Theme</span><button id="theme" aria-label="Switch between dark and light mode">☀️</button></label>
+    </div>
+  </div>
 </header>
+<div id="scrim" hidden></div>
 <main id="app"><!--SSR--></main>
 <footer><span>{{LEGAL}}</span><span><a class="fbl" href="{{FB}}" target="_blank" rel="noopener">Facebook</a> · <a href="/admin">Admin</a></span><span class="hint">{{FBHINT}}</span></footer>
 
@@ -359,6 +419,22 @@ const FR = {
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
+  'Live': 'Direct', 'LIVE': 'DIRECT', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
+  'No game is live right now.': 'Aucun match en direct pour le moment.', 'When a game is followed live, its score, box score and last plays appear here and update by themselves.': 'Quand un match est suivi en direct, son score, sa feuille de match et ses dernières actions apparaissent ici et se mettent à jour tout seuls.',
+  'See the calendar': 'Voir le calendrier', 'Make your picks': 'Faire vos pronostics', 'Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.': 'Compté à la main par un analyste pendant le match : les chiffres peuvent être corrigés jusqu’à la sortie de la feuille de match.',
+  'free throw made': 'lancer franc réussi', '2-pointer made': 'tir à 2 pts réussi', '3-pointer made': 'tir à 3 pts réussi', 'free throw missed': 'lancer franc raté', '2-pointer missed': 'tir à 2 pts raté', '3-pointer missed': 'tir à 3 pts raté',
+  'offensive rebound': 'rebond offensif', 'defensive rebound': 'rebond défensif', 'assist': 'passe décisive', 'steal': 'interception', 'block': 'contre', 'turnover': 'balle perdue', 'foul': 'faute',
+  'More': 'Plus', 'Settings': 'Réglages', 'Theme': 'Thème',
+  'Team statistics': 'Statistiques de l’équipe', 'Overall': 'Global', 'Record and scoring': 'Bilan et points', 'Efficiency': 'Efficacité', 'Shooting': 'Tirs', 'Rebounding': 'Rebonds',
+  'Ball control': 'Maîtrise du ballon', 'Defense': 'Défense', 'Record': 'Bilan', 'Win %': '% de victoires', 'Points scored': 'Points marqués', 'Points allowed': 'Points encaissés', 'Point difference': 'Différence de points',
+  'Offensive rating': 'Évaluation offensive', 'Defensive rating': 'Évaluation défensive', 'Net rating': 'Évaluation nette', 'Pace (possessions)': 'Rythme (possessions)',
+  'Field goal %': 'Réussite aux tirs', '2-point %': 'Réussite à 2 pts', '3-point %': 'Réussite à 3 pts', 'Free throw %': 'Réussite aux lancers francs', 'Effective FG %': 'Tirs pondérés (eFG %)', 'True shooting %': 'Efficacité au tir (TS %)',
+  'Shots per game': 'Tirs tentés par match', '3-pointers tried': 'Tirs à 3 pts tentés', 'Share of 3-pointers': 'Part des tirs à 3 pts', 'Free throws per shot': 'Lancers francs par tir',
+  'Offensive rebounds': 'Rebonds offensifs', 'Defensive rebounds': 'Rebonds défensifs', 'Offensive rebound %': '% rebonds offensifs', 'Defensive rebound %': '% rebonds défensifs',
+  'Assist per turnover': 'Passes par balle perdue', 'Turnover %': '% de balles perdues', 'Fouls': 'Fautes', 'Opponent FG %': 'Tirs réussis par l’adversaire', 'Opponent 3-point %': 'Réussite à 3 pts de l’adversaire',
+  'Opponent eFG %': 'eFG % de l’adversaire', 'Turnovers forced %': '% de balles perdues provoquées', 'per game': 'par match', 'rank among the teams': 'rang parmi les équipes',
+  'No games in this view yet.': 'Pas encore de match dans cette vue.', 'No box scores in this view yet.': 'Pas encore de feuille de match dans cette vue.',
+  'Rank 1 is the best of the league for the same view (home, away or overall); for turnovers, points allowed and what the opponents shoot, the lowest value is the best. Record, points and the ratings of the first group come from every official result; the rest from the box scores we have. Ratings are points scored or allowed per 100 possessions; the effective FG % counts a 3-pointer for 1.5 shots; the turnover % is turnovers per 100 plays; the rebound % is the share of the rebounds available to the team.': 'Le rang 1 est le meilleur de la ligue pour la même vue (domicile, extérieur ou global) ; pour les balles perdues, les points encaissés et les tirs de l’adversaire, la plus petite valeur est la meilleure. Le bilan et les points viennent de tous les résultats officiels ; le reste des feuilles de match que nous avons. Les évaluations sont des points marqués ou encaissés pour 100 possessions ; l’eFG % compte un tir à 3 points pour 1,5 tir ; le % de balles perdues est le nombre de balles perdues pour 100 actions ; le % de rebonds est la part des rebonds disponibles pour l’équipe.',
   'At home': 'Domicile', 'Away': 'Extérieur', 'pairing projected': 'affiche projetée', 'Show one team': 'Afficher une équipe',
   'The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.':
     'Les dates sont celles du calendrier officiel de la fédération. Les affiches de la deuxième phase (qui joue contre qui, domicile et extérieur) sont supposées reprendre la première phase, en attendant la publication du calendrier officiel.',
@@ -395,7 +471,7 @@ const SENT = {
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
     topNote: n => `The season MVP can only come from the top ${n} teams.`,
     rankIn: n => `#${n} in the standings`, race: (r, of) => `MVP race: #${r} of ${of}`, notPool: n => `Not in the MVP pool (team outside the top ${n})`,
-    avgTitle: n => `Season averages · ${n} games`, history: n => `Match history · ${n} played`, mvpCount: n => `${n}× game MVP`, mvpTag: n => `${n}× MVP`,
+    avgTitle: n => `Season averages · ${n} games`, history: n => `Match history · ${n} played`, liveAgo: n => n < 8 ? 'updated just now' : `updated ${n} s ago`, splitBox: (n, g) => `Box-score statistics: ${n} box score${n === 1 ? '' : 's'} out of ${g} game${g === 1 ? '' : 's'} in this view.`, mvpCount: n => `${n}× game MVP`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Official result shown. ${s}.`, benchOf: n => `Bench · ${n}`, seasonOf: s => `Season ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – results, stats and calendar | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – stats ${s} | Tunisia Basket`,
     metaGame: (a, sa, sb, b, md) => `${a} ${sa}–${sb} ${b} – box score, ${md} | Tunisia Basket`
@@ -416,7 +492,7 @@ const SENT = {
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
     topNote: n => `Le MVP de la saison ne peut venir que des ${n} premières équipes.`,
     rankIn: n => `${n}${n === 1 ? 'er' : 'e'} au classement`, race: (r, of) => `Course au MVP : ${r}e sur ${of}`, notPool: n => `Hors course au MVP (équipe hors du top ${n})`,
-    avgTitle: n => `Moyennes de la saison · ${n} matchs`, history: n => `Historique des matchs · ${n} joués`, mvpCount: n => `${n}× MVP de match`, mvpTag: n => `${n}× MVP`,
+    avgTitle: n => `Moyennes de la saison · ${n} matchs`, history: n => `Historique des matchs · ${n} joués`, liveAgo: n => n < 8 ? 'mis à jour à l’instant' : `mis à jour il y a ${n} s`, splitBox: (n, g) => `Statistiques des feuilles de match : ${n} feuille${n > 1 ? 's' : ''} sur ${g} match${g > 1 ? 's' : ''} dans cette vue.`, mvpCount: n => `${n}× MVP de match`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Résultat officiel affiché. ${s}.`, benchOf: n => `Banc · ${n}`, seasonOf: s => `Saison ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – résultats, statistiques et calendrier | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – statistiques ${s} | Tunisia Basket`,
     metaGame: (a, sa, sb, b, md) => `${a} ${sa}–${sb} ${b} – feuille de match, ${md} | Tunisia Basket`
@@ -426,8 +502,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -485,13 +561,35 @@ function track() {
   firstView = false;
 }
 
+// Every section of a page folds: its title becomes a bar that opens and closes it (the home page stays as it is, except its match history). The state is kept while the visitor
+// stays on the site (a click inside a page re-draws it), and the team statistics start closed.
+const foldState = {};
+function foldify(page) {
+  const app = $('#app'), only = page === 'home' ? [_('Latest games')] : null;
+  [...app.children].filter(h => h.tagName === 'H2').forEach(h => {
+    const label = h.textContent.replace(/[\d·]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (only && !only.includes(label)) return;
+    const d = document.createElement('details'), key = page + '|' + label;
+    d.className = 'fold'; d.dataset.fk = key;
+    d.open = key in foldState ? foldState[key] : label !== _('Team statistics');
+    const sum = document.createElement('summary');
+    sum.innerHTML = `<span>${h.innerHTML}</span><span class="chev">▾</span>`;
+    d.append(sum);
+    for (let n = h.nextElementSibling; n && n.tagName !== 'H2' && !n.matches('details.fold'); n = h.nextElementSibling) d.append(n);
+    h.replaceWith(d);
+    d.ontoggle = () => { foldState[key] = d.open; if (d.open) stickyCols(); };
+  });
+}
 async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings' }[r.page] || r.page)));
+  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings' }[r.page] || r.page)));
+  $('#morebtn').classList.toggle('on', ['mvp', 'predict', 'news'].includes(r.page));      // on a phone MVP, predictions and news sit behind "More"
+  closePop();
   const app = $('#app');
-  courtData = null; pageMeta = null; clearInterval(nbTimer);
+  courtData = null; pageMeta = null; clearInterval(nbTimer); clearInterval(liveTimer);
   try {
-    app.innerHTML = await ({ home, standings, players, games, planning, mvp, predict, news, team, player, game }[r.page] || home)(r.arg);
+    app.innerHTML = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game }[r.page] || home)(r.arg);
+    foldify(r.page);
     bind();
     startBanner();
     drawCourt();
@@ -513,6 +611,8 @@ const META = {
            fr: ['Résultats et feuilles de match Pro A – Tunisia Basket', 'Tous les matchs de la Pro A tunisienne de basket avec le score final, la feuille de match et le MVP.'] },
   mvp: { en: ['MVP race and fan vote – phase 1 – Tunisia Basket', 'Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans’ vote.'],
          fr: ['Course au MVP et vote des fans – phase 1 – Tunisia Basket', 'Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans.'] },
+  live: { en: ['Live Pro A basketball – score, box score, plays – Tunisia Basket', 'Follow a Tunisian Pro A basketball game live: the score, the clock, the box score and the last plays.'],
+          fr: ['Pro A basket en direct – score, feuille de match, actions – Tunisia Basket', 'Suivez un match de la Pro A tunisienne de basket en direct : le score, le chrono, la feuille de match et les dernières actions.'] },
   news: { en: ['Pro A basketball news – injuries, transfers, announcements – Tunisia Basket', 'The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.'],
           fr: ['Actualités Pro A basket – blessures, transferts, annonces – Tunisia Basket', 'Les dernières actualités de la Pro A tunisienne de basket : blessures, transferts, annonces officielles.'] },
   predict: { en: ['Pro A predictions – pick the winners of the next matchday – Tunisia Basket', 'Pick the winner of every game of the next Tunisian Pro A basketball matchday. One pick per game; see what the other fans think once you have picked.'],
@@ -931,7 +1031,7 @@ async function players() {
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
     <span class="mut small">${rows.length} ${_('players')} · ${_('per game')}</span></div>
   <div class="card tablecard"><div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th data-sort="gp">${H('GP')}${sortKey === 'gp' ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
+  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${p.mvp_games ? ` <span class="pill mvp hm">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
     ${cols.map(([k, , fn]) => `<td>${fn ? fn(p) : p[k]}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
@@ -958,7 +1058,7 @@ async function player(ref) {
   pageMeta = [f('metaPlayer', p.name, p.team, d.season), `${p.name}, ${p.team} #${p.number}: ${p.pts} ${_('pts')}, ${p.reb} ${_('reb')}, ${p.ast} ${_('ast')} · ${H('RTG')} ${p.rating}/99`];
   const pts = p.log.filter(r => r.pir != null).map(r => r.pir);
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
-  <div class="card row" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
+  <div class="card row phead" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
@@ -1089,7 +1189,7 @@ function partialGame(g) {
   };
   return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
-   <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
+   <div class="match scoreboard" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')}</div>` : ''}
    <div class="banner" style="margin-top:8px"><b>${_('Partial box score')}.</b> ${g.estimated ? _('Only some players of one team were recorded for this game, from a hand-kept sheet. Minutes and +/- are unknown, so it counts for points, rebounds and the values below, but not for ratings or PIR.') : _('Only one team’s players were recorded for this game, from a hand-kept sheet. Minutes, turnovers, fouls and +/- are unknown, so it counts for points, rebounds, assists, steals, blocks and shooting, but not for ratings or PIR.')}${g.complete ? '' : ' ' + _('The sheet does not cover the whole team, so there is no team total and no game MVP.')}${g.estimated ? ' <b>' + _('Values marked ~ are estimates, not from the sheet:') + '</b> ' + _('the player’s average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet.') : ''}${g.mvp ? ' ' + _('The game MVP is chosen among the winning team’s recorded players from points, rebounds, assists, steals, blocks and shooting only (turnovers and fouls are unknown).') : ''}</div></div>
   ${sheet(a)}${sheet(b)}`;
@@ -1121,7 +1221,7 @@ async function game(id) {
      <div class="s"><span>#${esc(p.number)} · ${esc(posName(p.pos))}</span>${rate(p.rating)}</div><div class="s"><span>${Math.round(p.min)} ${_('min')}</span><span>${p.pts} ${_('pts')}</span><span>${p.reb} ${_('reb')}</span><span>${p.ast} ${_('ast')}</span></div></div>`).join('') || `<div class="mut">${_('No bench players.')}</div>`}</div>`;
   return `<a class="mut" href="${url('games')}" onclick="if (history.length > 1) { history.back(); return false; }">← ${_('Back')}</a>
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
-   <div class="match" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
+   <div class="match scoreboard" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.score_note ? `<div class="banner" style="margin-top:8px">${esc(f('officialNote', g.score_note))}</div>` : ''}${g.source === 'video' ? `<div class="banner" style="margin-top:8px"><b>${_('Compiled from the broadcast video')}.</b> ${_('Stats compiled by Tunisia Basket from the TV broadcast, not from the official table sheet: minutes and +/- are estimates, and a few missed shots, turnovers and team rebounds could not be given to a player.')}</div>` : ''}${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')} · PIR ${g.mvp.pir}</div>` : ''}</div>
   <h2>${_('Starting five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Click a player for the season page')}</span></div><div id="court"></div>
@@ -1131,8 +1231,8 @@ async function game(id) {
 
 function standTable(d, compact) {
   const top = new Set(d.top_teams), pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA';
-  return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${compact ? '' : `<th>${pf}</th><th>${pa}</th>`}<th>${_('Diff')}</th><th>${_('Pts')}</th>${compact ? '' : `<th title="${_('Box scores available in the app')}">${_('Box scores')}</th>`}</tr></thead><tbody>
-  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td>${t.pf}</td><td>${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th class="hm">J</th><th>${W}</th><th>${Ls}</th>${compact ? '' : `<th class="hm">${pf}</th><th class="hm">${pa}</th>`}<th>${_('Diff')}</th><th>${_('Pts')}</th>${compact ? '' : `<th class="hm" title="${_('Box scores available in the app')}">${_('Box scores')}</th>`}</tr></thead><tbody>
+  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut hm">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp hm">${_('MVP pool')}</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
 const standNav = on => `<div class="seg" role="tablist">${[['standings', _('Standings')], ['games', _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
@@ -1143,6 +1243,32 @@ async function standings() {
   <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>`;
 }
 
+let teamSplit = 'all';
+const TS_GROUPS = [
+  ['Record and scoring', [['Games', 'gp', 'n'], ['Record', 'rec'], ['Win %', 'win_pct', 'p'], ['Points scored', 'ppg', 'd'], ['Points allowed', 'opp_ppg', 'd'], ['Point difference', 'diff', 's']]],
+  ['Efficiency', [['Offensive rating', 'ortg', 'd'], ['Defensive rating', 'drtg', 'd'], ['Net rating', 'net', 's'], ['Pace (possessions)', 'pace', 'd']]],
+  ['Shooting', [['Field goal %', 'fg_pct', 'p'], ['2-point %', 'p2_pct', 'p'], ['3-point %', 'p3_pct', 'p'], ['Free throw %', 'ft_pct', 'p'], ['Effective FG %', 'efg_pct', 'p'], ['True shooting %', 'ts_pct', 'p'],
+    ['Shots per game', 'fga', 'd'], ['3-pointers tried', 'p3a', 'd'], ['Share of 3-pointers', 'p3_rate', 'p'], ['Free throws per shot', 'ft_rate', 'p']]],
+  ['Rebounding', [['Offensive rebounds', 'oreb', 'd'], ['Defensive rebounds', 'dreb', 'd'], ['Rebounds', 'reb', 'd'], ['Offensive rebound %', 'oreb_pct', 'p'], ['Defensive rebound %', 'dreb_pct', 'p']]],
+  ['Ball control', [['Assists', 'ast', 'd'], ['Assist per turnover', 'ast_to', 'r'], ['Turnovers', 'tov', 'd'], ['Turnover %', 'tov_pct', 'p']]],
+  ['Defense', [['Steals', 'stl', 'd'], ['Blocks', 'blk', 'd'], ['Fouls', 'pf', 'd'], ['Opponent FG %', 'opp_fg_pct', 'p'], ['Opponent 3-point %', 'opp_p3_pct', 'p'], ['Opponent eFG %', 'opp_efg_pct', 'p'], ['Turnovers forced %', 'opp_tov_pct', 'p']]]];
+// Team statistics: overall / at home / away, each value with its rank among the teams in the same view
+function teamStatsBlock(t) {
+  const sp = t.splits[teamSplit], N = t.teams_ranked;
+  const val = (k, kind) => {
+    const v = sp[k];
+    if (k === 'rec') return `${sp.w}${W} – ${sp.l}${Ls}`;
+    if (v == null) return '<span class="mut">–</span>';
+    return kind === 'p' ? v.toFixed(1) + '%' : kind === 'n' ? String(v) : kind === 'r' ? v.toFixed(2) : kind === 's' ? signed(v) : v.toFixed(1);
+  };
+  const rk = k => { const r = sp.rank[k]; return r ? `<span class="pill ${r <= 3 ? 'w' : r > N - 3 ? 'l' : ''}" title="${esc(_('rank among the teams'))}">#${r}</span>` : ''; };
+  const none = !sp.gp ? _('No games in this view yet.') : !sp.box ? _('No box scores in this view yet.') : '';
+  return `<h2>${_('Team statistics')}</h2>
+  <div class="seg" role="group">${[['all', 'Overall'], ['home', 'At home'], ['away', 'Away']].map(([k, l]) => `<button data-split="${k}" class="${teamSplit === k ? 'on' : ''}" aria-pressed="${teamSplit === k}">${_(l)} <span class="mut small">${t.splits[k].gp}</span></button>`).join('')}</div>
+  ${none ? `<div class="banner">${none}</div>` : ''}
+  <div class="grid g2">${TS_GROUPS.map(([name, rows]) => `<div class="card tsg"><b>${_(name)}</b><table><tbody>${rows.map(([label, k, kind]) => `<tr style="cursor:default"><td class="l">${_(label)}${kind !== 'p' && ['oreb', 'dreb', 'reb', 'ast', 'tov', 'stl', 'blk', 'pf', 'fga', 'p3a'].includes(k) ? ` <span class="mut small">${_('per game')}</span>` : ''}</td><td class="v">${val(k, kind)}</td><td class="r">${rk(k)}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div>
+  <div class="note">${_('Rank 1 is the best of the league for the same view (home, away or overall); for turnovers, points allowed and what the opponents shoot, the lowest value is the best. Record, points and the ratings of the first group come from every official result; the rest from the box scores we have. Ratings are points scored or allowed per 100 possessions; the effective FG % counts a 3-pointer for 1.5 shots; the turnover % is turnovers per 100 plays; the rebound % is the share of the rebounds available to the team.')} ${esc(f('splitBox', t.splits[teamSplit].box, t.splits[teamSplit].gp))}</div>`;
+}
 async function team(codeArg) {
   const t = await api('teams/' + encodeURIComponent(codeArg)), st = t.standing, inPool = t.top_teams.includes(t.code);
   const played = t.results.length;
@@ -1158,6 +1284,7 @@ async function team(codeArg) {
       <span class="pill">${_('Regular season')}</span></div>
     <div style="margin-top:8px">${st ? `<span class="pill">${esc(f('rankIn', st.rank))}</span> <span class="pill w">${st.w}${W}</span> <span class="pill l">${st.l}${Ls}</span> <span class="pill">${st.pts} ${_('Pts').toLowerCase()}</span> <span class="pill ${st.diff >= 0 ? 'w' : 'l'}">${signed(st.diff)}</span> ` : ''}${inPool ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</div>
   </div>
+  ${teamStatsBlock(t)}
   ${t.lineup.length ? `<h2>${_('Most-played five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Season averages · click a player')}</span></div><div id="court"></div>
    <div class="note">${_('The five players with the most minutes this season, standing where their position puts them. Positions are inferred from stats (rebounds, blocks, assists, steals, threes) because the box scores do not list them; the admin can correct any player.')}</div></div>` : ''}
@@ -1204,6 +1331,57 @@ async function planning() {
       ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small">${_('vs')}</span>`}
       <a class="tn" href="${teamUrl(g.away)}">${esc(g.away)}${logo(g.away, 22)}</a></div>`).join('')}</div>`).join('')}</div>`;
 }
+
+// ---------------------------------------------------------------- live (proof of concept): games the admin switched on while an analyst counts them
+let liveTimer;
+const qLabel = q => q > 4 ? 'OT' + (q - 4) : 'Q' + q, clockTxt = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+function liveCard(g, now) {
+  const [a, b] = [g.home, g.away].map(c => g.teams[c]), ago = Math.max(0, now - g.updated), uc = g.used_court;
+  const five = t => t.players.filter(p => p.on).map(p => `<span class="ch"><span class="nn">${esc(p.number)}</span>${esc(title(p.name).split(' ').slice(-1)[0])}</span>`).join('');
+  const table = t => `<h3 style="margin:16px 0 6px;font-size:15px"><span class="tn">${logo(t.code, 22)}<span>${esc(t.name)}</span></span></h3>${uc ? `<div class="fivebar"><span class="mut small">${_('On court')}</span>${five(t)}</div>` : ''}
+    <div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th>${uc ? '<th>MIN</th>' : ''}<th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('PF')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th>${uc ? '<th>+/-</th>' : ''}</tr></thead><tbody>
+    ${t.players.map(p => `<tr class="${p.on ? 'on' : ''}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.id, name: p.name }, esc(title(p.name)))}</td>${uc ? `<td>${clockTxt(p.sec || 0)}</td>` : ''}<td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pf}</td><td>${p.fgm}/${p.fga}</td><td>${p.p3m}/${p.p3a}</td><td>${p.ftm}/${p.fta}</td>${uc ? `<td>${signed(p.pm || 0)}</td>` : ''}</tr>`).join('') || `<tr><td colspan="13" class="mut">${_('Nothing counted yet.')}</td></tr>`}</tbody></table></div>`;
+  return `<div class="card livecard"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span><span class="sp"></span><span class="mut small">${esc(f('liveAgo', ago))}</span></div>
+    <div class="liveboard"><div class="tm">${logo(a.code, 48)}<span>${esc(a.name)}</span></div><div><span class="big">${a.score}</span><span class="sep"> – </span><span class="big">${b.score}</span></div><div class="tm">${logo(b.code, 48)}<span>${esc(b.name)}</span></div></div>
+    ${table(a)}${table(b)}
+    <h3 style="margin:18px 0 4px;font-size:15px">${_('Last plays')}</h3><ul class="plays">${g.plays.map(p => `<li><span class="tm2">${p.q ? qLabel(p.q) + ' ' + clockTxt(p.t) : ''}</span><span><b>${esc(title(p.name))}</b> <span class="mut">${esc(p.team)} · ${_(p.text)}</span></span>${p.pts ? `<span class="pp">+${p.pts}</span>` : ''}</li>`).join('') || `<li class="mut">${_('Nothing counted yet.')}</li>`}</ul>
+    <div class="note">${_('Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.')}</div></div>`;
+}
+const liveBody = (games, now) => games.length ? games.map(g => liveCard(g, now)).join('')
+  : `<div class="card"><b>${_('No game is live right now.')}</b><p class="mut" style="margin:6px 0 12px">${_('When a game is followed live, its score, box score and last plays appear here and update by themselves.')}</p>
+     <div class="row"><a class="vote" href="${url('planning')}">${_('See the calendar')}</a><a class="vote" href="${url('predict')}">${_('Make your picks')}</a></div></div>`;
+async function live() {
+  pageMeta = META.live[LANG];
+  const get = () => fetch('/api/live', { cache: 'no-store' }).then(r => r.json());
+  const d = await get();
+  liveTimer = setInterval(async () => {
+    if (document.hidden) return;
+    try { const x = await get(), box = $('#livebox'); if (!box) return clearInterval(liveTimer); box.innerHTML = liveBody(x.games, x.now); stickyCols(); liveAir(x); } catch (e) { /* the next poll will do */ }
+  }, 5000);
+  return `<h1>${_('Live')} <span class="mut" style="font-size:15px">${_('updates every few seconds')}</span></h1><div id="livebox">${liveBody(d.games, d.now)}</div>`;
+}
+// the menu's red dot: lit while a game is live
+async function liveAir(d) {
+  try { d = d || await (await fetch('/api/live', { cache: 'no-store' })).json(); document.querySelectorAll('nav a[data-p=live]').forEach(a => a.classList.toggle('air', d.games.length > 0)); } catch (e) { /* offline */ }
+}
+// the settings panel: a dropdown on a computer (gear), the "More" sheet on a phone (it also holds the pages that are not in the bottom bar)
+const pop = $('#pop'), scrim = $('#scrim');
+function closePop() { pop.hidden = true; scrim.hidden = true; ['gear', 'morebtn'].forEach(i => $('#' + i).setAttribute('aria-expanded', 'false')); }
+function togglePop(btn) {
+  const was = !pop.hidden && btn.getAttribute('aria-expanded') === 'true';
+  closePop();
+  if (was) return;
+  pop.hidden = false; scrim.hidden = !matchMedia('(max-width:760px)').matches; btn.setAttribute('aria-expanded', 'true');
+}
+document.querySelectorAll('nav a.sec').forEach(a => { const c = a.cloneNode(true); c.classList.remove('sec'); $('#popnav').append(c); });
+$('#gear').onclick = e => { e.stopPropagation(); togglePop($('#gear')); };
+$('#morebtn').onclick = e => { e.stopPropagation(); togglePop($('#morebtn')); };
+scrim.onclick = closePop;
+document.addEventListener('click', e => { if (!pop.hidden && !e.target.closest('#pop, #gear, #morebtn') || e.target.closest('#pop a')) closePop(); });
+addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+$('#moretxt').textContent = _('More'); $('#gear').setAttribute('aria-label', _('Settings')); $('#gear').title = _('Settings'); $('#pop').setAttribute('aria-label', _('Settings'));
+$('#lbseason').textContent = _('Season'); $('#lblang').textContent = _('Language'); $('#lbtheme').textContent = _('Theme');
+liveAir(); setInterval(() => { if (!document.hidden) liveAir(); }, 30000);
 
 // ---------------------------------------------------------------- wiring
 // Quiet explanations: the less obvious stat labels (PIR, rating, TS%, +/-, fouls drawn, game MVP) get a dotted underline; hovering (or tapping) one shows a short note.
@@ -1254,8 +1432,20 @@ function decorateTips() {
   document.addEventListener('click', e => { const t = e.target.closest && e.target.closest('.tip'); if (t && matchMedia('(hover: none)').matches) show(t); else hide(); }, true);
   window.addEventListener('scroll', hide, { passive: true });
 })();
+// On a phone the first columns of a wide table (rank / number and name) stay in view while the rest slides
+function stickyCols() {
+  document.querySelectorAll('#app .scroll table').forEach(t => {
+    const box = t.parentElement, head = t.tHead && t.tHead.rows[0];
+    t.querySelectorAll('.s1, .s2').forEach(c => c.classList.remove('s1', 's2'));
+    if (!head || !matchMedia('(max-width:760px)').matches || t.scrollWidth <= box.clientWidth + 2) return;
+    const w1 = head.cells[0].getBoundingClientRect().width, two = w1 < 64 && head.cells.length > 2 && head.cells[1].classList.contains('l');
+    if (two) t.style.setProperty('--l2', Math.round(w1) + 'px');
+    t.querySelectorAll('tr').forEach(r => { if (r.cells.length < 3 || r.cells[0].colSpan > 1) return; r.cells[0].classList.add('s1'); if (two) r.cells[1].classList.add('s2'); });
+  });
+}
+let stickyTimer; addEventListener('resize', () => { clearTimeout(stickyTimer); stickyTimer = setTimeout(stickyCols, 150); });
 function bind() {
-  decorateTips();
+  decorateTips(); stickyCols();
   document.querySelectorAll('[data-go]').forEach(el => el.onclick = e => { if (e.target.closest('a')) return; go(el.dataset.go); });
   document.querySelectorAll('th[data-sort]').forEach(th => th.onclick = () => { const k = th.dataset.sort; sortDir = sortKey === k ? -sortDir : -1; sortKey = k; route(true); });
   const qi = $('#q'); if (qi) { qi.oninput = () => { q = qi.value; const pos = qi.selectionStart; route(true).then(() => { const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); }); }; }
@@ -1264,6 +1454,7 @@ function bind() {
   document.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => castVote(b.dataset.vote));
   document.querySelectorAll('[data-rvote]').forEach(b => b.onclick = () => castRoundVote(+b.dataset.round, b.dataset.rvote));
   document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => castPick(b.dataset.pick, b.dataset.side));
+  document.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { teamSplit = b.dataset.split; route(true); });
   const pf = $('#phasefold'); if (pf) pf.ontoggle = () => { phaseOpen = pf.open; };
   const sf = $('#statsfold'); if (sf) sf.ontoggle = () => { chartOpen = sf.open; };
   const lf = $('#leadfold'); if (lf) lf.ontoggle = () => { leadOpen = lf.open; };
@@ -1309,6 +1500,7 @@ $('#syncbtn').onclick = async () => {
 (async () => {  // fill the season picker on every page
   const d = await api('overview');
   $('#season').innerHTML = d.seasons.map(x => `<option ${x === d.season ? 'selected' : ''}>${x}</option>`).join('');
+  $('#season').closest('label').hidden = d.seasons.length < 2;
 })();
 route(true);
 setInterval(() => { const d = $('#deadline'); if (d) d.innerHTML = '⏳ ' + deadlineLine(d.dataset.open === '1', +d.dataset.ts); }, 30000);

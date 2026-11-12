@@ -282,6 +282,14 @@ def team_stats_public():
     return jsonify(stats.team_stats(request.args.get("season")))
 
 
+@app.get("/api/live")
+def live():
+    """Games the admin has made public while an analyst counts them (analytics.live_games): the Live page and the menu's live dot poll this."""
+    resp = jsonify(games=analytics.live_games(), now=int(time.time()))
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
+
+
 @app.get("/api/matchup")
 def matchup():
     """Head-to-head preview of two teams from the games played so far (used by the next-games banner)."""

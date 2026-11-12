@@ -22,12 +22,12 @@ import stats
 DEFAULT = "fr"          # the main language: its addresses have no prefix (/equipe/CA); the others do (/en/team/CA)
 LANGS = ("fr", "en")
 SLUGS = {
-    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions", "news": "news",
+    "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions", "news": "news", "live": "live",
            "team": "team", "player": "player", "game": "game"},
-    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics", "news": "actualites",
+    "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics", "news": "actualites", "live": "direct",
            "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "standings", "players", "games", "planning", "mvp", "predict", "news")
+LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news")
 ITEM_PAGES = ("team", "player", "game")
 SITE = "Tunisia Basket"
 OG_LOCALE = {"en": "en_US", "fr": "fr_FR"}
@@ -61,6 +61,8 @@ T = {
         "nw_nav": "News", "nw_h1": "Pro A basketball news", "nw_title": "Pro A basketball news – injuries, transfers, announcements – Tunisia Basket",
         "nw_desc": "The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.",
         "fb_hint": "Player, coach or club? We are still missing some box scores: send them to us, or ask for a correction, on our Facebook page.",
+        "live_nav": "Live", "live_h1": "Live basketball: follow a Pro A game as it is counted", "live_title": "Live Pro A basketball – score, box score, plays – Tunisia Basket",
+        "live_desc": "Follow a Tunisian Pro A basketball game live: the score, the clock, the box score and the last plays, updated every few seconds.",
         "pr_nav": "Predictions", "pr_h1": "Pro A predictions: who wins the next matchday?",
         "pr_title": "Pro A predictions – pick the winners of the next matchday – Tunisia Basket",
         "pr_desc": "Pick the winner of every game of the next Tunisian Pro A basketball matchday. One pick per game; see what the other fans think once you have picked.",
@@ -96,6 +98,8 @@ T = {
         "nw_nav": "Actualités", "nw_h1": "Actualités de la Pro A tunisienne de basket", "nw_title": "Actualités Pro A basket – blessures, transferts, annonces – Tunisia Basket",
         "nw_desc": "Les dernières actualités de la Pro A tunisienne de basket : blessures, transferts, annonces officielles.",
         "fb_hint": "Joueur, coach ou club ? Il nous manque encore des feuilles de match : envoyez-les-nous, ou demandez une correction, sur notre page Facebook.",
+        "live_nav": "Direct", "live_h1": "Basket en direct : suivez un match de Pro A pendant qu’il se joue", "live_title": "Pro A basket en direct – score, feuille de match, actions – Tunisia Basket",
+        "live_desc": "Suivez un match de la Pro A tunisienne de basket en direct : le score, le chrono, la feuille de match et les dernières actions, mis à jour toutes les quelques secondes.",
         "pr_nav": "Pronostics", "pr_h1": "Pronostics Pro A : qui gagne la prochaine journée ?",
         "pr_title": "Pronostics Pro A – choisissez les vainqueurs de la prochaine journée – Tunisia Basket",
         "pr_desc": "Choisissez le vainqueur de chaque match de la prochaine journée de la Pro A tunisienne de basket. Un pronostic par match ; découvrez l’avis des autres fans une fois le vôtre donné.",
@@ -230,6 +234,8 @@ def meta(lang, page, arg=None):
         out.update(title=t["nw_title"], description=t["nw_desc"], ssr=f'<h1>{t["nw_h1"]}</h1><ul>{items}</ul>')
     elif page == "predict":
         out.update(title=t["pr_title"], description=t["pr_desc"], ssr=f'<h1>{t["pr_h1"]}</h1><p>{esc(t["pr_desc"])}</p>')
+    elif page == "live":
+        out.update(title=t["live_title"], description=t["live_desc"], ssr=f'<h1>{t["live_h1"]}</h1><p>{esc(t["live_desc"])}</p>', robots="noindex,follow")   # a proof of concept: not worth indexing
     elif page == "standings":
         out.update(title=t["st_title"].format(season=season), description=t["st_desc"].format(season=season, lead=_lead(d)),
                    ssr=f'<h1>{t["standings"]} {season}</h1>{_standings_table(lang, d)}')
@@ -349,15 +355,27 @@ def head_html(lang, page, m):
 _template = {"mtime": 0, "text": ""}
 
 
+ICONS = {   # the menu's icons: 24x24 outlines, drawn here so the menu needs no files
+    "home": '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10v10h13V10"/>',
+    "live": '<circle cx="12" cy="12" r="2"/><path d="M8 8a5.7 5.7 0 0 0 0 8M16 8a5.7 5.7 0 0 1 0 8M5.2 5.2a9.6 9.6 0 0 0 0 13.6M18.8 5.2a9.6 9.6 0 0 1 0 13.6"/>',
+    "standings": '<path d="M5 21V12M12 21V4M19 21v-6"/>',
+    "players": '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M18 14.6c1.8 1 3 3 3 5.4"/>',
+    "mvp": '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4"/><path d="M12 13v4M8.5 20h7M10 17h4"/>',
+    "predict": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
+    "news": '<path d="M5 4h11v16H7a2 2 0 0 1-2-2V4z"/><path d="M16 8h3v10a2 2 0 0 1-2 2"/><path d="M8 8h5M8 12h5M8 16h3"/>',
+}
+SECONDARY = ("mvp", "predict", "news")      # on a phone these live behind the "More" button; the four others sit in the bottom bar
+
+
 def nav_html(lang):
-    """The menu. Games and the calendar live inside the Standings page (a switch there); News only appears once there is some."""
+    """The menu, with an icon for each page. Games and the calendar live inside the Standings page (a switch there); News only appears once there is some."""
     import content
     t = T[lang]
-    items = [("home", t["home"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"])]
+    items = [("home", t["home"]), ("live", t["live_nav"]), ("standings", t["standings"]), ("players", t["players"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"])]
     if content.load_news(1):
         items.append(("news", t["nw_nav"]))
-    items += [("players", t["players"]), ("standings", t["standings"])]
-    return "".join(f'<a href="{path(lang, p)}" data-p="{p}">{esc(label)}</a>' for p, label in items)
+    return "".join(f'<a href="{path(lang, p)}" data-p="{p}"{" class=sec" if p in SECONDARY else ""}>'
+                   f'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[p]}</svg>{"<i class=ldot></i>" if p == "live" else ""}<span>{esc(label)}</span></a>' for p, label in items)
 
 
 def shell(lang, page, m):

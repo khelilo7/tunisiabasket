@@ -132,5 +132,53 @@ check(admin.post(f"/admin/api/analytics/{gid}/unpublish", json={}, environ_overr
       and json.loads((config.DATA_DIR / "partial_games.json").read_text())["games"] == [], "unpublished: gone from the site")
 check(analyst.delete(f"/analytics/api/games/{gid}").status_code == 200 and analyst.get(f"/analytics/api/games/{gid}").status_code == 404, "an unpublished game can be deleted")
 
+# 8. who is on the court: the five of each team, how long they play (game clock) and their plus/minus
+lg = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 13, "date": "2026-11-14"}).get_json()
+lid = lg["id"]
+base_url = f"/analytics/api/games/{lid}"
+lu = lambda team, on, q=None, t=None: analyst.post(f"{base_url}/lineup", json={"team": team, "on": on, **({"q": q, "t": t} if q else {})})
+ev2 = lambda pid, stat, q, t: analyst.post(f"{base_url}/event", json={"pid": pid, "stat": stat, "q": q, "t": t})
+five, bench, opp = [p["id"] for p in ca[:5]], ca[5]["id"], [p["id"] for p in esg[:5]]
+check(lu("CA", [p["id"] for p in ca[:6]]).status_code == 422, "six players on the court are refused")
+check(lu("CA", five[:2] + five[:1]).status_code == 422 and lu("CA", [opp[0]]).status_code == 422 and lu("ZZZ", five).status_code == 422 and lu("CA", "x").status_code == 422, "duplicates, a player of the other team, an unknown team, a bad list are refused")
+check(visitor.post(f"/analytics/api/games/{lid}/lineup", json={"team": "CA", "on": five}).status_code in (401, 429), "the court is for the analyst only")
+check(lu("CA", five, 1, 600).status_code == 200 and lu("ESG", opp, 1, 600).status_code == 200, "the two fives are set at the start of the game")
+ev2(five[0], "p2_m", 1, 500)                                  # CA +2 while the first five is on
+lu("CA", five[:4] + [bench], 1, 300)                           # five[4] comes off after 5:00
+ev2(bench, "p3_m", 1, 200)                                    # CA +3
+ev2(opp[0], "p2_m", 1, 100)                                   # ESG +2
+pre = analyst.get(base_url).get_json()
+check(pre["court"]["on"]["CA"] == five[:4] + [bench] and pre["court"]["on"]["ESG"] == opp and pre["court"]["used"], "the court knows who is on")
+check(analytics.scores(pre) == {"CA": 5, "ESG": 2}, "a change of five is not a statistic: the score is only the shots")
+lu("CA", five, 1, 50)
+check(analyst.post(f"{base_url}/undo", json={}).get_json()["court"]["on"]["CA"] == five[:4] + [bench], "undo of a change of five gives the previous five back")
+r = analyst.post(f"{base_url}/submit", json={"matchday": 13, "date": "2026-11-14", "q": 1, "t": 0}).get_json()
+mins, pm = analytics.minutes(r), r["court"]["pm"]
+check(all(mins[i] == 600 for i in five[:4]) and mins[five[4]] == 300 and mins[bench] == 300 and all(mins[i] == 600 for i in opp), f"minutes follow the game clock up to where it stood when sent: {mins}")
+check(pm[five[0]] == 3 and pm[five[4]] == 2 and pm[bench] == 1 and pm[opp[0]] == -3 and pm[opp[1]] == -3, f"plus/minus: points of both teams while on the court: {pm}")
+csv_ = analyst.get(f"{base_url}/export.csv").get_data(as_text=True)
+check(csv_.splitlines()[0].split(",")[3:5] == ["MIN", "+/-"] and "10:00" in csv_ and "5:00" in csv_, "the CSV has minutes and +/-")
+sheet = next(x for x in analytics._sheets(r) if x["recorded"] == "CA")
+row = next(x for x in sheet["players"] if x["name"] == ca[0]["name"])
+check(row["min"] == 10.0 and row["pm"] == 3 and "come from the five" in sheet["note"], "the one-team sheet carries minutes and +/-")
+check(analyst.delete(base_url).status_code == 200, "game deleted")
+
+# 9. live: public only when the ADMIN switches a game on, only while it is being counted, and only what is meant to be public
+lv = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 15, "date": "2026-11-21"}).get_json()["id"]
+pub = app.app.test_client()
+analyst.post(f"/analytics/api/games/{lv}/event", json={"pid": ca[0]["id"], "stat": "p3_m", "q": 1, "t": 540})
+check(pub.get("/api/live").get_json()["games"] == [], "a game being counted is not public by default")
+check(analyst.post(f"/admin/api/analytics/{lv}/live", json={"on": True}).status_code in (401, 403) and pub.post(f"/admin/api/analytics/{lv}/live", json={"on": True}).status_code in (401, 403), "only the admin can make a game live")
+check(admin.post(f"/admin/api/analytics/{lv}/live", json={"on": True}, environ_overrides=ip("198.51.100.5")).status_code == 200, "the admin makes it live")
+lg_ = pub.get("/api/live").get_json()["games"]
+check(len(lg_) == 1 and lg_[0]["id"] == lv and lg_[0]["teams"]["CA"]["score"] == 3 and lg_[0]["clock"] == {"q": 1, "t": 540}, f"the public sees the score and the clock: {lg_ and lg_[0]['teams']['CA']['score']}")
+check(lg_[0]["plays"][0]["text"] == "3-pointer made" and lg_[0]["plays"][0]["pts"] == 3 and any(p["id"] == ca[0]["id"] and p["pts"] == 3 for p in lg_[0]["teams"]["CA"]["players"]), "box score and last plays are there")
+check(not ({"events", "players", "created", "note"} & set(lg_[0])) and pub.get("/api/live").headers["Cache-Control"] == "no-store", "nothing else of the analyst's file is public, and it is never cached")
+check(any(x["id"] == lv and x["live"] for x in admin.get("/admin/api/analytics", environ_overrides=ip("198.51.100.5")).get_json()["counting"]), "the admin sees it as live")
+analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": "2026-11-21"})
+check(pub.get("/api/live").get_json()["games"] == [], "sent for approval: no longer live")
+check(admin.post(f"/admin/api/analytics/{lv}/live", json={"on": True}, environ_overrides=ip("198.51.100.5")).status_code == 409, "a game that is not being counted cannot be live")
+analyst.delete(f"/analytics/api/games/{lv}")
+
 print("FAILED:\n  " + "\n  ".join(fails) if fails else "analytics checks passed")
 sys.exit(1 if fails else 0)

@@ -167,9 +167,57 @@ def tally(game):
     """{player id: {stat: count}}"""
     t = {}
     for e in game["events"]:
+        if e["stat"] == "lineup":
+            continue                                   # who is on the court is not a statistic (see court())
         r = t.setdefault(e["pid"], {})
         r[e["stat"]] = r.get(e["stat"], 0) + 1
     return t
+
+
+def qlen(q):
+    return 300 if q > 4 else 600                       # quarters of 10 minutes, overtimes of 5
+
+
+def elapsed(q, left):
+    """Seconds of game time played when quarter q has `left` seconds on the clock."""
+    return sum(qlen(i) for i in range(1, q)) + qlen(q) - left
+
+
+def court(game):
+    """Who is on the court and for how long, from the "lineup" events (the analyst's five of each team, with the game clock when he uses it).
+    {"on": {team: [ids]}, "since": {team: game seconds when this five came on}, "base": {id: seconds of the stints already closed}, "pm": {id: plus/minus}, "end": game seconds at the last clock stamp
+    (or the end the analyst gave when he sent the game)}. A player's time is "base" + (end - since) while he is on; plus/minus is the points scored by both teams while he was on."""
+    team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
+    on, since, base, pm, now = {c: [] for c in game["players"]}, {c: None for c in game["players"]}, {}, {}, 0
+    for e in game["events"]:
+        if "q" in e:
+            now = elapsed(e["q"], e["t"])
+        if e["stat"] == "lineup":
+            c = e["team"]
+            for pid in on[c]:
+                base[pid] = base.get(pid, 0) + max(0, now - (since[c] or 0))
+            on[c], since[c] = list(e["on"]), now
+        elif e["stat"] in POINTS and e["pid"] in team_of:
+            for c in on:
+                for pid in on[c]:
+                    pm[pid] = pm.get(pid, 0) + (POINTS[e["stat"]] if c == team_of[e["pid"]] else -POINTS[e["stat"]])
+    end = game.get("end")
+    return {"on": on, "since": since, "base": base, "pm": pm, "end": elapsed(end["q"], end["t"]) if end else now,
+            "used": any(e["stat"] == "lineup" for e in game["events"])}
+
+
+def minutes(game):
+    """{id: seconds on the court} up to the end of the count (only for a game where the analyst marked who was on the court)."""
+    c = court(game)
+    out = dict(c["base"])
+    for code, ids in c["on"].items():
+        for pid in ids:
+            out[pid] = out.get(pid, 0) + max(0, c["end"] - (c["since"][code] or 0))
+    return out
+
+
+def _view(game):
+    return {**game, "court": court(game)}
 
 
 def points_of(r):
@@ -223,6 +271,55 @@ def video_todo():
     return out
 
 
+# ---------------------------------------------------------------- live: what the public sees of a game the ADMIN has switched on
+PLAY = {"ft_m": "free throw made", "p2_m": "2-pointer made", "p3_m": "3-pointer made", "ft_x": "free throw missed", "p2_x": "2-pointer missed", "p3_x": "3-pointer missed",
+        "oreb": "offensive rebound", "dreb": "defensive rebound", "ast": "assist", "stl": "steal", "blk": "block", "tov": "turnover", "pf": "foul"}
+
+
+def live_games():
+    """The games being counted right now that the admin has made public ("live": true): score, game clock as of the last stamped action, the box score so far, the five on the court and
+    the last plays. Nothing else of an analyst's work is ever public, and a game that was sent for approval is no longer live."""
+    out = []
+    if not DIR.exists():
+        return out
+    photos = stats.load_photos()
+    names = stats.load_official()["teams"]
+    for f in sorted(DIR.glob("*.json")):
+        try:
+            g = json.loads(f.read_text())
+        except (OSError, ValueError):
+            continue
+        if not g.get("live") or g.get("status") not in OPEN_STATES:
+            continue
+        t, c, mins, sc = tally(g), court(g), minutes(g), scores(g)
+        who = {p["id"]: (code, p) for code, ps in g["players"].items() for p in ps}
+        stamp = next(({"q": e["q"], "t": e["t"]} for e in reversed(g["events"]) if "q" in e), None)
+        teams = {}
+        for code, ps in g["players"].items():
+            rows = []
+            for p in ps:
+                r = t.get(p["id"], {})
+                on = p["id"] in c["on"][code]
+                if not r and not on:
+                    continue
+                l = line(r)
+                rows.append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "on": on, **l, "reb": l["oreb"] + l["dreb"],
+                             **({"sec": mins.get(p["id"], 0), "pm": c["pm"].get(p["id"], 0)} if c["used"] else {})})
+            rows.sort(key=lambda x: (-x["on"], -x["pts"], x["number"]))
+            teams[code] = {"code": code, "name": names.get(code, code), "score": sc[code], "players": rows}
+        plays = []
+        for e in reversed(g["events"]):
+            if e["stat"] == "lineup" or e["pid"] not in who:
+                continue
+            code, p = who[e["pid"]]
+            plays.append({"q": e.get("q"), "t": e.get("t"), "team": code, "name": p["name"], "number": p["number"], "text": PLAY[e["stat"]], "pts": POINTS.get(e["stat"], 0)})
+            if len(plays) >= 14:
+                break
+        out.append({"id": g["id"], "home": g["home"], "away": g["away"], "matchday": g.get("matchday"), "clock": stamp, "teams": teams, "plays": plays,
+                    "used_court": c["used"], "updated": int(f.stat().st_mtime), "since": g.get("live_since")})
+    return out
+
+
 @bp.get("/analytics/api/data")
 def data():
     plan = stats.planning()
@@ -252,12 +349,12 @@ def create():
             _save({"id": gid, "home": home, "away": away, "matchday": md, "date": b.get("date") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(b.get("date") or "")) else None,
                    "status": "open", "created": time.strftime("%Y-%m-%d %H:%M"), "players": _roster([home, away]), "events": []})
             auth.audit("analytics-new-game", gid)
-    return jsonify(_load(gid))
+    return jsonify(_view(_load(gid)))
 
 
 @bp.get("/analytics/api/games/<gid>")
 def get_game(gid):
-    return jsonify(_load(gid))
+    return jsonify(_view(_load(gid)))
 
 
 @bp.delete("/analytics/api/games/<gid>")
@@ -271,9 +368,15 @@ def delete_game(gid):
     return jsonify(ok=True)
 
 
+def _stamp(e, b):
+    """The game clock is an extra: quarter and seconds left, only when the analyst uses it."""
+    if isinstance(b.get("q"), int) and 1 <= b["q"] <= 8 and isinstance(b.get("t"), int) and 0 <= b["t"] <= 3600:
+        e["q"], e["t"] = b["q"], b["t"]
+
+
 @bp.post("/analytics/api/games/<gid>/<op>")
 def change(gid, op):
-    if op not in ("event", "undo", "remove", "submit", "reopen"):
+    if op not in ("event", "lineup", "undo", "remove", "submit", "reopen"):
         abort(404)
     b = request.get_json(silent=True) or {}
     with _file_lock:
@@ -291,8 +394,17 @@ def change(gid, op):
             if len(g["events"]) >= MAX_EVENTS:
                 return jsonify(error="Too many actions in one game."), 422
             e = {"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S")}
-            if isinstance(b.get("q"), int) and 1 <= b["q"] <= 8 and isinstance(b.get("t"), int) and 0 <= b["t"] <= 3600:
-                e["q"], e["t"] = b["q"], b["t"]          # the game clock is an extra: quarter and seconds left, only when the analyst uses it
+            _stamp(e, b)
+            g["events"].append(e)
+        elif op == "lineup":
+            code, ids = b.get("team"), b.get("on")
+            known = {p["id"] for p in g["players"].get(code, [])}
+            if code not in g["players"] or not isinstance(ids, list) or len(ids) > 5 or len(set(ids)) != len(ids) or any(i not in known for i in ids):
+                return jsonify(error="Pick up to five players of this team."), 422
+            if len(g["events"]) >= MAX_EVENTS:
+                return jsonify(error="Too many actions in one game."), 422
+            e = {"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": None, "stat": "lineup", "team": code, "on": ids, "at": time.strftime("%H:%M:%S")}
+            _stamp(e, b)
             g["events"].append(e)
         elif op == "undo":
             if g["events"]:
@@ -306,9 +418,13 @@ def change(gid, op):
             if not g["events"]:
                 return jsonify(error="Nothing counted yet."), 422
             g.update(status="submitted", matchday=md, date=date, submitted=time.strftime("%Y-%m-%d %H:%M"), note="")
+            probe = {}
+            _stamp(probe, b)
+            if probe:
+                g["end"] = {"q": probe["q"], "t": probe["t"]}        # where the game clock stood when he sent it: the time on the court is counted up to there
             auth.audit("analytics-submit", gid)
         _save(g)
-    return jsonify(g)
+    return jsonify(_view(g))
 
 
 @bp.get("/analytics/api/games/<gid>/export.csv")
@@ -317,12 +433,14 @@ def export_csv(gid):
     t = tally(g)
     out = io.StringIO()
     w = csv.writer(out)
-    w.writerow(["team", "number", "player", "PTS", "FGM", "FGA", "3PM", "3PA", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF"])
+    c, mins = court(g), minutes(g)
+    w.writerow(["team", "number", "player", *(["MIN", "+/-"] if c["used"] else []), "PTS", "FGM", "FGA", "3PM", "3PA", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF"])
     for code, ps in g["players"].items():
         for p in ps:
-            if p["id"] in t:
-                l = line(t[p["id"]])
-                w.writerow([code, p["number"], p["name"], l["pts"], l["fgm"], l["fga"], l["p3m"], l["p3a"], l["ftm"], l["fta"], l["oreb"], l["dreb"], l["oreb"] + l["dreb"],
+            if p["id"] in t or mins.get(p["id"]):
+                l = line(t.get(p["id"], {}))
+                w.writerow([code, p["number"], p["name"], *([f"{mins.get(p['id'], 0) // 60}:{mins.get(p['id'], 0) % 60:02d}", c["pm"].get(p["id"], 0)] if c["used"] else []),
+                            l["pts"], l["fgm"], l["fga"], l["p3m"], l["p3a"], l["ftm"], l["fta"], l["oreb"], l["dreb"], l["oreb"] + l["dreb"],
                             l["ast"], l["stl"], l["blk"], l["tov"], l["pf"]])
     return out.getvalue(), 200, {"Content-Type": "text/csv; charset=utf-8", "Content-Disposition": f'attachment; filename="{gid}.csv"'}
 
@@ -338,13 +456,14 @@ def _official_result(g):
 
 def _sheets(g):
     """The two one-team sheets of stats.py's partial games for this game."""
-    t, out = tally(g), []
+    t, out, c, mins = tally(g), [], court(g), minutes(g)
     for code in (g["home"], g["away"]):
-        players = [{"number": p["number"], "name": p["name"], **line(t[p["id"]])} for p in g["players"][code] if p["id"] in t]
+        players = [{"number": p["number"], "name": p["name"], **line(t[p["id"]]), **({"min": round(mins.get(p["id"], 0) / 60, 2), "pm": c["pm"].get(p["id"], 0)} if c["used"] else {})}
+                   for p in g["players"][code] if p["id"] in t]
         if players:
             out.append({"id": _sheet_id(g["id"], code), "matchday": g["matchday"], "home": g["home"], "away": g["away"], "recorded": code, "date": g["date"],
                         "competition": "CHAMPIONNAT PRO A", "source": "Live count by an analyst on tunisiabasket.com, approved by the admin",
-                        "note": "Counted by hand while watching the game: minutes, +/- and fouls drawn are not known, and a stat may be missed.", "players": players})
+                        "note": "Counted by hand while watching the game: fouls drawn are not known, and a stat may be missed." + (" Minutes and +/- come from the five the analyst marked on the court (the site does not use them yet)." if c["used"] else " Minutes and +/- are not known."), "players": players})
     return out
 
 
@@ -361,8 +480,30 @@ def _partial_write(g, sheets):
         tmp.replace(PARTIAL_FILE)
 
 
+@bp.post("/admin/api/analytics/<gid>/live")
+def admin_live(gid):
+    """Body {"on": true|false}: show this game, while it is being counted, on the public Live page (or stop showing it)."""
+    g = _load(gid)
+    if g["status"] not in OPEN_STATES:
+        return jsonify(error="Only a game that is being counted can be live."), 409
+    on = bool((request.get_json(silent=True) or {}).get("on"))
+    with _file_lock:
+        g["live"] = on
+        if on:
+            g["live_since"] = int(time.time())
+        _save(g)
+    auth.audit("analytics-live", f"{gid} {'on' if on else 'off'}")
+    return jsonify(ok=True, message="Live: the public can follow this game now." if on else "No longer live.")
+
+
 @bp.get("/admin/api/analytics")
 def admin_list():
+    counting = []
+    for f in sorted(DIR.glob("*.json"), reverse=True) if DIR.exists() else []:
+        g = json.loads(f.read_text())
+        if g["status"] in OPEN_STATES:
+            s = scores(g)
+            counting.append({**summary(g), "live": bool(g.get("live")), "score": f"{g['home']} {s[g['home']]} – {s[g['away']]} {g['away']}"})
     rows = []
     for f in sorted(DIR.glob("*.json"), reverse=True) if DIR.exists() else []:
         g = json.loads(f.read_text())
@@ -372,7 +513,7 @@ def admin_list():
         rows.append({**summary(g), "official": {"home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"]} if r else None,
                      "same_score": bool(r) and {r["home"]: r["home_score"], r["away"]: r["away_score"]} == s,
                      "box": {c: [{"name": p["name"], "number": p["number"], **line(t[p["id"]])} for p in ps if p["id"] in t] for c, ps in g["players"].items()}})
-    return jsonify(games=rows)
+    return jsonify(games=rows, counting=counting)
 
 
 @bp.post("/admin/api/analytics/<gid>/approve")

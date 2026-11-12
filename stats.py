@@ -464,6 +464,7 @@ def link_official(games, official):
         exp = {r["home"]: r["home_score"], r["away"]: r["away_score"]}
         g["matchday_no"] = r["matchday"]
         g["matchday"] = f"J{r['matchday']}"
+        g["home_team"] = r["home"]                       # who played at home (box scores do not say): the team splits use it
         if box != exp:
             g["score_note"] = "Box score sheet says " + " – ".join(f"{t['code']} {t['box_points']}" for t in g["teams"])
             for t in g["teams"]:
@@ -729,6 +730,104 @@ def team_stats(season=None):
     return {"season": d["season"], "teams": rows}
 
 
+# --- Team statistics: overall, at home, away -----------------------------------------------------------------------------------------------------------------
+# Record and scoring come from ALL official results; everything else (shooting, rebounds, turnovers, ratings, what the opponents do against the team) from the box scores
+# we have, as ratio of sums (a team's 3P% is all its made threes over all its attempts, not the mean of the games' percentages). A box score is "home" or "away" for a team
+# through its official result (g["home_team"]); a game without one counts in "all" only.
+SPLITS = ("all", "home", "away")
+_BOX = ("fgm", "fga", "p2m", "p2a", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "reb", "ast", "tov", "stl", "blk", "pf")
+# metric -> True when a higher value is better, False when lower is better, None when it only describes a style (no rank)
+TEAM_METRICS = {"win_pct": True, "ppg": True, "opp_ppg": False, "diff": True, "ortg": True, "drtg": False, "net": True, "pace": None,
+                "fg_pct": True, "p2_pct": True, "p3_pct": True, "ft_pct": True, "efg_pct": True, "ts_pct": True, "fga": None, "p3a": None, "p3_rate": None, "ft_rate": True,
+                "oreb": True, "dreb": True, "reb": True, "oreb_pct": True, "dreb_pct": True,
+                "ast": True, "ast_to": True, "tov": False, "tov_pct": False,
+                "stl": True, "blk": True, "pf": None, "opp_fg_pct": False, "opp_p3_pct": False, "opp_efg_pct": False, "opp_tov_pct": True}
+
+
+def _box_sums(t):
+    c = Counter()
+    for p in t["players"]:
+        if not p.get("dnp"):
+            for k in _BOX:
+                c[k] += p.get(k) or 0
+    c["pts"] = t.get("box_points", t["points"])
+    c["tov"] += (t.get("not_attributed") or {}).get("tov", 0)         # a team turnover of a video-compiled sheet belongs to nobody but counts for the team
+    return c
+
+
+def _team_row(rec, mine, opp, n):
+    """The statistics of one team in one split. rec: {gp, w, l, pf, pa} from the official results; mine/opp: sums of the box scores; n: how many box scores."""
+    r = {"gp": rec["gp"], "w": rec["w"], "l": rec["l"], "box": n}
+    r["win_pct"] = 100 * rec["w"] / rec["gp"] if rec["gp"] else None
+    r["ppg"] = rec["pf"] / rec["gp"] if rec["gp"] else None
+    r["opp_ppg"] = rec["pa"] / rec["gp"] if rec["gp"] else None
+    r["diff"] = (rec["pf"] - rec["pa"]) / rec["gp"] if rec["gp"] else None
+    keys = ("ortg", "drtg", "net", "pace", "fg_pct", "p2_pct", "p3_pct", "ft_pct", "efg_pct", "ts_pct", "fga", "p3a", "p3_rate", "ft_rate", "oreb", "dreb", "reb", "oreb_pct", "dreb_pct",
+            "ast", "ast_to", "tov", "tov_pct", "stl", "blk", "pf", "opp_fg_pct", "opp_p3_pct", "opp_efg_pct", "opp_tov_pct")
+    if not n or not mine["fga"]:
+        return {**r, **dict.fromkeys(keys)}
+    ratio = lambda a, b: 100 * a / b if b else None
+    poss = lambda c: c["fga"] + 0.44 * c["fta"] - c["oreb"] + c["tov"]
+    p = (poss(mine) + poss(opp)) / 2                                  # the two teams have the same possessions, up to the rebounds: take the middle
+    per = lambda k: mine[k] / n
+    r.update(ortg=100 * mine["pts"] / p if p else None, drtg=100 * opp["pts"] / p if p else None, pace=p / n)
+    r["net"] = r["ortg"] - r["drtg"] if p else None
+    r.update(fg_pct=ratio(mine["fgm"], mine["fga"]), p2_pct=ratio(mine["p2m"], mine["p2a"]), p3_pct=ratio(mine["p3m"], mine["p3a"]), ft_pct=ratio(mine["ftm"], mine["fta"]),
+             efg_pct=ratio(mine["fgm"] + 0.5 * mine["p3m"], mine["fga"]), ts_pct=ratio(mine["pts"], 2 * (mine["fga"] + 0.44 * mine["fta"])),
+             fga=per("fga"), p3a=per("p3a"), p3_rate=ratio(mine["p3a"], mine["fga"]), ft_rate=ratio(mine["fta"], mine["fga"]),
+             oreb=per("oreb"), dreb=per("dreb"), reb=per("reb"), oreb_pct=ratio(mine["oreb"], mine["oreb"] + opp["dreb"]), dreb_pct=ratio(mine["dreb"], mine["dreb"] + opp["oreb"]),
+             ast=per("ast"), ast_to=mine["ast"] / mine["tov"] if mine["tov"] else None, tov=per("tov"), tov_pct=ratio(mine["tov"], mine["fga"] + 0.44 * mine["fta"] + mine["tov"]),
+             stl=per("stl"), blk=per("blk"), pf=per("pf"),
+             opp_fg_pct=ratio(opp["fgm"], opp["fga"]), opp_p3_pct=ratio(opp["p3m"], opp["p3a"]), opp_efg_pct=ratio(opp["fgm"] + 0.5 * opp["p3m"], opp["fga"]),
+             opp_tov_pct=ratio(opp["tov"], opp["fga"] + 0.44 * opp["fta"] + opp["tov"]))
+    return r
+
+
+def team_splits(season=None, data=None):
+    """{team code: {"all"|"home"|"away": {metric: value, ..., "rank": {metric: 1..N}}}}. Ranks compare the teams in the same split (best = 1)."""
+    d = data or build(season)
+    o = load_official()
+    rec = {c: {s: {"gp": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for s in SPLITS} for c in o["teams"]}
+    for r in o["results"]:
+        for code, pf, pa, venue in ((r["home"], r["home_score"], r["away_score"], "home"), (r["away"], r["away_score"], r["home_score"], "away")):
+            if code in rec:
+                for s in ("all", venue):
+                    x = rec[code][s]
+                    x["gp"] += 1
+                    x["w"] += pf > pa
+                    x["l"] += pf < pa
+                    x["pf"] += pf
+                    x["pa"] += pa
+    acc = {c: {s: [Counter(), Counter(), 0] for s in SPLITS} for c in o["teams"]}
+    for g in d["games"]:
+        a, b = g["teams"]
+        for t, u in ((a, b), (b, a)):
+            if t["code"] not in acc:
+                continue
+            venues = ["all"] + ([("home" if g.get("home_team") == t["code"] else "away")] if g.get("home_team") else [])
+            mine, opp = _box_sums(t), _box_sums(u)
+            for s in venues:
+                x = acc[t["code"]][s]
+                x[0].update(mine)
+                x[1].update(opp)
+                x[2] += 1
+    out = {c: {s: _team_row(rec[c][s], *acc[c][s]) for s in SPLITS} for c in o["teams"]}
+    for s in SPLITS:
+        for k, better in TEAM_METRICS.items():
+            vals = {c: out[c][s][k] for c in out if out[c][s].get(k) is not None}
+            for c in out:
+                out[c][s].setdefault("rank", {})
+                if better is not None and c in vals:
+                    out[c][s]["rank"][k] = 1 + sum((v > vals[c]) if better else (v < vals[c]) for v in vals.values())
+    for c in out:
+        for s in SPLITS:
+            for k in TEAM_METRICS:
+                v = out[c][s].get(k)
+                if v is not None:
+                    out[c][s][k] = round(v, 2 if k == "ast_to" else 1)
+    return out
+
+
 def matchup(home, away, season=None):
     """Everything to compare two teams before they meet, from the games played so far."""
     o = load_official()
@@ -789,7 +888,7 @@ def team_view(code, season=None):
     row = next((r for r in d["standings"] if r["code"] == code), None)
     team_players = [p for p in d["players"] if p["team"] == code]
     return {"code": code, "name": o["teams"][code], "standing": row, "results": results, "upcoming": upcoming,
-            "lineup": team_lineup(team_players),
+            "lineup": team_lineup(team_players), "splits": team_splits(season, d)[code], "teams_ranked": len(o["teams"]),
             "projected": plan["projected"], "top_teams": d["top_teams"],
             "players": [{k: v for k, v in p.items() if k != "log"} for p in d["players"] if p["team"] == code]}
 
