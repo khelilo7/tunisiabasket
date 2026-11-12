@@ -57,16 +57,18 @@ T = {
         "p_desc": "{name}, {team} #{num}: {pts} points, {reb} rebounds and {ast} assists per game over {gp} games in the {season} Pro A season. Rating {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
-        "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "MVP race – phase 1 (J1–J11)",
+        "mvp_nav": "Player of the round", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "Player of the round and MVP race – phase 1 (J1–J11)",
         "nw_nav": "News", "nw_h1": "Pro A basketball news", "nw_title": "Pro A basketball news – injuries, transfers, announcements – Tunisia Basket",
         "nw_desc": "The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.",
         "fb_hint": "Player, coach or club? We are still missing some box scores: send them to us, or ask for a correction, on our Facebook page.",
+        "tip_home": "Main page", "tip_live": "Live games and scores", "tip_standings": "Ranking, results and calendar", "tip_players": "Player statistics",
+        "tip_mvp": "Player of the round and MVP vote", "tip_predict": "Predict the next matchday", "tip_news": "News",
         "live_nav": "Live", "live_h1": "Live basketball: follow a Pro A game as it is counted", "live_title": "Live Pro A basketball – score, box score, plays – Tunisia Basket",
         "live_desc": "Follow a Tunisian Pro A basketball game live: the score, the clock, the box score and the last plays, updated every few seconds.",
         "pr_nav": "Predictions", "pr_h1": "Pro A predictions: who wins the next matchday?",
         "pr_title": "Pro A predictions – pick the winners of the next matchday – Tunisia Basket",
         "pr_desc": "Pick the winner of every game of the next Tunisian Pro A basketball matchday. One pick per game; see what the other fans think once you have picked.",
-        "mv_title": "MVP race and fan vote – phase 1 – Tunisia Basket",
+        "mv_title": "Player of the round and MVP fan vote – Tunisia Basket",
         "mv_desc": "Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans' vote. {who}",
         "mvp_game": " Game MVP: {name}.", "not_found": "Page not found – Tunisia Basket",
         "legal": "© {year} Tunisia Basket · Independent site, not affiliated with the Tunisian Basketball Federation or the clubs. Club names and logos belong to their owners.",
@@ -94,16 +96,18 @@ T = {
         "p_desc": "{name}, {team} n°{num} : {pts} points, {reb} rebonds et {ast} passes décisives par match en {gp} matchs de Pro A {season}. Note {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
-        "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Course au MVP – phase 1 (J1–J11)",
+        "mvp_nav": "Joueur de la journée", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Joueur de la journée et course au MVP – phase 1 (J1–J11)",
         "nw_nav": "Actualités", "nw_h1": "Actualités de la Pro A tunisienne de basket", "nw_title": "Actualités Pro A basket – blessures, transferts, annonces – Tunisia Basket",
         "nw_desc": "Les dernières actualités de la Pro A tunisienne de basket : blessures, transferts, annonces officielles.",
         "fb_hint": "Joueur, coach ou club ? Il nous manque encore des feuilles de match : envoyez-les-nous, ou demandez une correction, sur notre page Facebook.",
+        "tip_home": "Page principale", "tip_live": "Matchs et scores en direct", "tip_standings": "Classement, résultats et calendrier", "tip_players": "Statistiques des joueurs",
+        "tip_mvp": "Joueur de la journée et vote MVP", "tip_predict": "Pronostiquez la prochaine journée", "tip_news": "Actualités",
         "live_nav": "Direct", "live_h1": "Basket en direct : suivez un match de Pro A pendant qu’il se joue", "live_title": "Pro A basket en direct – score, feuille de match, actions – Tunisia Basket",
         "live_desc": "Suivez un match de la Pro A tunisienne de basket en direct : le score, le chrono, la feuille de match et les dernières actions, mis à jour toutes les quelques secondes.",
         "pr_nav": "Pronostics", "pr_h1": "Pronostics Pro A : qui gagne la prochaine journée ?",
         "pr_title": "Pronostics Pro A – choisissez les vainqueurs de la prochaine journée – Tunisia Basket",
         "pr_desc": "Choisissez le vainqueur de chaque match de la prochaine journée de la Pro A tunisienne de basket. Un pronostic par match ; découvrez l’avis des autres fans une fois le vôtre donné.",
-        "mv_title": "Course au MVP et vote des fans – phase 1 – Tunisia Basket",
+        "mv_title": "Joueur de la journée et vote des fans MVP – Tunisia Basket",
         "mv_desc": "Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans. {who}",
         "mvp_game": " MVP du match : {name}.", "not_found": "Page introuvable – Tunisia Basket",
         "legal": "© {year} Tunisia Basket · Site indépendant, non affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs. Les noms et logos des clubs appartiennent à leurs propriétaires.",
@@ -159,6 +163,8 @@ def parse_path(p):
     page = rev.get(parts[0])
     if not page or len(parts) > 2:
         return None
+    if page == "live":                              # /direct and /direct/<game id>
+        return (lang, page, parts[1] if len(parts) == 2 else None)
     if page in ITEM_PAGES:
         return (lang, page, parts[1]) if len(parts) == 2 else None
     return (lang, page, None) if len(parts) == 1 else None
@@ -374,7 +380,7 @@ def nav_html(lang):
     items = [("home", t["home"]), ("live", t["live_nav"]), ("standings", t["standings"]), ("players", t["players"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"])]
     if content.load_news(1):
         items.append(("news", t["nw_nav"]))
-    return "".join(f'<a href="{path(lang, p)}" data-p="{p}"{" class=sec" if p in SECONDARY else ""}>'
+    return "".join(f'<a href="{path(lang, p)}" data-p="{p}" title="{esc(t["tip_" + p], quote=True)}"{" class=sec" if p in SECONDARY else ""}>'
                    f'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[p]}</svg>{"<i class=ldot></i>" if p == "live" else ""}<span>{esc(label)}</span></a>' for p, label in items)
 
 

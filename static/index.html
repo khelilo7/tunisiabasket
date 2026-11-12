@@ -320,6 +320,11 @@
   .onair { display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:800; letter-spacing:.1em; color:#ff6574; background:rgba(255,59,78,.14); border-radius:99px; padding:3px 10px; } .onair i { width:8px; height:8px; border-radius:50%; background:#ff3b4e; animation:pulse 1.6s infinite; }
   .fivebar { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0 10px; } .fivebar .ch { display:inline-flex; gap:6px; align-items:center; background:var(--bg); border-radius:99px; padding:3px 10px 3px 4px; font-size:13px; } .fivebar .ch .nn { width:22px; height:22px; border-radius:50%; background:var(--pill); display:grid; place-items:center; font-size:11px; font-weight:800; }
   .plays { display:grid; gap:2px; margin:6px 0 0; padding:0; list-style:none; } .plays li { display:flex; gap:10px; align-items:baseline; padding:6px 0; border-bottom:1px solid var(--line); font-size:14px; } .plays li:last-child { border-bottom:0; } .plays .tm2 { width:64px; flex:none; color:var(--mut); font-size:12px; font-variant-numeric:tabular-nums; } .plays .pp { margin-left:auto; font-weight:800; color:var(--acc); }
+  .livegrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:12px; align-items:start; }
+  .livetile { display:block; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; transition:border-color .15s, transform .15s; } .livetile:hover { border-color:var(--acc); transform:translateY(-2px); }
+  .livetile .lt { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin:10px 0 6px; } .livetile .tm { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; font-weight:700; color:var(--mut); }
+  .livetile .sc { display:flex; align-items:baseline; gap:6px; } .livetile .sc b { font-size:32px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; } .livetile .sc span { color:var(--mut); }
+  .playsfold { margin-top:16px; }
   .livecard tr.on td:first-child { box-shadow:inset 3px 0 0 var(--good); }
 </style>
 </head>
@@ -419,6 +424,7 @@ const FR = {
   'Official result shown.': 'Résultat officiel affiché.', 'min': 'min', 'pts': 'pts', 'reb': 'reb', 'ast': 'pd', 'vs': 'contre',
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
+  'This game is not live any more.': 'Ce match n’est plus en direct.', 'Its box score will be on the site once it is approved.': 'Sa feuille de match sera sur le site une fois validée.', 'All live games': 'Tous les matchs en direct', 'Tap a game to follow it.': 'Touchez un match pour le suivre.',
   'Live': 'Direct', 'LIVE': 'DIRECT', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
   'No game is live right now.': 'Aucun match en direct pour le moment.', 'When a game is followed live, its score, box score and last plays appear here and update by themselves.': 'Quand un match est suivi en direct, son score, sa feuille de match et ses dernières actions apparaissent ici et se mettent à jour tout seuls.',
   'See the calendar': 'Voir le calendrier', 'Make your picks': 'Faire vos pronostics', 'Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.': 'Compté à la main par un analyste pendant le match : les chiffres peuvent être corrigés jusqu’à la sortie de la feuille de match.',
@@ -609,8 +615,8 @@ const META = {
              fr: ['Statistiques des joueurs Pro A – points, rebonds, passes – Tunisia Basket', 'Moyennes par match et notes de chaque joueur de la Pro A tunisienne de basket.'] },
   games: { en: ['Pro A results and box scores – Tunisia Basket', 'Every Tunisian Pro A basketball game with the final score, box score and game MVP.'],
            fr: ['Résultats et feuilles de match Pro A – Tunisia Basket', 'Tous les matchs de la Pro A tunisienne de basket avec le score final, la feuille de match et le MVP.'] },
-  mvp: { en: ['MVP race and fan vote – phase 1 – Tunisia Basket', 'Who is the MVP of the first phase of the Tunisian Pro A basketball league? The race matchday by matchday, the stats and the fans’ vote.'],
-         fr: ['Course au MVP et vote des fans – phase 1 – Tunisia Basket', 'Qui est le MVP de la première phase de la Pro A tunisienne de basket ? La course journée par journée, les statistiques et le vote des fans.'] },
+  mvp: { en: ['Player of the round and MVP fan vote – Tunisia Basket', 'Who is the player of the round in the Tunisian Pro A basketball league, and who was the MVP of the first phase? The stats and the fans’ votes.'],
+         fr: ['Joueur de la journée et vote des fans MVP – Tunisia Basket', 'Qui est le joueur de la journée en Pro A tunisienne de basket, et qui était le MVP de la première phase ? Les statistiques et le vote des fans.'] },
   live: { en: ['Live Pro A basketball – score, box score, plays – Tunisia Basket', 'Follow a Tunisian Pro A basketball game live: the score, the clock, the box score and the last plays.'],
           fr: ['Pro A basket en direct – score, feuille de match, actions – Tunisia Basket', 'Suivez un match de la Pro A tunisienne de basket en direct : le score, le chrono, la feuille de match et les dernières actions.'] },
   news: { en: ['Pro A basketball news – injuries, transfers, announcements – Tunisia Basket', 'The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.'],
@@ -770,7 +776,7 @@ async function mvp() {
   pageMeta = META.mvp[LANG];
   const [r, rv] = await Promise.all([fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`).then(x => x.json()), fetch(`/api/round?vid=${voterId()}`, { cache: 'no-store' }).then(x => x.json()).catch(() => null)]);
   const c = r.candidates, ordered = [...c].sort((a, b) => a.vote_rank - b.vote_rank), shown = mvpAll ? ordered : ordered.slice(0, 10), cur = r.current, by = r.current_by, best = r.leader;
-  if (!c.length) return `<h1>${_('MVP race')}</h1><div class="empty">${_('No games yet')}</div>`;
+  if (!c.length) return `<h1>${_('Player of the round')}</h1><div class="empty">${_('No games yet')}</div>`;
   r.ballot_ranked.forEach((id, i) => { const x = c.find(y => y.id === id); if (x) x.pos = i + 1; });   // 1 = the most votes
   const banner = cur ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${by === 'winner' ? _('Phase 1 MVP') : _('Current MVP')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
       <div class="nm">${face(cur, 72)}<span>${plink(cur, esc(title(cur.name)))}</span></div>
@@ -779,7 +785,7 @@ async function mvp() {
       <div class="tiles">${[['PTS', cur.pts], ['REB', cur.reb], [H('AST'), cur.ast], [H('STL'), cur.stl], [H('BLK'), cur.blk], ['PIR', cur.pir], [_('Votes'), cur.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
       ${best && best.id !== cur.id ? `<p class="mut" style="margin:10px 0 0">⭐ ${_('Best by stats')}: <b style="color:var(--txt)">${esc(title(best.name))}</b> · ${esc(best.team)} · PIR ${best.pir}</p>` : ''}
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
-  return `<h1>${_('MVP race')} <span class="mut" style="font-size:15px">${_('Phase 1')} · J1–J${PHASE * 11}${r.complete ? '' : ' · ' + _('in progress')}</span></h1>
+  return `<h1>${_('Player of the round')}</h1>
   ${roundSection(rv)}
   <details class="fold" id="phasefold" ${(phaseOpen === null ? r.voting_open : phaseOpen) ? 'open' : ''}><summary><span>${_('Phase 1 MVP')}</span><span class="sub mut">${cur ? (by === 'winner' ? '🏆 ' : '') + esc(title(cur.name)) + ' · ' : ''}${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span><span class="chev">▾</span></summary>
   ${banner}
@@ -1333,8 +1339,16 @@ async function planning() {
 }
 
 // ---------------------------------------------------------------- live (proof of concept): games the admin switched on while an analyst counts them
-let liveTimer;
+let liveTimer, livePlaysOpen = false;
 const qLabel = q => q > 4 ? 'OT' + (q - 4) : 'Q' + q, clockTxt = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+// the list: one small tile per live game (logos, score, clock), side by side; a click opens the game
+function liveTile(g) {
+  const [a, b] = [g.home, g.away].map(c => g.teams[c]);
+  return `<a class="livetile" href="${url('live', g.id)}"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="sp"></span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span></div>
+    <div class="lt"><div class="tm">${logo(a.code, 44)}<span>${esc(a.code)}</span></div><div class="sc"><b>${a.score}</b><span>–</span><b>${b.score}</b></div><div class="tm">${logo(b.code, 44)}<span>${esc(b.code)}</span></div></div>
+    <div class="mut small" style="text-align:center">${esc(a.name)} – ${esc(b.name)}</div></a>`;
+}
+// the game itself: score, the fives, the box score, and the last plays folded (closed until the visitor opens them)
 function liveCard(g, now) {
   const [a, b] = [g.home, g.away].map(c => g.teams[c]), ago = Math.max(0, now - g.updated), uc = g.used_court;
   const five = t => t.players.filter(p => p.on).map(p => `<span class="ch"><span class="nn">${esc(p.number)}</span>${esc(title(p.name).split(' ').slice(-1)[0])}</span>`).join('');
@@ -1344,21 +1358,29 @@ function liveCard(g, now) {
   return `<div class="card livecard"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span><span class="sp"></span><span class="mut small">${esc(f('liveAgo', ago))}</span></div>
     <div class="liveboard"><div class="tm">${logo(a.code, 48)}<span>${esc(a.name)}</span></div><div><span class="big">${a.score}</span><span class="sep"> – </span><span class="big">${b.score}</span></div><div class="tm">${logo(b.code, 48)}<span>${esc(b.name)}</span></div></div>
     ${table(a)}${table(b)}
-    <h3 style="margin:18px 0 4px;font-size:15px">${_('Last plays')}</h3><ul class="plays">${g.plays.map(p => `<li><span class="tm2">${p.q ? qLabel(p.q) + ' ' + clockTxt(p.t) : ''}</span><span><b>${esc(title(p.name))}</b> <span class="mut">${esc(p.team)} · ${_(p.text)}</span></span>${p.pts ? `<span class="pp">+${p.pts}</span>` : ''}</li>`).join('') || `<li class="mut">${_('Nothing counted yet.')}</li>`}</ul>
+    <details class="fold playsfold" ${livePlaysOpen ? 'open' : ''}><summary><span>${_('Last plays')}</span><span class="chev">▾</span></summary><ul class="plays">${g.plays.map(p => `<li><span class="tm2">${p.q ? qLabel(p.q) + ' ' + clockTxt(p.t) : ''}</span><span><b>${esc(title(p.name))}</b> <span class="mut">${esc(p.team)} · ${_(p.text)}</span></span>${p.pts ? `<span class="pp">+${p.pts}</span>` : ''}</li>`).join('') || `<li class="mut">${_('Nothing counted yet.')}</li>`}</ul></details>
     <div class="note">${_('Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.')}</div></div>`;
 }
-const liveBody = (games, now) => games.length ? games.map(g => liveCard(g, now)).join('')
-  : `<div class="card"><b>${_('No game is live right now.')}</b><p class="mut" style="margin:6px 0 12px">${_('When a game is followed live, its score, box score and last plays appear here and update by themselves.')}</p>
+const liveEmpty = () => `<div class="card"><b>${_('No game is live right now.')}</b><p class="mut" style="margin:6px 0 12px">${_('When a game is followed live, its score, box score and last plays appear here and update by themselves.')}</p>
      <div class="row"><a class="vote" href="${url('planning')}">${_('See the calendar')}</a><a class="vote" href="${url('predict')}">${_('Make your picks')}</a></div></div>`;
-async function live() {
+function liveBody(games, now, id) {
+  if (id) {
+    const g = games.find(x => x.id === id);
+    return g ? liveCard(g, now) : `<div class="card"><b>${_('This game is not live any more.')}</b><p class="mut" style="margin:6px 0 12px">${_('Its box score will be on the site once it is approved.')}</p><a class="vote" href="${url('live')}">${_('All live games')}</a></div>`;
+  }
+  return games.length ? `<p class="mut" style="margin:0 0 12px">${_('Tap a game to follow it.')}</p><div class="livegrid">${games.map(liveTile).join('')}</div>` : liveEmpty();
+}
+function liveWire() { const d = $('#livebox details.playsfold'); if (d) d.ontoggle = () => { livePlaysOpen = d.open; }; }
+async function live(id) {
   pageMeta = META.live[LANG];
   const get = () => fetch('/api/live', { cache: 'no-store' }).then(r => r.json());
   const d = await get();
   liveTimer = setInterval(async () => {
     if (document.hidden) return;
-    try { const x = await get(), box = $('#livebox'); if (!box) return clearInterval(liveTimer); box.innerHTML = liveBody(x.games, x.now); stickyCols(); liveAir(x); } catch (e) { /* the next poll will do */ }
+    try { const x = await get(), box = $('#livebox'); if (!box) return clearInterval(liveTimer); box.innerHTML = liveBody(x.games, x.now, id); liveWire(); stickyCols(); liveAir(x); } catch (e) { /* the next poll will do */ }
   }, 5000);
-  return `<h1>${_('Live')} <span class="mut" style="font-size:15px">${_('updates every few seconds')}</span></h1><div id="livebox">${liveBody(d.games, d.now)}</div>`;
+  setTimeout(liveWire, 0);
+  return `${id ? `<a class="mut" href="${url('live')}">← ${_('All live games')}</a>` : ''}<h1>${_('Live')} <span class="mut" style="font-size:15px">${_('updates every few seconds')}</span></h1><div id="livebox">${liveBody(d.games, d.now, id)}</div>`;
 }
 // the menu's red dot: lit while a game is live
 async function liveAir(d) {
