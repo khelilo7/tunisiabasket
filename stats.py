@@ -4,6 +4,7 @@ import datetime
 import difflib
 import json
 import math
+import os
 import re
 from collections import Counter, defaultdict
 
@@ -291,15 +292,48 @@ def partial_games(games):
                           "won": score[code] > score[r["away"] if code == r["home"] else r["home"]], "players": players, "recorded": code == rec,
                           "complete": bool(players) and sum(p["pts"] for p in players) == score[code]})
         out.append({"id": raw_g["id"], "partial": True, "date": raw_g["date"], "date_approx": bool(raw_g.get("date_approx")), "competition": raw_g.get("competition"),
-                    "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": _sheet_mvp(next(t for t in teams if t["recorded"])), "note": raw_g.get("note"), "source": raw_g.get("source"),
+                    "matchday_no": r["matchday"], "matchday": f"J{r['matchday']}", "mvp": _sheet_mvp(next(t for t in teams if t["won"])), "note": raw_g.get("note"), "source": raw_g.get("source"),
                     "recorded": rec, "complete": next(t for t in teams if t["recorded"])["complete"],
                     "estimated": any(p["est"] for t in teams for p in t["players"]), "teams": teams})
-    return out
+    return _merge_sides(out)
+
+
+def _merge_sides(out):
+    """Two sheets of the same game for its TWO different teams (an analyst counted both teams from the video; or a hand-kept sheet of one team and a counted sheet of the other)
+    are ONE game with both teams' players. A second sheet of a team that already has one stays a game of its own, as it always was. `ids` lists the ids of the sheets
+    (the old address of a sheet still opens the merged game)."""
+    merged, rest = {}, []
+    for g in out:
+        key = (g["matchday_no"], frozenset(t["code"] for t in g["teams"]))
+        m = merged.get(key)
+        if m is None:
+            g["recorded_all"], g["ids"] = [g["recorded"]], [g["id"]]
+            merged[key] = g
+        elif g["recorded"] not in m["recorded_all"]:
+            src = next(t for t in g["teams"] if t["code"] == g["recorded"])
+            dst = next(t for t in m["teams"] if t["code"] == g["recorded"])
+            dst.update(players=src["players"], recorded=True, complete=src["complete"])
+            m["recorded_all"].append(g["recorded"])
+            m["ids"].append(g["id"])
+            m["estimated"] = m["estimated"] or g["estimated"]
+            m["note"] = m.get("note") or g.get("note")
+        else:
+            g["recorded_all"], g["ids"] = [g["recorded"]], [g["id"]]
+            rest.append(g)
+    out = []
+    for g in merged.values():
+        if len(g["ids"]) > 1:
+            common = os.path.commonprefix(g["ids"]).strip("-")
+            g["id"] = common if len(common) >= 6 else g["ids"][0]            # live-j12-ca-esg--ali-ca + live-j12-ca-esg--ali-esg -> live-j12-ca-esg--ali
+            g["complete"] = all(t["complete"] for t in g["teams"] if t["recorded"])
+            g["mvp"] = _sheet_mvp(next(t for t in g["teams"] if t["won"]))
+        out.append(g)
+    return out + rest
 
 
 def partial_game(gid):
-    """The API view of one one-team game (or None)."""
-    return next((g for g in partial_games(load_games()) if g["id"] == gid), None)
+    """The API view of one partial game (or None); the old id of a sheet that was merged into a two-team game still finds it."""
+    return next((g for g in partial_games(load_games()) if g["id"] == gid or gid in g.get("ids", [])), None)
 
 
 SCHEDULE_FILE = config.DATA_DIR / "schedule.json"     # per game: {"12:CA-ESG": {"time": "18:30", "date": "2026-11-11", "featured": 1}} (admin)
@@ -605,8 +639,9 @@ def box_counts(games, partials=()):
         for t in g["teams"]:
             c[t["code"]] += 1
     for g in partials:
-        if g.get("complete"):
-            c[g["recorded"]] += 1
+        for t in g["teams"]:
+            if t.get("recorded") and t.get("complete"):
+                c[t["code"]] += 1
     return c
 
 

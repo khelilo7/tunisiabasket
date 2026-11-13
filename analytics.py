@@ -5,11 +5,13 @@ nothing else: it never works on /admin (a logged-in admin can use /analytics too
 assists...) on the players the site already knows, and every click is one event saved in data/analytics/<game>.json. They can download the box score, or send the
 game for approval.
 
-Nothing an analyst enters is public. When the admin approves a game, it is published as TWO one-team sheets in data/partial_games.json (stats.py, "One-team box
+Every analyst signs in with a NAME as well as the token: each action is stamped with it, and two analysts with two names each get their own version of a game (the
+admin sees and edits every version, and approves one). Nothing an analyst enters is public. When the admin approves a game, it is published as TWO one-team sheets in data/partial_games.json (stats.py, "One-team box
 scores"): the same safe path as the hand-kept sheets, so minutes, +/- and fouls drawn stay unknown (never 0), the game never enters standings, team totals, the MVP
 race or the fan vote, and a real box score of the same game replaces it. A sheet is ignored until the official result of that matchday exists.
 """
 import csv
+import hashlib
 import hmac
 import io
 import json
@@ -18,6 +20,7 @@ import re
 import secrets
 import threading
 import time
+import unicodedata
 
 from flask import Blueprint, abort, jsonify, request, send_from_directory
 
@@ -32,12 +35,13 @@ PARTIAL_FILE = config.DATA_DIR / "partial_games.json"
 COOKIE = "proa_analyst"
 SESSION_HOURS = 12
 MAX_EVENTS = 6000
+LOG_MAX = 4000                              # entries of a game's change log
 STATS = ("ft_m", "p2_m", "p3_m", "ft_x", "p2_x", "p3_x", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf")
 POINTS = {"ft_m": 1, "p2_m": 2, "p3_m": 3}
 OPEN_STATES = ("open", "rejected")           # the analyst may still count
 PUBLIC = {"analytics.page", "analytics.login_route", "analytics.me"}
 
-_sessions: dict[str, float] = {}
+_sessions: dict[str, dict] = {}           # session id -> {"exp", "name", "slug"}
 _lock = threading.Lock()
 _file_lock = threading.Lock()
 
@@ -68,16 +72,43 @@ def _verify(token: str) -> bool:
     return hmac.compare_digest(auth._hash(token.upper(), bytes.fromhex(d["salt"])), d["hash"])
 
 
-def is_analyst() -> bool:
-    """A signed-in analyst, or the admin (who may do everything an analyst does)."""
+NAME_RE = re.compile(r"[\w .'\-]{2,30}")
+
+
+def clean_name(v):
+    """The analyst's name as typed (2-30 letters, digits, spaces . ' -), or None."""
+    v = " ".join(str(v or "").split())
+    return v if NAME_RE.fullmatch(v) and re.search(r"\w", v) else None
+
+
+def name_slug(name):
+    """A short ASCII key for a name, so 'Ali' and 'ali' are one analyst; a name with no latin letters (Arabic...) gets a key from its hash."""
+    s = re.sub(r"[^a-z0-9]+", "-", unicodedata.normalize("NFKD", name.lower()).encode("ascii", "ignore").decode()).strip("-")[:24]
+    return s if len(s) >= 2 else "a" + hashlib.sha1(name.lower().encode()).hexdigest()[:8]
+
+
+def _session():
     sid = request.cookies.get(COOKIE)
     if sid:
         with _lock:
-            exp = _sessions.get(sid)
-            if exp and exp > time.time():
-                return True
+            s = _sessions.get(sid)
+            if s and s["exp"] > time.time():
+                return s
             _sessions.pop(sid, None)
-    return auth.is_admin()
+    return None
+
+
+def is_analyst() -> bool:
+    """A signed-in analyst, or the admin (who may do everything an analyst does)."""
+    return bool(_session()) or auth.is_admin()
+
+
+def who():
+    """(name, key) of whoever is making the request: "Admin", or the analyst's name given at sign-in. Every action is stamped with it."""
+    if auth.is_admin():
+        return "Admin", "admin"
+    s = _session()
+    return (s["name"], s["slug"]) if s else (None, None)
 
 
 @bp.before_request
@@ -102,7 +133,11 @@ def page():
 def login_route():
     if not auth.same_origin_ok():
         abort(403)
-    ip, token = auth.client_ip(), (request.get_json(silent=True) or {}).get("token", "")
+    body = request.get_json(silent=True) or {}
+    ip, token = auth.client_ip(), body.get("token", "")
+    name = clean_name(body.get("name"))
+    if not name:
+        return jsonify(error="Enter your name (2 to 30 letters): every action you make is stamped with it."), 422
     wait = auth._locked_out(ip)
     if wait:
         auth.audit("analytics-login-blocked", f"locked for {wait}s")
@@ -118,10 +153,10 @@ def login_route():
     sid = secrets.token_urlsafe(32)
     with _lock:
         now = time.time()
-        for k in [k for k, exp in _sessions.items() if exp < now]:
+        for k in [k for k, v in _sessions.items() if v["exp"] < now]:
             del _sessions[k]
-        _sessions[sid] = now + SESSION_HOURS * 3600
-    auth.audit("analytics-login-ok")
+        _sessions[sid] = {"exp": now + SESSION_HOURS * 3600, "name": name, "slug": name_slug(name)}
+    auth.audit("analytics-login-ok", name)
     resp = jsonify(ok=True)
     resp.set_cookie(COOKIE, sid, max_age=SESSION_HOURS * 3600, httponly=True, samesite="Strict", secure=request.is_secure, path="/")
     return resp
@@ -138,7 +173,8 @@ def logout_route():
 
 @bp.get("/analytics/api/me")
 def me():
-    return jsonify(analyst=is_analyst(), configured=token_configured())
+    name, _ = who()
+    return jsonify(analyst=is_analyst(), configured=token_configured(), name=name, admin=auth.is_admin())
 
 
 # ---------------------------------------------------------------- games (data/analytics/<id>.json)
@@ -153,6 +189,18 @@ def _load(gid):
         return json.loads(_path(gid).read_text())
     except (OSError, ValueError):
         abort(404)
+
+
+def _mine(g):
+    _, slug = who()
+    return auth.is_admin() or not g.get("analyst_slug") or g["analyst_slug"] == slug      # a game from before names existed stays open to every analyst
+
+
+def _load_mine(gid):
+    g = _load(gid)
+    if not _mine(g):
+        abort(404)                                  # somebody else's version does not exist for you
+    return g
 
 
 def _save(game):
@@ -183,15 +231,25 @@ def elapsed(q, left):
     return sum(qlen(i) for i in range(1, q)) + qlen(q) - left
 
 
+def ordered(game):
+    """[(game seconds, event)] in the order things happened on the court: by the game clock when an action carries it (so a time the analyst corrects, or an action he adds
+    for an earlier moment, falls in its place), the order of entry otherwise (an action without a clock follows the one before it)."""
+    now, rows = 0, []
+    for e in game["events"]:
+        if "q" in e:
+            now = elapsed(e["q"], e["t"])
+        rows.append((now, e["n"], e))
+    rows.sort(key=lambda r: (r[0], r[1]))
+    return [(a, e) for a, _, e in rows]
+
+
 def court(game):
     """Who is on the court and for how long, from the "lineup" events (the analyst's five of each team, with the game clock when he uses it).
     {"on": {team: [ids]}, "since": {team: game seconds when this five came on}, "base": {id: seconds of the stints already closed}, "pm": {id: plus/minus}, "end": game seconds at the last clock stamp
     (or the end the analyst gave when he sent the game)}. A player's time is "base" + (end - since) while he is on; plus/minus is the points scored by both teams while he was on."""
     team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
     on, since, base, pm, now = {c: [] for c in game["players"]}, {c: None for c in game["players"]}, {}, {}, 0
-    for e in game["events"]:
-        if "q" in e:
-            now = elapsed(e["q"], e["t"])
+    for now, e in ordered(game):
         if e["stat"] == "lineup":
             c = e["team"]
             for pid in on[c]:
@@ -240,7 +298,7 @@ def line(r):
 def summary(game):
     s = scores(game)
     return {"id": game["id"], "home": game["home"], "away": game["away"], "matchday": game.get("matchday"), "date": game.get("date"), "status": game["status"],
-            "created": game["created"], "events": len(game["events"]), "home_score": s[game["home"]], "away_score": s[game["away"]], "note": game.get("note", "")}
+            "created": game["created"], "analyst": game.get("analyst"), "kind": game.get("kind", "live"), "base": game.get("base") or game["id"], "live": bool(game.get("live")), "events": len(game["events"]), "home_score": s[game["home"]], "away_score": s[game["away"]], "note": game.get("note", "")}
 
 
 def _roster(codes):
@@ -264,10 +322,13 @@ def video_todo():
         if k in full:
             continue
         pg = partial.get(k)
+        if pg and set(pg.get("recorded_all", [])) == {r["home"], r["away"]} and pg["complete"]:
+            continue                                                    # both teams are already counted and add up to the official score: nothing left to count
         rec = next((t for t in pg["teams"] if t["recorded"]), None) if pg else None
-        out.append({"matchday": r["matchday"], "home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"],
+        out.append({"matchday": r["matchday"], "home": r["home"], "away": r["away"], "base": f"v{r['matchday']}-{r['home'].lower()}-{r['away'].lower()}",
+                    "home_score": r["home_score"], "away_score": r["away_score"],
                     "date": (pg or {}).get("date") or cal.get(r["matchday"]), "status": "partial" if pg else "none",
-                    "recorded": rec["code"] if rec else None, "complete": bool(pg and pg["complete"])})
+                    "recorded": rec["code"] if rec else None, "recorded_all": pg.get("recorded_all", []) if pg else [], "complete": bool(pg and pg["complete"])})
     return out
 
 
@@ -289,11 +350,12 @@ def live_games():
             g = json.loads(f.read_text())
         except (OSError, ValueError):
             continue
-        if not g.get("live") or g.get("status") not in OPEN_STATES:
+        if not g.get("live") or g.get("status") not in OPEN_STATES or g.get("kind") == "video":
             continue
         t, c, mins, sc = tally(g), court(g), minutes(g), scores(g)
-        who = {p["id"]: (code, p) for code, ps in g["players"].items() for p in ps}
-        stamp = next(({"q": e["q"], "t": e["t"]} for e in reversed(g["events"]) if "q" in e), None)
+        who_ = {p["id"]: (code, p) for code, ps in g["players"].items() for p in ps}
+        seq = ordered(g)
+        stamp = next(({"q": e["q"], "t": e["t"]} for _, e in reversed(seq) if "q" in e), None)
         teams = {}
         for code, ps in g["players"].items():
             rows = []
@@ -308,10 +370,10 @@ def live_games():
             rows.sort(key=lambda x: (-x["on"], -x["pts"], x["number"]))
             teams[code] = {"code": code, "name": names.get(code, code), "score": sc[code], "players": rows}
         plays = []
-        for e in reversed(g["events"]):
-            if e["stat"] == "lineup" or e["pid"] not in who:
+        for _, e in reversed(seq):
+            if e["stat"] == "lineup" or e["pid"] not in who_:
                 continue
-            code, p = who[e["pid"]]
+            code, p = who_[e["pid"]]
             plays.append({"q": e.get("q"), "t": e.get("t"), "team": code, "name": p["name"], "number": p["number"], "text": PLAY[e["stat"]], "pts": POINTS.get(e["stat"], 0)})
             if len(plays) >= 14:
                 break
@@ -324,7 +386,7 @@ def live_games():
 def data():
     plan = stats.planning()
     photos = stats.load_photos()
-    games = [summary(json.loads(f.read_text())) for f in sorted(DIR.glob("*.json"), reverse=True)] if DIR.exists() else []
+    games = [summary(g) for g in (json.loads(f.read_text()) for f in sorted(DIR.glob("*.json"), reverse=True)) if _mine(g)] if DIR.exists() else []
     roster = {}
     for p in stats.build()["players"]:
         roster.setdefault(p["team"], []).append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "min": p.get("total_min") or 0})
@@ -332,7 +394,7 @@ def data():
         ps.sort(key=lambda p: (-p["min"], p["number"]))
     matches = [{"key": f"{md['matchday']}:{g['home']}-{g['away']}", "matchday": md["matchday"], "date": g.get("game_date") or md.get("date"), "time": g.get("time"),
                 "home": g["home"], "away": g["away"], "played": g["played"]} for md in plan["matchdays"] for g in md["games"]]
-    return jsonify(teams=plan["teams"], roster=roster, matches=matches, games=games, video=video_todo())
+    return jsonify(teams=plan["teams"], roster=roster, matches=matches, games=games, video=video_todo(), me=dict(zip(("name", "admin"), (who()[0], auth.is_admin()))))
 
 
 @bp.post("/analytics/api/games")
@@ -343,24 +405,36 @@ def create():
     if home not in teams or away not in teams or home == away:
         return jsonify(error="Pick two different teams."), 422
     md = b.get("matchday") if isinstance(b.get("matchday"), int) and 1 <= b["matchday"] <= 60 else None
-    gid = f"j{md}-{home.lower()}-{away.lower()}" if md else f"x-{home.lower()}-{away.lower()}-{time.strftime('%m%d-%H%M')}"
+    name, slug = who()
+    video, date = bool(b.get("video")), b.get("date")
+    base = f"j{md}-{home.lower()}-{away.lower()}" if md else f"x-{home.lower()}-{away.lower()}-{time.strftime('%m%d-%H%M')}"
+    if video:                                          # a game counted from the video: only one that has no full box score (nothing at all, or a one-team / some-players sheet)
+        todo = next((v for v in video_todo() if v["matchday"] == md and {v["home"], v["away"]} == {home, away}), None)
+        if not todo:
+            return jsonify(error="Only a game that has no box score, or only a partial one, can be counted from video: this one already has a full box score, or no official result yet."), 422
+        home, away, date = todo["home"], todo["away"], todo["date"] or date
+        base = todo["base"]
+    gid = f"{base}--{slug}"                          # two analysts with two names count the same game on two separate sheets
     with _file_lock:
         if not _path(gid).exists():
-            _save({"id": gid, "home": home, "away": away, "matchday": md, "date": b.get("date") if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(b.get("date") or "")) else None,
-                   "status": "open", "created": time.strftime("%Y-%m-%d %H:%M"), "players": _roster([home, away]), "events": []})
-            auth.audit("analytics-new-game", gid)
-    return jsonify(_view(_load(gid)))
+            g = {"id": gid, "base": base, "kind": "video" if video else "live", "analyst": name, "analyst_slug": slug, "home": home, "away": away, "matchday": md,
+                 "date": date if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(date or "")) else None,
+                 "status": "open", "created": time.strftime("%Y-%m-%d %H:%M"), "players": _roster([home, away]), "events": [], "log": []}
+            _log(g, name, "start", "added this game from the video list" if video else "started counting this game")
+            _save(g)
+            auth.audit("analytics-new-game", f"{gid} by {name}")
+    return jsonify(_view(_load_mine(gid)))
 
 
 @bp.get("/analytics/api/games/<gid>")
 def get_game(gid):
-    return jsonify(_view(_load(gid)))
+    return jsonify(_view(_load_mine(gid)))
 
 
 @bp.delete("/analytics/api/games/<gid>")
 def delete_game(gid):
     with _file_lock:
-        g = _load(gid)
+        g = _load_mine(gid)
         if g["status"] == "published":
             return jsonify(error="This game is published: ask the admin to unpublish it first."), 409
         _path(gid).unlink(missing_ok=True)
@@ -374,28 +448,56 @@ def _stamp(e, b):
         e["q"], e["t"] = b["q"], b["t"]
 
 
+def _log(g, by, op, detail):
+    """Who did what: one line per change, kept with the game (the admin reads it in the Analytics tab)."""
+    g.setdefault("log", []).append({"at": time.strftime("%Y-%m-%d %H:%M:%S"), "by": by or "?", "op": op, "detail": detail})
+    del g["log"][:-LOG_MAX]
+
+
+def _clock(e):
+    return f" ({'OT' + str(e['q'] - 4) if e['q'] > 4 else 'Q' + str(e['q'])} {e['t'] // 60}:{e['t'] % 60:02d})" if "q" in e else ""
+
+
+def describe(g, e):
+    names = {p["id"]: p["name"] for ps in g["players"].values() for p in ps}
+    if e["stat"] == "lineup":
+        return f"five of {e['team']}: " + (", ".join(names.get(i, i) for i in e["on"]) or "nobody") + _clock(e)
+    return f"{names.get(e['pid'], e['pid'])} · {PLAY.get(e['stat'], e['stat'])}" + _clock(e)
+
+
+def _can_edit(g):
+    return g["status"] in OPEN_STATES or (auth.is_admin() and g["status"] == "submitted")
+
+
+def _next_n(g):
+    return max((e["n"] for e in g["events"]), default=0) + 1
+
+
 @bp.post("/analytics/api/games/<gid>/<op>")
 def change(gid, op):
-    if op not in ("event", "lineup", "undo", "remove", "submit", "reopen"):
+    if op not in ("event", "lineup", "edit", "undo", "remove", "submit", "reopen"):
         abort(404)
     b = request.get_json(silent=True) or {}
+    name, _ = who()
     with _file_lock:
-        g = _load(gid)
+        g = _load_mine(gid)
         if op == "reopen":
             if g["status"] != "submitted":
                 return jsonify(error="Only a game waiting for approval can be reopened."), 409
             g["status"] = "open"
-        elif g["status"] not in OPEN_STATES:
-            return jsonify(error=f"This game is {g['status']}: it can no longer be changed."), 409
+            _log(g, name, "reopen", "took the game back to edit it")
+        elif not _can_edit(g):
+            return jsonify(error=f"This game is {g['status']}: it can no longer be changed." + (" Ask the admin to unpublish it first." if g["status"] == "published" else "")), 409
         elif op == "event":
             known = {p["id"] for ps in g["players"].values() for p in ps}
             if b.get("stat") not in STATS or b.get("pid") not in known:
                 return jsonify(error="Unknown player or action."), 422
             if len(g["events"]) >= MAX_EVENTS:
                 return jsonify(error="Too many actions in one game."), 422
-            e = {"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S")}
+            e = {"n": _next_n(g), "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S"), "by": name}
             _stamp(e, b)
             g["events"].append(e)
+            _log(g, name, "add", "added " + describe(g, e))
         elif op == "lineup":
             code, ids = b.get("team"), b.get("on")
             known = {p["id"] for p in g["players"].get(code, [])}
@@ -403,14 +505,47 @@ def change(gid, op):
                 return jsonify(error="Pick up to five players of this team."), 422
             if len(g["events"]) >= MAX_EVENTS:
                 return jsonify(error="Too many actions in one game."), 422
-            e = {"n": g["events"][-1]["n"] + 1 if g["events"] else 1, "pid": None, "stat": "lineup", "team": code, "on": ids, "at": time.strftime("%H:%M:%S")}
+            e = {"n": _next_n(g), "pid": None, "stat": "lineup", "team": code, "on": ids, "at": time.strftime("%H:%M:%S"), "by": name}
             _stamp(e, b)
             g["events"].append(e)
+            _log(g, name, "lineup", "set the " + describe(g, e))
+        elif op == "edit":
+            e = next((x for x in g["events"] if x["n"] == b.get("n")), None)
+            if not e:
+                return jsonify(error="That action does not exist any more."), 422
+            before = describe(g, e)
+            if e["stat"] == "lineup":
+                ids = b.get("on", e["on"])
+                known = {p["id"] for p in g["players"].get(e["team"], [])}
+                if not isinstance(ids, list) or len(ids) > 5 or len(set(ids)) != len(ids) or any(i not in known for i in ids):
+                    return jsonify(error="Pick up to five players of this team."), 422
+                e["on"] = ids
+            else:
+                pid, stat = b.get("pid", e["pid"]), b.get("stat", e["stat"])
+                if stat not in STATS or pid not in {p["id"] for ps in g["players"].values() for p in ps}:
+                    return jsonify(error="Unknown player or action."), 422
+                e["pid"], e["stat"] = pid, stat
+            if "clock" in b:                                   # {"q": 2, "t": 392} puts it at that moment; null takes the clock off
+                if b["clock"] is None:
+                    e.pop("q", None), e.pop("t", None)
+                else:
+                    probe = {}
+                    _stamp(probe, b["clock"] if isinstance(b["clock"], dict) else {})
+                    if not probe:
+                        return jsonify(error="The time is a quarter (1-8) and seconds left (0-3600)."), 422
+                    e["q"], e["t"] = probe["q"], probe["t"]
+            e["edited_by"], e["edited_at"] = name, time.strftime("%Y-%m-%d %H:%M:%S")
+            _log(g, name, "edit", f"changed {before}  →  {describe(g, e)}")
         elif op == "undo":
             if g["events"]:
-                g["events"].pop()
+                last = max(g["events"], key=lambda x: x["n"])
+                g["events"].remove(last)
+                _log(g, name, "undo", "undid " + describe(g, last))
         elif op == "remove":
-            g["events"] = [e for e in g["events"] if e["n"] != b.get("n")]
+            gone = next((x for x in g["events"] if x["n"] == b.get("n")), None)
+            if gone:
+                g["events"] = [x for x in g["events"] if x is not gone]
+                _log(g, name, "remove", "removed " + describe(g, gone))
         elif op == "submit":
             md, date = b.get("matchday"), str(b.get("date") or "")
             if not isinstance(md, int) or not 1 <= md <= 60 or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
@@ -422,14 +557,15 @@ def change(gid, op):
             _stamp(probe, b)
             if probe:
                 g["end"] = {"q": probe["q"], "t": probe["t"]}        # where the game clock stood when he sent it: the time on the court is counted up to there
-            auth.audit("analytics-submit", gid)
+            _log(g, name, "submit", f"sent the game for approval (J{md}, {date})")
+            auth.audit("analytics-submit", f"{gid} by {name}")
         _save(g)
     return jsonify(_view(g))
 
 
 @bp.get("/analytics/api/games/<gid>/export.csv")
 def export_csv(gid):
-    g = _load(gid)
+    g = _load_mine(gid)
     t = tally(g)
     out = io.StringIO()
     w = csv.writer(out)
@@ -462,7 +598,7 @@ def _sheets(g):
                    for p in g["players"][code] if p["id"] in t]
         if players:
             out.append({"id": _sheet_id(g["id"], code), "matchday": g["matchday"], "home": g["home"], "away": g["away"], "recorded": code, "date": g["date"],
-                        "competition": "CHAMPIONNAT PRO A", "source": "Live count by an analyst on tunisiabasket.com, approved by the admin",
+                        "competition": "CHAMPIONNAT PRO A", "source": f"Live count by {g.get('analyst') or 'an analyst'} on tunisiabasket.com, approved by the admin",
                         "note": "Counted by hand while watching the game: fouls drawn are not known, and a stat may be missed." + (" Minutes and +/- come from the five the analyst marked on the court (the site does not use them yet)." if c["used"] else " Minutes and +/- are not known."), "players": players})
     return out
 
@@ -473,7 +609,8 @@ def _partial_write(g, sheets):
             doc = json.loads(PARTIAL_FILE.read_text())
         except (OSError, ValueError):
             doc = {}
-        keep = [s for s in doc.get("games") or [] if not str(s.get("id", "")).startswith(f"live-{g['id']}-")]
+        mine = {_sheet_id(g["id"], g["home"]), _sheet_id(g["id"], g["away"])}
+        keep = [s for s in doc.get("games") or [] if s.get("id") not in mine]            # exactly this game's two sheets: another version of the same game keeps its own
         doc["games"] = keep + sheets
         tmp = PARTIAL_FILE.with_suffix(".tmp")
         tmp.write_text(json.dumps(doc, ensure_ascii=False, indent=1))
@@ -484,6 +621,8 @@ def _partial_write(g, sheets):
 def admin_live(gid):
     """Body {"on": true|false}: show this game, while it is being counted, on the public Live page (or stop showing it)."""
     g = _load(gid)
+    if g.get("kind") == "video":
+        return jsonify(error="A game counted from the video is not played live."), 409
     if g["status"] not in OPEN_STATES:
         return jsonify(error="Only a game that is being counted can be live."), 409
     on = bool((request.get_json(silent=True) or {}).get("on"))
@@ -491,6 +630,11 @@ def admin_live(gid):
         g["live"] = on
         if on:
             g["live_since"] = int(time.time())
+            for f in DIR.glob("*.json"):                       # one version of a game on the Live page: the others of the same game go off
+                o = json.loads(f.read_text())
+                if o["id"] != g["id"] and o.get("live") and {o["home"], o["away"]} == {g["home"], g["away"]} and o.get("matchday") == g.get("matchday"):
+                    o["live"] = False
+                    _save(o)
         _save(g)
     auth.audit("analytics-live", f"{gid} {'on' if on else 'off'}")
     return jsonify(ok=True, message="Live: the public can follow this game now." if on else "No longer live.")
@@ -512,7 +656,8 @@ def admin_list():
         r, t, s = _official_result(g), tally(g), scores(g)
         rows.append({**summary(g), "official": {"home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"]} if r else None,
                      "same_score": bool(r) and {r["home"]: r["home_score"], r["away"]: r["away_score"]} == s,
-                     "box": {c: [{"name": p["name"], "number": p["number"], **line(t[p["id"]])} for p in ps if p["id"] in t] for c, ps in g["players"].items()}})
+                     "box": {c: [{"name": p["name"], "number": p["number"], **line(t[p["id"]])} for p in ps if p["id"] in t] for c, ps in g["players"].items()},
+                     "log": g.get("log", [])[-300:], "editable": g["status"] in ("submitted", "open", "rejected")})
     return jsonify(games=rows, counting=counting)
 
 
@@ -529,13 +674,25 @@ def admin_approve(gid):
     sheets = _sheets(g)
     if not sheets:
         return jsonify(error="Nothing to publish."), 422
+    replaced = []
+    for f in sorted(DIR.glob("*.json")):                       # one version of a game on the site at a time: another published version of it steps down
+        o = json.loads(f.read_text())
+        if o["id"] != g["id"] and o["status"] == "published" and {o["home"], o["away"]} == {g["home"], g["away"]} and o.get("matchday") == md:
+            _partial_write(o, [])
+            o["status"] = "submitted"
+            _log(o, "Admin", "unpublish", f"replaced on the site by the version of {g.get('analyst') or 'another analyst'}")
+            with _file_lock:
+                _save(o)
+            replaced.append(o.get("analyst") or o["id"])
     _partial_write(g, sheets)
+    _log(g, "Admin", "approve", f"approved and published (J{md}, {date})")
     with _file_lock:
         _save(g)
-    auth.audit("analytics-approve", gid)
+    auth.audit("analytics-approve", f"{gid} ({g.get('analyst') or 'no name'})")
     shown = _official_result(g) is not None
     return jsonify(ok=True, message=("Published: it is on the site now." if shown else
-                   f"Approved, but it will only appear once the official result of J{md} {g['home']}-{g['away']} is entered (Games tab)."))
+                   f"Approved, but it will only appear once the official result of J{md} {g['home']}-{g['away']} is entered (Games tab).") +
+                   (f" The version of {', '.join(replaced)} is no longer on the site (one version per game)." if replaced else ""))
 
 
 @bp.post("/admin/api/analytics/<gid>/reject")
@@ -544,6 +701,7 @@ def admin_reject(gid):
     if g["status"] != "submitted":
         return jsonify(error="Only a game waiting for approval can be sent back."), 409
     g.update(status="rejected", note=str((request.get_json(silent=True) or {}).get("note") or "")[:300])
+    _log(g, "Admin", "reject", "sent back: " + (g["note"] or "no reason given"))
     with _file_lock:
         _save(g)
     auth.audit("analytics-reject", gid)
@@ -557,6 +715,7 @@ def admin_unpublish(gid):
         return jsonify(error="This game is not published."), 409
     _partial_write(g, [])
     g["status"] = "submitted"
+    _log(g, "Admin", "unpublish", "removed from the site")
     with _file_lock:
         _save(g)
     auth.audit("analytics-unpublish", gid)

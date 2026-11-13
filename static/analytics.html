@@ -67,6 +67,18 @@
   .pickbar { background:#173d2a; } .pickbar b { color:#7be0a3; }
   #subm { position:fixed; inset:0; background:rgba(5,8,18,.6); display:grid; place-items:center; z-index:8; } #subm > div { background:var(--panel); border-radius:14px; padding:16px; width:min(380px, 92vw); max-height:84vh; overflow:auto; }
   #subm h4 { margin:0 0 10px; font-size:15px; } #subm button.o { display:flex; gap:8px; width:100%; margin-bottom:6px; align-items:center; text-align:left; } #subm button.o small { color:var(--muted); margin-left:auto; }
+  .vlist { margin:6px 0 4px; background:var(--panel); border-radius:10px; padding:4px 12px 10px; } .vlist > summary { padding:10px 0; font-weight:600; } .vlist .saved { background:var(--bg); }
+  #who { font-size:13px; } .name-note { color:var(--muted); font-size:13px; margin:-4px 0 8px; }
+  .other { background:#3a2a0a; border-left-color:#ffb020; }
+  .hist { margin-top:26px; } .hist .hbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px; } .hist .hbar input { flex:1; min-width:180px; }
+  .hform { display:flex; gap:6px; flex-wrap:wrap; align-items:center; background:var(--panel); padding:8px; border-radius:10px; margin-bottom:8px; } .hform select, .hform input { padding:6px; }
+  .hlist { max-height:520px; overflow:auto; border:1px solid var(--line); border-radius:10px; } .hlist[hidden] { display:none; }
+  .hrow { display:grid; grid-template-columns:78px 92px 1fr auto; gap:8px; align-items:center; padding:6px 10px; border-bottom:1px solid var(--line); font-size:13px; } .hrow:last-child { border-bottom:0; } .hrow:hover { background:var(--panel); }
+  .hrow .tm { color:var(--muted); font-variant-numeric:tabular-nums; } .hrow .by { color:var(--accent); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .hrow .ed { color:var(--muted); font-size:11px; }
+  .hrow .ba { display:flex; gap:4px; } .hrow .ba button { padding:3px 8px; background:transparent; color:var(--muted); } .hrow .ba button:hover { color:var(--text); }
+  .hrow.editing { grid-template-columns:1fr; background:#173d2a; } .hrow.editing .hform { background:transparent; margin:0; padding:0; }
+  .clog { margin-top:10px; } .clog .ln { display:grid; grid-template-columns:140px 90px 1fr; gap:8px; font-size:12px; padding:3px 0; border-bottom:1px solid var(--line); } .clog .ln span:first-child { color:var(--muted); }
+  @media (max-width:700px) { .hrow { grid-template-columns:62px 1fr auto; } .hrow .by { display:none; } }
   .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bad); padding:10px 16px; border-radius:10px; z-index:9; }
   .toast.ok { background:var(--good); }
 </style>
@@ -76,6 +88,7 @@
   <h1>LIVE STATS</h1>
   <span class="muted">Tunisia Basket · analytics</span>
   <span class="sp"></span>
+  <span id="who" class="muted"></span>
   <button id="logout" hidden>Sign out</button>
 </header>
 <main id="app"></main>
@@ -103,14 +116,19 @@ function toast(msg, ok) { const t = document.createElement("div"); t.className =
 const tn = c => (S.data?.teams || {})[c] || c;
 
 function showLogin(err) {
-  $("#logout").hidden = true;
-  $("#app").innerHTML = `<form class="login" id="lf"><h2 style="margin:0">Sign in</h2><p class="muted">Enter the analytics token you were given.</p>
-    <input id="tok" autocomplete="off" autofocus placeholder="XXXX-XXXX-XXXX-XXXX"><button class="accent" style="width:100%">Sign in</button><p class="muted" id="err">${esc(err || "")}</p></form>`;
+  $("#logout").hidden = true; $("#who").textContent = "";
+  let saved = ""; try { saved = localStorage.getItem("an-name") || ""; } catch {}
+  $("#app").innerHTML = `<form class="login" id="lf"><h2 style="margin:0">Sign in</h2><p class="muted">Your name, then the analytics token you were given.</p>
+    <input id="nm" autocomplete="off" maxlength="30" placeholder="Your name (compulsory)" value="${esc(saved)}" style="text-transform:none;letter-spacing:0" ${saved ? "" : "autofocus"}>
+    <p class="name-note">Every action you make is stamped with this name. Two analysts with two names each get their own sheet of a game.</p>
+    <input id="tok" autocomplete="off" ${saved ? "autofocus" : ""} placeholder="XXXX-XXXX-XXXX-XXXX"><button class="accent" style="width:100%">Sign in</button><p class="muted" id="err">${esc(err || "")}</p></form>`;
   $("#lf").onsubmit = async e => {
     e.preventDefault();
-    const r = await fetch("/analytics/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: $("#tok").value }) });
+    const name = $("#nm").value.trim();
+    if (name.length < 2) { $("#err").textContent = "Enter your name (at least 2 letters)."; return $("#nm").focus(); }
+    const r = await fetch("/analytics/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: $("#tok").value, name }) });
     const j = await r.json().catch(() => ({}));
-    if (r.ok) load(); else $("#err").textContent = j.error || "Could not sign in.";
+    if (r.ok) { try { localStorage.setItem("an-name", name); } catch {} load(); } else $("#err").textContent = j.error || "Could not sign in.";
   };
 }
 $("#logout").onclick = async () => { await fetch("/analytics/api/logout", { method: "POST" }); location.hash = ""; showLogin(); };
@@ -118,7 +136,7 @@ $("#logout").onclick = async () => { await fetch("/analytics/api/logout", { meth
 async function load() {
   const me = await (await fetch("/analytics/api/me")).json();
   if (!me.analyst) return showLogin(me.configured ? "" : "No analytics token has been set yet.");
-  $("#logout").hidden = false;
+  S.me = me; $("#logout").hidden = !!me.admin && !me.name; $("#who").textContent = me.name ? (me.admin ? "Admin" : "Counting as " + me.name) : "";
   S.data = await api("/data");
   const id = location.hash.startsWith("#game=") ? location.hash.slice(6) : null;
   S.game = null;
@@ -129,7 +147,7 @@ async function load() {
 /* ---- home ---- */
 function renderHome() {
   const D = S.data, app = $("#app");
-  const byId = Object.fromEntries(D.games.map(g => [g.id, g]));
+  const mine = D.games.filter(g => !g.analyst || g.analyst === S.me.name).sort((a, b) => (a.analyst ? 1 : 0) - (b.analyst ? 1 : 0)), byId = Object.fromEntries(mine.map(g => [g.base, g]));     // an old game without a name is continued as it is; a version of mine wins over it      // "Continue" is about my own version
   const days = [...new Set(D.matches.map(m => m.matchday))].sort((a, b) => a - b);
   const next = days.find(d => D.matches.some(m => m.matchday === d && !m.played)) ?? days[0];
   const order = [next, ...days.filter(d => d > next).slice(0, 2)];
@@ -139,27 +157,34 @@ function renderHome() {
       <b>${esc(tn(m.home))}</b> <span class="muted">vs</span> <b>${esc(tn(m.away))}</b><br><span class="muted">${esc([m.date, m.time].filter(Boolean).join(" · "))}</span>
       ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
   };
-  const vcard = v => {
-    const g = byId[`j${v.matchday}-${v.home.toLowerCase()}-${v.away.toLowerCase()}`];
-    const why = v.status === "none" ? "No box score" : v.complete ? `Partial: only ${tn(v.recorded)} was recorded` : `Partial: some of ${tn(v.recorded)}'s players`;
-    return `<button class="match ${g ? "has" : ""}" data-md="${v.matchday}" data-home="${v.home}" data-away="${v.away}" data-date="${v.date || ""}">
-      <b>${esc(tn(v.home))}</b> <span class="muted">vs</span> <b>${esc(tn(v.away))}</b><br><span class="muted">J${v.matchday} · final ${v.home_score} – ${v.away_score}</span><br>
-      <span class="pill ${v.status === "none" ? "rejected" : "submitted"}">${why}</span>
-      ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
+  const vidMine = Object.fromEntries(mine.filter(g => g.kind === "video").map(g => [g.base, g]));
+  const vrow = v => {
+    const g = vidMine[v.base], two = (v.recorded_all || []).length > 1, why = v.status === "none" ? "No box score" : two ? "Partial: both teams counted, some players missing" : v.complete ? `Partial: only ${tn(v.recorded)} was recorded` : `Partial: some of ${tn(v.recorded)}'s players`;
+    return `<div class="saved"><b>${esc(tn(v.home))} ${v.home_score} – ${v.away_score} ${esc(tn(v.away))}</b><span class="muted">J${v.matchday}</span><span class="pill ${v.status === "none" ? "rejected" : "submitted"}">${why}</span><span class="sp"></span>
+      ${g ? `<button data-open="${g.id}" title="It is on your board: open it">✔ On your board · open</button>` : `<button class="accent" data-vadd="${v.matchday}|${v.home}|${v.away}|${v.date || ""}">＋ Add to my board</button>`}</div>`;
   };
-  const todo = (D.video || []).length ? `<h2>🎥 To count from video <span class="muted" style="font-size:14px;font-weight:400">${D.video.length} games without a full box score</span></h2>
-    <div class="matches">${D.video.map(vcard).join("")}</div>` : "";
+  const todo = (D.video || []).length ? `<details class="vlist" ${S.vopen ? "open" : ""}><summary>🎥 Games without a full box score <span class="muted">(${D.video.length}): add the ones you want to count from the video to your board</span></summary>${D.video.map(vrow).join("")}</details>` : "";
+  const gameRow = g => `<div class="saved"><b>${esc(tn(g.home))} ${g.home_score} – ${g.away_score} ${esc(tn(g.away))}</b>
+      <span class="pill ${g.status}">${STATE[g.status]}</span>${g.matchday ? `<span class="muted">J${g.matchday}</span>` : ""}${g.analyst ? `<span class="pill" title="the analyst who counted this version">✎ ${esc(g.analyst)}</span>` : ""}<span class="muted">${esc(g.created)} · ${g.events} actions</span><span class="sp"></span>
+      <button data-open="${g.id}">Open</button><a href="/analytics/api/games/${g.id}/export.csv"><button>CSV</button></a>${g.status === "published" ? "" : `<button data-del="${g.id}">Delete</button>`}</div>`;
+  const curGames = D.games.filter(g => g.kind !== "video"), vidGames = D.games.filter(g => g.kind === "video"), who = S.me.admin ? "every version" : "yours";
   const opts = Object.keys(D.roster).sort((a, b) => tn(a).localeCompare(tn(b))).map(c => `<option value="${c}">${esc(tn(c))}</option>`).join("");
   app.innerHTML = `
-    ${todo}
     ${order.map((d, i) => `${i ? `<details><summary>Matchday ${d}</summary>` : `<h2>Matchday ${d}</h2>`}<div class="matches">${D.matches.filter(m => m.matchday === d).map(card).join("")}</div>${i ? "</details>" : ""}`).join("")}
     <h2>Any other game</h2>
     <div class="row-actions"><select id="h">${opts}</select> <span class="muted">vs</span> <select id="a">${opts}</select><button class="accent" id="go">Start</button></div>
-    ${D.games.length ? `<h2>Your games</h2>${D.games.map(g => `<div class="saved"><b>${esc(tn(g.home))} ${g.home_score} – ${g.away_score} ${esc(tn(g.away))}</b>
-      <span class="pill ${g.status}">${STATE[g.status]}</span><span class="muted">${esc(g.created)} · ${g.events} actions</span><span class="sp"></span>
-      <button data-open="${g.id}">Open</button><a href="/analytics/api/games/${g.id}/export.csv"><button>CSV</button></a>${g.status === "published" ? "" : `<button data-del="${g.id}">Delete</button>`}</div>`).join("")}` : ""}`;
+    <h2>🎥 From video</h2>${todo}
+    ${vidGames.length ? `<h2>Your games · from video <span class="muted" style="font-size:13px;font-weight:400">${who}</span></h2>${vidGames.map(gameRow).join("")}` : `<p class="muted">Nothing added from the video list yet.</p>`}
+    ${curGames.length ? `<h2>Your games · current <span class="muted" style="font-size:13px;font-weight:400">${who}</span></h2>${curGames.map(gameRow).join("")}` : ""}`;
   $("#a").selectedIndex = 1;
-  app.querySelectorAll(".match").forEach(b => b.onclick = () => start({ home: b.dataset.home, away: b.dataset.away, matchday: +b.dataset.md, date: b.dataset.date }));
+  const vd = app.querySelector("details.vlist"); if (vd) vd.ontoggle = () => { S.vopen = vd.open; };
+  app.querySelectorAll("[data-vadd]").forEach(b => b.onclick = async () => {
+    const [md, home, away, date] = b.dataset.vadd.split("|");
+    b.disabled = true; S.vopen = true;
+    try { await api("/games", "POST", { home, away, matchday: +md, date, video: true }); toast("Added to your board.", true); } catch { b.disabled = false; return; }
+    load();
+  });
+  app.querySelectorAll(".match").forEach(b => b.onclick = () => { const ex = byId[`j${b.dataset.md}-${b.dataset.home.toLowerCase()}-${b.dataset.away.toLowerCase()}`]; ex ? open(ex.id) : start({ home: b.dataset.home, away: b.dataset.away, matchday: +b.dataset.md, date: b.dataset.date }); });
   $("#go").onclick = () => start({ home: $("#h").value, away: $("#a").value });
   app.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
   app.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => { if (confirm("Delete this game and everything counted in it?")) { await api("/games/" + b.dataset.del, "DELETE"); load(); } });
@@ -170,7 +195,7 @@ function open(id) { location.hash = "#game=" + id; load(); }
 /* ---- game ---- */
 const ptsOf = r => (r?.ft_m || 0) + 2 * (r?.p2_m || 0) + 3 * (r?.p3_m || 0);
 function tally(game) { const t = {}; game.events.forEach(e => { const r = (t[e.pid] ||= {}); r[e.stat] = (r[e.stat] || 0) + 1; }); return t; }
-const editable = g => g.status === "open" || g.status === "rejected";
+const editable = g => g.status === "open" || g.status === "rejected" || (S.me?.admin && g.status === "submitted");        // the admin may also correct a version waiting for approval
 
 function renderGame() {
   const g = S.game, app = $("#app"), t = tally(g), ed = editable(g);
@@ -187,20 +212,20 @@ function renderGame() {
       <div class="btns">${BTNS.map(b => b ? `<button class="b ${b[2]}" data-stat="${b[0]}" title="${b[3]}" ${ed ? "" : "disabled"}>${b[1]}${r[b[0]] ? `<i>${r[b[0]]}</i>` : ""}</button>` : `<span class="sep"></span>`).join("")}</div></div>`;
   };
   const byId = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p]));
-  const last = [...g.events].reverse().slice(0, 8);
   app.innerHTML = `
     <div class="bar"><button id="back">← Matches</button>
       <div class="score">${total(g.home)} – ${total(g.away)}<small>${esc(tn(g.home))} – ${esc(tn(g.away))} · <span class="pill ${g.status}">${STATE[g.status]}</span></small></div>
       ${ed ? clockHtml() : ""}
       <button id="undo" ${ed ? "" : "disabled"} title="Undo the last action (Ctrl/Cmd + Z)">↶ Undo</button><a href="/analytics/api/games/${g.id}/export.csv"><button>Download CSV</button></a>
-      ${ed ? `<button class="accent" id="submit" title="Send to the admin, who decides if it goes on the site">Send for approval</button>` : ""}${g.status === "submitted" ? `<button id="reopen">Take back to edit</button>` : ""}</div>
+      ${ed && g.status !== "submitted" ? `<button class="accent" id="submit" title="Send to the admin, who decides if it goes on the site">Send for approval</button>` : ""}${g.status === "submitted" ? `<button id="reopen">Take back to edit</button>` : ""}</div>
+    ${g.analyst && g.analyst !== S.me.name ? `<div class="note other">This is the version of <b>${esc(g.analyst)}</b>${S.me.admin ? ": you are editing it as Admin, and every change you make is logged under your name" : ""}.</div>` : ""}
     ${g.status === "rejected" && g.note ? `<div class="note"><b>The admin sent it back:</b> ${esc(g.note)}</div>` : ""}
     ${g.status === "submitted" ? `<div class="note">Sent for approval. You can still take it back to edit it until the admin decides.</div>` : ""}
     ${g.status === "published" ? `<div class="note">Approved: these stats are on the site.</div>` : ""}
     <div class="teams">${[g.home, g.away].map(c => `<div class="team"><h3>${esc(tn(c))}</h3>${courtBar(c, ed)}${g.players[c].map(p => row(p, c)).join("") || '<span class="muted">No players for this team.</span>'}</div>`).join("")}</div>
     <div class="muted legend">Click a button to add it to that player. Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound. The orange number is how many that player has. Wrong click? Undo, or remove it below.<br>
       <b>On the court:</b> mark the five of each team (● = on the court, ○ = bench). To substitute, tap the player who comes on or goes off and choose who replaces him: his time on the court (it follows the game clock above) and his +/- are counted for you.</div>
-    <div class="log"><h2>Last actions</h2>${last.map(e => e.stat === "lineup" ? `<div><span class="muted">${e.q ? qName(e.q) + " " + fmt(e.t) : e.at}</span><b>${esc(tn(e.team))}</b> on the court: ${e.on.map(id => esc((byId[id]?.name || id).split(" ").slice(-1)[0])).join(", ") || "nobody"}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>` : `<div><span class="muted">${e.q ? qName(e.q) + " " + fmt(e.t) : e.at}</span><b>${esc(byId[e.pid]?.name || e.pid)}</b> ${esc(LABEL[e.stat])}${ed ? `<button data-rm="${e.n}">remove</button>` : ""}</div>`).join("") || '<span class="muted">Nothing yet.</span>'}</div>`;
+    ${historyHtml(g, ed, byId)}`;
   $("#back").onclick = () => { location.hash = ""; load(); };
   $("#undo").onclick = undo;
   if ($("#submit")) $("#submit").onclick = submit;
@@ -212,7 +237,7 @@ function renderGame() {
   app.querySelectorAll("[data-pickstart]").forEach(b => b.onclick = () => { const c = b.dataset.pickstart; S.pick = { team: c, sel: new Set(S.game.court.on[c]) }; renderGame(); });
   app.querySelectorAll("[data-pickok]").forEach(b => b.onclick = async () => { const pk = S.pick; S.pick = null; await setLineup(pk.team, [...pk.sel]); });
   app.querySelectorAll("[data-pickno]").forEach(b => b.onclick = () => { S.pick = null; renderGame(); });
-  app.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { S.game = await api(`/games/${g.id}/remove`, "POST", { n: +b.dataset.rm }); renderGame(); });
+  histWire();
 }
 async function add(pid, stat) {
   const y = scrollY;
@@ -223,6 +248,73 @@ async function add(pid, stat) {
   if (co.used && co.on[code].length === 5 && !co.on[code].includes(pid)) toast(`${S.game.players[code].find(p => p.id === pid).name} is on the bench: tap ○ to bring him on.`);   // a hint, never a block
   renderGame(); scrollTo(0, y);
   const el = document.getElementById("pts-" + pid); if (el) { el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 500); }
+}
+/* ---- history: every action, newest first; the analyst can change or remove any of them, and add one at a given time ---- */
+function orderedEvents(g) {
+  let now = 0;
+  return g.events.map(e => { if (e.q) now = elapsed(e.q, e.t); return [now, e]; }).sort((a, b) => a[0] - b[0] || a[1].n - b[1].n).map(x => x[1]);     // the same order the server uses
+}
+const clockLbl = e => e.q ? qName(e.q) + " " + fmt(e.t) : e.at;
+function evText(g, e) {
+  const nm = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p.name]));
+  return e.stat === "lineup" ? `${tn(e.team)} on the court: ${e.on.map(id => (nm[id] || id).split(" ").slice(-1)[0]).join(", ") || "nobody"}` : `${nm[e.pid] || e.pid} · ${LABEL[e.stat]}`;
+}
+const playerOpts = (g, sel) => Object.entries(g.players).map(([c, ps]) => `<optgroup label="${esc(tn(c))}">${ps.map(p => `<option value="${p.id}" ${p.id === sel ? "selected" : ""}>#${p.number} ${esc(p.name)}</option>`).join("")}</optgroup>`).join("");
+const statOpts = sel => BTNS.filter(Boolean).map(b => `<option value="${b[0]}" ${b[0] === sel ? "selected" : ""}>${b[3]}</option>`).join("");
+const qOpts = sel => QN.map((n, i) => `<option value="${i + 1}" ${sel === i + 1 ? "selected" : ""}>${n}</option>`).join("");
+function historyHtml(g, ed, byId) {
+  const seq = orderedEvents(g).reverse(), log = (g.log || []).slice().reverse();
+  const c = ed ? clk() : null, nowT = c ? fmt(clkNow(c)) : "";
+  const addForm = ed ? `<div class="hform"><b>Add an action</b><select id="af-p">${playerOpts(g)}</select><select id="af-s">${statOpts("p2_m")}</select>
+      <select id="af-q">${qOpts(c.q)}</select><input id="af-t" size="5" style="width:70px" value="${nowT}" title="Time left in the quarter (mm:ss); empty = no clock"><button class="accent" id="af-go">Add</button></div>` : "";
+  const row = e => {
+    const txt = evText(g, e);
+    if (S.edit === e.n) return `<div class="hrow editing" data-n="${e.n}"><div class="hform">${e.stat === "lineup" ? `<b>${esc(txt)}</b>` : `<select data-ep>${playerOpts(g, e.pid)}</select><select data-es>${statOpts(e.stat)}</select>`}
+        <select data-eq>${qOpts(e.q)}</select><input data-et size="5" style="width:70px" value="${e.q ? fmt(e.t) : ""}" placeholder="mm:ss" title="Time left in the quarter; empty = no clock">
+        ${e.stat === "lineup" ? `<button data-hfive="${e.n}">Change the five…</button>` : ""}<button class="accent" data-hsave="${e.n}">Save</button><button data-hcancel>Cancel</button></div></div>`;
+    return `<div class="hrow" data-n="${e.n}" data-t="${esc((txt + " " + (e.by || "") + " " + clockLbl(e)).toLowerCase())}"><span class="tm">${esc(clockLbl(e))}</span><span class="by" title="entered by">${esc(e.by || "—")}</span>
+      <span>${e.stat === "lineup" ? "🔁 " : ""}${esc(txt)}${e.edited_by ? ` <span class="ed">· changed by ${esc(e.edited_by)}</span>` : ""}</span>
+      ${ed ? `<span class="ba"><button data-hedit="${e.n}" title="Change this action">✎</button><button data-rm="${e.n}" title="Remove this action">🗑</button></span>` : "<span></span>"}</div>`;
+  };
+  return `<div class="hist"><h2>History <span class="muted" style="text-transform:none;letter-spacing:0">${g.events.length} actions · in game order, newest first</span></h2>${addForm}
+    <div class="hbar"><input id="hf" placeholder="Filter: a player, an action, an analyst, a time…"></div>
+    <div class="hlist" id="hlist">${seq.map(row).join("") || '<div class="muted" style="padding:10px">Nothing yet.</div>'}</div>
+    <details class="clog"><summary>Change log (${log.length}): who did what</summary>${log.slice(0, 300).map(l => `<div class="ln"><span>${esc(l.at)}</span><b>${esc(l.by)}</b><span>${esc(l.detail)}</span></div>`).join("") || '<span class="muted">Nothing yet.</span>'}</details></div>`;
+}
+function parseClock(v) { v = (v || "").trim(); if (!v) return null; const m = v.match(/^(\d{1,2}):(\d{2})$/); return m ? +m[1] * 60 + +m[2] : false; }
+function histWire() {
+  const app = $("#app"), g = S.game;
+  const hf = $("#hf"); if (hf) hf.oninput = () => { const f = hf.value.trim().toLowerCase(); app.querySelectorAll(".hrow[data-t]").forEach(r => { r.hidden = !!f && !r.dataset.t.includes(f); }); };
+  app.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { if (!confirm("Remove this action?")) return; const y = scrollY; S.game = await api(`/games/${g.id}/remove`, "POST", { n: +b.dataset.rm }); renderGame(); scrollTo(0, y); });
+  app.querySelectorAll("[data-hedit]").forEach(b => b.onclick = () => { S.edit = +b.dataset.hedit; const y = scrollY; renderGame(); scrollTo(0, y); });
+  app.querySelectorAll("[data-hcancel]").forEach(b => b.onclick = () => { S.edit = null; const y = scrollY; renderGame(); scrollTo(0, y); });
+  app.querySelectorAll("[data-hsave]").forEach(b => b.onclick = async () => {
+    const n = +b.dataset.hsave, row = b.closest(".hrow"), e = g.events.find(x => x.n === n), body = { n };
+    const t = parseClock(row.querySelector("[data-et]").value);
+    if (t === false) return toast("Write the time like 6:32 (or leave it empty).");
+    body.clock = t === null ? null : { q: +row.querySelector("[data-eq]").value, t };
+    if (e.stat !== "lineup") { body.pid = row.querySelector("[data-ep]").value; body.stat = row.querySelector("[data-es]").value; }
+    S.edit = null; const y = scrollY;
+    S.game = await api(`/games/${g.id}/edit`, "POST", body); renderGame(); scrollTo(0, y);
+  });
+  app.querySelectorAll("[data-hfive]").forEach(b => b.onclick = () => {
+    const e = g.events.find(x => x.n === +b.dataset.hfive), sel = new Set(e.on), pl = g.players[e.team];
+    const m = document.createElement("div"); m.id = "subm";
+    const paint = () => { m.innerHTML = `<div><h4>${esc(tn(e.team))} on the court (${sel.size}/5)</h4>${pl.map(p => `<button class="o" data-id="${p.id}" style="${sel.has(p.id) ? "background:#173d2a" : ""}"><b>#${p.number}</b> ${esc(p.name)}<small>${sel.has(p.id) ? "✓" : ""}</small></button>`).join("")}
+      <button class="o accent" data-ok>Save the five</button><button class="o" data-no style="background:transparent;color:var(--muted)">Cancel</button></div>`;
+      m.querySelectorAll("[data-id]").forEach(x => x.onclick = () => { sel.has(x.dataset.id) ? sel.delete(x.dataset.id) : sel.size < 5 ? sel.add(x.dataset.id) : toast("Five players at most."); paint(); });
+      m.querySelector("[data-no]").onclick = () => m.remove();
+      m.querySelector("[data-ok]").onclick = async () => { m.remove(); const y = scrollY; S.game = await api(`/games/${g.id}/edit`, "POST", { n: e.n, on: [...sel] }); renderGame(); scrollTo(0, y); }; };
+    paint(); document.body.append(m);
+  });
+  const go = $("#af-go");
+  if (go) go.onclick = async () => {
+    const t = parseClock($("#af-t").value);
+    if (t === false) return toast("Write the time like 6:32 (or leave it empty).");
+    const y = scrollY;
+    S.game = await api(`/games/${g.id}/event`, "POST", { pid: $("#af-p").value, stat: $("#af-s").value, ...(t === null ? {} : { q: +$("#af-q").value, t }) });
+    renderGame(); scrollTo(0, y); toast("Added.", true);
+  };
 }
 /* ---- who is on the court: five per team, time on the court from the game clock, plus/minus ---- */
 const elapsed = (q, left) => { let s = 0; for (let i = 1; i < q; i++) s += len(i); return s + len(q) - left; };

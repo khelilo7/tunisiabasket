@@ -28,11 +28,11 @@ for method, path in [("get", "/analytics/api/data"), ("post", "/analytics/api/ga
                      ("post", "/admin/api/analytics/j12-ca-esg/approve")]:
     check(getattr(visitor, method)(path, environ_overrides=ip("198.51.100.1")).status_code == 401, f"anonymous {method.upper()} {path} must be 401")
 check(visitor.get("/analytics/api/me").get_json()["analyst"] is False, "anonymous is not an analyst")
-codes = [visitor.post("/analytics/api/login", json={"token": "bad%d" % i}, environ_overrides=ip("198.51.100.2")).status_code for i in range(6)]
+codes = [visitor.post("/analytics/api/login", json={"token": "bad%d" % i, "name": "Guesser"}, environ_overrides=ip("198.51.100.2")).status_code for i in range(6)]
 check(codes == [401] * 5 + [429], f"lockout after 5 wrong tokens: {codes}")
-check(visitor.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333"}, environ_overrides=ip("198.51.100.2")).status_code == 429, "locked out even with the right token")
-check(analyst.post("/analytics/api/login", json={"token": "TEST-TOKEN-0000-1111"}, environ_overrides=ip("198.51.100.3")).status_code == 401, "the ADMIN token is not an analytics token")
-r = analyst.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333"}, environ_overrides=ip("198.51.100.3"))
+check(visitor.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333", "name": "Locked Out"}, environ_overrides=ip("198.51.100.2")).status_code == 429, "locked out even with the right token")
+check(analyst.post("/analytics/api/login", json={"token": "TEST-TOKEN-0000-1111", "name": "Tester One"}, environ_overrides=ip("198.51.100.3")).status_code == 401, "the ADMIN token is not an analytics token")
+r = analyst.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333", "name": "Tester One"}, environ_overrides=ip("198.51.100.3"))
 check(r.status_code == 200 and "HttpOnly" in r.headers["Set-Cookie"] and "SameSite=Strict" in r.headers["Set-Cookie"], "analyst login, HttpOnly + SameSite=Strict cookie")
 check(analyst.get("/analytics/api/me").get_json()["analyst"] is True, "signed in")
 for method, path in [("get", "/admin/api/official"), ("get", "/admin/api/analytics"), ("post", "/admin/api/analytics/j12-ca-esg/approve"), ("get", "/admin/api/roster")]:
@@ -59,7 +59,7 @@ check(any(v["status"] == "partial" and v["recorded"] == "CA" for v in todo) or n
 # 3. counting
 g = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 12, "date": "2026-11-11"}).get_json()
 gid = g["id"]
-check(gid == "j12-ca-esg" and g["status"] == "open" and [p["id"] for p in g["players"]["CA"]] == [p["id"] for p in ca], "game created with the site's players")
+check(gid == "j12-ca-esg--tester-one" and g["analyst"] == "Tester One" and g["status"] == "open" and [p["id"] for p in g["players"]["CA"]] == [p["id"] for p in ca], "game created with the site's players")
 check(analyst.post("/analytics/api/games", json={"home": "CA", "away": "CA"}).status_code == 422 and analyst.post("/analytics/api/games", json={"home": "CA", "away": "ZZZ"}).status_code == 422, "bad teams refused")
 ev = lambda pid, stat: analyst.post(f"/analytics/api/games/{gid}/event", json={"pid": pid, "stat": stat})
 a, b, c_ = ca[0]["id"], ca[1]["id"], esg[0]["id"]
@@ -109,7 +109,7 @@ analyst.post(f"/analytics/api/games/{gid}/submit", json={"matchday": 12, "date":
 check(admin.post(f"/admin/api/analytics/{gid}/approve", json={}, environ_overrides=ip("198.51.100.5")).status_code == 200, "approved")
 doc = json.loads((config.DATA_DIR / "partial_games.json").read_text())
 ids = sorted(x["id"] for x in doc["games"])
-check(ids == ["live-j12-ca-esg-ca", "live-j12-ca-esg-esg"], f"two one-team sheets published: {ids}")
+check(ids == ["live-j12-ca-esg--tester-one-ca", "live-j12-ca-esg--tester-one-esg"], f"two one-team sheets published: {ids}")
 sheet = next(x for x in doc["games"] if x["recorded"] == "CA")
 check(sheet["matchday"] == 12 and sheet["date"] == "2026-11-11" and sheet["players"][0]["pts"] == 6 and sheet["players"][0]["oreb"] == 1, "the sheet carries the counted stats")
 
@@ -118,7 +118,13 @@ check(public_partials() == [], "approved, but ignored while the official result 
 o = stats.load_official()
 o["results"].append({"matchday": 12, "home": "CA", "away": "ESG", "home_score": 8, "away_score": 3})
 (config.DATA_DIR / "official.json").write_text(json.dumps(o))
-check(sorted(public_partials()) == ["live-j12-ca-esg-ca", "live-j12-ca-esg-esg"], "with the official result, both sheets are on the site")
+check(public_partials() == ["live-j12-ca-esg--tester-one"], f"with the official result, the two sheets of the game show as ONE game: {public_partials()}")
+mg = next(x for x in stats.build()["partials"] if x["id"] == "live-j12-ca-esg--tester-one")
+check(mg["recorded_all"] == ["CA", "ESG"] and all(t["players"] for t in mg["teams"]) and all(t["recorded"] for t in mg["teams"]), "both teams' players are on the game (not only one team)")
+check(stats.partial_game("live-j12-ca-esg--tester-one-esg") is not None and stats.partial_game("live-j12-ca-esg--tester-one-ca")["id"] == mg["id"], "the old address of a sheet still opens the game")
+api_ = app.app.test_client().get(f"/api/games/{mg['id']}").get_json()
+check(all(t["players"] for t in api_["teams"]) and api_["recorded_all"] == ["CA", "ESG"], "the game page API carries both teams")
+check(stats.box_counts([], [mg]).get("CA", 0) + stats.box_counts([], [mg]).get("ESG", 0) == sum(1 for t in mg["teams"] if t["complete"]), "box scores are counted per complete team")
 b2 = stats.build()
 ca_row = next(p for p in b2["players"] if p["id"] == a)
 last = ca_row["log"][-1]
@@ -179,6 +185,100 @@ analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": 
 check(pub.get("/api/live").get_json()["games"] == [], "sent for approval: no longer live")
 check(admin.post(f"/admin/api/analytics/{lv}/live", json={"on": True}, environ_overrides=ip("198.51.100.5")).status_code == 409, "a game that is not being counted cannot be live")
 analyst.delete(f"/analytics/api/games/{lv}")
+
+# 10. names, one version per analyst, editing any action, the change log
+anon = app.app.test_client()
+for bad in ({"token": "TEST-ANALYST-2222-3333"}, {"token": "TEST-ANALYST-2222-3333", "name": "x"}, {"token": "TEST-ANALYST-2222-3333", "name": "<b>Eve</b>"}, {"token": "TEST-ANALYST-2222-3333", "name": "  "}):
+    check(anon.post("/analytics/api/login", json=bad, environ_overrides=ip("198.51.100.60")).status_code == 422, f"a name is compulsory: {bad.get('name')!r}")
+check(analytics.name_slug("Tester One") == analytics.name_slug("tester  one") == "tester-one" and analytics.name_slug("أحمد") != analytics.name_slug("محمد"), "one key per name, an Arabic name still gets its own")
+two = app.app.test_client()
+check(two.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333", "name": "Tester Two"}, environ_overrides=ip("198.51.100.61")).status_code == 200, "a second analyst signs in with the same token and another name")
+check(analyst.get("/analytics/api/me").get_json()["name"] == "Tester One" and two.get("/analytics/api/me").get_json()["name"] == "Tester Two", "the page knows who is who")
+mk = lambda cl: cl.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 16, "date": "2026-11-28"}).get_json()
+ga, gb = mk(analyst), mk(two)
+check(ga["id"] == "j16-ca-esg--tester-one" and gb["id"] == "j16-ca-esg--tester-two" and ga["id"] != gb["id"], f"two names, two versions of the same game: {ga['id']} {gb['id']}")
+check(mk(analyst)["id"] == ga["id"] and len(ga["events"]) == 0, "the same name opening the game again continues its own version")
+check([g["id"] for g in two.get("/analytics/api/data").get_json()["games"] if g["base"] == "j16-ca-esg"] == [gb["id"]], "an analyst sees only his own versions")
+check(two.get(f"/analytics/api/games/{ga['id']}").status_code == 404 and two.post(f"/analytics/api/games/{ga['id']}/event", json={"pid": ca[0]["id"], "stat": "p2_m"}).status_code == 404 and two.delete(f"/analytics/api/games/{ga['id']}").status_code == 404, "another analyst's version does not exist for him")
+adm = app.app.test_client()
+adm.post("/admin/api/login", json={"token": "TEST-TOKEN-0000-1111"}, environ_overrides=ip("198.51.100.62"))
+seen = {g["id"]: g["analyst"] for g in adm.get("/analytics/api/data", environ_overrides=ip("198.51.100.62")).get_json()["games"] if g["base"] == "j16-ca-esg"}
+check(seen == {ga["id"]: "Tester One", gb["id"]: "Tester Two"}, f"the admin sees every version with its analyst: {seen}")
+
+A = f"/analytics/api/games/{ga['id']}"
+evA = lambda pid, stat, q=None, t=None: analyst.post(f"{A}/event", json={"pid": pid, "stat": stat, **({"q": q, "t": t} if q else {})})
+five = [p["id"] for p in ca[:5]]
+bench = ca[5]["id"]
+for pid, stat in [(five[0], "p3_m"), (five[1], "p2_m"), (five[2], "ast")]:
+    evA(pid, stat)
+g1 = analyst.get(A).get_json()
+check(all(e["by"] == "Tester One" for e in g1["events"]) and [x["op"] for x in g1["log"]][:2] == ["start", "add"], "every action is stamped with its analyst and logged")
+first, second = g1["events"][0]["n"], g1["events"][1]["n"]
+r = analyst.post(f"{A}/remove", json={"n": first}).get_json()
+check(len(r["events"]) == 2 and all(e["n"] != first for e in r["events"]) and r["log"][-1]["op"] == "remove" and "removed" in r["log"][-1]["detail"], "any action can be removed, not only the last ones")
+r = analyst.post(f"{A}/edit", json={"n": second, "pid": five[3], "stat": "p3_m", "clock": {"q": 2, "t": 311}})
+e2 = next(e for e in r.get_json()["events"] if e["n"] == second)
+check(r.status_code == 200 and e2["pid"] == five[3] and e2["stat"] == "p3_m" and (e2["q"], e2["t"]) == (2, 311) and e2["edited_by"] == "Tester One" and e2["by"] == "Tester One", "an action can be changed: player, action, time")
+check("changed" in r.get_json()["log"][-1]["detail"] and "→" in r.get_json()["log"][-1]["detail"], "the change log says what was changed")
+check(analyst.post(f"{A}/edit", json={"n": second, "pid": "nobody-1"}).status_code == 422 and analyst.post(f"{A}/edit", json={"n": second, "stat": "dunk"}).status_code == 422
+      and analyst.post(f"{A}/edit", json={"n": 9999, "stat": "ast"}).status_code == 422 and analyst.post(f"{A}/edit", json={"n": second, "clock": {"q": 99, "t": 1}}).status_code == 422, "bad edits are refused")
+check("q" not in next(e for e in analyst.post(f"{A}/edit", json={"n": second, "clock": None}).get_json()["events"] if e["n"] == second), "the clock of an action can be taken off")
+# an action entered late but timed earlier falls in its place: the five that leaves at 5:00 still gets the points scored before
+analyst.post(f"{A}/lineup", json={"team": "CA", "on": five, "q": 1, "t": 600})
+analyst.post(f"{A}/lineup", json={"team": "CA", "on": five[:4] + [bench], "q": 1, "t": 300})
+analyst.post(f"{A}/event", json={"pid": five[0], "stat": "p2_m", "q": 1, "t": 400})                     # entered after the substitution, played before it
+pmA = analyst.get(A).get_json()["court"]["pm"]
+check(pmA.get(five[4]) == 2 and pmA.get(bench, 0) == 0, f"actions are placed by the game clock: {pmA}")
+# the admin edits every version; an analyst cannot touch a version that was sent for approval
+sub = two.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[0]["id"], "stat": "p2_m"}).get_json()
+check(two.post(f"/analytics/api/games/{gb['id']}/submit", json={"matchday": 16, "date": "2026-11-28"}).status_code == 200, "version B sent for approval")
+check(two.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[0]["id"], "stat": "p2_m"}).status_code == 409, "an analyst cannot change a version waiting for approval")
+r = adm.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[1]["id"], "stat": "p3_m"}, environ_overrides=ip("198.51.100.62"))
+check(r.status_code == 200 and r.get_json()["events"][-1]["by"] == "Admin" and r.get_json()["status"] == "submitted", "the admin can add to a version waiting for approval, stamped Admin")
+r = adm.post(f"/analytics/api/games/{gb['id']}/edit", json={"n": r.get_json()["events"][-1]["n"], "stat": "ast"}, environ_overrides=ip("198.51.100.62"))
+check(r.status_code == 200 and r.get_json()["log"][-1]["by"] == "Admin", "and edit it, logged as Admin")
+# the admin tab: every version with its analyst and log; approving one takes the other off the site
+analyst.post(f"{A}/submit", json={"matchday": 16, "date": "2026-11-28", "q": 1, "t": 0})
+lst = {x["id"]: x for x in adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["games"]}
+check(lst[ga["id"]]["analyst"] == "Tester One" and lst[gb["id"]]["analyst"] == "Tester Two" and lst[gb["id"]]["log"] and lst[ga["id"]]["editable"], "the admin list shows each version, its analyst and its log")
+ap = lambda gid_: adm.post(f"/admin/api/analytics/{gid_}/approve", json={}, environ_overrides=ip("198.51.100.62"))
+check(ap(ga["id"]).status_code == 200 and ap(gb["id"]).status_code == 200, "both versions approved one after the other")
+stored = lambda: sorted(x["id"] for x in json.loads((config.DATA_DIR / "partial_games.json").read_text())["games"] if x["id"].startswith("live-j16-"))
+pub = stored()
+check(pub and all("tester-two" in x for x in pub) and any("tester-two" in x for x in pub), f"only one version is on the site: {pub}")
+st = {x["id"]: x["status"] for x in adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["games"]}
+check(st[gb["id"]] == "published" and st[ga["id"]] == "submitted", f"the first version stepped down: {st}")
+check(adm.post(f"/admin/api/analytics/{gb['id']}/unpublish", json={}, environ_overrides=ip("198.51.100.62")).status_code == 200 and stored() == [], "unpublishing removes exactly that version's sheets")
+# live: one version of a game at a time
+for who_, cl in ((ga, analyst), (gb, two)):
+    cl.post(f"/analytics/api/games/{who_['id']}/reopen", json={})
+live_ = lambda gid_, on: adm.post(f"/admin/api/analytics/{gid_}/live", json={"on": on}, environ_overrides=ip("198.51.100.62"))
+live_(ga["id"], True)
+live_(gb["id"], True)
+cnt = {x["id"]: x["live"] for x in adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["counting"]}
+check(cnt.get(gb["id"]) and not cnt.get(ga["id"]) and [g["id"] for g in anon.get("/api/live").get_json()["games"] if g["id"].startswith("j16-")] == [gb["id"]], f"only one version of a game is live: {cnt}")
+
+# 11. games from the video list: added to the board on request, and only a game without a full box score
+dv = analyst.get("/analytics/api/data").get_json()
+todo0 = dv["video"][0]
+check(todo0["base"] == f"v{todo0['matchday']}-{todo0['home'].lower()}-{todo0['away'].lower()}", "each game of the video list has its own key")
+full_game = next(g for g in stats.build()["games"] if g.get("matchday_no"))
+fa, fb = [t["code"] for t in full_game["teams"]]
+r = analyst.post("/analytics/api/games", json={"home": fa, "away": fb, "matchday": full_game["matchday_no"], "video": True})
+check(r.status_code == 422 and "full box score" in r.get_json()["error"], "a game that already has a full box score cannot be added from the video list")
+check(analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 55, "video": True}).status_code == 422, "nor a game with no official result")
+check(analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "video": True}).status_code == 422, "nor one with no matchday")
+r = analyst.post("/analytics/api/games", json={"home": todo0["away"], "away": todo0["home"], "matchday": todo0["matchday"], "video": True})
+vg = r.get_json()
+check(r.status_code == 200 and vg["kind"] == "video" and vg["id"] == f"{todo0['base']}--tester-one" and (vg["home"], vg["away"]) == (todo0["home"], todo0["away"]), f"a game without a full box score is added to the board (as in the official result): {vg.get('id')}")
+check(analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "matchday": todo0["matchday"], "video": True}).get_json()["id"] == vg["id"], "adding it twice gives the same game")
+check(any(g["id"] == vg["id"] and g["kind"] == "video" for g in analyst.get("/analytics/api/data").get_json()["games"]) and not any(g["kind"] == "video" for g in two.get("/analytics/api/data").get_json()["games"]), "it is on this analyst's board only, flagged as a video game")
+live_c = analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "matchday": todo0["matchday"]}).get_json()
+check(live_c["kind"] == "live" and live_c["id"] != vg["id"], "counting the same match live is a separate game")
+check(adm.post(f"/admin/api/analytics/{vg['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62")).status_code == 409, "a video game is never live")
+check(analyst.post(f"/analytics/api/games/{vg['id']}/event", json={"pid": vg["players"][vg["home"]][0]["id"], "stat": "p2_m"}).status_code == 200, "and it is counted like any other game")
+for gid_ in (vg["id"], live_c["id"]):
+    analyst.delete(f"/analytics/api/games/{gid_}")
 
 print("FAILED:\n  " + "\n  ".join(fails) if fails else "analytics checks passed")
 sys.exit(1 if fails else 0)
