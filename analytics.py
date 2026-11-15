@@ -408,7 +408,9 @@ def create():
     name, slug = who()
     video, date = bool(b.get("video")), b.get("date")
     base = f"j{md}-{home.lower()}-{away.lower()}" if md else f"x-{home.lower()}-{away.lower()}-{time.strftime('%m%d-%H%M')}"
-    if video:                                          # a game counted from the video: only one that has no full box score (nothing at all, or a one-team / some-players sheet)
+    if md and not video and any(stats.matchday_hint(g) == md and {t["code"] for t in g["teams"]} == {home, away} for g in stats.build()["games"]):
+        return jsonify(error="This game already has a full box score on the site: it can no longer be counted."), 422
+    if video:                                        # a game counted from the video: only one that has no full box score (nothing at all, or a one-team / some-players sheet)
         todo = next((v for v in video_todo() if v["matchday"] == md and {v["home"], v["away"]} == {home, away}), None)
         if not todo:
             return jsonify(error="Only a game that has no box score, or only a partial one, can be counted from video: this one already has a full box score, or no official result yet."), 422

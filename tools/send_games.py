@@ -1,6 +1,8 @@
 """Send box scores transcribed by hand (JSON files in exports/games_inbox/) to a running site through its admin panel.
 
-    python tools/send_games.py --site https://tunisiabasket.com [--dry-run]
+    python tools/send_games.py --site https://tunisiabasket.com [--dry-run] [FILE.json ...]
+
+With no file names every JSON of the inbox is sent; with names (looked up in the inbox) only those.
 
 For sheets the OCR cannot read (for example phone screenshots). Each game is checked by the site (points add up, rebounds, shooting, minutes...) and linked to the official result of
 its matchday. Sending a game twice only rewrites it. The admin token is typed, never shown or stored.
@@ -20,9 +22,13 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--site", required=True)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("only", nargs="*", help="inbox file names to send (default: all)")
     a = ap.parse_args()
     site = a.site.rstrip("/")
-    files = sorted(INBOX.glob("*.json"))
+    files = sorted(INBOX / n for n in a.only) if a.only else sorted(INBOX.glob("*.json"))
+    missing = [f.name for f in files if not f.is_file()]
+    if missing:
+        sys.exit(f"Not in {INBOX}: {', '.join(missing)}")
     if not files:
         sys.exit(f"No game files in {INBOX}.")
     games = [json.loads(f.read_text()) for f in files]
