@@ -136,6 +136,7 @@ An icon and a word per page (Home, Live, Standings, Players, MVP, Predictions, N
 - **Brand:** `static/img/` (logo, favicons, app icons, share image), `static/site.webmanifest`; the original artwork is `assets/brand/logo-source.jpg`.
 - **Team logos:** the clubs' own logos are in `assets/team-logos-src/<CODE>.<png|jpg>`. `python tools/build_team_logos.py` crops each to its real content, removes
   non-white backgrounds, scales every logo to the same size and centres it on a round white badge: `static/img/teams/<CODE>.png` (256 px).
+- **Corrections shipped with a release:** `assets/game_fixes/<game id>.json` (a complete game, as `tools/send_games.py` would send it) replaces that game in `data/games` ONCE at the next start-up (`game_fixes.py`): the old copy goes to `data/games_replaced/`, a fix that fails the checks is refused, a game the site does not have is never created, and a game sent or edited from the admin afterwards is not overwritten. Test: `tests/test_game_fixes.py`.
   To change a logo, replace its source file and run the script again. The logos belong to the clubs.
 
 ## Phase MVP: stats race and fan vote (mvp.py)

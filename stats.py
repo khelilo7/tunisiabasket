@@ -11,6 +11,9 @@ from collections import Counter, defaultdict
 import config
 
 config.ensure_data()
+import game_fixes  # noqa: E402
+
+game_fixes.apply()   # corrections that ship with this release (once each; see game_fixes.py)
 GAMES_DIR = config.DATA_DIR / "games"
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
