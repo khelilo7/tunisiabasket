@@ -20,7 +20,6 @@ Path(DATA, "official.json").write_text(json.dumps(official))
 import analytics  # noqa: E402
 import app  # noqa: E402
 import auth  # noqa: E402
-import stats  # noqa: E402
 import video_analysis_sheet as vas  # noqa: E402
 
 auth.time.sleep = lambda s: None
