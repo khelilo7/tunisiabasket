@@ -342,10 +342,12 @@
   .fm { width:min(560px,100%); } .fm .muh { padding:16px 18px; border-bottom:1px solid var(--line); }
   .fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; padding:14px 16px; max-height:62vh; overflow:auto; }
   .fteam { display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px; border-radius:12px; font-size:12px; font-weight:700; text-align:center; line-height:1.2; }
-  .fteam.on { border-color:var(--acc); background:var(--glow); } .fnone { margin:0 16px 16px; }
+  .fteam.on { border-color:var(--acc); background:var(--glow); } .fnone { margin:0 16px 16px; } .fask { display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; padding:0 16px 16px; } .fask button { background:none; border:0; color:var(--mut); text-decoration:underline; cursor:pointer; font-size:13px; padding:6px 4px; }
   .fbtn { padding:4px 12px; border-radius:99px; font-size:13px; font-weight:700; } .fbtn.on { background:var(--acc); border-color:var(--acc); color:#1a1205; }
   tr.fav td:first-child { box-shadow:inset 3px 0 0 var(--acc); }
+  body.busy #app { opacity:.55; transition:opacity .25s; } body.busy::before { content:''; position:fixed; left:0; top:0; height:3px; width:40%; background:var(--acc); z-index:99; animation:busybar 1s ease-in-out infinite; } @keyframes busybar { 0% { left:-40%; } 100% { left:100%; } }
   .tsg td.l { white-space:normal; }
+  .benchrow { display:flex; flex-wrap:wrap; gap:8px 14px; align-items:center; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); } .bp2 { display:flex; gap:9px; align-items:center; background:var(--bg); border-radius:12px; padding:6px 12px 6px 8px; } .bp2 span { display:flex; flex-direction:column; min-width:0; } .bp2 small { color:var(--mut); font-size:12px; } .bp2:hover { outline:1px solid var(--acc); }
   main.wide { max-width:1400px; }
   .withside { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px; align-items:start; } .withside > aside { position:sticky; top:68px; display:grid; gap:12px; }
   .withside > div { min-width:0; }
@@ -393,6 +395,7 @@
   .sb.s-facebook, .sb.s-youtube { padding:13px 22px; font-size:15px; }
   .ini { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--pill); color:var(--mut); font-size:9px; font-weight:800; flex:none; }
   .n1grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); }
+  .n1table td.l { white-space:normal; min-width:150px; } .n1table .tn { align-items:center; }
   .n1g .n1s { text-align:center; }
   .n1g { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--line); } .n1g .tn:last-child { justify-content:flex-end; text-align:right; } .n1g .win { font-weight:800; }
   .seg.league { margin-bottom:8px; } .seg.league a.on { background:var(--acc); color:#1a1205; }
@@ -429,6 +432,22 @@
 <footer><span>{{LEGAL}}</span><span class="fright"><a href="{{ABOUT}}">{{ABOUTLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
 
 <script>
+// Instant navigation. GET /api/* answers are kept for a minute and shared by simultaneous requests (a page asking for what another page just asked costs nothing); any POST clears them so a vote
+// or a save is never hidden; the pages likely to be opened next are fetched in advance (see prefetchFor). /api/live is never cached.
+(() => {
+  const native = window.fetch.bind(window), cache = new Map(), TTL = 60000;
+  window.fetch = (input, init) => {
+    const url = typeof input === 'string' ? input : input.url, method = ((init && init.method) || 'GET').toUpperCase();
+    if (!url.startsWith('/api/')) return native(input, init);
+    if (method !== 'GET') { cache.clear(); return native(input, init); }
+    if (/^\/api\/(live|status|hit)/.test(url)) return native(input, init);
+    const hit = cache.get(url);
+    if (hit && Date.now() - hit.t < TTL) return hit.p.then(r => r.clone());
+    const p = native(input, init).then(r => { if (!r.ok) cache.delete(url); return r; }, e => { cache.delete(url); throw e; });
+    cache.set(url, { t: Date.now(), p });
+    return p.then(r => r.clone());
+  };
+})();
 const $ = s => document.querySelector(s);
 const DEFAULT = 'fr';   // French is the main language (no address prefix); English lives under /en
 const LANG = document.documentElement.lang === 'en' ? 'en' : 'fr';
@@ -550,6 +569,8 @@ const FR = {
   'Tap the team you think wins': 'Touchez l’équipe que vous voyez gagner',
   'score missing': 'score manquant', 'to come': 'à venir', 'projected': 'projeté', 'Next games': 'Prochains matchs', 'Full calendar': 'Calendrier complet',
   'Home and away assumed until the federation publishes them': 'Domicile et extérieur supposés en attendant la publication de la fédération',
+  'the next three by minutes': 'les trois suivants au temps de jeu',
+  'Never show this again': 'Ne plus me le proposer',
   // dark / light
   'Dark mode': 'Mode sombre', 'Light mode': 'Mode clair'
 };
@@ -694,7 +715,18 @@ function foldify(page) {
     d.ontoggle = () => { foldState[key] = d.open; if (d.open) stickyCols(); };
   });
 }
+let busyTimer = null;
+const busy = on => { clearTimeout(busyTimer); if (on) busyTimer = setTimeout(() => document.body.classList.add('busy'), 120); else document.body.classList.remove('busy'); };
+// warm the cache for the page behind a link (hover, touch, or idle time) so that opening it is instant
+function prefetchFor(pathname) {
+  const r = parsePath(pathname); if (!r) return;
+  const g = u => fetch(u).catch(() => {});
+  ({ home: () => g('/api/home'), standings: () => api('overview').catch(() => {}), games: () => api('games').catch(() => {}), planning: () => g('/api/planning'), players: () => api('players').catch(() => {}),
+     nat1: () => g('/api/nat1'), mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
+     team: () => api('teams/' + encodeURIComponent(r.arg)).catch(() => {}), player: () => api('players/' + ((r.arg || '').match(/^([a-z0-9]+-\d+)/) || [, r.arg])[1]).catch(() => {}), game: () => g('/api/games/' + encodeURIComponent(r.arg)) }[r.page] || (() => {}))();
+}
 async function route(keepScroll) {
+  busy(true);
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
   document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', mvp: 'players' }[r.page] || r.page)));
   $('#morebtn').classList.toggle('on', ['predict', 'news'].includes(r.page));      // on a phone the MVP vote and the news sit behind "More"
@@ -711,6 +743,7 @@ async function route(keepScroll) {
     if (pageMeta) setMeta(...pageMeta);
     track();
   } catch (e) { app.innerHTML = `<div class="empty">${_('Could not load this page')} (${esc(e.message)}).</div>`; }
+  busy(false);
   if (!keepScroll) window.scrollTo(0, 0);
 }
 
@@ -814,16 +847,24 @@ async function setFav(code) {
   favTeam = code; renderClubBtn(); try { code ? localStorage.setItem('fav', code) : localStorage.removeItem('fav'); } catch (e) { /* ignore */ }
   try { await fetch('/api/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: code, rid: ridValue() }) }); } catch (e) { /* the choice still works on this device */ }
 }
-async function openFollow() {
+async function openFollow(opts) {
+  const ask = !!(opts && opts.ask === true);
   closeModal();
   const d = await api('overview');
   const el = document.createElement('div'); el.className = 'modal-bg'; el.id = 'modal';
   el.innerHTML = `<div class="modal fm" role="dialog" aria-modal="true" aria-label="${esc(_('Follow a club'))}"><div class="muh"><div class="row"><b>⭐ ${_('Follow a club')}</b><span class="sp"></span><button class="x" aria-label="${_('Close')}">×</button></div>
     <div class="mut small" style="margin-top:4px">${_('Optional. Your club is highlighted for you on this device, and it tells us which clubs our readers follow. Nothing personal is stored.')}</div></div>
     <div class="fgrid">${[...d.standings].sort((a, b) => a.name.localeCompare(b.name)).map(t => `<button class="fteam${t.code === favTeam ? ' on' : ''}" data-fav="${esc(t.code)}">${logo(t.code, 48)}<span>${esc(t.name)}</span></button>`).join('')}</div>
-    ${favTeam ? `<button class="fnone" data-fav="">${_('Stop following')}</button>` : ''}</div>`;
-  el.onclick = async e => { if (e.target === el || e.target.closest('.x')) return closeModal(); const b = e.target.closest('[data-fav]'); if (!b) return; await setFav(b.dataset.fav); try { localStorage.removeItem('fdismiss'); } catch (e2) { /* ignore */ } closeModal(); route(true); };
+    ${favTeam ? `<button class="fnone" data-fav="">${_('Stop following')}</button>` : ''}${ask ? `<div class="fask"><button data-later>${_('Not now')}</button><button data-never>${_('Never show this again')}</button></div>` : ''}</div>`;
+  el.onclick = async e => { if (e.target.closest('[data-never]')) { try { localStorage.setItem('fnever', '1'); } catch (e2) { /* ignore */ } return closeModal(); } if (e.target === el || e.target.closest('.x') || e.target.closest('[data-later]')) return closeModal(); const b = e.target.closest('[data-fav]'); if (!b) return; await setFav(b.dataset.fav); try { localStorage.removeItem('fdismiss'); } catch (e2) { /* ignore */ } closeModal(); route(true); };
   document.body.appendChild(el); document.body.style.overflow = 'hidden';
+}
+// Asked once, at the first visit after a deployment, to whoever has no club yet: never again after that (the home card, the star of a team page and the button of the top bar stay).
+// FOLLOW_PROMPT names the deployment: it is the only thing to change if the question should be asked again one day. "Never show this again" is kept for good.
+const FOLLOW_PROMPT = '2026-11-17';
+function maybeAskClub() {
+  try { if (favTeam || localStorage.getItem('fnever') === '1' || localStorage.getItem('fprompt') === FOLLOW_PROMPT) return; } catch (e) { return; }
+  setTimeout(() => { if ($('#modal') || favTeam) return; try { localStorage.setItem('fprompt', FOLLOW_PROMPT); } catch (e) { /* ignore */ } openFollow({ ask: true }); }, 2500);
 }
 const socialRow = () => { const f0 = document.querySelector('footer .socials'); return f0 ? f0.outerHTML : ''; };
 function followCard(standings) {
@@ -1002,22 +1043,6 @@ async function castVote(pid) {
 
 // ---------------------------------------------------------------- match predictions (the split is shown only after picking that game; the server enforces it)
 let predMsg = null;
-// The predictions as a panel at the side of the Games page: one compact row per game of the next matchday
-function predRow(g, open) {
-  const side = (s, code, name) => `<button class="ptm${g.my === s ? ' on' : ''}" data-pick="${esc(g.key)}" data-side="${s}" ${open && !g.my ? '' : 'disabled'} aria-pressed="${g.my === s}" title="${esc(name)}">${logo(code, 34)}<b>${esc(code)}</b></button>`;
-  const sp = g.split;
-  return `<div class="prow">${side('H', g.home, g.home_name)}<span class="nbvs">VS</span>${side('A', g.away, g.away_name)}${g.my && sp ? `<div class="pbar" aria-label="${_('Fans’ prediction')}"><span class="${g.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 3)}">${sp.H}%</span><span class="${g.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 3)}">${sp.A}%</span></div>` : ''}</div>`;
-}
-function predPanel(r) {
-  if (!r) return `<div class="card sidecard"><div class="crown">🔮 ${_('Predictions')}</div><div class="mut small">${_('No game to predict for now.')}</div></div>`;
-  const when = r.date ? fmtDay(r.date) : '';
-  return `<div class="card sidecard" id="predpanel"><div class="crown">🔮 ${_('Predictions')} · ${_('Day')} ${r.matchday}</div>
-    <div class="mut small" style="margin-bottom:6px">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: they closed at noon on game day.'))} · ${esc(f('predProg', r.picked, r.of))}</div>
-    ${predMsg ? `<div class="votemsg${predMsg.ok ? '' : ' bad'}" role="status" style="margin:6px 0">${esc(predMsg.text)}</div>` : ''}
-    <details class="pdet"><summary>${_('Predict the winners')} · ${esc(f('predProg', r.picked, r.of))}</summary>
-    ${r.games.map(g => predRow(g, r.open)).join('')}
-    <div class="mut small" style="margin-top:8px">${_('Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.')}</div></details></div>`;
-}
 async function castPick(game, side) {
   const msg = { ok: false, text: _('Could not save your pick.') };
   try {
@@ -1242,16 +1267,15 @@ function spark(v) {
 }
 
 let gamesTeam = '';
-async function games(fromPredict) {
-  const [d, pj] = await Promise.all([api('games'), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
-  pageMeta = fromPredict ? META.predict[LANG] : META.games[LANG];
+async function games() {
+  const d = await api('games');
+  pageMeta = META.games[LANG];
   const teams = [...new Map(d.games.flatMap(g => g.teams).map(t => [t.code, t.name]))].sort((a, b) => a[1].localeCompare(b[1]));
   const list = d.games.filter(g => !gamesTeam || g.teams.some(t => t.code === gamesTeam));
   return `${standNav('games')}<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>
   <div class="toolbar"><select id="gt" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(([c, n]) => `<option value="${c}" ${c === gamesTeam ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
     <span class="mut small">${list.length} ${_('Games').toLowerCase()}</span></div>
-  <div class="withside"><div class="grid g2">${list.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>
-  <aside>${predPanel(pj && pj.round)}</aside></div>`;
+  <div class="grid g2">${list.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
 }
 
 // ---------------------------------------------------------------- courts and lineups
@@ -1409,7 +1433,7 @@ function standTable(d, compact) {
 }
 
 const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a></div>`;
-const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[['standings', _('Standings')], ['games', _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
+const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function standings() {
   const d = await api('overview');
   pageMeta = META.standings[LANG];
@@ -1420,28 +1444,31 @@ async function standings() {
 
 // ---------------------------------------------------------------- National One (the league below the Pro A): results and table only, no statistics
 let n1Team = '';
-async function nat1() {
+const N1SUB = { en: { games: 'games', planning: 'calendar' }, fr: { games: 'matchs', planning: 'calendrier' } };
+const nat1Url = tab => tab === 'standings' ? url('nat1') : url('nat1', N1SUB[LANG][tab]);
+const n1Nav = on => `<div class="seg" role="tablist">${[['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${nat1Url(k)}">${l}</a>`).join('')}</div>`;
+// Nationale 1 has the same three tabs as the Pro A: Standings, Games (the results) and Calendar (what is still to play)
+async function nat1(arg) {
+  const tab = Object.entries(N1SUB[LANG]).find(([, v]) => v === arg)?.[0] || 'standings';
   const d = await fetch('/api/nat1', { cache: 'no-cache' }).then(r => r.json());
   pageMeta = META.nat1[LANG];
-  const badge = c => `<span class="ini">${esc(String(c).slice(0, 3))}</span>`, names = d.teams, official = d.official;
+  const badge = c => `<img class="tlogo" src="/img/teams/${esc(c)}.png" alt="" width="28" height="28" loading="lazy" onerror="this.outerHTML='<span class=&quot;ini&quot;>${esc(String(c).slice(0, 3))}</span>'">`, names = d.teams, official = d.official;
   const keep = m => ({ ...m, games: m.games.filter(g => !n1Team || g.home === n1Team || g.away === n1Team) });
   const played = d.matchdays.filter(m => m.played).map(keep).filter(m => m.games.length).reverse();
   const coming = d.matchdays.filter(m => !m.played).map(keep).filter(m => m.games.length);
   const pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA', hasPF = d.standings.some(t => t.pf != null);
-  const head = `${leagueNav('nat1')}<h1>${_('National One')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>`;
+  const head = `${leagueNav('nat1')}${n1Nav(tab)}<h1>${_('National One')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>`;
   if (!d.standings.length) return `${head}<div class="empty">${_('The National One results are coming soon.')}</div>`;
-  const table = `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${hasPF ? `<th class="hm">${pf}</th><th class="hm">${pa}</th>` : ''}<th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
-    ${d.standings.map(t => `<tr style="cursor:default"><td>${t.rank}</td><td class="l"><span class="tn">${badge(t.code)}<span>${esc(t.name)}</span></span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${hasPF ? `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>` : ''}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+  const filter = `<div class="toolbar"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
   const game = (g, isPlayed) => { const has = g.home_score != null, hw = has && g.home_score > g.away_score;
     return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span>${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}<span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
-  const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${m.projected ? `<span class="pill" title="${esc(_('Home and away assumed until the federation publishes them'))}">${_('projected')}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
-  return `${head}
-  ${table}
-  <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>
-  <div class="toolbar" style="margin-top:14px"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
-  ${coming.length ? `<h2>${_('Next games')}</h2><div class="grid n1grid">${coming.slice(0, 2).map(m => day(m, false)).join('')}</div>${coming.length > 2 ? `<details class="fold" style="margin-top:10px"><summary><span>${_('Full calendar')}</span><span class="sub mut">J${coming[2].matchday}–J${coming.at(-1).matchday}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${coming.slice(2).map(m => day(m, false)).join('')}</div></details>` : ''}` : ''}
-  <h2>${_('Results')}</h2>
-  <div class="grid n1grid">${played.map(m => day(m, true)).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+  const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
+  if (tab === 'games') return `${head}${filter}<div class="grid n1grid">${played.map(m => day(m, true)).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+  if (tab === 'planning') return `${head}${filter}${coming.length ? `<h2>${_('Next games')}</h2><div class="grid n1grid">${coming.slice(0, 2).map(m => day(m, false)).join('')}</div>${coming.length > 2 ? `<details class="fold" style="margin-top:10px"><summary><span>${_('Full calendar')}</span><span class="sub mut">J${coming[2].matchday}–J${coming.at(-1).matchday}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${coming.slice(2).map(m => day(m, false)).join('')}</div></details>` : ''}` : `<div class="empty">${_('No games.')}</div>`}`;
+  const table = `<div class="card scroll"><table class="n1table"><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${hasPF ? `<th class="hm">${pf}</th><th class="hm">${pa}</th>` : ''}<th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
+    ${d.standings.map(t => `<tr style="cursor:default"><td>${t.rank}</td><td class="l"><span class="tn">${badge(t.code)}<span>${esc(t.name)}</span></span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${hasPF ? `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>` : ''}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+  return `${head}${table}
+  <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>`;
 }
 
 // ---------------------------------------------------------------- About us
@@ -1531,15 +1558,15 @@ async function team(codeArg) {
   ${teamStatsBlock(t)}
   ${t.lineup.length ? `<h2>${_('Most-played five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Season averages · click a player')}</span></div><div id="court"></div>
+   ${(t.bench || []).length ? `<div class="benchrow"><b>${_('Bench')}</b><span class="mut small">${_('the next three by minutes')}</span>${t.bench.map(b => `<a class="bp2" href="${playerUrl(b.id, b.name)}">${face(b, 34)}<span><b>${esc(title(b.name))}</b><small>#${b.number} · ${esc(posName(b.pos))} · ${b.min} ${_('min')} · ${b.pts} ${_('pts')} · ${b.reb} ${_('reb')} · ${b.ast} ${_('ast')}</small></span></a>`).join('')}</div>` : ''}
    <div class="note">${_('The five players with the most minutes this season, standing where their position puts them. Positions are inferred from stats (rebounds, blocks, assists, steals, threes) because the box scores do not list them; the admin can correct any player.')}</div></div>` : ''}
   <h2>${esc(f('history', played))}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th><th>${_('Score')}</th><th></th></tr></thead><tbody>
   ${dayRows || `<tr><td colspan="5" class="mut">${_('No matches played yet.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Next matches · calendar')}</h2>
-  ${t.projected ? `<div class="banner">${_('The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.')}</div>` : ''}
   <div class="card scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Date')}</th><th class="l">${_('Opponent')}</th><th></th></tr></thead><tbody>
-  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l">${u.date ? esc(fmtDay(u.date)) : '–'}${u.time ? ' · ' + esc(u.time) : ''}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}${t.projected ? ' · ' + _('pairing projected') : ''}</td></tr>`).join('') || `<tr><td colspan="4" class="mut">${_('No upcoming matches.')}</td></tr>`}
+  ${t.upcoming.map(u => `<tr style="cursor:default"><td class="l">J${u.matchday}</td><td class="l">${u.date ? esc(fmtDay(u.date)) : '–'}${u.time ? ' · ' + esc(u.time) : ''}</td><td class="l"><span class="tn"><span class="mut small">${u.home ? _('vs') : '@'}</span>${logo(u.opp, 26)}${teamLink(u.opp, u.opp_name)}</span></td><td class="mut small">${u.home ? _('At home') : _('Away')}</td></tr>`).join('') || `<tr><td colspan="4" class="mut">${_('No upcoming matches.')}</td></tr>`}
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
@@ -1553,7 +1580,6 @@ async function planning() {
   pageMeta = META.planning[LANG];
   const codes = Object.keys(d.teams).sort((a, b) => d.teams[a].localeCompare(d.teams[b]));
   const head = `${standNav('planning')}<h1>${_('Planning')} <span class="mut" style="font-size:15px">${esc(f('planningSub', d.matchdays[0]?.matchday, d.matchdays.at(-1)?.matchday))}</span></h1>
-  ${d.projected ? `<div class="banner">${_('The dates are the federation’s official dates. The pairings of the second phase (who plays whom, home and away) are assumed to mirror the first phase until the official fixtures are published.')}</div>` : ''}
   <div class="row" style="margin-bottom:12px"><label class="mut small" for="pt">${_('Show one team')}</label>
     <select id="pt"><option value="">${_('All teams')}</option>${codes.map(c => `<option value="${c}" ${c === planTeam ? 'selected' : ''}>${esc(d.teams[c])}</option>`).join('')}</select></div>`;
   if (planTeam) {   // only this team's matches, one line per matchday
@@ -1563,13 +1589,13 @@ async function planning() {
       const home = g.home === planTeam, opp = home ? g.away : g.home;
       const res = g.played ? `<b>${home ? g.home_score : g.away_score} – ${home ? g.away_score : g.home_score}</b>` : '';
       return `<tr style="cursor:default"><td class="l">J${m.matchday}</td><td class="l"><span class="tn"><span class="mut small">${home ? _('vs') : '@'}</span>${logo(opp, 26)}${teamLink(opp, d.teams[opp])}</span></td>
-        <td class="mut small">${home ? _('At home') : _('Away')}${d.projected && !g.played ? ' · ' + _('pairing projected') : ''}</td><td>${res}</td></tr>`;
+        <td class="mut small">${home ? _('At home') : _('Away')}</td><td>${res}</td></tr>`;
     }).join('');
     return head + `<div class="card"><div class="row" style="margin-bottom:6px"><span class="tn" style="font-size:18px;font-weight:800">${logo(planTeam, 40)}${esc(d.teams[planTeam])}</span><span class="sp"></span>
       <a href="${teamUrl(planTeam)}" class="mut small">${_('Team page')} ›</a></div>
       <div class="scroll"><table><thead><tr><th>${_('Day')}</th><th class="l">${_('Opponent')}</th><th></th><th>${_('Score')}</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
-  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}<span class="sp"></span><span class="mut small">${d.projected ? _('pairing projected') : ''}</span></div>
+  return head + `<div class="grid g2">${d.matchdays.map(m => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}<span class="sp"></span></div>
     ${m.games.map(g => `<div class="match" style="padding:6px 0;border-top:1px solid var(--line)">
       <a class="tn" href="${teamUrl(g.home)}">${logo(g.home, 22)}${esc(g.home)}</a>
       ${g.played ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small">${_('vs')}</span>`}
@@ -1769,7 +1795,14 @@ $('#syncbtn').onclick = async () => {
   $('#season').innerHTML = d.seasons.map(x => `<option ${x === d.season ? 'selected' : ''}>${x}</option>`).join('');
   $('#season').closest('label').hidden = d.seasons.length < 2;
 })();
-route(true);
+route(true).then(() => {
+  // once the first page is there: warm the likely next pages, then follow the pointer (a hover or a touch on a link fetches what that page needs)
+  const idle = window.requestIdleCallback || (f => setTimeout(f, 600));
+  idle(() => ['standings', 'nat1', 'games', 'players', 'predict'].forEach((pg, i) => setTimeout(() => prefetchFor(url(pg)), i * 150)));
+  const near = e => { const a = e.target.closest && e.target.closest('a[href]'); if (a && a.origin === location.origin) prefetchFor(a.pathname); };
+  document.addEventListener('pointerover', near, { passive: true }); document.addEventListener('touchstart', near, { passive: true });
+  maybeAskClub();
+});
 setInterval(() => { const d = $('#deadline'); if (d) d.innerHTML = '⏳ ' + deadlineLine(d.dataset.open === '1', +d.dataset.ts); }, 30000);
 // auto-refresh data every 2 minutes so new games appear without reloading
 setInterval(() => { if (!document.hidden && !document.activeElement.matches('input')) route(true); }, 120000);

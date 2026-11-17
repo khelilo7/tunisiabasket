@@ -61,6 +61,12 @@ check(all(r.get("home") in (True, False, None) for r in pl["log"]), "each log ro
 # 4. the form chips know the game to open
 m = c.get(f"/api/matchup?home={a}&away={b}").get_json()
 check(all("game_id" in x for x in m["form"][a]) and any(x["game_id"] for x in m["form"][a]), "a form chip carries the game id when the site has its box score")
+# the bench under a team's most-played five: the next three by total minutes, never a player of the five
+tv = c.get(f"/api/teams/{a}").get_json()
+ids5, bench = {p["id"] for p in tv["lineup"]}, tv["bench"]
+check(len(bench) <= 3 and bench and not ({b["id"] for b in bench} & ids5), "the bench has up to three players, none of them in the five")
+mins = {p["id"]: p["total_min"] for p in tv["players"]}
+check(all(mins[b["id"]] <= min(mins[i] for i in ids5) for b in bench) and [mins[b["id"]] for b in bench] == sorted((mins[b["id"]] for b in bench), reverse=True), "the bench is ordered by minutes, below the five")
 print("team lines and splits:", "FAILED" if fails else "ok")
 for m_ in fails:
     print(" -", m_)

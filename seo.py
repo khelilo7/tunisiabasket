@@ -30,6 +30,7 @@ SLUGS = {
 }
 LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "nat1")
 ITEM_PAGES = ("team", "player", "game")
+NAT1_TABS = {"en": {"games": "games", "planning": "calendar"}, "fr": {"games": "matchs", "planning": "calendrier"}}      # the tabs of the Nationale 1 page: /nationale-1 (table), /nationale-1/matchs, /nationale-1/calendrier
 SITE = "Tunisia Basket"
 OG_LOCALE = {"en": "en_US", "fr": "fr_FR"}
 
@@ -157,6 +158,8 @@ def path(lang, page, arg=None):
     if page == "home":
         return pre + "/"
     base = f"{pre}/{SLUGS[lang][page]}"
+    if page == "nat1" and arg:
+        arg = NAT1_TABS[lang].get(arg, arg)
     return f"{base}/{arg}" if arg else base
 
 
@@ -188,6 +191,9 @@ def parse_path(p):
         return (lang, page, parts[1] if len(parts) == 2 else None)
     if page in ITEM_PAGES:
         return (lang, page, parts[1]) if len(parts) == 2 else None
+    if page == "nat1" and len(parts) == 2:           # /nationale-1/matchs, /nationale-1/calendrier
+        tab = next((k for k, v in NAT1_TABS[lang].items() if v == parts[1]), None)
+        return (lang, page, tab) if tab else None
     return (lang, page, None) if len(parts) == 1 else None
 
 
@@ -439,7 +445,7 @@ def sitemap_xml():
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
     import content
-    entries = [("home", None), ("standings", None), ("nat1", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None)]
+    entries = [("home", None), ("standings", None), ("nat1", None), ("nat1", "games"), ("nat1", "planning"), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None)]
     if content.load_news(1):                       # an empty news page is not worth indexing
         entries.append(("news", None))
     entries += [("team", c) for c in stats.load_official()["teams"]]

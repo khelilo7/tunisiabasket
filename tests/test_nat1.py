@@ -21,6 +21,8 @@ post = lambda body: c.post("/admin/api/nat1", json=body, headers=H)
 # 1. nothing yet: an honest empty page, no crash
 check(c.get("/api/nat1").get_json()["standings"] == [], "no team yet: an empty table")
 check(c.get("/nationale-1").status_code == 200 and c.get("/en/national-one").status_code == 200, "both addresses of the page exist")
+check(all(c.get(u).status_code == 200 for u in ("/nationale-1/matchs", "/nationale-1/calendrier", "/en/national-one/games", "/en/national-one/calendar")), "the Games and Calendar tabs have their own addresses")
+check(c.get("/nationale-1/nope").status_code == 404, "an unknown tab is a 404")
 check(c.post("/admin/api/nat1", json={"op": "team", "code": "ESM", "name": "ES Marsa"}).status_code in (401, 403), "only the admin edits Nationale 1")
 
 # 2. teams
@@ -81,6 +83,10 @@ v = c.get("/api/nat1").get_json()
 check([t["code"] for t in v["standings"]] == ["CSK", "ESM", "ASM", "EOS"] and v["standings"][0]["diff"] == 97 and v["standings"][0]["pf"] is None, "the federation's table IS the table (order and numbers as given, no invented points for / against)")
 check(post({"op": "official", "text": "CSK, 4, 4, 0, 97, 9"}).status_code == 422 and post({"op": "official", "text": "CSK, 4, 3, 0, 97, 6"}).status_code == 422, "a table whose points or games do not add up is refused")
 check(post({"op": "official", "text": ""}).status_code == 200 and c.get("/api/nat1").get_json()["official"] is None, "an empty table removes it: the table is computed again")
+# every club of the league has its badge (tools/build_team_logos.py), so the page never falls back to initials for the clubs we know
+import tools.build_nat1_seed as _seed  # noqa: E402
+missing = [code for code in _seed.TEAMS if not (Path(__file__).resolve().parent.parent / "static" / "img" / "teams" / f"{code}.png").exists()]
+check(not missing, f"a badge for every National One club: missing {missing}")
 print("nationale 1, about, menu:", "FAILED" if fails else "ok")
 for m in fails:
     print(" -", m)

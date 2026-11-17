@@ -2,10 +2,13 @@
 import bisect
 import datetime
 import difflib
+import functools
 import json
 import math
 import os
 import re
+import threading
+import time
 from collections import Counter, defaultdict
 
 import config
@@ -424,6 +427,55 @@ def apply_roster(players: list, keep_hidden: bool = False) -> list:
     return [p for p in players if p["id"] not in hidden]
 
 
+# --- A short-lived cache of the two heavy computations (every page and API call starts with them: reading every game file, then the ratings of every player). Each entry is kept
+# while no data file changed (name, modification time, size and inode of every *.json of the data folder, of its games folder and of the assets) and for 30 seconds at most. The
+# value is handed out as it is, so nothing may modify what build() / build_all_games() return: tests/test_cache.py runs the endpoints and checks the cached value is untouched.
+# NO_STATS_CACHE=1 switches it off.
+_CACHE, _CACHE_LOCK, CACHE_SECONDS = {}, threading.RLock(), 30      # re-entrant: build() calls build_all_games()
+
+
+def _fingerprint():
+    parts = []
+    for base in (config.DATA_DIR, config.GAMES_DIR if hasattr(config, "GAMES_DIR") else config.DATA_DIR / "games", config.ASSETS_DIR):
+        try:
+            with os.scandir(base) as it:
+                for e in it:
+                    if e.name.endswith(".json") and e.is_file():
+                        st = e.stat()
+                        parts.append((e.path, st.st_mtime_ns, st.st_size, st.st_ino))
+        except OSError:
+            pass
+    for f in PARTIAL_FILES:                                  # the one-team sheets (normally inside the folders above; a test may point elsewhere)
+        try:
+            st = os.stat(f)
+            parts.append((str(f), st.st_mtime_ns, st.st_size, st.st_ino))
+        except OSError:
+            parts.append((str(f), 0, 0, 0))
+    return hash(tuple(sorted(parts)))
+
+
+def _cached(fn):
+    @functools.wraps(fn)
+    def wrapper(*a, **k):
+        if os.environ.get("NO_STATS_CACHE"):
+            return fn(*a, **k)
+        key, fp = (fn.__name__, a, tuple(sorted(k.items()))), _fingerprint()
+        hit = _CACHE.get(key)
+        if hit and hit[0] == fp and time.monotonic() - hit[1] < CACHE_SECONDS:
+            return hit[2]
+        with _CACHE_LOCK:
+            hit = _CACHE.get(key)
+            if hit and hit[0] == fp and time.monotonic() - hit[1] < CACHE_SECONDS:
+                return hit[2]
+            value = fn(*a, **k)
+            if len(_CACHE) > 12:
+                _CACHE.clear()
+            _CACHE[key] = (fp, time.monotonic(), value)
+            return value
+    return wrapper
+
+
+@_cached
 def build_all_games():
     games = load_games()
     official = load_official()
@@ -539,6 +591,7 @@ def _avg(xs):
     return round(sum(xs) / len(xs), 1) if xs else 0.0
 
 
+@_cached
 def build(season=None, keep_hidden=False):
     """Return (games, players) for a season (default: the latest one)."""
     all_games = build_all_games()
@@ -966,7 +1019,7 @@ def team_view(code, season=None):
     row = next((r for r in d["standings"] if r["code"] == code), None)
     team_players = [p for p in d["players"] if p["team"] == code]
     return {"code": code, "name": o["teams"][code], "standing": row, "results": results, "upcoming": upcoming,
-            "lineup": team_lineup(team_players), "splits": team_splits(season, d)[code], "teams_ranked": len(o["teams"]),
+            "lineup": team_lineup(team_players), "bench": team_bench(team_players), "splits": team_splits(season, d)[code], "teams_ranked": len(o["teams"]),
             "projected": plan["projected"], "top_teams": d["top_teams"],
             "players": [{k: v for k, v in p.items() if k != "log"} for p in d["players"] if p["team"] == code]}
 
@@ -1086,6 +1139,13 @@ def team_lineup(players):
     keys = ("id", "name", "number", "pos", "pos_source", "pos_value", "gp", "total_min", "min", "pts", "reb", "ast",
             "stl", "blk", "tov", "pm", "pir", "rating", "fg_pct", "p3_pct", "ft_pct", "ts_pct")
     return arrange([{k: p[k] for k in keys} for p in top])
+
+
+def team_bench(players, n=3):
+    """The bench of a team: the next `n` players by total minutes after the five of team_lineup (what the team page shows under its most-played five)."""
+    ranked = sorted((p for p in players if p["total_min"] > 0), key=lambda p: -p["total_min"])[5:5 + n]
+    keys = ("id", "name", "number", "pos", "gp", "total_min", "min", "pts", "reb", "ast", "pir", "rating")
+    return [{k: p[k] for k in keys} for p in ranked]
 
 
 def game_lineups(g, pos_by_id):

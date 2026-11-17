@@ -82,6 +82,8 @@ def _page_view(lang, page, arg=None):
 for _lang in seo.LANGS:   # French: /, /classement, /equipe/CA ...   English: /en/, /en/standings, /en/team/CA ...
     for _page in seo.LIST_PAGES:
         app.add_url_rule(seo.path(_lang, _page), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
+    for _tab in seo.NAT1_TABS[_lang]:                  # Nationale 1: its table, games and calendar tabs have their own addresses
+        app.add_url_rule(seo.path(_lang, "nat1", _tab), f"page_{_lang}_nat1_{_tab}", partial(_page_view, _lang, "nat1", _tab))
     app.add_url_rule(seo.path(_lang, "live", "<arg>"), f"page_{_lang}_live_game", partial(_page_view, _lang, "live"))      # the detail of one live game
     for _page in seo.ITEM_PAGES:
         app.add_url_rule(seo.path(_lang, _page, "<arg>"), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
