@@ -38,6 +38,8 @@ for c, v in sp.items():
 for s in stats.SPLITS:
     for k, better in stats.TEAM_METRICS.items():
         ranked = {c: v[s]["rank"][k] for c, v in sp.items() if k in v[s]["rank"]}
+        if k.removeprefix("opp_") in stats.EXTRA_KEYS and not ranked:
+            continue                                      # the team lines (paint, second chance...) only exist for sheets that print them: tests/test_team_extra.py
         if better is None:
             check(not ranked, f"{k}: a style number has no rank")
             continue

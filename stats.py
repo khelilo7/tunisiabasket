@@ -285,7 +285,7 @@ def partial_games(games):
                     row = {"number": p["number"], "name": names.get(pid) or p["name"], "pid": pid, "dnp": False, "starter": False, "partial": True,
                            **{k: p.get(k, 0) for k in ("pts", "fgm", "fga", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "ast", "stl", "blk")},
                            **{k: None for k in PARTIAL_UNKNOWN}}
-                    for k in ("tov", "pf"):                           # only when the sheet (or an estimate flagged in "est") gives them
+                    for k in ("tov", "pf", "fd"):                     # only when the sheet (or an estimate flagged in "est") gives them
                         if p.get(k) is not None:
                             row[k] = p[k]
                     row["est"] = [k for k in (p.get("est") or []) if k in ESTIMABLE]   # values that are NOT on the sheet but estimated from the player's other games
@@ -567,6 +567,7 @@ def build(season=None, keep_hidden=False):
                 row = dict(p)
                 row.update(game_id=g["id"], date=g["date"], matchday=g.get("matchday"), team=t["code"],
                            opp=opp["code"], score=f'{t["points"]}-{opp["points"]}', won=t["won"],
+                           home=(g.get("home_team") == t["code"]) if g.get("home_team") else None,       # None: the official result does not say who was at home
                            is_mvp=bool(g["mvp"] and g["mvp"]["player_id"] == i))
                 log[i].append(row)
 
@@ -632,6 +633,22 @@ def build(season=None, keep_hidden=False):
     players.sort(key=lambda p: (p["mvp_eligible"], p["qualified"], p["impact"], p["pts"]), reverse=True)
     return {"season": season, "seasons": seasons, "games": games, "partials": partials, "players": players,
             "standings": table, "top_teams": sorted(top, key=lambda c: rank[c]) if table else []}
+
+
+def player_splits(rows):
+    """A player's averages overall, at home and away, from the rows of his game log (the same rules as the season line: a statistic is averaged over the games where it is
+    known). {"all"|"home"|"away": {gp, wins, min, pts, reb, ast, stl, blk, tov, pf, pm, fg_pct, p3_pct, ft_pct, ts_pct, pir}}. A game whose venue is unknown counts in "all" only."""
+    out = {}
+    for name, keep in (("all", lambda r: True), ("home", lambda r: r.get("home") is True), ("away", lambda r: r.get("home") is False)):
+        rs = [r for r in rows if keep(r)]
+        known = lambda k: [r[k] for r in rs if r.get(k) is not None]
+        tot = lambda k: sum(known(k))
+        fga, fta, pts = tot("fga"), tot("fta"), tot("pts")
+        out[name] = {"gp": len(rs), "wins": sum(bool(r["won"]) for r in rs),
+                     **{k: _avg(known(k)) for k in ("min", "pts", "reb", "ast", "stl", "blk", "tov", "pf", "pm", "pir")},
+                     "fg_pct": round(100 * tot("fgm") / fga, 1) if fga else 0, "p3_pct": round(100 * tot("p3m") / tot("p3a"), 1) if tot("p3a") else 0,
+                     "ft_pct": round(100 * tot("ftm") / fta, 1) if fta else 0, "ts_pct": round(100 * pts / (2 * (fga + 0.44 * fta)), 1) if (fga + fta) else 0}
+    return out
 
 
 def box_counts(games, partials=()):
@@ -775,11 +792,13 @@ def team_stats(season=None):
 SPLITS = ("all", "home", "away")
 _BOX = ("fgm", "fga", "p2m", "p2a", "p3m", "p3a", "ftm", "fta", "oreb", "dreb", "reb", "ast", "tov", "stl", "blk", "pf")
 # metric -> True when a higher value is better, False when lower is better, None when it only describes a style (no rank)
+EXTRA_KEYS = ("paint", "second", "fast", "tov_pts", "bench")             # team lines of a sheet (team_extra.py): averaged over the games that print them
 TEAM_METRICS = {"win_pct": True, "ppg": True, "opp_ppg": False, "diff": True, "ortg": True, "drtg": False, "net": True, "pace": None,
                 "fg_pct": True, "p2_pct": True, "p3_pct": True, "ft_pct": True, "efg_pct": True, "ts_pct": True, "fga": None, "p3a": None, "p3_rate": None, "ft_rate": True,
                 "oreb": True, "dreb": True, "reb": True, "oreb_pct": True, "dreb_pct": True,
                 "ast": True, "ast_to": True, "tov": False, "tov_pct": False,
-                "stl": True, "blk": True, "pf": None, "opp_fg_pct": False, "opp_p3_pct": False, "opp_efg_pct": False, "opp_tov_pct": True}
+                "stl": True, "blk": True, "pf": None, "opp_fg_pct": False, "opp_p3_pct": False, "opp_efg_pct": False, "opp_tov_pct": True,
+                "paint": True, "second": True, "fast": True, "tov_pts": True, "bench": True, "opp_paint": False, "opp_second": False, "opp_fast": False, "opp_tov_pts": False}
 
 
 def _box_sums(t):
@@ -791,6 +810,17 @@ def _box_sums(t):
     c["pts"] = t.get("box_points", t["points"])
     c["tov"] += (t.get("not_attributed") or {}).get("tov", 0)         # a team turnover of a video-compiled sheet belongs to nobody but counts for the team
     return c
+
+
+def _extra_row(mine_x, opp_x):
+    """Per-game averages of the team lines, over the games where the sheet printed them: {"paint": 41.3, "opp_paint": 36.0, ..., "extra_games": 3}. A key with no game stays None."""
+    out = {}
+    for k in EXTRA_KEYS:
+        for pre, src in (("", mine_x), ("opp_", opp_x)):
+            vals = src.get(k, [])
+            out[pre + k] = sum(vals) / len(vals) if vals else None
+    out["extra_games"] = max((len(v) for v in mine_x.values()), default=0)
+    return out
 
 
 def _team_row(rec, mine, opp, n):
@@ -836,7 +866,7 @@ def team_splits(season=None, data=None):
                     x["l"] += pf < pa
                     x["pf"] += pf
                     x["pa"] += pa
-    acc = {c: {s: [Counter(), Counter(), 0] for s in SPLITS} for c in o["teams"]}
+    acc = {c: {s: [Counter(), Counter(), 0, defaultdict(list), defaultdict(list)] for s in SPLITS} for c in o["teams"]}
     for g in d["games"]:
         a, b = g["teams"]
         for t, u in ((a, b), (b, a)):
@@ -849,7 +879,13 @@ def team_splits(season=None, data=None):
                 x[0].update(mine)
                 x[1].update(opp)
                 x[2] += 1
-    out = {c: {s: _team_row(rec[c][s], *acc[c][s]) for s in SPLITS} for c in o["teams"]}
+                for k, v in (t.get("extra") or {}).items():
+                    if k in EXTRA_KEYS and isinstance(v, int):
+                        x[3][k].append(v)
+                for k, v in (u.get("extra") or {}).items():
+                    if k in EXTRA_KEYS and isinstance(v, int):
+                        x[4][k].append(v)
+    out = {c: {s: {**_team_row(rec[c][s], *acc[c][s][:3]), **_extra_row(acc[c][s][3], acc[c][s][4])} for s in SPLITS} for c in o["teams"]}
     for s in SPLITS:
         for k, better in TEAM_METRICS.items():
             vals = {c: out[c][s][k] for c in out if out[c][s].get(k) is not None}
@@ -874,10 +910,14 @@ def matchup(home, away, season=None):
     ts = {r["code"]: r for r in team_stats(season)["teams"]}
     d = build(season)
 
+    ids = {}
+    for g in [*d["games"], *d.get("partials", [])]:
+        ids.setdefault((g.get("matchday_no"), frozenset(t["code"] for t in g["teams"])), g["id"])
+
     def form(code):
         rs = [r for r in sorted(o["results"], key=lambda r: r["matchday"]) if code in (r["home"], r["away"])][-5:]
         return [{"matchday": r["matchday"], "won": (r["home_score"] > r["away_score"]) == (r["home"] == code),
-                 "opp": r["away"] if r["home"] == code else r["home"]} for r in rs]
+                 "opp": r["away"] if r["home"] == code else r["home"], "game_id": ids.get((r["matchday"], frozenset((r["home"], r["away"]))))} for r in rs]
 
     def key_players(code):
         ps = sorted((p for p in d["players"] if p["team"] == code and p["gp"]), key=lambda p: (p["pts"], p["pir"]), reverse=True)[:3]

@@ -13,9 +13,11 @@ import config
 import content
 import lineups
 import mvp
+import nat1
 import predict
 import rounds
 import seo
+import social
 import stats
 import traffic
 
@@ -245,7 +247,7 @@ def player(pid):
         abort(404)
     rank = [x["id"] for x in d["players"] if x["mvp_eligible"]]
     return jsonify(season=d["season"], rank=rank.index(pid) + 1 if pid in rank else None,
-                   of=len(rank), top_teams=d["top_teams"], player=p)
+                   of=len(rank), top_teams=d["top_teams"], player={**p, "splits": stats.player_splits(p["log"])})
 
 
 @app.get("/api/games")
@@ -318,6 +320,30 @@ def planning():
     r = jsonify(plan)
     r.headers["Cache-Control"] = "no-store"
     return r
+
+
+@app.get("/api/nat1")
+def nat1_view():
+    """Nationale 1 (nat1.py): the table and the results by matchday. No stats: we only have results."""
+    r = jsonify(nat1.view())
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
+@app.get("/api/social")
+def social_links():
+    """The club's social pages (social.py): what the footer and the home card show."""
+    return jsonify(links=social.links())
+
+
+@app.post("/api/follow")
+def follow_club():
+    """The club a visitor chose to follow (optional). Body {"team": "CA", "rid": <the browser's code>}; an empty team takes the choice back. Only a count per club is kept."""
+    b = request.get_json(silent=True) or {}
+    team = str(b.get("team") or "").upper()[:8]
+    if team and team not in stats.load_official()["teams"]:
+        return jsonify(ok=False, reason="unknown"), 422
+    return jsonify(ok=traffic.follow(request, team, str(b.get("rid", ""))[:40]))
 
 
 @app.post("/api/sync")

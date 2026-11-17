@@ -32,8 +32,8 @@
   .bar { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
   .score { flex:1; text-align:center; font-size:30px; font-weight:800; }
   .score small { display:block; font-size:12px; font-weight:500; color:var(--muted); }
-  .teams { display:grid; grid-template-columns:1fr; gap:18px; margin-top:16px; }
-  @media (min-width:1250px) { .teams { grid-template-columns:1fr 1fr; } }
+  .teams { display:grid; grid-template-columns:minmax(0,1fr); gap:18px; margin-top:16px; }
+  @media (min-width:1250px) { .teams { grid-template-columns:minmax(0,1fr) minmax(0,1fr); } }
   .team h3 { margin:0 0 8px; font-size:16px; }
   .p { display:flex; align-items:center; gap:6px; background:var(--panel); border-radius:10px; padding:5px 8px; margin-bottom:5px; }
   .av { width:28px; height:28px; border-radius:50%; background:var(--panel2) center/cover; flex:none; display:grid; place-items:center; font-weight:700; font-size:12px; color:var(--muted); }
@@ -81,6 +81,61 @@
   @media (max-width:700px) { .hrow { grid-template-columns:62px 1fr auto; } .hrow .by { display:none; } }
   .toast { position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--bad); padding:10px 16px; border-radius:10px; z-index:9; }
   .toast.ok { background:var(--good); }
+
+  /* ---- v2: on-court first, a clearer clock, tags, phone layout ---- */
+  button { touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+  .livebar { position:sticky; top:0; z-index:6; background:var(--bg); margin:-20px -20px 14px; padding:10px 20px 8px; border-bottom:1px solid var(--line); }
+  .lb1 { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .lb1 .score { font-size:28px; line-height:1.1; } .lb1 .score .tsc { font-variant-numeric:tabular-nums; }
+  .menu { position:relative; } .menu > summary { list-style:none; cursor:pointer; background:var(--panel2); border-radius:8px; padding:8px 14px; font-weight:700; color:var(--text); margin:0; } .menu > summary::-webkit-details-marker { display:none; }
+  .menu > div { position:absolute; right:0; top:42px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:8px; display:grid; gap:6px; min-width:210px; z-index:9; box-shadow:0 12px 30px rgba(0,0,0,.45); }
+  .menu a button, .menu > div > button { width:100%; text-align:left; }
+  .clock2 { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .clock2 .q { display:flex; align-items:center; gap:2px; background:var(--panel); border-radius:10px; padding:2px; } .clock2 .q b { min-width:42px; text-align:center; font-size:15px; }
+  .clock2 .q button { padding:8px 11px; font-size:16px; background:transparent; }
+  .clock2 .t { font-size:38px; font-weight:800; font-variant-numeric:tabular-nums; min-width:112px; text-align:center; cursor:text; background:var(--panel); border-radius:12px; padding:2px 10px; line-height:1.15; user-select:none; }
+  .clock2 .t.run { color:var(--good); } .clock2 .t.end { color:var(--bad); }
+  .clock2 input.ti { font-size:30px; width:112px; text-align:center; font-weight:800; padding:2px 8px; letter-spacing:1px; }
+  .clock2 .go { min-width:104px; padding:11px 16px; font-size:16px; font-weight:800; background:var(--good); color:#fff; border-radius:12px; } .clock2 .go.stop { background:var(--bad); }
+  .clock2 .adj { display:flex; gap:4px; } .clock2 .adj button { padding:9px 10px; font-size:13px; background:var(--panel); min-width:44px; }
+  .clock2 .nq { background:var(--accent); color:#1a1205; font-weight:800; border-radius:10px; animation:pulse 1.2s infinite; } @keyframes pulse { 50% { filter:brightness(1.3); } }
+  .clock2 label { font-size:12px; color:var(--muted); display:flex; gap:4px; align-items:center; }
+  .clock2 .adjt { display:none; padding:12px 14px; font-size:16px; font-weight:800; background:var(--panel); border-radius:12px; }
+  .tagbar { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px; background:#3a2a0a; border-left:4px solid var(--accent); border-radius:10px; padding:6px 10px; font-size:13px; }
+  .tagbar .tg { padding:8px 12px; border-radius:99px; background:var(--panel2); font-weight:700; } .tagbar .tg.on { background:var(--accent); color:#1a1205; } .tagbar .tgx { margin-left:auto; background:transparent; color:var(--muted); }
+  .startcard { background:var(--panel); border:1px solid var(--accent); border-radius:12px; padding:12px 14px; margin-bottom:14px; display:grid; gap:8px; }
+  .startcard .sf { display:flex; gap:6px; align-items:center; flex-wrap:wrap; } .startcard .sf b { min-width:90px; } .startcard .ch { display:inline-flex; gap:5px; align-items:center; background:var(--panel2); border-radius:99px; padding:3px 10px 3px 4px; font-size:13px; }
+  .startcard .ch .av { width:22px; height:22px; font-size:10px; } .startcard .accent { padding:12px; font-size:16px; }
+  .team .th { display:flex; align-items:baseline; gap:10px; } .team .th h3 { margin:0; font-size:17px; } .team .th .ts { font-size:24px; font-weight:800; margin-left:auto; font-variant-numeric:tabular-nums; }
+  .xl { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 8px; } .xl span { background:var(--panel); border-radius:99px; padding:2px 10px; font-size:12px; color:var(--muted); } .xl b { color:var(--text); }
+  .sec { font-size:12px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:8px 0 5px; }
+  .benchd { margin-top:10px; } .benchd > summary { cursor:pointer; color:var(--muted); padding:6px 0; font-weight:600; } .benchd[open] > summary { margin-bottom:6px; }
+  .p .nm { width:auto; flex:1 1 150px; min-width:120px; } .p .nm .n1 { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; } .p .nm .cl { font-size:11px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .p.sel { outline:2px solid var(--accent); background:#2a2f55; } .p .cd { width:32px; height:32px; font-size:15px; } .p .cd.bench { background:var(--panel2); } .p .btns { margin-left:auto; }
+  .tabs2 { display:none; }
+  #pad { display:none; }
+  .tgs { display:inline-flex; gap:4px; } .tgs button { padding:4px 8px; font-size:12px; background:var(--panel2); } .tgs button.on { background:var(--accent); color:#1a1205; }
+  .tagtxt { color:#ffcf8a; font-size:12px; }
+  @media (max-width:899px) {
+    header { position:static; padding:8px 12px; } header h1 { font-size:16px; } header .muted:not(#who) { display:none; }
+    main { padding:10px 10px 230px; }
+    .livebar { margin:-10px -10px 10px; padding:8px 10px 6px; }
+    .lb1 .score { font-size:24px; order:0; } .lb1 { flex-wrap:nowrap; } .lb1 #back { padding:10px 12px; } .lb1 #undo { padding:10px 12px; }
+    .lb1 .score small { font-size:11px; } .menu > summary { padding:10px 12px; }
+    .clock2 { gap:6px; justify-content:space-between; } .clock2 .t { font-size:34px; min-width:98px; } .clock2 .go { min-width:92px; padding:12px 10px; }
+    .clock2 .adjt { display:block; } .clock2 .adj { display:none; order:5; width:100%; } .clock2 .adj.open { display:flex; } .clock2 .adj button { flex:1; padding:11px 4px; } .clock2 label { display:none; }
+    .clock2 .go { min-width:86px; flex:1; }
+    .teams { grid-template-columns:minmax(0,1fr); } .team { min-width:0; } .tabs2 { display:flex; gap:6px; margin-bottom:10px; } .tabs2 button { flex:1; padding:12px 6px; font-weight:700; border-radius:10px; background:var(--panel); } .tabs2 button.on { background:var(--accent); color:#1a1205; }
+    .team[hidden] { display:none; }
+    .p { padding:8px; gap:8px; } .p .btns { display:none; } .p .nm { min-width:0; } .p .pts { width:34px; font-size:22px; } .p .cd { width:38px; height:38px; font-size:17px; } .p .av { width:34px; height:34px; }
+    #pad { display:block; position:fixed; left:0; right:0; bottom:0; z-index:7; background:var(--panel); border-top:2px solid var(--accent); padding:8px 8px calc(8px + env(safe-area-inset-bottom)); box-shadow:0 -10px 30px rgba(0,0,0,.5); }
+    #pad .who { display:flex; align-items:center; gap:8px; margin-bottom:6px; font-weight:700; } #pad .who span { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } #pad .who b { font-size:20px; } #pad .who button { padding:6px 12px; background:transparent; color:var(--muted); font-size:16px; }
+    #pad .g1 { display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; margin-bottom:6px; } #pad .g2 { display:grid; grid-template-columns:repeat(8, 1fr); gap:4px; }
+    #pad .b { min-height:50px; padding:4px 0; font-size:17px; border-radius:10px; } #pad .g2 .b { min-height:46px; font-size:11px; } #pad .b i { top:-5px; right:-3px; }
+    #pad.empty { text-align:center; color:var(--muted); padding:12px; }
+    .hrow { grid-template-columns:58px 1fr auto; } .hform { gap:8px; } .hform select, .hform input { padding:10px; }
+    .toast { bottom:250px; }
+  }
 </style>
 </head>
 <body>
@@ -99,7 +154,7 @@ const BTNS = [
   ["ft_m", "+1", "mk", "Free throw made"], ["p2_m", "+2", "mk", "2-pointer made"], ["p3_m", "+3", "mk", "3-pointer made"], null,
   ["ft_x", "✗1", "ms", "Free throw missed"], ["p2_x", "✗2", "ms", "2-pointer missed"], ["p3_x", "✗3", "ms", "3-pointer missed"], null,
   ["oreb", "OR", "ot", "Offensive rebound"], ["dreb", "DR", "ot", "Defensive rebound"], ["ast", "AST", "ot", "Assist"], ["stl", "STL", "ot", "Steal"],
-  ["blk", "BLK", "ot", "Block"], ["tov", "TOV", "ot", "Turnover"], ["pf", "PF", "ot", "Personal foul"],
+  ["blk", "BLK", "ot", "Block"], ["tov", "TOV", "ot", "Turnover"], ["pf", "PF", "ot", "Personal foul"], ["fd", "FD", "ot", "Foul drawn (a foul against him)"],
 ];
 const LABEL = Object.fromEntries(BTNS.filter(Boolean).map(b => [b[0], b[3]]));
 const STATE = { open: "Counting", submitted: "Waiting for approval", published: "Approved: on the site", rejected: "Sent back" };
@@ -194,49 +249,100 @@ function open(id) { location.hash = "#game=" + id; load(); }
 
 /* ---- game ---- */
 const ptsOf = r => (r?.ft_m || 0) + 2 * (r?.p2_m || 0) + 3 * (r?.p3_m || 0);
-function tally(game) { const t = {}; game.events.forEach(e => { const r = (t[e.pid] ||= {}); r[e.stat] = (r[e.stat] || 0) + 1; }); return t; }
+function tally(game) { const t = {}; game.events.forEach(e => { if (e.stat === "lineup") return; const r = (t[e.pid] ||= {}); r[e.stat] = (r[e.stat] || 0) + 1; }); return t; }
 const editable = g => g.status === "open" || g.status === "rejected" || (S.me?.admin && g.status === "submitted");        // the admin may also correct a version waiting for approval
+const isMobile = () => matchMedia("(max-width: 899px)").matches;
+const TAGS = { p2_m: ["paint", "second", "fast", "tov"], p3_m: ["second", "fast", "tov"], ft_m: ["second", "fast", "tov"] };
+const TAGN = { paint: "Paint", second: "2nd chance", fast: "Fast break", tov: "Off turnover" };
+S.bench = {};
+function countsLine(r) {
+  const g = k => r[k] || 0, fg = g("p2_m") + g("p3_m"), fga = fg + g("p2_x") + g("p3_x"), ft = g("ft_m"), fta = ft + g("ft_x"), reb = g("oreb") + g("dreb"), p = [];
+  if (fga) p.push(`FG ${fg}/${fga}`);
+  if (g("p3_m") || g("p3_x")) p.push(`3P ${g("p3_m")}/${g("p3_m") + g("p3_x")}`);
+  if (fta) p.push(`FT ${ft}/${fta}`);
+  if (reb) p.push(`R ${reb}`);
+  [["ast", "A"], ["stl", "S"], ["blk", "B"], ["tov", "TO"], ["pf", "PF"], ["fd", "FD"]].forEach(([k, l]) => { if (g(k)) p.push(`${l} ${g(k)}`); });
+  return p.join(" · ") || "nothing yet";
+}
+function suggestFive(code) {       // the server's guess (starts this season and in the last games); filled up with the most-used players if it has fewer than five
+  const g = S.game, ids = new Set(g.players[code].map(p => p.id));
+  const five = ((S.data.fives || {})[code] || []).filter(i => ids.has(i)).slice(0, 5);
+  for (const p of g.players[code]) { if (five.length >= 5) break; if (!five.includes(p.id)) five.push(p.id); }
+  return five;
+}
+async function startFives(codes) {
+  for (const c of codes) await api(`/games/${S.game.id}/lineup`, "POST", { team: c, on: suggestFive(c), q: clk().q, t: clkNow(clk()) });
+  S.game = await api(`/games/${S.game.id}`); renderGame();
+}
 
 function renderGame() {
-  const g = S.game, app = $("#app"), t = tally(g), ed = editable(g);
+  const g = S.game, app = $("#app"), t = tally(g), ed = editable(g), mob = isMobile();
   const photos = Object.fromEntries(Object.values(S.data.roster).flat().map(p => [p.id, p.photo]));
   const total = code => g.players[code].reduce((n, p) => n + ptsOf(t[p.id]), 0);
   const cc = g.court, picking = S.pick;
+  if (!S.tab || !g.players[S.tab]) S.tab = g.home;
+  if (S.sel && !Object.values(g.players).flat().some(p => p.id === S.sel)) S.sel = null;
+  const byId = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p]));
   const row = (p, code) => {
     const r = t[p.id] || {}, ph = photos[p.id], on = cc.on[code].includes(p.id), pk = picking && picking.team === code, picked = pk && picking.sel.has(p.id);
-    return `<div class="p ${on && !pk ? "on" : ""} ${pk ? "pick" : ""} ${picked ? "picked" : ""}" data-pid="${p.id}" data-team="${code}">
-      ${ed ? `<button class="cd ${pk ? "pk" : on ? "on" : ""} ${picked ? "picked" : ""}" data-cd="${p.id}" title="${pk ? "Tap to put him in / out of the five" : on ? "On the court: tap to substitute him" : "On the bench: tap to bring him on"}">${pk ? (picked ? "✓" : "") : on ? "●" : "○"}</button>` : ""}
+    return `<div class="p ${on && !pk ? "on" : ""} ${pk ? "pick" : ""} ${picked ? "picked" : ""} ${S.sel === p.id && !pk ? "sel" : ""}" data-pid="${p.id}" data-team="${code}">
+      ${ed ? `<button class="cd ${pk ? "pk" : on ? "on" : "bench"} ${picked ? "picked" : ""}" data-cd="${p.id}" title="${pk ? "Tap to put him in / out of the five" : on ? "On the court: tap to substitute him" : "On the bench: tap to bring him on"}">${pk ? (picked ? "✓" : "") : "⇄"}</button>` : ""}
       <div class="av" ${ph ? `style="background-image:url('${esc(ph)}')"` : ""}>${ph ? "" : p.number}</div>
-      <div class="nm" title="${esc(p.name)}"><small>#${p.number}</small> ${esc(p.name)}</div><div class="pts" id="pts-${p.id}">${ptsOf(r)}</div>
+      <div class="nm" title="${esc(p.name)}"><div class="n1"><small>#${p.number}</small> ${esc(p.name)}</div><div class="cl">${countsLine(r)}</div></div><div class="pts" id="pts-${p.id}">${ptsOf(r)}</div>
       ${cc.used ? `<div class="mn" data-mn="${p.id}" data-team="${code}"><b>${fmt(courtSecs(p.id, code))}</b><span class="${(cc.pm[p.id] || 0) >= 0 ? "pos" : "neg"}">${(cc.pm[p.id] || 0) > 0 ? "+" : ""}${cc.pm[p.id] || 0}</span></div>` : ""}
       <div class="btns">${BTNS.map(b => b ? `<button class="b ${b[2]}" data-stat="${b[0]}" title="${b[3]}" ${ed ? "" : "disabled"}>${b[1]}${r[b[0]] ? `<i>${r[b[0]]}</i>` : ""}</button>` : `<span class="sep"></span>`).join("")}</div></div>`;
   };
-  const byId = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p]));
+  const team = code => {
+    const ps = g.players[code], pk = picking && picking.team === code, on = ps.filter(p => cc.on[code].includes(p.id)), bench = ps.filter(p => !cc.on[code].includes(p.id)), ex = (g.extra || {})[code] || {};
+    const lines = [["Paint", "paint"], ["2nd chance", "second"], ["Fast break", "fast"], ["Off TO", "tov_pts"], ["Bench", "bench"]].filter(([, k]) => ex[k] != null && (ex[k] || k === "bench")).map(([l, k]) => `<span>${l} <b>${ex[k]}</b></span>`).join("");
+    const body = pk || !on.length ? ps.map(p => row(p, code)).join("") || '<span class="muted">No players for this team.</span>'
+      : `<div class="sec">On the court</div>${on.map(p => row(p, code)).join("")}<details class="benchd" data-bench="${code}" ${S.bench[code] || !bench.length ? "open" : ""}><summary>Bench <span class="muted">(${bench.length})</span></summary>${bench.map(p => row(p, code)).join("")}</details>`;
+    return `<div class="team" data-team="${code}" ${mob && S.tab !== code ? "hidden" : ""}><div class="th"><h3>${esc(tn(code))}</h3><span class="ts">${total(code)}</span></div>${lines ? `<div class="xl" title="Points from the baskets you tagged: paint, second chance, fast break, off turnovers">${lines}</div>` : ""}${courtBar(code, ed)}${body}</div>`;
+  };
+  const need = ed && !picking ? [g.home, g.away].filter(c => !cc.on[c].length) : [];
+  const startCard = need.length ? `<div class="startcard"><div><b>Start the game</b> <span class="muted">· the five most likely to start (from their last games). Tap Start, or change a team.</span></div>
+    ${need.map(c => `<div class="sf"><b>${esc(tn(c))}</b>${suggestFive(c).map(id => `<span class="ch"><span class="av">${byId[id].number}</span>${esc(byId[id].name.split(" ").slice(-1)[0])}</span>`).join("")}<button data-pickstart="${c}">Change</button></div>`).join("")}
+    <button class="accent" id="startboth">▶ Start with ${need.length === 2 ? "these fives" : "this five"}</button></div>` : "";
+  const selP = S.sel && byId[S.sel], padOn = mob && ed && !picking;
+  const pad = !padOn ? "" : selP ? `<div id="pad"><div class="who"><span>#${selP.number} ${esc(selP.name)}</span><b>${ptsOf(t[selP.id])}</b><button id="padx" title="Close">✕</button></div>
+      <div class="g1">${BTNS.filter(b => b && b[2] !== "ot").map(b => `<button class="b ${b[2]}" data-stat="${b[0]}">${b[1]}${(t[selP.id] || {})[b[0]] ? `<i>${t[selP.id][b[0]]}</i>` : ""}</button>`).join("")}</div>
+      <div class="g2">${BTNS.filter(b => b && b[2] === "ot").map(b => `<button class="b ot" data-stat="${b[0]}">${b[1]}${(t[selP.id] || {})[b[0]] ? `<i>${t[selP.id][b[0]]}</i>` : ""}</button>`).join("")}</div></div>`
+    : `<div id="pad" class="empty">Tap a player to add a shot, rebound, assist…</div>`;
   app.innerHTML = `
-    <div class="bar"><button id="back">← Matches</button>
-      <div class="score">${total(g.home)} – ${total(g.away)}<small>${esc(tn(g.home))} – ${esc(tn(g.away))} · <span class="pill ${g.status}">${STATE[g.status]}</span></small></div>
-      ${ed ? clockHtml() : ""}
-      <button id="undo" ${ed ? "" : "disabled"} title="Undo the last action (Ctrl/Cmd + Z)">↶ Undo</button><a href="/analytics/api/games/${g.id}/export.csv"><button>Download CSV</button></a>
-      ${ed && g.status !== "submitted" ? `<button class="accent" id="submit" title="Send to the admin, who decides if it goes on the site">Send for approval</button>` : ""}${g.status === "submitted" ? `<button id="reopen">Take back to edit</button>` : ""}</div>
+    <div class="livebar"><div class="lb1"><button id="back" title="Back to the matches">←</button>
+      <div class="score"><span class="tsc">${total(g.home)} – ${total(g.away)}</span><small>${esc(tn(g.home))} – ${esc(tn(g.away))} · <span class="pill ${g.status}">${STATE[g.status]}</span></small></div>
+      <button id="undo" ${ed ? "" : "disabled"} title="Undo the last action (Ctrl/Cmd + Z)">↶ Undo</button>
+      <details class="menu"><summary>⋯</summary><div><a href="/analytics/api/games/${g.id}/export.csv"><button>⬇ Box score CSV</button></a><a href="/analytics/api/games/${g.id}/export-team.csv"><button>⬇ Team lines CSV</button></a>
+        ${ed && g.status !== "submitted" ? `<button class="accent" id="submit" title="Send to the admin, who decides if it goes on the site">Send for approval</button>` : ""}${g.status === "submitted" ? `<button id="reopen">Take back to edit</button>` : ""}</div></details></div>
+      ${ed ? clockHtml() : ""}<div id="tagslot">${ed ? tagHtml() : ""}</div></div>
     ${g.analyst && g.analyst !== S.me.name ? `<div class="note other">This is the version of <b>${esc(g.analyst)}</b>${S.me.admin ? ": you are editing it as Admin, and every change you make is logged under your name" : ""}.</div>` : ""}
     ${g.status === "rejected" && g.note ? `<div class="note"><b>The admin sent it back:</b> ${esc(g.note)}</div>` : ""}
     ${g.status === "submitted" ? `<div class="note">Sent for approval. You can still take it back to edit it until the admin decides.</div>` : ""}
     ${g.status === "published" ? `<div class="note">Approved: these stats are on the site.</div>` : ""}
-    <div class="teams">${[g.home, g.away].map(c => `<div class="team"><h3>${esc(tn(c))}</h3>${courtBar(c, ed)}${g.players[c].map(p => row(p, c)).join("") || '<span class="muted">No players for this team.</span>'}</div>`).join("")}</div>
-    <div class="muted legend">Click a button to add it to that player. Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound. The orange number is how many that player has. Wrong click? Undo, or remove it below.<br>
-      <b>On the court:</b> mark the five of each team (● = on the court, ○ = bench). To substitute, tap the player who comes on or goes off and choose who replaces him: his time on the court (it follows the game clock above) and his +/- are counted for you.</div>
-    ${historyHtml(g, ed, byId)}`;
+    ${startCard}
+    <div class="tabs2">${[g.home, g.away].map(c => `<button data-tab="${c}" class="${S.tab === c ? "on" : ""}">${esc(tn(c))} <b>${total(c)}</b></button>`).join("")}</div>
+    <div class="teams">${[g.home, g.away].map(team).join("")}</div>
+    <div class="muted legend">${mob ? "Tap a player, then the buttons at the bottom." : "Click a button to add it to that player."} Green = made shot, red ✗ = missed shot, OR / DR = offensive / defensive rebound, PF = foul committed, FD = foul drawn (a foul against him). After a made basket, tag it (paint, 2nd chance, fast break, off turnover) in the bar at the top: those tags build the team lines of the box score.<br>
+      <b>On the court:</b> the five are listed first, the bench is folded below. <b>⇄</b> = substitute: tap it on the player who goes off or comes on and choose the other one. Minutes and +/- follow the game clock.</div>
+    ${historyHtml(g, ed, byId)}${pad}`;
   $("#back").onclick = () => { location.hash = ""; load(); };
   $("#undo").onclick = undo;
   if ($("#submit")) $("#submit").onclick = submit;
   if ($("#reopen")) $("#reopen").onclick = async () => { S.game = await api(`/games/${g.id}/reopen`, "POST", {}); renderGame(); };
   clockWire();
-  app.querySelectorAll(".b").forEach(b => b.onclick = () => add(b.closest(".p").dataset.pid, b.dataset.stat));
+  if ($("#startboth")) $("#startboth").onclick = () => startFives(need);
+  app.querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { S.tab = b.dataset.tab; S.sel = null; renderGame(); });
+  app.querySelectorAll("[data-bench]").forEach(d => d.ontoggle = () => { S.bench[d.dataset.bench] = d.open; });
+  app.querySelectorAll(".p .b").forEach(b => b.onclick = e => { e.stopPropagation(); add(b.closest(".p").dataset.pid, b.dataset.stat); });
+  app.querySelectorAll("#pad .b").forEach(b => b.onclick = () => add(S.sel, b.dataset.stat));
+  if ($("#padx")) $("#padx").onclick = () => { S.sel = null; renderGame(); };
   app.querySelectorAll("[data-cd]").forEach(b => b.onclick = e => { e.stopPropagation(); cdClick(b.closest(".p").dataset.team, b.dataset.cd); });
   app.querySelectorAll(".p.pick").forEach(r => r.onclick = e => { if (!e.target.closest(".b")) cdClick(r.dataset.team, r.dataset.pid); });
-  app.querySelectorAll("[data-pickstart]").forEach(b => b.onclick = () => { const c = b.dataset.pickstart; S.pick = { team: c, sel: new Set(S.game.court.on[c]) }; renderGame(); });
+  if (mob && ed) app.querySelectorAll(".p:not(.pick)").forEach(r => r.onclick = e => { if (e.target.closest(".cd")) return; S.sel = S.sel === r.dataset.pid ? null : r.dataset.pid; const y = scrollY; renderGame(); scrollTo(0, y); });
+  app.querySelectorAll("[data-pickstart]").forEach(b => b.onclick = () => { const c = b.dataset.pickstart; S.pick = { team: c, sel: new Set(S.game.court.on[c].length ? S.game.court.on[c] : suggestFive(c)) }; renderGame(); });
   app.querySelectorAll("[data-pickok]").forEach(b => b.onclick = async () => { const pk = S.pick; S.pick = null; await setLineup(pk.team, [...pk.sel]); });
   app.querySelectorAll("[data-pickno]").forEach(b => b.onclick = () => { S.pick = null; renderGame(); });
+  tagWire();
   histWire();
 }
 async function add(pid, stat) {
@@ -244,11 +350,29 @@ async function add(pid, stat) {
   const c = clk();
   const at = c.auto && !c.running && c.left > 0 ? (clkStart(c), clkNow(c)) : clkNow(c);     // the clock is an extra: it starts by itself on an action, stop it any time
   S.game = await api(`/games/${S.game.id}/event`, "POST", { pid, stat, q: c.q, t: at });
+  const last = S.game.events.reduce((m, x) => x.n > m.n ? x : m, { n: 0 });
+  S.tag = TAGS[stat] && last.pid === pid ? { n: last.n, until: Date.now() + 15000 } : null;          // a made basket: offer the tags for a few seconds
   const co = S.game.court, code = Object.keys(S.game.players).find(k => S.game.players[k].some(p => p.id === pid));
-  if (co.used && co.on[code].length === 5 && !co.on[code].includes(pid)) toast(`${S.game.players[code].find(p => p.id === pid).name} is on the bench: tap ○ to bring him on.`);   // a hint, never a block
+  if (co.used && co.on[code].length === 5 && !co.on[code].includes(pid)) toast(`${S.game.players[code].find(p => p.id === pid).name} is on the bench: tap ⇄ to bring him on.`);   // a hint, never a block
   renderGame(); scrollTo(0, y);
   const el = document.getElementById("pts-" + pid); if (el) { el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 500); }
 }
+/* ---- tags on the last made basket ---- */
+function tagHtml() {
+  const g = S.game, tg = S.tag; if (!tg || Date.now() > tg.until) return "";
+  const e = g.events.find(x => x.n === tg.n); if (!e || !TAGS[e.stat]) return "";
+  const p = Object.values(g.players).flat().find(x => x.id === e.pid), on = new Set(e.tags || []);
+  return `<div class="tagbar"><span><b>${esc((p?.name || "").split(" ").slice(-1)[0])}</b> ${LABEL[e.stat]} · tag it:</span>${TAGS[e.stat].map(k => `<button class="tg ${on.has(k) ? "on" : ""}" data-tag="${k}">${TAGN[k]}</button>`).join("")}<button class="tgx" data-tagx title="Done">✕</button></div>`;
+}
+function tagWire() {
+  document.querySelectorAll("[data-tag]").forEach(b => b.onclick = async () => {
+    const e = S.game.events.find(x => x.n === S.tag?.n); if (!e) return;
+    const cur = new Set(e.tags || []); cur.has(b.dataset.tag) ? cur.delete(b.dataset.tag) : cur.add(b.dataset.tag);
+    const y = scrollY; S.game = await api(`/games/${S.game.id}/edit`, "POST", { n: e.n, tags: [...cur] }); S.tag.until = Date.now() + 15000; renderGame(); scrollTo(0, y);
+  });
+  document.querySelectorAll("[data-tagx]").forEach(b => b.onclick = () => { S.tag = null; $("#tagslot").innerHTML = ""; });
+}
+setInterval(() => { if (S.tag && Date.now() > S.tag.until) { S.tag = null; const el = document.getElementById("tagslot"); if (el) el.innerHTML = ""; } }, 1000);
 /* ---- history: every action, newest first; the analyst can change or remove any of them, and add one at a given time ---- */
 function orderedEvents(g) {
   let now = 0;
@@ -257,7 +381,7 @@ function orderedEvents(g) {
 const clockLbl = e => e.q ? qName(e.q) + " " + fmt(e.t) : e.at;
 function evText(g, e) {
   const nm = Object.fromEntries(Object.values(g.players).flat().map(p => [p.id, p.name]));
-  return e.stat === "lineup" ? `${tn(e.team)} on the court: ${e.on.map(id => (nm[id] || id).split(" ").slice(-1)[0]).join(", ") || "nobody"}` : `${nm[e.pid] || e.pid} · ${LABEL[e.stat]}`;
+  return e.stat === "lineup" ? `${tn(e.team)} on the court: ${e.on.map(id => (nm[id] || id).split(" ").slice(-1)[0]).join(", ") || "nobody"}` : `${nm[e.pid] || e.pid} · ${LABEL[e.stat]}${(e.tags || []).length ? " (" + e.tags.map(k => TAGN[k].toLowerCase()).join(", ") + ")" : ""}`;
 }
 const playerOpts = (g, sel) => Object.entries(g.players).map(([c, ps]) => `<optgroup label="${esc(tn(c))}">${ps.map(p => `<option value="${p.id}" ${p.id === sel ? "selected" : ""}>#${p.number} ${esc(p.name)}</option>`).join("")}</optgroup>`).join("");
 const statOpts = sel => BTNS.filter(Boolean).map(b => `<option value="${b[0]}" ${b[0] === sel ? "selected" : ""}>${b[3]}</option>`).join("");
@@ -269,7 +393,7 @@ function historyHtml(g, ed, byId) {
       <select id="af-q">${qOpts(c.q)}</select><input id="af-t" size="5" style="width:70px" value="${nowT}" title="Time left in the quarter (mm:ss); empty = no clock"><button class="accent" id="af-go">Add</button></div>` : "";
   const row = e => {
     const txt = evText(g, e);
-    if (S.edit === e.n) return `<div class="hrow editing" data-n="${e.n}"><div class="hform">${e.stat === "lineup" ? `<b>${esc(txt)}</b>` : `<select data-ep>${playerOpts(g, e.pid)}</select><select data-es>${statOpts(e.stat)}</select>`}
+    if (S.edit === e.n) return `<div class="hrow editing" data-n="${e.n}"><div class="hform">${e.stat === "lineup" ? `<b>${esc(txt)}</b>` : `<select data-ep>${playerOpts(g, e.pid)}</select><select data-es>${statOpts(e.stat)}</select><span class="tgs">${["paint", "second", "fast", "tov"].map(k => `<button type="button" data-etag="${k}" class="${(e.tags || []).includes(k) ? "on" : ""}" title="Tag this basket">${TAGN[k]}</button>`).join("")}</span>`}
         <select data-eq>${qOpts(e.q)}</select><input data-et size="5" style="width:70px" value="${e.q ? fmt(e.t) : ""}" placeholder="mm:ss" title="Time left in the quarter; empty = no clock">
         ${e.stat === "lineup" ? `<button data-hfive="${e.n}">Change the five…</button>` : ""}<button class="accent" data-hsave="${e.n}">Save</button><button data-hcancel>Cancel</button></div></div>`;
     return `<div class="hrow" data-n="${e.n}" data-t="${esc((txt + " " + (e.by || "") + " " + clockLbl(e)).toLowerCase())}"><span class="tm">${esc(clockLbl(e))}</span><span class="by" title="entered by">${esc(e.by || "—")}</span>
@@ -287,13 +411,14 @@ function histWire() {
   const hf = $("#hf"); if (hf) hf.oninput = () => { const f = hf.value.trim().toLowerCase(); app.querySelectorAll(".hrow[data-t]").forEach(r => { r.hidden = !!f && !r.dataset.t.includes(f); }); };
   app.querySelectorAll("[data-rm]").forEach(b => b.onclick = async () => { if (!confirm("Remove this action?")) return; const y = scrollY; S.game = await api(`/games/${g.id}/remove`, "POST", { n: +b.dataset.rm }); renderGame(); scrollTo(0, y); });
   app.querySelectorAll("[data-hedit]").forEach(b => b.onclick = () => { S.edit = +b.dataset.hedit; const y = scrollY; renderGame(); scrollTo(0, y); });
+  app.querySelectorAll("[data-etag]").forEach(b => b.onclick = () => b.classList.toggle("on"));
   app.querySelectorAll("[data-hcancel]").forEach(b => b.onclick = () => { S.edit = null; const y = scrollY; renderGame(); scrollTo(0, y); });
   app.querySelectorAll("[data-hsave]").forEach(b => b.onclick = async () => {
     const n = +b.dataset.hsave, row = b.closest(".hrow"), e = g.events.find(x => x.n === n), body = { n };
     const t = parseClock(row.querySelector("[data-et]").value);
     if (t === false) return toast("Write the time like 6:32 (or leave it empty).");
     body.clock = t === null ? null : { q: +row.querySelector("[data-eq]").value, t };
-    if (e.stat !== "lineup") { body.pid = row.querySelector("[data-ep]").value; body.stat = row.querySelector("[data-es]").value; }
+    if (e.stat !== "lineup") { body.pid = row.querySelector("[data-ep]").value; body.stat = row.querySelector("[data-es]").value; body.tags = [...row.querySelectorAll("[data-etag].on")].map(x => x.dataset.etag); }
     S.edit = null; const y = scrollY;
     S.game = await api(`/games/${g.id}/edit`, "POST", body); renderGame(); scrollTo(0, y);
   });
@@ -328,11 +453,11 @@ function updCourt() {
   document.querySelectorAll("[data-mn]").forEach(el => { const b = el.querySelector("b"), v = fmt(courtSecs(el.dataset.mn, el.dataset.team)); if (b && b.textContent !== v) b.textContent = v; });
 }
 function courtBar(code, ed) {
-  const g = S.game, c = g.court, on = c.on[code], pl = Object.fromEntries(g.players[code].map(p => [p.id, p])), pk = S.pick && S.pick.team === code;
+  const g = S.game, c = g.court, on = c.on[code], pk = S.pick && S.pick.team === code;
   if (pk) return `<div class="courtbar pickbar"><b>Pick the players on the court: ${S.pick.sel.size}/5</b><span class="sp"></span>
     <button class="accent" data-pickok ${S.pick.sel.size === 5 || (S.pick.sel.size && g.players[code].length < 5) ? "" : "disabled"}>Confirm</button><button data-pickno>Cancel</button></div>`;
-  if (!on.length) return ed ? `<div class="courtbar"><span class="hint">Who is on the court? Mark the five to get minutes and +/- (optional).</span><span class="sp"></span><button class="accent" data-pickstart="${code}">Pick the five</button></div>` : "";
-  return `<div class="courtbar"><span class="muted">On court</span>${on.map(id => `<span class="ch"><span class="av">${pl[id].number}</span>${esc(pl[id].name.split(" ").slice(-1)[0])}</span>`).join("")}${ed ? `<span class="sp"></span><button data-pickstart="${code}" title="Change several players at once">✎ Change the five</button>` : ""}</div>`;
+  if (!on.length) return ed ? `<div class="courtbar"><span class="hint">No five yet: use “Start the game” above, or pick it by hand.</span><span class="sp"></span><button data-pickstart="${code}">Pick the five</button></div>` : "";
+  return ed ? `<div class="courtbar"><span class="hint">${on.length}/5 on the court</span><span class="sp"></span><button data-pickstart="${code}" title="Change several players at once">✎ Change the five</button></div>` : "";
 }
 function cdClick(code, pid) {
   const g = S.game;
@@ -375,27 +500,37 @@ const clkSave = () => { try { localStorage.setItem(clk.id, JSON.stringify(clk.c)
 const clkNow = c => c.running ? Math.max(0, c.left - Math.floor((Date.now() - c.at) / 1000)) : c.left;
 function clkStart(c) { if (c.left > 0) { c.running = true; c.at = Date.now(); clkSave(); } }
 function clkStop(c) { if (c.running) { c.left = clkNow(c); c.running = false; clkSave(); } }
+function clkSet(c, left) { const run = c.running; c.left = Math.max(0, Math.min(len(c.q), left)); c.at = Date.now(); c.running = run && c.left > 0; clkSave(); }
 function clockHtml() {
-  const c = clk();
-  return `<div class="clock" title="Game clock: optional. It starts by itself when you add an action, and you can stop or start it any time.">
-    <select id="cq">${QN.map((n, i) => `<option value="${i + 1}" ${c.q === i + 1 ? "selected" : ""}>${n}</option>`).join("")}</select>
-    <span class="t ${c.running ? "run" : ""}" id="ct" title="Click to set the time">${fmt(clkNow(c))}</span>
-    <button id="cgo">${c.running ? "⏸ Stop" : "▶ Start"}</button>
+  const c = clk(), n = clkNow(c);
+  return `<div class="clock2" title="Game clock: optional. It starts by itself when you add an action; stop or start it any time (space bar).">
+    <div class="q"><button id="cqp" title="Previous quarter">‹</button><b id="cqn">${qName(c.q)}</b><button id="cqn2" title="Next quarter">›</button></div>
+    <span class="t ${c.running ? "run" : ""} ${n === 0 ? "end" : ""}" id="ct" title="Tap to type the time (6:32 or 632)">${fmt(n)}</span>
+    <button class="go ${c.running ? "stop" : ""}" id="cgo">${c.running ? "⏸ Stop" : "▶ Start"}</button>
+    <button class="adjt" id="cadjt" title="Match the TV clock: ±1 s, ±10 s">±</button>
+    <div class="adj ${S.adj ? "open" : ""}" title="Match the TV clock"><button data-adj="-10">−10s</button><button data-adj="-1">−1s</button><button data-adj="1">+1s</button><button data-adj="10">+10s</button></div>
     <label title="Start the clock by itself when you add an action"><input type="checkbox" id="cauto" ${c.auto ? "checked" : ""}> auto</label></div>`;
 }
 function clockWire() {
   if (!$("#cgo")) return;
-  const c = clk(), paint = () => { const t = $("#ct"); if (!t) return; updCourt(); const n = clkNow(c); t.textContent = fmt(n); t.classList.toggle("run", c.running); $("#cgo").textContent = c.running ? "⏸ Stop" : "▶ Start";
+  const c = clk(), paint = () => {
+    const t = $("#ct"); if (!t || t.tagName === "INPUT") return; updCourt(); const n = clkNow(c); t.textContent = fmt(n); t.classList.toggle("run", c.running); t.classList.toggle("end", n === 0);
+    $("#cgo").textContent = c.running ? "⏸ Stop" : "▶ Start"; $("#cgo").classList.toggle("stop", c.running); $("#cqn").textContent = qName(c.q);
+    let nx = $("#cnext"); if (n === 0 && c.q < 8 && !nx) { nx = document.createElement("button"); nx.id = "cnext"; nx.className = "nq"; nx.textContent = "Next: " + qName(c.q + 1) + " ›"; nx.onclick = () => stepQ(1); $(".clock2 .q").after(nx); } else if ((n > 0 || c.q >= 8) && nx) nx.remove();
     if (c.running && n === 0) { clkStop(c); paint(); toast("End of " + qName(c.q), true); } };
+  const stepQ = d => { clkStop(c); c.q = Math.max(1, Math.min(8, c.q + d)); c.left = len(c.q); c.running = false; clkSave(); paint(); };
   $("#cgo").onclick = () => { c.running ? clkStop(c) : clkStart(c); paint(); };
-  $("#cq").onchange = e => { clkStop(c); c.q = +e.target.value; c.left = len(c.q); clkSave(); paint(); };
+  $("#cqp").onclick = () => stepQ(-1); $("#cqn2").onclick = () => stepQ(1);
+  document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => { clkSet(c, clkNow(c) + +b.dataset.adj); paint(); });
+  $("#cadjt").onclick = () => { S.adj = !S.adj; document.querySelector(".clock2 .adj").classList.toggle("open", S.adj); };
   $("#cauto").onchange = e => { c.auto = e.target.checked; clkSave(); };
   $("#ct").onclick = () => {
-    const v = prompt("Time left in the quarter (mm:ss):", fmt(clkNow(c))); if (v === null) return;
-    const m = v.trim().match(/^(\d{1,2}):(\d{2})$/); if (!m) return toast("Write it like 6:32");
-    clkStop(c); c.left = Math.min(3600, +m[1] * 60 + +m[2]); clkSave(); paint();
+    const t = $("#ct"), inp = document.createElement("input"); inp.className = "ti"; inp.inputMode = "numeric"; inp.value = fmt(clkNow(c)); inp.id = "ct"; t.replaceWith(inp); inp.focus(); inp.select();
+    const done = ok => { if (!inp.isConnected) return; if (ok) { const v = inp.value.trim().replace(/[^0-9:]/g, ""), m = v.match(/^(\d{1,2}):(\d{2})$/) || (/^\d{3,4}$/.test(v) && v.match(/^(\d{1,2})(\d{2})$/)); if (m) clkSet(c, +m[1] * 60 + +m[2]); else toast("Write it like 6:32 (or 632)"); }
+      const sp = document.createElement("span"); sp.className = "t"; sp.id = "ct"; inp.replaceWith(sp); clockWire(); };
+    inp.onkeydown = e => { if (e.key === "Enter") done(true); else if (e.key === "Escape") done(false); }; inp.onblur = () => done(true);
   };
-  clearInterval(clockWire.timer); clockWire.timer = setInterval(paint, 250);
+  clearInterval(clockWire.timer); clockWire.timer = setInterval(paint, 250); paint();
 }
 async function undo() { if (!editable(S.game)) return; const y = scrollY; S.game = await api(`/games/${S.game.id}/undo`, "POST", {}); renderGame(); scrollTo(0, y); }
 async function submit() {
@@ -406,7 +541,11 @@ async function submit() {
   S.game = await api(`/games/${g.id}/submit`, "POST", { matchday: parseInt(md, 10), date: date.trim(), q: c.q, t: clkNow(c) });
   toast("Sent to the admin.", true); renderGame();
 }
-addEventListener("keydown", e => { if (S.game && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); } });
+addEventListener("keydown", e => {
+  if (S.game && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+  else if (S.game && e.key === " " && !e.target.closest("input, select, textarea, button, summary") && $("#cgo")) { e.preventDefault(); $("#cgo").click(); }          // space bar: start / stop the clock
+});
+addEventListener("resize", (() => { let m = isMobile(); return () => { if (m !== isMobile()) { m = isMobile(); if (S.game) renderGame(); } }; })());
 addEventListener("hashchange", load);
 load();
 </script>

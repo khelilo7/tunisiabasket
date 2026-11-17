@@ -25,6 +25,8 @@ import config
 import stats
 import mvp
 import predict
+import nat1
+import social
 import traffic
 from extractor import extract
 from ocr_parser import IMAGE_EXT, page_count
@@ -266,6 +268,65 @@ def review_list():
                       "result": g, "problems": problems, "warnings": [], "message": "From Drive sync",
                       "suggest": _suggest(g)})
     return jsonify(items=items)
+
+
+@bp.get("/admin/api/nat1")
+def nat1_admin_view():
+    return jsonify(nat1.view())
+
+
+@bp.post("/admin/api/nat1")
+def nat1_admin_edit():
+    """Body {"op": "team" | "remove_team" | "result" | "paste" | "fixtures" | "official" | "remove_result" | "season", ...}: the teams and results of Nationale 1 (nat1.py)."""
+    b = request.get_json(silent=True) or {}
+    op, msg = b.get("op"), "Saved."
+    try:
+        if op == "team":
+            nat1.add_team(b.get("code"), b.get("name"))
+            msg = f"Team {str(b.get('code')).upper()} saved."
+        elif op == "remove_team":
+            nat1.remove_team(str(b.get("code") or "").upper())
+            msg = "Team removed."
+        elif op == "result":
+            added, replaced = nat1.put_results([b])
+            msg = "Result saved." if added else "Result replaced."
+        elif op == "paste":
+            added, replaced = nat1.put_results(nat1.parse_lines(b.get("text")))
+            msg = f"{added} result(s) added, {replaced} replaced."
+        elif op == "fixtures":
+            msg = f"{nat1.put_fixtures(nat1.parse_fixtures(b.get('text')))} game(s) saved in the calendar."
+        elif op == "official":
+            published, rows = nat1.parse_official(b.get("text"))
+            n = nat1.set_official(published, rows)
+            msg = f"The federation's table ({n} teams) is shown." if n else "The federation's table is removed: the table is computed from the results."
+        elif op == "remove_result":
+            gone = nat1.remove_result(int(b.get("matchday") or 0), str(b.get("home") or "").upper(), str(b.get("away") or "").upper())
+            msg = "Result removed." if gone else "That result does not exist."
+        elif op == "season":
+            nat1.set_season(b.get("season"))
+            msg = "Season saved."
+        else:
+            return jsonify(error="Unknown operation."), 422
+    except ValueError as e:
+        return jsonify(error=str(e)), 422
+    auth.audit("nat1", f"{op}")
+    return jsonify(ok=True, message=msg, **nat1.view())
+
+
+@bp.get("/admin/api/social")
+def social_view():
+    return jsonify(values=social.load(), networks=[{"key": k, "name": n} for k, n in social.NETWORKS])
+
+
+@bp.post("/admin/api/social")
+def social_save():
+    """Body {"facebook": "https://...", "youtube": "", ...}: the addresses of the club's social pages (an empty one removes its icon)."""
+    try:
+        values = social.save(request.get_json(silent=True) or {})
+    except ValueError as e:
+        return jsonify(error=str(e)), 422
+    auth.audit("social-links", ", ".join(k for k, v in values.items() if v))
+    return jsonify(ok=True, values=values)
 
 
 @bp.get("/admin/api/traffic")

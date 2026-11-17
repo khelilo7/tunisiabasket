@@ -26,6 +26,7 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 
 import auth
 import config
+import lineups
 import stats
 
 bp = Blueprint("analytics", __name__)
@@ -36,8 +37,12 @@ COOKIE = "proa_analyst"
 SESSION_HOURS = 12
 MAX_EVENTS = 6000
 LOG_MAX = 4000                              # entries of a game's change log
-STATS = ("ft_m", "p2_m", "p3_m", "ft_x", "p2_x", "p3_x", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf")
+STATS = ("ft_m", "p2_m", "p3_m", "ft_x", "p2_x", "p3_x", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf", "fd")
 POINTS = {"ft_m": 1, "p2_m": 2, "p3_m": 3}
+# Tags on a made shot, one tap each after the basket (the team lines of a box score): in the paint (2-pointers only), second-chance points, fast-break points, points off a turnover.
+TAGS = {"p2_m": ("paint", "second", "fast", "tov"), "p3_m": ("second", "fast", "tov"), "ft_m": ("second", "fast", "tov")}
+TAG_KEY = {"paint": "paint", "second": "second", "fast": "fast", "tov": "tov_pts"}          # tag -> the key of the team line (team_extra.py)
+TAG_LABEL = {"paint": "in the paint", "second": "second chance", "fast": "fast break", "tov": "off a turnover"}
 OPEN_STATES = ("open", "rejected")           # the analyst may still count
 PUBLIC = {"analytics.page", "analytics.login_route", "analytics.me"}
 
@@ -275,7 +280,34 @@ def minutes(game):
 
 
 def _view(game):
-    return {**game, "court": court(game)}
+    return {**game, "court": court(game), "extra": team_extra(game)}
+
+
+def clean_tags(stat, tags):
+    """The tags this kind of action may carry, in a fixed order; anything else is dropped."""
+    ok = TAGS.get(stat, ())
+    return [t for t in ok if isinstance(tags, (list, tuple)) and t in tags]
+
+
+def team_extra(game):
+    """{team: {"paint", "second", "fast", "tov_pts", "bench"}}: the points of the tagged baskets, and the points of the players who were not in the first five the analyst marked
+    (bench points need both fives; without them the key is left out). The same five numbers as a federation sheet's team lines (team_extra.py)."""
+    team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
+    out = {c: {"paint": 0, "second": 0, "fast": 0, "tov_pts": 0} for c in game["players"]}
+    for e in game["events"]:
+        if e["stat"] in POINTS and e.get("tags") and e["pid"] in team_of:
+            for t in e["tags"]:
+                if t in TAG_KEY:
+                    out[team_of[e["pid"]]][TAG_KEY[t]] += POINTS[e["stat"]]
+    first = {}
+    for _, e in ordered(game):
+        if e["stat"] == "lineup" and e["team"] not in first:
+            first[e["team"]] = set(e["on"])
+    t = tally(game)
+    for c, five in first.items():
+        if len(five) == 5:
+            out[c]["bench"] = sum(points_of(t.get(p["id"], {})) for p in game["players"][c] if p["id"] not in five)
+    return out
 
 
 def points_of(r):
@@ -292,7 +324,7 @@ def line(r):
     g = lambda k: r.get(k, 0)
     fgm, fga = g("p2_m") + g("p3_m"), g("p2_m") + g("p3_m") + g("p2_x") + g("p3_x")
     return {"pts": points_of(r), "fgm": fgm, "fga": fga, "p3m": g("p3_m"), "p3a": g("p3_m") + g("p3_x"), "ftm": g("ft_m"), "fta": g("ft_m") + g("ft_x"),
-            "oreb": g("oreb"), "dreb": g("dreb"), "ast": g("ast"), "stl": g("stl"), "blk": g("blk"), "tov": g("tov"), "pf": g("pf")}
+            "oreb": g("oreb"), "dreb": g("dreb"), "ast": g("ast"), "stl": g("stl"), "blk": g("blk"), "tov": g("tov"), "pf": g("pf"), "fd": g("fd")}
 
 
 def summary(game):
@@ -334,7 +366,7 @@ def video_todo():
 
 # ---------------------------------------------------------------- live: what the public sees of a game the ADMIN has switched on
 PLAY = {"ft_m": "free throw made", "p2_m": "2-pointer made", "p3_m": "3-pointer made", "ft_x": "free throw missed", "p2_x": "2-pointer missed", "p3_x": "3-pointer missed",
-        "oreb": "offensive rebound", "dreb": "defensive rebound", "ast": "assist", "stl": "steal", "blk": "block", "tov": "turnover", "pf": "foul"}
+        "oreb": "offensive rebound", "dreb": "defensive rebound", "ast": "assist", "stl": "steal", "blk": "block", "tov": "turnover", "pf": "foul", "fd": "foul drawn"}
 
 
 def live_games():
@@ -392,9 +424,11 @@ def data():
         roster.setdefault(p["team"], []).append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "min": p.get("total_min") or 0})
     for ps in roster.values():
         ps.sort(key=lambda p: (-p["min"], p["number"]))
+    d = stats.build()
+    fives = {c: [p["id"] for p in lineups.expected_five(d, c)] for c in roster}            # the five most likely to start (starts this season and in the last games, absences left out)
     matches = [{"key": f"{md['matchday']}:{g['home']}-{g['away']}", "matchday": md["matchday"], "date": g.get("game_date") or md.get("date"), "time": g.get("time"),
                 "home": g["home"], "away": g["away"], "played": g["played"]} for md in plan["matchdays"] for g in md["games"]]
-    return jsonify(teams=plan["teams"], roster=roster, matches=matches, games=games, video=video_todo(), me=dict(zip(("name", "admin"), (who()[0], auth.is_admin()))))
+    return jsonify(teams=plan["teams"], roster=roster, fives=fives, matches=matches, games=games, video=video_todo(), me=dict(zip(("name", "admin"), (who()[0], auth.is_admin()))))
 
 
 @bp.post("/analytics/api/games")
@@ -464,7 +498,8 @@ def describe(g, e):
     names = {p["id"]: p["name"] for ps in g["players"].values() for p in ps}
     if e["stat"] == "lineup":
         return f"five of {e['team']}: " + (", ".join(names.get(i, i) for i in e["on"]) or "nobody") + _clock(e)
-    return f"{names.get(e['pid'], e['pid'])} · {PLAY.get(e['stat'], e['stat'])}" + _clock(e)
+    tags = (" (" + ", ".join(TAG_LABEL[t] for t in e["tags"]) + ")") if e.get("tags") else ""
+    return f"{names.get(e['pid'], e['pid'])} · {PLAY.get(e['stat'], e['stat'])}{tags}" + _clock(e)
 
 
 def _can_edit(g):
@@ -497,6 +532,9 @@ def change(gid, op):
             if len(g["events"]) >= MAX_EVENTS:
                 return jsonify(error="Too many actions in one game."), 422
             e = {"n": _next_n(g), "pid": b["pid"], "stat": b["stat"], "at": time.strftime("%H:%M:%S"), "by": name}
+            tags = clean_tags(b["stat"], b.get("tags"))
+            if tags:
+                e["tags"] = tags
             _stamp(e, b)
             g["events"].append(e)
             _log(g, name, "add", "added " + describe(g, e))
@@ -527,6 +565,12 @@ def change(gid, op):
                 if stat not in STATS or pid not in {p["id"] for ps in g["players"].values() for p in ps}:
                     return jsonify(error="Unknown player or action."), 422
                 e["pid"], e["stat"] = pid, stat
+            if "tags" in b or e.get("tags"):
+                tags = clean_tags(e["stat"], b.get("tags", e.get("tags")))
+                if tags:
+                    e["tags"] = tags
+                else:
+                    e.pop("tags", None)
             if "clock" in b:                                   # {"q": 2, "t": 392} puts it at that moment; null takes the clock off
                 if b["clock"] is None:
                     e.pop("q", None), e.pop("t", None)
@@ -572,15 +616,27 @@ def export_csv(gid):
     out = io.StringIO()
     w = csv.writer(out)
     c, mins = court(g), minutes(g)
-    w.writerow(["team", "number", "player", *(["MIN", "+/-"] if c["used"] else []), "PTS", "FGM", "FGA", "3PM", "3PA", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF"])
+    w.writerow(["team", "number", "player", *(["MIN", "+/-"] if c["used"] else []), "PTS", "FGM", "FGA", "3PM", "3PA", "FTM", "FTA", "OREB", "DREB", "REB", "AST", "STL", "BLK", "TOV", "PF", "FD"])
     for code, ps in g["players"].items():
         for p in ps:
             if p["id"] in t or mins.get(p["id"]):
                 l = line(t.get(p["id"], {}))
                 w.writerow([code, p["number"], p["name"], *([f"{mins.get(p['id'], 0) // 60}:{mins.get(p['id'], 0) % 60:02d}", c["pm"].get(p["id"], 0)] if c["used"] else []),
                             l["pts"], l["fgm"], l["fga"], l["p3m"], l["p3a"], l["ftm"], l["fta"], l["oreb"], l["dreb"], l["oreb"] + l["dreb"],
-                            l["ast"], l["stl"], l["blk"], l["tov"], l["pf"]])
+                            l["ast"], l["stl"], l["blk"], l["tov"], l["pf"], l["fd"]])
     return out.getvalue(), 200, {"Content-Type": "text/csv; charset=utf-8", "Content-Disposition": f'attachment; filename="{gid}.csv"'}
+
+
+@bp.get("/analytics/api/games/<gid>/export-team.csv")
+def export_team_csv(gid):
+    """The team lines the analyst tagged: team, points in the paint, second chance, fast break, off turnovers, bench (empty when not counted)."""
+    g = _load_mine(gid)
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(["team", "paint", "second_chance", "fast_break", "points_off_turnovers", "bench"])
+    for code, x in team_extra(g).items():
+        w.writerow([code, x["paint"], x["second"], x["fast"], x["tov_pts"], x.get("bench", "")])
+    return out.getvalue(), 200, {"Content-Type": "text/csv; charset=utf-8", "Content-Disposition": f'attachment; filename="{gid}-team.csv"'}
 
 
 # ---------------------------------------------------------------- the admin's side: review, approve, reject, unpublish
@@ -594,13 +650,13 @@ def _official_result(g):
 
 def _sheets(g):
     """The two one-team sheets of stats.py's partial games for this game."""
-    t, out, c, mins = tally(g), [], court(g), minutes(g)
+    t, out, c, mins, ex = tally(g), [], court(g), minutes(g), team_extra(g)
     for code in (g["home"], g["away"]):
         players = [{"number": p["number"], "name": p["name"], **line(t[p["id"]]), **({"min": round(mins.get(p["id"], 0) / 60, 2), "pm": c["pm"].get(p["id"], 0)} if c["used"] else {})}
                    for p in g["players"][code] if p["id"] in t]
         if players:
             out.append({"id": _sheet_id(g["id"], code), "matchday": g["matchday"], "home": g["home"], "away": g["away"], "recorded": code, "date": g["date"],
-                        "competition": "CHAMPIONNAT PRO A", "source": f"Live count by {g.get('analyst') or 'an analyst'} on tunisiabasket.com, approved by the admin",
+                        "extra": ex[code], "competition": "CHAMPIONNAT PRO A", "source": f"Live count by {g.get('analyst') or 'an analyst'} on tunisiabasket.com, approved by the admin",
                         "note": "Counted by hand while watching the game: fouls drawn are not known, and a stat may be missed." + (" Minutes and +/- come from the five the analyst marked on the court (the site does not use them yet)." if c["used"] else " Minutes and +/- are not known."), "players": players})
     return out
 

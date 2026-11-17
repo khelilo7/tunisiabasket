@@ -122,6 +122,32 @@
    "note": "J7 sheet: #0 Moumen Laaouadi and #17 Mosaab Ammari play in the same game, so #0 is not Ammari"
   },
   {
+   "team": "SN",
+   "number": 4,
+   "id": "sn-10",
+   "from": "2026-10-03",
+   "to": "2026-10-05",
+   "note": "J3 sheet prints Youssef Zrour under 4 (his number is 10; 4 is Slimane Chelly's)"
+  },
+  {
+   "team": "SN",
+   "number": 40,
+   "id": "sn-140",
+   "name": "Ahmed Yassine Mrabet",
+   "from": "2026-09-29",
+   "to": "2026-10-01",
+   "note": "J2: Mrabet played on 40, the number Jasson David Hobel took later"
+  },
+  {
+   "team": "ESG",
+   "number": 5,
+   "id": "esg-105",
+   "name": "Antonio Hauser",
+   "from": "2026-09-27",
+   "to": "2026-10-01",
+   "note": "J1 and J2: Antonio Hauser (Tony) wore 5, the number Sani Samuel has from J3"
+  },
+  {
    "team": "USA",
    "number": 88,
    "id": "usa-188",

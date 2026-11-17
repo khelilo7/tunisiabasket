@@ -75,7 +75,7 @@ check(ev("nobody-1", "ast").status_code == 422 and ev(a, "dunk").status_code == 
 g = analyst.get(f"/analytics/api/games/{gid}").get_json()
 s = analytics.scores(g)
 check(s == {"CA": 8, "ESG": 3}, f"score from the events: {s}")
-check(analytics.line(analytics.tally(g)[a]) == {"pts": 6, "fgm": 2, "fga": 3, "p3m": 1, "p3a": 1, "ftm": 1, "fta": 1, "oreb": 1, "dreb": 0, "ast": 1, "stl": 0, "blk": 0, "tov": 0, "pf": 0}, "one player's line")
+check(analytics.line(analytics.tally(g)[a]) == {"pts": 6, "fgm": 2, "fga": 3, "p3m": 1, "p3a": 1, "ftm": 1, "fta": 1, "oreb": 1, "dreb": 0, "ast": 1, "stl": 0, "blk": 0, "tov": 0, "pf": 0, "fd": 0}, "one player's line")
 n = g["events"][-1]["n"]
 analyst.post(f"/analytics/api/games/{gid}/undo", json={})
 check(len(analyst.get(f"/analytics/api/games/{gid}").get_json()["events"]) == 13, "undo removes the last action")
@@ -128,7 +128,7 @@ check(stats.box_counts([], [mg]).get("CA", 0) + stats.box_counts([], [mg]).get("
 b2 = stats.build()
 ca_row = next(p for p in b2["players"] if p["id"] == a)
 last = ca_row["log"][-1]
-check(last.get("min") is None and last.get("fd") is None and last.get("pm") is None and last["pts"] == 6 and last["tov"] == 0, "minutes, fouls drawn and +/- stay unknown (never 0); points, turnovers and fouls are the counted ones")
+check(last.get("min") is None and last.get("pm") is None and last["pts"] == 6 and last["tov"] == 0 and last["fd"] == 0, "minutes and +/- stay unknown (never 0); points, turnovers, fouls and fouls drawn are the counted ones")
 check(len(b2["games"]) == games_before, "it never becomes a box score")
 check(json.dumps(stats.official_standings(), sort_keys=True) != standings_before, "standings changed only because the admin entered the official result")
 lst = admin.get("/admin/api/analytics", environ_overrides=ip("198.51.100.5")).get_json()["games"]

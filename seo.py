@@ -17,17 +17,18 @@ from pathlib import Path
 from flask import request
 
 import config
+import social
 import stats
 
 DEFAULT = "fr"          # the main language: its addresses have no prefix (/equipe/CA); the others do (/en/team/CA)
 LANGS = ("fr", "en")
 SLUGS = {
     "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions", "news": "news", "live": "live",
-           "team": "team", "player": "player", "game": "game"},
+           "about": "about", "nat1": "national-one", "team": "team", "player": "player", "game": "game"},
     "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics", "news": "actualites", "live": "direct",
-           "team": "equipe", "player": "joueur", "game": "match"},
+           "about": "a-propos", "nat1": "nationale-1", "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news")
+LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "nat1")
 ITEM_PAGES = ("team", "player", "game")
 SITE = "Tunisia Basket"
 OG_LOCALE = {"en": "en_US", "fr": "fr_FR"}
@@ -57,12 +58,22 @@ T = {
         "p_desc": "{name}, {team} #{num}: {pts} points, {reb} rebounds and {ast} assists per game over {gp} games in the {season} Pro A season. Rating {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – box score, {md} | Tunisia Basket",
         "m_desc": "{a} vs {b} ({sa}–{sb}), Tunisian Pro A basketball {md}: full box score, starting fives and player stats.{mvp}",
-        "mvp_nav": "Player of the round", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "Player of the round and MVP race – phase 1 (J1–J11)",
+        "mvp_nav": "MVP", "mv_votes": "fan votes", "mv_phase1": "Phase 1 MVP", "mv_current": "Current MVP", "mv_h1": "Player of the round and MVP race – phase 1 (J1–J11)",
         "nw_nav": "News", "nw_h1": "Pro A basketball news", "nw_title": "Pro A basketball news – injuries, transfers, announcements – Tunisia Basket",
         "nw_desc": "The latest news of the Tunisian Pro A basketball league: injuries, transfers, official announcements.",
+        "ab_title": "About Tunisia Basket – basketball statistics for Tunisia, made for free by fans",
+        "ab_desc": "Tunisia Basket is a team of people who love basketball, working for free to improve the visibility and the use of basketball statistics in Tunisia.",
+        "ab_h1": "About us", "ab_nav": "About",
+        "ab_p": ["We are a team of people who love basketball. We want to make basketball in Tunisia better: give statistics the visibility they deserve, help clubs, players, journalists and fans use them, and have fun together in small, friendly competitions: the player of the round, the MVP vote, the match predictions.",
+                 "We do this for free, in our spare time. There is no paywall and no advertising to get past: the scores, the box scores and the numbers are for everybody.",
+                 "Your engagement is what keeps it going, and we truly appreciate it. Vote, predict, share a page with a friend, follow us on social media, and tell us when something is missing or wrong: send us a box score or a correction and we will add it.",
+                 "Tunisia Basket is an independent project. It is not affiliated with the Tunisian Basketball Federation or with the clubs; club names and logos belong to their owners."],
+        "nt_nav": "National One", "nt_title": "National One basketball results and standings – Tunisia Basket",
+        "nt_desc": "Results and standings of the National One, the second basketball league below the Tunisian Pro A.", "nt_h1": "National One: results and standings",
+        "follow_us": "Follow us",
         "fb_hint": "Player, coach or club? We are still missing some box scores: send them to us, or ask for a correction, on our Facebook page.",
-        "tip_home": "Main page", "tip_live": "Live games and scores", "tip_standings": "Ranking, results and calendar", "tip_players": "Player statistics",
-        "tip_mvp": "Player of the round and MVP vote", "tip_predict": "Predict the next matchday", "tip_news": "News",
+        "tip_home": "Main page", "tip_live": "Live games and scores", "tip_standings": "Ranking, results and calendar", "tip_players": "Player statistics, MVP and player of the round",
+        "tip_mvp": "The MVP vote and race", "tip_predict": "Predict the next matchday", "tip_news": "News",
         "live_nav": "Live", "live_h1": "Live basketball: follow a Pro A game as it is counted", "live_title": "Live Pro A basketball – score, box score, plays – Tunisia Basket",
         "live_desc": "Follow a Tunisian Pro A basketball game live: the score, the clock, the box score and the last plays, updated every few seconds.",
         "pr_nav": "Predictions", "pr_h1": "Pro A predictions: who wins the next matchday?",
@@ -96,12 +107,22 @@ T = {
         "p_desc": "{name}, {team} n°{num} : {pts} points, {reb} rebonds et {ast} passes décisives par match en {gp} matchs de Pro A {season}. Note {rating}/99.",
         "m_title": "{a} {sa}–{sb} {b} – feuille de match, {md} | Tunisia Basket",
         "m_desc": "{a} contre {b} ({sa}–{sb}), Pro A tunisienne de basket {md} : feuille de match complète, cinq de départ et statistiques des joueurs.{mvp}",
-        "mvp_nav": "Joueur de la journée", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Joueur de la journée et course au MVP – phase 1 (J1–J11)",
+        "mvp_nav": "MVP", "mv_votes": "votes des fans", "mv_phase1": "MVP de la phase 1", "mv_current": "MVP actuel", "mv_h1": "Joueur de la journée et course au MVP – phase 1 (J1–J11)",
         "nw_nav": "Actualités", "nw_h1": "Actualités de la Pro A tunisienne de basket", "nw_title": "Actualités Pro A basket – blessures, transferts, annonces – Tunisia Basket",
         "nw_desc": "Les dernières actualités de la Pro A tunisienne de basket : blessures, transferts, annonces officielles.",
+        "ab_title": "À propos de Tunisia Basket – les statistiques du basket tunisien, faites gratuitement par des passionnés",
+        "ab_desc": "Tunisia Basket est une équipe de passionnés de basket qui travaillent gratuitement pour améliorer la visibilité et l’usage des statistiques du basket en Tunisie.",
+        "ab_h1": "À propos", "ab_nav": "À propos",
+        "ab_p": ["Nous sommes une équipe de passionnés de basket. Nous voulons faire progresser le basket en Tunisie : donner aux statistiques la visibilité qu’elles méritent, aider les clubs, les joueurs, les journalistes et les supporters à s’en servir, et nous amuser ensemble autour de petites compétitions amicales : le joueur de la journée, le vote du MVP, les pronostics.",
+                 "Nous le faisons gratuitement, sur notre temps libre. Pas de abonnement ni de publicité à franchir : les scores, les feuilles de match et les chiffres sont pour tout le monde.",
+                 "Votre engagement fait vivre le projet, et nous y sommes très sensibles. Votez, pronostiquez, partagez une page avec un ami, suivez-nous sur les réseaux, et dites-nous quand il manque quelque chose ou qu’une info est fausse : envoyez-nous une feuille de match ou une correction, nous l’ajouterons.",
+                 "Tunisia Basket est un projet indépendant. Il n’est pas affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs ; les noms et logos des clubs appartiennent à leurs propriétaires."],
+        "nt_nav": "Nationale 1", "nt_title": "Nationale 1 basket : résultats et classement – Tunisia Basket",
+        "nt_desc": "Résultats et classement de la Nationale 1, la deuxième division du basket tunisien sous la Pro A.", "nt_h1": "Nationale 1 : résultats et classement",
+        "follow_us": "Suivez-nous",
         "fb_hint": "Joueur, coach ou club ? Il nous manque encore des feuilles de match : envoyez-les-nous, ou demandez une correction, sur notre page Facebook.",
-        "tip_home": "Page principale", "tip_live": "Matchs et scores en direct", "tip_standings": "Classement, résultats et calendrier", "tip_players": "Statistiques des joueurs",
-        "tip_mvp": "Joueur de la journée et vote MVP", "tip_predict": "Pronostiquez la prochaine journée", "tip_news": "Actualités",
+        "tip_home": "Page principale", "tip_live": "Matchs et scores en direct", "tip_standings": "Classement, résultats et calendrier", "tip_players": "Statistiques des joueurs, MVP et joueur de la journée",
+        "tip_mvp": "Vote et course au MVP", "tip_predict": "Pronostiquez la prochaine journée", "tip_news": "Actualités",
         "live_nav": "Direct", "live_h1": "Basket en direct : suivez un match de Pro A pendant qu’il se joue", "live_title": "Pro A basket en direct – score, feuille de match, actions – Tunisia Basket",
         "live_desc": "Suivez un match de la Pro A tunisienne de basket en direct : le score, le chrono, la feuille de match et les dernières actions, mis à jour toutes les quelques secondes.",
         "pr_nav": "Pronostics", "pr_h1": "Pronostics Pro A : qui gagne la prochaine journée ?",
@@ -206,7 +227,7 @@ def _org_jsonld(lang):
     return {"@context": "https://schema.org", "@type": "WebSite", "name": SITE, "url": b + path(lang, "home"),
             "alternateName": ["TunisiaBasket", "Tunisia Basket Pro A", "tunisiabasket.com"], "inLanguage": lang,
             "publisher": {"@type": "Organization", "name": SITE, "url": b + "/", "logo": {"@type": "ImageObject", "url": b + "/img/icon-512.png", "width": 512, "height": 512},
-            "sameAs": ["https://www.facebook.com/people/Tunisia-Basket/61596371069928/"]}}
+            "sameAs": [l["url"] for l in social.links()]}}
 
 
 def meta(lang, page, arg=None):
@@ -240,6 +261,13 @@ def meta(lang, page, arg=None):
         out.update(title=t["nw_title"], description=t["nw_desc"], ssr=f'<h1>{t["nw_h1"]}</h1><ul>{items}</ul>')
     elif page == "predict":
         out.update(title=t["pr_title"], description=t["pr_desc"], ssr=f'<h1>{t["pr_h1"]}</h1><p>{esc(t["pr_desc"])}</p>')
+    elif page == "about":
+        out.update(title=t["ab_title"], description=t["ab_desc"], ssr=f'<h1>{t["ab_h1"]}</h1>' + "".join(f"<p>{esc(x)}</p>" for x in t["ab_p"]))
+    elif page == "nat1":
+        import nat1
+        v = nat1.view()
+        rows = "".join(f'<tr><td>{r["rank"]}</td><td>{esc(r["name"])}</td><td>{r["w"]}</td><td>{r["l"]}</td><td>{r["pts"]}</td><td>{r["diff"]:+d}</td></tr>' for r in v["standings"])
+        out.update(title=t["nt_title"], description=t["nt_desc"], ssr=f'<h1>{t["nt_h1"]}</h1><table><thead><tr><th>#</th><th>{t["team"]}</th><th>W</th><th>L</th><th>Pts</th><th>+/-</th></tr></thead><tbody>{rows}</tbody></table>')
     elif page == "live":
         out.update(title=t["live_title"], description=t["live_desc"], ssr=f'<h1>{t["live_h1"]}</h1><p>{esc(t["live_desc"])}</p>', robots="noindex,follow")   # a proof of concept: not worth indexing
     elif page == "standings":
@@ -370,17 +398,20 @@ ICONS = {   # the menu's icons: 24x24 outlines, drawn here so the menu needs no 
     "predict": '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.2"/>',
     "news": '<path d="M5 4h11v16H7a2 2 0 0 1-2-2V4z"/><path d="M16 8h3v10a2 2 0 0 1-2 2"/><path d="M8 8h5M8 12h5M8 16h3"/>',
 }
-SECONDARY = ("mvp", "predict", "news")      # on a phone these live behind the "More" button; the four others sit in the bottom bar
+SECONDARY = ("predict", "news")      # on a phone these live behind the "More" button; the four others sit in the bottom bar
 
 
 def nav_html(lang):
     """The menu, with an icon for each page. Games and the calendar live inside the Standings page (a switch there); News only appears once there is some."""
     import content
     t = T[lang]
-    items = [("home", t["home"]), ("live", t["live_nav"]), ("standings", t["standings"]), ("players", t["players"]), ("mvp", t["mvp_nav"]), ("predict", t["pr_nav"])]
+    items = [("home", t["home"]), ("live", t["live_nav"]), ("standings", t["standings"]), ("players", t["players"]), ("predict", t["pr_nav"])]
     if content.load_news(1):
         items.append(("news", t["nw_nav"]))
-    return "".join(f'<a href="{path(lang, p)}" data-p="{p}" title="{esc(t["tip_" + p], quote=True)}"{" class=sec" if p in SECONDARY else ""}>'
+    def cls(p):
+        c = [x for x, on in (("sec", p in SECONDARY), ("hot", p == "predict")) if on]
+        return f' class="{" ".join(c)}"' if c else ""
+    return "".join(f'<a href="{path(lang, p)}" data-p="{p}" title="{esc(t["tip_" + p], quote=True)}"{cls(p)}>'
                    f'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">{ICONS[p]}</svg>{"<i class=ldot></i>" if p == "live" else ""}<span>{esc(label)}</span></a>' for p, label in items)
 
 
@@ -394,6 +425,8 @@ def shell(lang, page, m):
             .replace("{{REGULAR}}", esc(T[lang]["regular"][0].upper() + T[lang]["regular"][1:]))
             .replace("{{LEGAL}}", esc(T[lang]["legal"].format(year=time.gmtime().tm_year)))
             .replace("{{FB}}", "https://www.facebook.com/people/Tunisia-Basket/61596371069928/").replace("{{FBHINT}}", esc(T[lang]["fb_hint"]))
+            .replace("{{PREDICT}}", path(lang, "predict")).replace("{{ABOUT}}", path(lang, "about")).replace("{{ABOUTLABEL}}", esc(T[lang]["ab_nav"]))
+            .replace("{{SOCIAL}}", social.html(T[lang]["follow_us"])).replace("{{SOCIALBIG}}", social.html(T[lang]["follow_us"], big=True))
             .replace("<!--NAV-->", nav_html(lang)).replace("<!--HEAD-->", head_html(lang, page, m))
             .replace("<!--SSR-->", m.get("ssr", "")))
 
@@ -406,7 +439,7 @@ def sitemap_xml():
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
     import content
-    entries = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None)]
+    entries = [("home", None), ("standings", None), ("nat1", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None)]
     if content.load_news(1):                       # an empty news page is not worth indexing
         entries.append(("news", None))
     entries += [("team", c) for c in stats.load_official()["teams"]]

@@ -4,6 +4,8 @@ import re
 
 import pdfplumber
 
+import team_extra
+
 MONTHS = {m: i + 1 for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split())}
 ROW = re.compile(r"^(\*?)(\d{1,2})\s+(.+?)\s+(?:(\d{1,3}:\d{2})\s+(.*)|DNP)$")
 MA = r"(\d+)/(\d+)\s+[\d.,]+"
@@ -90,7 +92,9 @@ def parse_text_pdf(path, page=0):
 
     if len(teams) != 2:
         raise ValueError(f"expected 2 teams, found {len(teams)}")
-    return {"competition": comp, "date": date, "teams": teams}
+    game = {"competition": comp, "date": date, "teams": teams}
+    team_extra.attach(game, text)             # points in the paint, second chance, fast break, off turnovers, bench (when the sheet prints them)
+    return game
 
 
 if __name__ == "__main__":

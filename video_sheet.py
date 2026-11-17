@@ -10,6 +10,7 @@ import re
 
 import pdfplumber
 
+import team_extra
 from text_parser import ROW, STATS
 
 MARKER = re.compile(r"compiled by tunisia basket|\(from video\)|broadcast video", re.I)
@@ -88,6 +89,7 @@ def parse_video_sheet(path, page=0):
     if len(teams) != 2 or any(t["points"] is None for t in teams):
         raise ValueError(f"expected 2 teams with a totals line, found {len(teams)}")
     game = {"competition": comp, "date": None, "teams": teams, "source": "video", "note": NOTE}
+    team_extra.attach(game, text)
     if md:
         game["matchday_no"], game["matchday"] = int(md.group(1)), f"J{int(md.group(1))}"
     return game

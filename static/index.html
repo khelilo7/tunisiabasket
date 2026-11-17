@@ -326,6 +326,83 @@
   .livetile .sc { display:flex; align-items:baseline; gap:6px; } .livetile .sc b { font-size:32px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; } .livetile .sc span { color:var(--mut); }
   .playsfold { margin-top:16px; }
   .livecard tr.on td:first-child { box-shadow:inset 3px 0 0 var(--good); }
+
+  /* social pages, the optional "follow a club" window, the side panels of Players and Games */
+  .socials { display:inline-flex; gap:8px; align-items:center; vertical-align:middle; }
+  .soc { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; color:#fff; transition:transform .15s, box-shadow .15s; }
+  .soc:hover { transform:translateY(-2px) scale(1.07); box-shadow:0 6px 16px rgba(0,0,0,.35); color:#fff; }
+  .soc.s-facebook { background:#1877f2; } .soc.s-youtube { background:#f00; } .soc.s-x { background:#0f1419; box-shadow:inset 0 0 0 1px #3a4350; }
+  .soc.s-instagram { background:radial-gradient(circle at 30% 107%,#fdf497 0,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%); }
+  .soc svg { width:17px; height:17px; }
+  footer .fright { display:inline-flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .linkbtn { background:none; border:1px solid var(--line); border-radius:99px; padding:5px 12px; font-size:12px; color:var(--txt); cursor:pointer; } .linkbtn:hover { border-color:var(--acc); color:var(--acc); }
+  .followcard { display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin-top:22px; background:var(--mvp-grad); border-color:var(--mvp-line); }
+  .followcard .fl { display:flex; align-items:center; gap:12px; min-width:0; } .followcard .fstar { font-size:26px; line-height:1; }
+  .followcard .fr { display:flex; align-items:center; gap:10px; flex-wrap:wrap; } .followcard .later { background:none; border:0; color:var(--mut); font-size:12px; text-decoration:underline; cursor:pointer; padding:4px; }
+  .fm { width:min(560px,100%); } .fm .muh { padding:16px 18px; border-bottom:1px solid var(--line); }
+  .fgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; padding:14px 16px; max-height:62vh; overflow:auto; }
+  .fteam { display:flex; flex-direction:column; align-items:center; gap:6px; padding:12px 6px; border-radius:12px; font-size:12px; font-weight:700; text-align:center; line-height:1.2; }
+  .fteam.on { border-color:var(--acc); background:var(--glow); } .fnone { margin:0 16px 16px; }
+  .fbtn { padding:4px 12px; border-radius:99px; font-size:13px; font-weight:700; } .fbtn.on { background:var(--acc); border-color:var(--acc); color:#1a1205; }
+  tr.fav td:first-child { box-shadow:inset 3px 0 0 var(--acc); }
+  .tsg td.l { white-space:normal; }
+  main.wide { max-width:1400px; }
+  .withside { display:grid; grid-template-columns:minmax(0,1fr) 340px; gap:18px; align-items:start; } .withside > aside { position:sticky; top:68px; display:grid; gap:12px; }
+  .withside > div { min-width:0; }
+  .sidecard { padding:14px; margin:0; } .sidecard .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px; }
+  .sidecard .rrow { display:grid; grid-template-columns:22px 40px minmax(0,1fr) auto; gap:9px; align-items:center; padding:8px 0; border-top:1px solid var(--line); } .sidecard .rrow:first-of-type { border-top:0; }
+  .sidecard .rrow.me { background:var(--glow); border-radius:10px; padding-left:6px; padding-right:6px; }
+  .sidecard .rinfo { display:flex; flex-direction:column; gap:2px; min-width:0; } .sidecard .rinfo a { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sidecard .rvote { display:flex; align-items:center; gap:8px; } .sidecard .rvote .vote { padding:5px 12px; }
+  .sidecard details { margin-top:8px; } .sidecard details > summary { cursor:pointer; color:var(--mut); font-size:13px; padding:4px 0; }
+  .sidecard .wn { display:flex; align-items:center; gap:12px; margin:4px 0 10px; font-size:19px; font-weight:800; line-height:1.15; }
+  .prow { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; padding:9px 0; border-top:1px solid var(--line); } .prow:first-of-type { border-top:0; }
+  .prow .pbar, .prow .pnote { grid-column:1 / -1; }
+  .ptm { display:flex; align-items:center; gap:8px; justify-content:center; padding:7px 6px; border-radius:12px; font-weight:800; } .ptm.on { border-color:var(--acc); background:var(--glow); } .ptm:disabled { cursor:default; opacity:.9; }
+  .pdet > summary { cursor:pointer; font-weight:700; padding:6px 0; color:var(--txt); }
+  .tlr { padding:8px 0; border-top:1px solid var(--line); } .tlr:first-child { border-top:0; }
+  .tlr .tv { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:baseline; } .tlr .tv span { color:var(--mut); font-size:13px; text-align:center; } .tlr .tv b { font-size:18px; } .tlr .tv b:last-child { text-align:right; } .tlr .tv b.win { color:var(--acc); }
+  .tlr .tb { display:flex; height:6px; border-radius:4px; overflow:hidden; background:var(--track); margin-top:5px; gap:2px; } .tlr .tb i { display:block; background:var(--mut); opacity:.55; } .tlr .tb i.win { background:var(--acc); opacity:1; }
+  a.chip2 { text-decoration:none; transition:transform .12s; } a.chip2:hover { transform:translateY(-2px); outline:2px solid var(--acc); }
+  .pill a { color:inherit; } a.pillink { text-decoration:none; } a.pillink:hover .pill { outline:2px solid var(--acc); }
+  @media (max-width:1100px) { .withside { grid-template-columns:1fr; } .withside > aside { position:static; order:-1; } }
+  @media (max-width:760px) { .followcard { padding:14px; } .soc { width:38px; height:38px; } }
+
+  /* playoff / playout zones of the standings: colour first, the MVP pool only a small star */
+  .zone { font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; padding:2px 8px; border-radius:99px; margin-left:4px; }
+  .zone.z-po { background:var(--pillw); color:var(--good); } .zone.z-pl { background:var(--pilll); color:var(--bad); }
+  tr.zone-po td:first-child { box-shadow:inset 4px 0 0 var(--good); } tr.zone-pl td:first-child { box-shadow:inset 4px 0 0 var(--bad); }
+  tr.zone-po { background:linear-gradient(90deg, rgba(62,207,142,.08), transparent 38%); } tr.zone-pl { background:linear-gradient(90deg, rgba(255,93,108,.07), transparent 38%); }
+  tr.zone-po td.rkz { color:var(--good); font-weight:800; } tr.zone-pl td.rkz { color:var(--bad); font-weight:800; }
+  tr.zend td { border-bottom:2px dashed var(--line); }
+  .mvpdot { font-size:11px; color:var(--acc); opacity:.7; margin-left:2px; font-style:normal; } .mvpdot:hover { opacity:1; }
+  .zlegend { display:flex; gap:16px; flex-wrap:wrap; align-items:center; margin:10px 2px 0; font-size:13px; font-weight:600; } .zlegend i { display:inline-block; width:12px; height:12px; border-radius:4px; margin-right:6px; vertical-align:-1px; }
+  .zlegend i.z-po { background:var(--good); } .zlegend i.z-pl { background:var(--bad); } .zlegend .mut { font-weight:400; margin-left:auto; }
+
+  /* header: my club + predictions; the hot menu entry; social buttons; National One; About; predictions page */
+  .clubbtn { display:inline-flex; align-items:center; gap:6px; border-radius:99px; padding:5px 12px; font-weight:700; font-size:13px; white-space:nowrap; } .clubbtn b { font-weight:400; } .clubbtn.on { border-color:var(--acc); background:var(--glow); }
+  .hdrbtn { display:none; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid var(--line); background:var(--card); color:var(--txt); border-radius:50%; font-size:16px; position:relative; } .hdrbtn span { display:none; }
+  nav a.hot .pdot { margin-left:4px; }
+  .pdot { width:8px; height:8px; border-radius:50%; background:var(--bad); box-shadow:0 0 0 0 rgba(255,93,108,.6); animation:pdot 1.8s infinite; display:inline-block; margin-left:5px; } @keyframes pdot { 70% { box-shadow:0 0 0 7px rgba(255,93,108,0); } 100% { box-shadow:0 0 0 0 rgba(255,93,108,0); } }
+  .hdrbtn .pdot { position:absolute; top:-2px; right:-2px; margin:0; }
+  footer .faint { opacity:.55; font-size:11px; } footer .faint a:hover { opacity:1; }
+  .fbv { display:inline-flex; align-items:center; gap:8px; } .fbv svg { flex:none; background:#fff; border-radius:50%; }
+  .socialcard { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:16px; }
+  .socbig { display:inline-flex; gap:10px; flex-wrap:wrap; } .sb { display:inline-flex; align-items:center; gap:9px; padding:11px 18px; border-radius:99px; color:#fff; font-weight:800; font-size:14px; transition:transform .15s, box-shadow .15s; } .sb:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(0,0,0,.35); color:#fff; }
+  .sb.s-facebook { background:#1877f2; } .sb.s-youtube { background:#f00; } .sb.s-x { background:#0f1419; box-shadow:inset 0 0 0 1px #3a4350; } .sb.s-instagram { background:radial-gradient(circle at 30% 107%,#fdf497 0,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%); }
+  .sb.s-facebook, .sb.s-youtube { padding:13px 22px; font-size:15px; }
+  .ini { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--pill); color:var(--mut); font-size:9px; font-weight:800; flex:none; }
+  .n1grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); }
+  .n1g .n1s { text-align:center; }
+  .n1g { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--line); } .n1g .tn:last-child { justify-content:flex-end; text-align:right; } .n1g .win { font-weight:800; }
+  .seg.league { margin-bottom:8px; } .seg.league a.on { background:var(--acc); color:#1a1205; }
+  .about { max-width:760px; margin:0 auto; } .abhero { display:flex; gap:16px; align-items:center; margin:6px 0 14px; } .abtext p { font-size:16px; line-height:1.65; margin:0 0 14px; } .abtext p:last-child { margin:0; color:var(--mut); font-size:14px; }
+  .predhero { background:var(--mvp-grad); border-color:var(--mvp-line); } .predhero .ph1 { display:flex; gap:14px; align-items:center; } .predhero .pico { font-size:38px; }
+  .pprog { display:flex; align-items:center; gap:12px; } .pprog .bar { flex:1; height:10px; border-radius:6px; background:var(--track); overflow:hidden; } .pprog .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--acc),#ffc46b); border-radius:6px; transition:width .4s; }
+  @media (max-width:480px) { header .brand .logo { display:none; } header .brand img { height:34px; flex:none; } }
+  @media (max-width:760px) {
+    header .brand { flex:1; } .hdrbtn { display:inline-flex; } .clubbtn span { max-width:70px; overflow:hidden; text-overflow:ellipsis; } .socialcard .socbig { width:100%; } .sb { flex:1 1 auto; justify-content:center; }
+  }
 </style>
 </head>
 <body>
@@ -333,6 +410,8 @@
   <a class="brand" href="{{HOME}}"><img src="/img/logo-96.png" alt="Tunisia Basket" width="34" height="42"><span class="logo"><b>TUNISIA</b> BASKET</span></a>
   <span class="pill" id="phase">{{REGULAR}}</span>
   <nav id="nav"><!--NAV--><button class="more" id="morebtn" aria-expanded="false" aria-controls="pop"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg><span id="moretxt">More</span></button></nav>
+  <button class="clubbtn" id="clubbtn" type="button"></button>
+  <a class="hdrbtn" id="predbtn" href="{{PREDICT}}">🎯 <span>Pronostics</span></a>
   <button class="gear" id="gear" aria-expanded="false" aria-controls="pop" aria-label="Settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4.9a7.6 7.6 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.4a7.6 7.6 0 0 0-2.6 1.5l-2.4-.9-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-.9a7.6 7.6 0 0 0 2.6 1.5l.4 2.4h4l.4-2.4a7.6 7.6 0 0 0 2.6-1.5l2.4.9 2-3.4z"/></svg></button>
   <button id="syncbtn" hidden>⟳ Sync</button>
   <div id="pop" role="dialog" aria-label="Settings" hidden>
@@ -346,7 +425,8 @@
 </header>
 <div id="scrim" hidden></div>
 <main id="app"><!--SSR--></main>
-<footer><span>{{LEGAL}}</span><span><a class="fbl" href="{{FB}}" target="_blank" rel="noopener">Facebook</a> · <a href="/admin">Admin</a></span><span class="hint">{{FBHINT}}</span></footer>
+<template id="socbig">{{SOCIALBIG}}</template>
+<footer><span>{{LEGAL}}</span><span class="fright"><a href="{{ABOUT}}">{{ABOUTLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
 
 <script>
 const $ = s => document.querySelector(s);
@@ -449,6 +529,27 @@ const FR = {
   // metrics
   'Points': 'Points', 'Rebounds': 'Rebonds', 'Assists': 'Passes décisives', 'Steals': 'Interceptions', 'Blocks': 'Contres', 'PIR (efficiency)': 'PIR (évaluation)',
   'Minutes': 'Minutes', 'Plus / minus': 'Plus / moins', 'FG %': '% au tir', '3P %': '% à 3 pts', 'True shooting %': '% de tir réel',
+  // follow a club, social pages, side panels, scoring sources
+  'Follow a club': 'Suivre un club', 'Follow us': 'Suivez-nous', 'Follow': 'Suivre', 'Following': 'Suivi', 'Stop following': 'Ne plus suivre', 'Choose a club': 'Choisir un club',
+  'Follow your club': 'Suivez votre club', 'You follow': 'Vous suivez', 'Change': 'Changer', 'Not now': 'Plus tard',
+  'Optional. Your club is highlighted for you on this device, and it tells us which clubs our readers follow. Nothing personal is stored.': 'Facultatif. Votre club est mis en avant pour vous sur cet appareil, et cela nous dit quels clubs nos lecteurs suivent. Aucune donnée personnelle n’est conservée.',
+  'Get the scores, the news and the box scores of your club first, and follow us on social media.': 'Retrouvez en premier les scores, les actus et les feuilles de match de votre club, et suivez-nous sur les réseaux.',
+  'Scoring sources': 'Origine des points', 'Points in the paint': 'Points dans la raquette', 'Second-chance points': 'Points sur seconde chance', 'Fast-break points': 'Points en contre-attaque',
+  'Points off turnovers': 'Points sur balles perdues', 'Bench points': 'Points du banc', 'Paint points allowed': 'Points encaissés dans la raquette', 'Second-chance points allowed': 'Points encaissés sur seconde chance',
+  'Fast-break points allowed': 'Points encaissés en contre-attaque', 'Points allowed off turnovers': 'Points encaissés sur balles perdues', 'Team comparison': 'Comparaison des équipes',
+  'sheets with these lines': 'feuilles avec ces lignes', 'More candidates': 'Autres candidats', 'History': 'Historique', 'Vote for the best player of this matchday.': 'Votez pour le meilleur joueur de cette journée.',
+  'Predict the winners': 'Pronostiquez les vainqueurs', 'Full vote': 'Tout le vote',
+  'MVP · Player of the round': 'MVP · Joueur de la journée', 'Playoff': 'Play-off', 'Playout': 'Play-out', 'top 6': '6 premiers', 'the other 6': 'les 6 autres',
+  'National One': 'Nationale 1', 'My club': 'Mon club', 'Change your club': 'Changer de club', 'About us': 'À propos', 'Follow Tunisia Basket': 'Suivez Tunisia Basket',
+  'Basketball statistics for Tunisia, made for free by fans': 'Les statistiques du basket tunisien, faites gratuitement par des passionnés',
+  'Your engagement means a lot to us. Thank you!': 'Votre engagement compte beaucoup pour nous. Merci !',
+  'Pick your club: it is highlighted for you, and we learn which clubs our readers follow.': 'Choisissez votre club : il est mis en avant pour vous, et nous saurons quels clubs nos lecteurs suivent.',
+  'Scores, box scores and news first, on our pages. A tip, a correction or a missing result? Write to us there: we read everything.': 'Scores, feuilles de match et actus en premier, sur nos pages. Une info, une correction, un résultat manquant ? Écrivez-nous : nous lisons tout.',
+  'The National One results are coming soon.': 'Les résultats de la Nationale 1 arrivent bientôt.', 'Results': 'Résultats',
+  'We only have results for the National One: there are no player or box-score statistics yet.': 'Pour la Nationale 1, nous n’avons que les résultats : pas encore de statistiques de joueurs ni de feuilles de match.',
+  'Tap the team you think wins': 'Touchez l’équipe que vous voyez gagner',
+  'score missing': 'score manquant', 'to come': 'à venir', 'projected': 'projeté', 'Next games': 'Prochains matchs', 'Full calendar': 'Calendrier complet',
+  'Home and away assumed until the federation publishes them': 'Domicile et extérieur supposés en attendant la publication de la fédération',
   // dark / light
   'Dark mode': 'Mode sombre', 'Light mode': 'Mode clair'
 };
@@ -478,6 +579,7 @@ const SENT = {
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
     topNote: n => `The season MVP can only come from the top ${n} teams.`,
     rankIn: n => `#${n} in the standings`, race: (r, of) => `MVP race: #${r} of ${of}`, notPool: n => `Not in the MVP pool (team outside the top ${n})`,
+    scoresMissing: n => `${n} score${n === 1 ? '' : 's'} missing`, nat1Official: (src, d) => `Official ${src} table of ${d}.`,
     avgTitle: n => `Season averages · ${n} games`, history: n => `Match history · ${n} played`, liveAgo: n => n < 8 ? 'updated just now' : `updated ${n} s ago`, splitBox: (n, g) => `Box-score statistics: ${n} box score${n === 1 ? '' : 's'} out of ${g} game${g === 1 ? '' : 's'} in this view.`, mvpCount: n => `${n}× game MVP`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Official result shown. ${s}.`, benchOf: n => `Bench · ${n}`, seasonOf: s => `Season ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – results, stats and calendar | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – stats ${s} | Tunisia Basket`,
@@ -499,6 +601,7 @@ const SENT = {
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
     topNote: n => `Le MVP de la saison ne peut venir que des ${n} premières équipes.`,
     rankIn: n => `${n}${n === 1 ? 'er' : 'e'} au classement`, race: (r, of) => `Course au MVP : ${r}e sur ${of}`, notPool: n => `Hors course au MVP (équipe hors du top ${n})`,
+    scoresMissing: n => `${n} score${n > 1 ? 's' : ''} manquant${n > 1 ? 's' : ''}`, nat1Official: (src, d) => `Classement officiel ${src} du ${d}.`,
     avgTitle: n => `Moyennes de la saison · ${n} matchs`, history: n => `Historique des matchs · ${n} joués`, liveAgo: n => n < 8 ? 'mis à jour à l’instant' : `mis à jour il y a ${n} s`, splitBox: (n, g) => `Statistiques des feuilles de match : ${n} feuille${n > 1 ? 's' : ''} sur ${g} match${g > 1 ? 's' : ''} dans cette vue.`, mvpCount: n => `${n}× MVP de match`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Résultat officiel affiché. ${s}.`, benchOf: n => `Banc · ${n}`, seasonOf: s => `Saison ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – résultats, statistiques et calendrier | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – statistiques ${s} | Tunisia Basket`,
@@ -509,8 +612,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -560,10 +663,14 @@ let pageMeta = null;   // a page fills this in; route() applies it
 
 // Page-view counter: one small anonymous beacon per page the visitor opens (no cookie; see traffic.py). Filters on a page do not count.
 let tracked = '', firstView = true;
+function ridValue() {
+  let rid = ''; try { rid = localStorage.getItem('rid') || ''; if (!/^[a-f0-9]{32}$/.test(rid)) { rid = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('rid', rid); } } catch (e) { rid = ''; }   // random id kept in this browser: lets the admin tell new from returning visitors
+  return rid;
+}
 function track() {
   if (location.pathname === tracked) return;
   tracked = location.pathname;
-  let rid = ''; try { rid = localStorage.getItem('rid') || ''; if (!/^[a-f0-9]{32}$/.test(rid)) { rid = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); localStorage.setItem('rid', rid); } } catch (e) { rid = ''; }   // random id kept in this browser: lets the admin tell new from returning visitors
+  const rid = ridValue();
   try { navigator.sendBeacon('/api/hit', new Blob([JSON.stringify({ path: location.pathname, lang: LANG, ref: firstView ? document.referrer : '', rid })], { type: 'application/json' })); } catch (e) { /* ignore */ }
   firstView = false;
 }
@@ -589,13 +696,14 @@ function foldify(page) {
 }
 async function route(keepScroll) {
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings' }[r.page] || r.page)));
-  $('#morebtn').classList.toggle('on', ['mvp', 'predict', 'news'].includes(r.page));      // on a phone MVP, predictions and news sit behind "More"
+  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', mvp: 'players' }[r.page] || r.page)));
+  $('#morebtn').classList.toggle('on', ['predict', 'news'].includes(r.page));      // on a phone the MVP vote and the news sit behind "More"
   closePop();
   const app = $('#app');
+  app.classList.toggle('wide', ['games'].includes(r.page));     // these pages have a side panel next to the table
   courtData = null; pageMeta = null; clearInterval(nbTimer); clearInterval(liveTimer);
   try {
-    app.innerHTML = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game }[r.page] || home)(r.arg);
+    app.innerHTML = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1 }[r.page] || home)(r.arg);
     foldify(r.page);
     bind();
     startBanner();
@@ -608,6 +716,10 @@ async function route(keepScroll) {
 
 // ---------------------------------------------------------------- pages
 const META = {
+  about: { en: ['About Tunisia Basket – basketball statistics for Tunisia, made for free by fans', 'Tunisia Basket is a team of people who love basketball, working for free to improve the visibility and the use of basketball statistics in Tunisia.'],
+           fr: ['À propos de Tunisia Basket – les statistiques du basket tunisien, faites gratuitement par des passionnés', 'Tunisia Basket est une équipe de passionnés de basket qui travaillent gratuitement pour améliorer la visibilité et l’usage des statistiques du basket en Tunisie.'] },
+  nat1: { en: ['National One basketball results and standings – Tunisia Basket', 'Results and standings of the National One, the second basketball league below the Tunisian Pro A.'],
+          fr: ['Nationale 1 basket : résultats et classement – Tunisia Basket', 'Résultats et classement de la Nationale 1, la deuxième division du basket tunisien sous la Pro A.'] },
   home: { en: ['Tunisia Basket – Tunisian Pro A basketball scores, standings and player stats', 'Scores, standings, box scores, player stats and the MVP race of the Tunisian Pro A basketball league.'],
           fr: ['Tunisia Basket – Scores, classement et statistiques de la Pro A tunisienne de basket', 'Résultats, classement, feuilles de match, statistiques des joueurs et course au MVP de la Pro A tunisienne de basket.'] },
   standings: { en: ['Pro A basketball standings – Tunisia Basket', 'Full Tunisian Pro A basketball standings: wins, losses, points and goal difference.'],
@@ -686,8 +798,45 @@ async function castRoundVote(md, pid) {
   } catch (e) { /* keep the generic message */ }
   roundMsg = msg; await route(true);
 }
+// Follow a club: optional, kept on this device (and counted per club, nothing personal), never a pop-up of its own: a card on the home page, a star on the team page, a button in the footer
+let favTeam = ''; try { favTeam = localStorage.getItem('fav') || ''; } catch (e) { /* storage blocked */ }
+function renderClubBtn() {
+  const b = $('#clubbtn'); if (!b) return;
+  b.innerHTML = favTeam ? `${logo(favTeam, 20)}<span>${esc(favTeam)}</span>` : `<b>⭐</b><span>${_('My club')}</span>`;
+  b.title = favTeam ? _('Change your club') : _('Follow a club'); b.classList.toggle('on', !!favTeam);
+}
+// the prediction entry of the menu shows a dot while there are games left to pick
+async function updateHot() {
+  const j = await fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null), r = j && j.round, hot = !!(r && r.open && r.picked < r.of);
+  document.querySelectorAll('nav a[data-p=predict], .popnav a[data-p=predict], #predbtn').forEach(a => { a.querySelector('.pdot')?.remove(); if (hot) a.insertAdjacentHTML('beforeend', '<i class="pdot"></i>'); });
+}
+async function setFav(code) {
+  favTeam = code; renderClubBtn(); try { code ? localStorage.setItem('fav', code) : localStorage.removeItem('fav'); } catch (e) { /* ignore */ }
+  try { await fetch('/api/follow', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ team: code, rid: ridValue() }) }); } catch (e) { /* the choice still works on this device */ }
+}
+async function openFollow() {
+  closeModal();
+  const d = await api('overview');
+  const el = document.createElement('div'); el.className = 'modal-bg'; el.id = 'modal';
+  el.innerHTML = `<div class="modal fm" role="dialog" aria-modal="true" aria-label="${esc(_('Follow a club'))}"><div class="muh"><div class="row"><b>⭐ ${_('Follow a club')}</b><span class="sp"></span><button class="x" aria-label="${_('Close')}">×</button></div>
+    <div class="mut small" style="margin-top:4px">${_('Optional. Your club is highlighted for you on this device, and it tells us which clubs our readers follow. Nothing personal is stored.')}</div></div>
+    <div class="fgrid">${[...d.standings].sort((a, b) => a.name.localeCompare(b.name)).map(t => `<button class="fteam${t.code === favTeam ? ' on' : ''}" data-fav="${esc(t.code)}">${logo(t.code, 48)}<span>${esc(t.name)}</span></button>`).join('')}</div>
+    ${favTeam ? `<button class="fnone" data-fav="">${_('Stop following')}</button>` : ''}</div>`;
+  el.onclick = async e => { if (e.target === el || e.target.closest('.x')) return closeModal(); const b = e.target.closest('[data-fav]'); if (!b) return; await setFav(b.dataset.fav); try { localStorage.removeItem('fdismiss'); } catch (e2) { /* ignore */ } closeModal(); route(true); };
+  document.body.appendChild(el); document.body.style.overflow = 'hidden';
+}
+const socialRow = () => { const f0 = document.querySelector('footer .socials'); return f0 ? f0.outerHTML : ''; };
+function followCard(standings) {
+  let dismissed = 0; try { dismissed = +localStorage.getItem('fdismiss') || 0; } catch (e) { /* ignore */ }
+  const mine = favTeam && (standings || []).find(t => t.code === favTeam);
+  if (mine) return `<div class="card followcard"><div class="fl"><span class="fstar">⭐</span>${logo(mine.code, 36)}<div><b>${_('You follow')} ${esc(mine.name)}</b><div class="mut small"><a href="${teamUrl(mine.code)}">${esc(mine.name)} →</a></div></div></div>
+    <div class="fr"><button class="linkbtn" data-followopen>${_('Change')}</button></div></div>`;
+  if (dismissed && Date.now() - dismissed < 30 * 864e5) return '';
+  return `<div class="card followcard"><div class="fl"><span class="fstar">⭐</span><div><b>${_('Follow your club')}</b><div class="mut small">${_('Pick your club: it is highlighted for you, and we learn which clubs our readers follow.')}</div></div></div>
+    <div class="fr"><button class="vote" data-followopen>${_('Choose a club')}</button><button class="later" data-followlater>${_('Not now')}</button></div></div>`;
+}
 const FB = 'https://www.facebook.com/people/Tunisia-Basket/61596371069928/';
-const fbCard = () => `<div class="card fbcard"><div><b>${_('A tip, a correction, a missing result?')}</b><div class="mut small">${_('Write to us on our Facebook page: we read everything.')}</div></div><a class="vote" href="${FB}" target="_blank" rel="noopener">${_('Contact us on Facebook')} →</a></div>`;
+const fbCard = () => `<div class="card fbcard"><div><b>${_('A tip, a correction, a missing result?')}</b><div class="mut small">${_('Write to us on our Facebook page: we read everything.')}</div></div><a class="vote fbv" href="${FB}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="#1877f2"><path d="M22 12a10 10 0 1 0-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.78-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0 0 22 12z"/></svg>${_('Contact us on Facebook')} →</a></div>`;
 const NEWS_LABEL = { official: 'Official', injury: 'Injury', transfer: 'Transfer', result: 'Result', info: 'Info', interview: 'Interview' };
 const nTitle = n => LANG === 'en' && n.title_en ? n.title_en : n.title, nBody = n => LANG === 'en' && n.body_en ? n.body_en : n.body;
 const NEWS_ICON = { official: '📢', injury: '🩹', transfer: '🔁', result: '🏀', info: '📰', interview: '🎙️' };
@@ -714,6 +863,7 @@ async function home() {
   ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="nlist two">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
   ${h.recent.length ? `<div class="grid g2">${h.recent.map(gameCard).join('')}</div>` : `<div class="empty">${_('Box scores appear here as soon as they are added.')}</div>`}
+  ${followCard(h.standings)}
   ${fbCard()}`;
 }
 async function news() {
@@ -777,7 +927,7 @@ async function mvp() {
   pageMeta = META.mvp[LANG];
   const [r, rv] = await Promise.all([fetch(`/api/mvp?phase=${PHASE}&vid=${voterId()}`).then(x => x.json()), fetch(`/api/round?vid=${voterId()}`, { cache: 'no-store' }).then(x => x.json()).catch(() => null)]);
   const c = r.candidates, ordered = [...c].sort((a, b) => a.vote_rank - b.vote_rank), shown = mvpAll ? ordered : ordered.slice(0, 10), cur = r.current, by = r.current_by, best = r.leader;
-  if (!c.length) return `<h1>${_('Player of the round')}</h1><div class="empty">${_('No games yet')}</div>`;
+  if (!c.length) return `${playersNav('mvp')}<h1>${_('Player of the round')}</h1><div class="empty">${_('No games yet')}</div>`;
   r.ballot_ranked.forEach((id, i) => { const x = c.find(y => y.id === id); if (x) x.pos = i + 1; });   // 1 = the most votes
   const banner = cur ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${by === 'winner' ? _('Phase 1 MVP') : _('Current MVP')} · ${_('Phase 1')} (J1–J${PHASE * 11})</div>
       <div class="nm">${face(cur, 72)}<span>${plink(cur, esc(title(cur.name)))}</span></div>
@@ -786,7 +936,7 @@ async function mvp() {
       <div class="tiles">${[['PTS', cur.pts], ['REB', cur.reb], [H('AST'), cur.ast], [H('STL'), cur.stl], [H('BLK'), cur.blk], ['PIR', cur.pir], [_('Votes'), cur.votes]].map(([l, v]) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
       ${best && best.id !== cur.id ? `<p class="mut" style="margin:10px 0 0">⭐ ${_('Best by stats')}: <b style="color:var(--txt)">${esc(title(best.name))}</b> · ${esc(best.team)} · PIR ${best.pir}</p>` : ''}
       ${r.note ? `<p class="mut" style="margin:10px 0 0">${esc(r.note)}</p>` : ''}</div></div>` : '';
-  return `<h1>${_('Player of the round')}</h1>
+  return `${playersNav('mvp')}<h1>${_('Player of the round')}</h1>
   ${roundSection(rv)}
   <details class="fold" id="phasefold" ${(phaseOpen === null ? r.voting_open : phaseOpen) ? 'open' : ''}><summary><span>${_('Phase 1 MVP')}</span><span class="sub mut">${cur ? (by === 'winner' ? '🏆 ' : '') + esc(title(cur.name)) + ' · ' : ''}${r.voting_open ? _('Voting is open') : _('Voting is closed')}</span><span class="chev">▾</span></summary>
   ${banner}
@@ -852,24 +1002,21 @@ async function castVote(pid) {
 
 // ---------------------------------------------------------------- match predictions (the split is shown only after picking that game; the server enforces it)
 let predMsg = null;
-function predGame(g, open, plan) {
-  const side = (s, code, name) => `<button class="pgt${g.my === s ? ' on' : ''}" data-pick="${esc(g.key)}" data-side="${s}" ${open && !g.my ? '' : 'disabled'} aria-pressed="${g.my === s}">${logo(code, 64)}<b>${esc(name)}</b><small>${esc(f('predWins', code))}</small></button>`;
+// The predictions as a panel at the side of the Games page: one compact row per game of the next matchday
+function predRow(g, open) {
+  const side = (s, code, name) => `<button class="ptm${g.my === s ? ' on' : ''}" data-pick="${esc(g.key)}" data-side="${s}" ${open && !g.my ? '' : 'disabled'} aria-pressed="${g.my === s}" title="${esc(name)}">${logo(code, 34)}<b>${esc(code)}</b></button>`;
   const sp = g.split;
-  return `<div class="card pg"><div class="pgm">${side('H', g.home, g.home_name)}<span class="nbvs">VS</span>${side('A', g.away, g.away_name)}</div>
-    ${g.my ? (sp ? `<div class="pbar" aria-label="${_('Fans’ prediction')}"><span class="${g.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 3)}">${sp.H}%</span><span class="${g.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 3)}">${sp.A}%</span></div>
-        <div class="mut small" style="text-align:center">${_('Fans’ prediction')} · ${_('Your pick')}: <b style="color:var(--txt)">${esc(g.my === 'H' ? g.home_name : g.away_name)}</b></div>` : '')
-      : `<div class="mut small" style="text-align:center">${open ? _('Pick to see what the fans think') : _('Picks are closed')}</div>`}</div>`;
+  return `<div class="prow">${side('H', g.home, g.home_name)}<span class="nbvs">VS</span>${side('A', g.away, g.away_name)}${g.my && sp ? `<div class="pbar" aria-label="${_('Fans’ prediction')}"><span class="${g.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 3)}">${sp.H}%</span><span class="${g.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 3)}">${sp.A}%</span></div>` : ''}</div>`;
 }
-async function predict() {
-  pageMeta = META.predict[LANG];
-  const j = await (await fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' })).json(), r = j.round;
-  if (!r) return `<h1>${_('Predictions')}</h1><div class="empty">${_('No game to predict for now.')}</div>`;
+function predPanel(r) {
+  if (!r) return `<div class="card sidecard"><div class="crown">🔮 ${_('Predictions')}</div><div class="mut small">${_('No game to predict for now.')}</div></div>`;
   const when = r.date ? fmtDay(r.date) : '';
-  return `<h1>${_('Predictions')} <span class="mut" style="font-size:15px">${_('Day')} ${r.matchday}${when ? ' · ' + esc(when) : ''}</span></h1>
-  <p class="mut" style="margin:0 0 10px">${_('Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.')}</p>
-  <div class="votemsg">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: they closed at noon on game day.'))} · ${esc(f('predProg', r.picked, r.of))}</div>
-  ${predMsg ? `<div class="votemsg${predMsg.ok ? '' : ' bad'}" role="status">${esc(predMsg.text)}</div>` : ''}
-  <div class="pgrid">${r.games.map(g => predGame(g, r.open)).join('')}</div>`;
+  return `<div class="card sidecard" id="predpanel"><div class="crown">🔮 ${_('Predictions')} · ${_('Day')} ${r.matchday}</div>
+    <div class="mut small" style="margin-bottom:6px">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: they closed at noon on game day.'))} · ${esc(f('predProg', r.picked, r.of))}</div>
+    ${predMsg ? `<div class="votemsg${predMsg.ok ? '' : ' bad'}" role="status" style="margin:6px 0">${esc(predMsg.text)}</div>` : ''}
+    <details class="pdet"><summary>${_('Predict the winners')} · ${esc(f('predProg', r.picked, r.of))}</summary>
+    ${r.games.map(g => predRow(g, r.open)).join('')}
+    <div class="mut small" style="margin-top:8px">${_('Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.')}</div></details></div>`;
 }
 async function castPick(game, side) {
   const msg = { ok: false, text: _('Could not save your pick.') };
@@ -881,7 +1028,7 @@ async function castPick(game, side) {
     else if (j.reason === 'closed') msg.text = _('Predictions are closed: they closed at noon on game day.');
     else if (j.reason === 'network') msg.text = _('Too many picks from this network. Try again later.');
   } catch (e) { /* keep the generic message */ }
-  predMsg = msg; await route(true);
+  predMsg = msg; await route(true); updateHot();
 }
 
 // ---------------------------------------------------------------- next games banner and matchup comparison
@@ -993,7 +1140,7 @@ async function openMatchup(spec) {
     [_('Points scored'), f1(A.ppg), f1(B.ppg), A.ppg, B.ppg], [_('Points allowed'), f1(A.opp_ppg), f1(B.opp_ppg), A.opp_ppg, B.opp_ppg, 1], [_('Margin / game'), sg(A.diff_pg), sg(B.diff_pg), A.diff_pg, B.diff_pg],
     [_('FG %'), pc(A.fg_pct), pc(B.fg_pct), A.fg_pct, B.fg_pct], [_('3P %'), pc(A.p3_pct), pc(B.p3_pct), A.p3_pct, B.p3_pct], [_('Free throw %'), pc(A.ft_pct), pc(B.ft_pct), A.ft_pct, B.ft_pct],
     [_('Rebounds'), f1(A.reb), f1(B.reb), A.reb, B.reb], [_('Assists'), f1(A.ast), f1(B.ast), A.ast, B.ast], [_('Steals'), f1(A.stl), f1(B.stl), A.stl, B.stl], [_('Blocks'), f1(A.blk), f1(B.blk), A.blk, B.blk], [_('Turnovers'), f1(A.tov), f1(B.tov), A.tov, B.tov, 1]];
-  const chips = c => `<div class="chips">${m.form[c].map(x => `<span class="chip2 ${x.won ? 'w' : 'l'}" title="J${x.matchday} ${esc(x.opp)}">${x.won ? W : Ls}</span>`).join('')}</div>`;
+  const chips = c => `<div class="chips">${m.form[c].map(x => `${x.game_id ? `<a class="chip2 ${x.won ? 'w' : 'l'}" href="${gameUrl(x.game_id)}" title="J${x.matchday} ${esc(x.opp)} · ${esc(_('Box score'))}">` : `<span class="chip2 ${x.won ? 'w' : 'l'}" title="J${x.matchday} ${esc(x.opp)}">`}${x.won ? W : Ls}${x.game_id ? '</a>' : '</span>'}`).join('')}</div>`;
   const pls = c => m.players[c].map(p => `<a class="pl" href="${playerUrl(p.id, p.name)}"><b>${esc(title(p.name))}</b><span>${p.pts} ${_('pts')} · ${p.reb} ${_('reb')} · ${p.ast} ${_('ast')}</span></a>`).join('');
   el.querySelector('.modal').innerHTML = `<div class="muh"><div class="row"><span class="mut small">${date ? esc(fmtDay(date)) + ' · ' : ''}${_('Day')} ${md}</span><span class="sp"></span><button class="x" aria-label="${_('Close')}">×</button></div>
       <div class="mut2"><a class="t" href="${teamUrl(home)}">${logo(home, 56)}<span>${esc(A.name)}</span></a><b style="color:var(--mut)">VS</b><a class="t" href="${teamUrl(away)}">${logo(away, 56)}<span>${esc(B.name)}</span></a></div>
@@ -1019,6 +1166,7 @@ function gameCard(g) {
 
 let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = true;   // by default only ranked players; searching a name looks at everyone
 const QUAL = 70;   // % of its team's games a player must have played to be ranked (same rule as the NBA, 58 of 82)
+const playersNav = on => `<div class="seg" role="tablist">${[['players', _('Players')], ['mvp', '🏆 ' + _('MVP') + ' · ' + _('Player of the round')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function players() {
   const d = await api('players');
   pageMeta = META.players[LANG];
@@ -1029,7 +1177,7 @@ async function players() {
     ['ts_pct', H('TS%')], ['pm', '+/-', p => signed(p.pm)], ['pir', 'PIR'], ['rating', H('RTG'), p => rate(p.rating)]];
   const rows = d.players.filter(p => (!q || p.name.toLowerCase().includes(q.toLowerCase())) && (!teamF || p.teams.includes(teamF)) && (!qualOnly || q || p.qualified))
     .sort((a, b) => ((a[sortKey] ?? 0) - (b[sortKey] ?? 0) || 0) * sortDir || a.name.localeCompare(b.name));
-  return `<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
+  return `${playersNav('players')}<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
   <details class="fold" id="leadfold" ${leadOpen ? 'open' : ''}><summary><span>${_('League leaders')}</span><span class="sub mut">${_('per game')}</span><span class="chev">▾</span></summary>
     <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div></details>
   <h2>${_('All players')}</h2>
@@ -1059,25 +1207,30 @@ function transferLine(p) {
   return `<div class="bio">${p.transfers.map(t => `<span><span class="mut">${_('Transfer')}</span> <b>${esc(t.from)} → ${esc(t.to)}</b>${t.date ? ' <span class="mut">' + fmtDate(t.date) + '</span>' : ''}</span>`).join('')}</div>`;
 }
 
+let playerSplit = 'all';
+const inSplit = (r, k) => k === 'all' || (k === 'home' ? r.home === true : r.home === false);
 async function player(ref) {
   const id = (ref.match(/^([a-z0-9]+-\d+)/) || [, ref])[1];
   const d = await api('players/' + id), p = d.player;
   pageMeta = [f('metaPlayer', p.name, p.team, d.season), `${p.name}, ${p.team} #${p.number}: ${p.pts} ${_('pts')}, ${p.reb} ${_('reb')}, ${p.ast} ${_('ast')} · ${H('RTG')} ${p.rating}/99`];
-  const pts = p.log.filter(r => r.pir != null).map(r => r.pir);
+  const SP = p.splits || null, split = SP && SP[playerSplit] ? playerSplit : 'all', S = SP ? SP[split] : p, logRows = p.log.filter(r => inSplit(r, split));
+  const pts = logRows.filter(r => r.pir != null).map(r => r.pir);
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
   <div class="card row phead" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
       ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span></div></div></div>
-  <h2>${esc(f('avgTitle', p.gp))}</h2>
-  <div class="grid g4">${[['PTS', p.pts], ['REB', p.reb], [H('AST'), p.ast], [H('STL'), p.stl], [H('BLK'), p.blk], [H('TOV'), p.tov], ['MIN', p.min], ['+/-', signed(p.pm)],
-      [H('FG%'), p.fg_pct], [H('3P%'), p.p3_pct], [H('FT%'), p.ft_pct], [H('TS%'), p.ts_pct], ['PIR', p.pir]].map(([l, v]) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
+  <h2>${esc(f('avgTitle', S.gp))}</h2>
+  ${SP ? `<div class="seg" role="group">${[['all', 'Overall'], ['home', 'At home'], ['away', 'Away']].map(([k, l]) => `<button data-psplit="${k}" class="${split === k ? 'on' : ''}" aria-pressed="${split === k}">${_(l)} <span class="mut small">${SP[k].gp}</span></button>`).join('')}</div>` : ''}
+  ${SP && !S.gp ? `<div class="banner">${_('No games in this view yet.')}</div>` : ''}
+  <div class="grid g4">${[['PTS', S.pts], ['REB', S.reb], [H('AST'), S.ast], [H('STL'), S.stl], [H('BLK'), S.blk], [H('TOV'), S.tov], ['MIN', S.min], ['+/-', signed(S.pm)],
+      [H('FG%'), S.fg_pct], [H('3P%'), S.p3_pct], [H('FT%'), S.ft_pct], [H('TS%'), S.ts_pct], ['PIR', S.pir]].map(([l, v]) => `<div class="card stat"><b>${v}</b><span>${l}</span></div>`).join('')}</div>
   <h2>${_('Form (PIR per game)')}</h2><div class="card">${spark(pts)}</div>
   <h2>${_('Game log')}</h2>
   <div class="card scroll"><table><thead><tr><th>${_('Date')}</th><th class="l">${_('Opp')}</th><th>${_('Result')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-  ${[...p.log].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}${r.partial ? ` <span class="mut small">${_('Partial box score')}</span>` : ''}</td>
-    <td><span class="${r.won ? 'good' : 'bad'}">${r.won ? W : Ls}</span> ${r.score}</td><td>${r.min == null ? '–' : Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${est(r, ['ast'], r.ast)}</td><td>${est(r, ['stl'], r.stl)}</td><td>${est(r, ['blk'], r.blk)}</td><td>${est(r, ['tov'], dash(r.tov))}</td>
+  ${[...logRows].reverse().map(r => `<tr data-go="${gameUrl(r.game_id)}"><td class="l">${fmtDate(r.date)}</td><td class="l">${r.team !== p.team ? esc(r.team) + ' ' : ''}<span class="tn">${_('vs')} ${logo(r.opp, 22)}<a href="${gameUrl(r.game_id)}">${esc(r.opp)}</a></span>${r.is_mvp ? ' <span class="pill mvp">MVP</span>' : ''}${r.partial ? ` <span class="mut small">${_('Partial box score')}</span>` : ''}</td>
+    <td><a class="${r.won ? 'good' : 'bad'}" href="${gameUrl(r.game_id)}" title="${esc(_('Box score'))}"><b>${r.won ? W : Ls}</b></a> ${r.score}</td><td>${r.min == null ? '–' : Math.round(r.min)}</td><td>${r.pts}</td><td>${r.reb}</td><td>${est(r, ['ast'], r.ast)}</td><td>${est(r, ['stl'], r.stl)}</td><td>${est(r, ['blk'], r.blk)}</td><td>${est(r, ['tov'], dash(r.tov))}</td>
     <td>${est(r, ['fgm', 'fga'], r.fgm + '/' + r.fga)}</td><td>${est(r, ['p3m', 'p3a'], r.p3m + '/' + r.p3a)}</td><td>${est(r, ['ftm', 'fta'], r.ftm + '/' + r.fta)}</td><td>${r.pm == null ? '–' : signed(r.pm)}</td><td>${dash(r.pir)}</td><td>${r.rating == null ? '–' : rate(r.rating)}</td></tr>`).join('')}
   </tbody></table></div>${p.log.some(r => r.est && r.est.length) ? `<div class="mut small" style="margin-top:6px"><i class="est">~</i> ${_('Estimated, not from the sheet: his average in his full box scores, adjusted so that the points add up. Points and rebounds are from the sheet. The averages above include these games.')}</div>` : ''}`;
 }
@@ -1089,15 +1242,16 @@ function spark(v) {
 }
 
 let gamesTeam = '';
-async function games() {
-  const d = await api('games');
-  pageMeta = META.games[LANG];
+async function games(fromPredict) {
+  const [d, pj] = await Promise.all([api('games'), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
+  pageMeta = fromPredict ? META.predict[LANG] : META.games[LANG];
   const teams = [...new Map(d.games.flatMap(g => g.teams).map(t => [t.code, t.name]))].sort((a, b) => a[1].localeCompare(b[1]));
   const list = d.games.filter(g => !gamesTeam || g.teams.some(t => t.code === gamesTeam));
   return `${standNav('games')}<h1>${_('Games')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>
   <div class="toolbar"><select id="gt" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(([c, n]) => `<option value="${c}" ${c === gamesTeam ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
     <span class="mut small">${list.length} ${_('Games').toLowerCase()}</span></div>
-  <div class="grid g2">${list.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+  <div class="withside"><div class="grid g2">${list.map(gameCard).join('') || `<div class="empty">${_('No games.')}</div>`}</div>
+  <aside>${predPanel(pj && pj.round)}</aside></div>`;
 }
 
 // ---------------------------------------------------------------- courts and lineups
@@ -1202,6 +1356,14 @@ function partialGame(g) {
   ${sheet(a)}${sheet(b)}`;
 }
 
+// Points in the paint, second chance, fast break, off turnovers, bench: the team lines of the sheet, side by side (only the lines the sheet printed)
+function teamLines(a, b) {
+  const rows = [['paint', 'Points in the paint'], ['second', 'Second-chance points'], ['fast', 'Fast-break points'], ['tov_pts', 'Points off turnovers'], ['bench', 'Bench points']]
+    .filter(([k]) => a.extra && b.extra && a.extra[k] != null && b.extra[k] != null);
+  if (!rows.length) return '';
+  return `<h2>${_('Team comparison')}</h2><div class="card">${rows.map(([k, l]) => { const x = a.extra[k], y = b.extra[k], t = Math.max(1, x + y);
+    return `<div class="tlr"><div class="tv"><b class="${x > y ? 'win' : ''}">${x}</b><span>${_(l)}</span><b class="${y > x ? 'win' : ''}">${y}</b></div><div class="tb"><i class="${x >= y ? 'win' : ''}" style="width:${100 * x / t}%"></i><i class="${y >= x ? 'win' : ''}" style="width:${100 * y / t}%"></i></div></div>`; }).join('')}</div>`;
+}
 async function game(id) {
   const g = await (await fetch('/api/games/' + encodeURIComponent(id))).json();
   if (!g.teams) throw new Error(_('Page not found'));
@@ -1230,26 +1392,99 @@ async function game(id) {
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
    <div class="match scoreboard" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.score_note ? `<div class="banner" style="margin-top:8px">${esc(f('officialNote', g.score_note))}</div>` : ''}${g.source === 'video' ? `<div class="banner" style="margin-top:8px"><b>${_('Compiled from the broadcast video')}.</b> ${_('Stats compiled by Tunisia Basket from the TV broadcast, not from the official table sheet: minutes and +/- are estimates, and a few missed shots, turnovers and team rebounds could not be given to a player.')}</div>` : ''}${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')} · PIR ${g.mvp.pir}</div>` : ''}</div>
+  ${teamLines(a, b)}
   <h2>${_('Starting five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Click a player for the season page')}</span></div><div id="court"></div>
    <div class="note">${_('Players stand where their position puts them (inferred from their stats: rebounds, blocks, assists, steals, threes). Each team defends its own basket; bigs are under it, guards towards the middle.')}</div></div>
   ${bench(a)}${bench(b)}${sheet(a)}${sheet(b)}`;
 }
 
+const PLAYOFF_N = 6;      // the six best go to the playoffs, the others to the playout
+const zoneOf = rank => rank <= PLAYOFF_N ? 'po' : 'pl';
+const zonePill = rank => `<span class="zone z-${zoneOf(rank)}">${rank <= PLAYOFF_N ? _('Playoff') : _('Playout')}</span>`;
 function standTable(d, compact) {
   const top = new Set(d.top_teams), pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA';
   return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th class="hm">J</th><th>${W}</th><th>${Ls}</th>${compact ? '' : `<th class="hm">${pf}</th><th class="hm">${pa}</th>`}<th>${_('Diff')}</th><th>${_('Pts')}</th>${compact ? '' : `<th class="hm" title="${_('Box scores available in the app')}">${_('Box scores')}</th>`}</tr></thead><tbody>
-  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}"${top.has(t.code) ? ' class="top"' : ''}><td>${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a><span class="mut hm">${esc(t.code)}</span>${top.has(t.code) ? `<span class="pill mvp hm">${_('MVP pool')}</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}" class="${['zone-' + zoneOf(t.rank), t.rank === PLAYOFF_N ? 'zend' : '', t.code === favTeam ? 'fav' : ''].join(' ').trim()}"><td class="rkz">${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a>${zonePill(t.rank)}${top.has(t.code) ? `<span class="mvpdot hm" title="${esc(_('MVP pool'))}">★</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
-const standNav = on => `<div class="seg" role="tablist">${[['standings', _('Standings')], ['games', _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
+const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a></div>`;
+const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[['standings', _('Standings')], ['games', _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function standings() {
   const d = await api('overview');
   pageMeta = META.standings[LANG];
   return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
+  <div class="zlegend"><span><i class="z-po"></i>${_('Playoff')} · ${_('top 6')}</span><span><i class="z-pl"></i>${_('Playout')} · ${_('the other 6')}</span><span class="mut small"><b class="mvpdot">★</b> ${_('MVP pool')}</span></div>
   <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>`;
 }
 
+// ---------------------------------------------------------------- National One (the league below the Pro A): results and table only, no statistics
+let n1Team = '';
+async function nat1() {
+  const d = await fetch('/api/nat1', { cache: 'no-cache' }).then(r => r.json());
+  pageMeta = META.nat1[LANG];
+  const badge = c => `<span class="ini">${esc(String(c).slice(0, 3))}</span>`, names = d.teams, official = d.official;
+  const keep = m => ({ ...m, games: m.games.filter(g => !n1Team || g.home === n1Team || g.away === n1Team) });
+  const played = d.matchdays.filter(m => m.played).map(keep).filter(m => m.games.length).reverse();
+  const coming = d.matchdays.filter(m => !m.played).map(keep).filter(m => m.games.length);
+  const pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA', hasPF = d.standings.some(t => t.pf != null);
+  const head = `${leagueNav('nat1')}<h1>${_('National One')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>`;
+  if (!d.standings.length) return `${head}<div class="empty">${_('The National One results are coming soon.')}</div>`;
+  const table = `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${hasPF ? `<th class="hm">${pf}</th><th class="hm">${pa}</th>` : ''}<th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
+    ${d.standings.map(t => `<tr style="cursor:default"><td>${t.rank}</td><td class="l"><span class="tn">${badge(t.code)}<span>${esc(t.name)}</span></span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${hasPF ? `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>` : ''}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+  const game = (g, isPlayed) => { const has = g.home_score != null, hw = has && g.home_score > g.away_score;
+    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span>${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}<span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
+  const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${m.projected ? `<span class="pill" title="${esc(_('Home and away assumed until the federation publishes them'))}">${_('projected')}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
+  return `${head}
+  ${table}
+  <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>
+  <div class="toolbar" style="margin-top:14px"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>
+  ${coming.length ? `<h2>${_('Next games')}</h2><div class="grid n1grid">${coming.slice(0, 2).map(m => day(m, false)).join('')}</div>${coming.length > 2 ? `<details class="fold" style="margin-top:10px"><summary><span>${_('Full calendar')}</span><span class="sub mut">J${coming[2].matchday}–J${coming.at(-1).matchday}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${coming.slice(2).map(m => day(m, false)).join('')}</div></details>` : ''}` : ''}
+  <h2>${_('Results')}</h2>
+  <div class="grid n1grid">${played.map(m => day(m, true)).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
+}
+
+// ---------------------------------------------------------------- About us
+const ABOUT = {
+  en: ['We are a team of people who love basketball. We want to make basketball in Tunisia better: give statistics the visibility they deserve, help clubs, players, journalists and fans use them, and have fun together in small, friendly competitions: the player of the round, the MVP vote, the match predictions.',
+       'We do this for free, in our spare time. There is no paywall and no advertising to get past: the scores, the box scores and the numbers are for everybody.',
+       'Your engagement is what keeps it going, and we truly appreciate it. Vote, predict, share a page with a friend, follow us on social media, and tell us when something is missing or wrong: send us a box score or a correction and we will add it.',
+       'Tunisia Basket is an independent project. It is not affiliated with the Tunisian Basketball Federation or with the clubs; club names and logos belong to their owners.'],
+  fr: ['Nous sommes une équipe de passionnés de basket. Nous voulons faire progresser le basket en Tunisie : donner aux statistiques la visibilité qu’elles méritent, aider les clubs, les joueurs, les journalistes et les supporters à s’en servir, et nous amuser ensemble autour de petites compétitions amicales : le joueur de la journée, le vote du MVP, les pronostics.',
+       'Nous le faisons gratuitement, sur notre temps libre. Pas d’abonnement ni de publicité à franchir : les scores, les feuilles de match et les chiffres sont pour tout le monde.',
+       'Votre engagement fait vivre le projet, et nous y sommes très sensibles. Votez, pronostiquez, partagez une page avec un ami, suivez-nous sur les réseaux, et dites-nous quand il manque quelque chose ou qu’une info est fausse : envoyez-nous une feuille de match ou une correction, nous l’ajouterons.',
+       'Tunisia Basket est un projet indépendant. Il n’est pas affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs ; les noms et logos des clubs appartiennent à leurs propriétaires.']
+};
+async function about() {
+  pageMeta = META.about[LANG];
+  const t = document.querySelector('#socbig'), btns = t ? t.innerHTML.trim() : '';
+  return `<div class="about"><div class="abhero"><img src="/img/logo-96.png" alt="" width="64" height="80"><div><h1 style="margin:0">${_('About us')}</h1><div class="mut">${_('Basketball statistics for Tunisia, made for free by fans')}</div></div></div>
+  <div class="card abtext">${ABOUT[LANG].map(p => `<p>${esc(p)}</p>`).join('')}</div>
+  <div class="card socialcard"><div class="sl"><b>${_('Follow Tunisia Basket')}</b><div class="mut small">${_('Your engagement means a lot to us. Thank you!')}</div></div>${btns}</div>
+  <div class="card followcard"><div class="fl"><span class="fstar">⭐</span><div><b>${_('Follow your club')}</b><div class="mut small">${_('Pick your club: it is highlighted for you, and we learn which clubs our readers follow.')}</div></div></div><div class="fr"><button class="vote" data-followopen>${favTeam ? _('Change') : _('Choose a club')}</button></div></div></div>`;
+}
+
+// ---------------------------------------------------------------- Predictions: a page of its own, one big card per game (the Games page also has a compact panel)
+function predGame(g, open) {
+  const side = (s, code, name) => `<button class="pgt${g.my === s ? ' on' : ''}" data-pick="${esc(g.key)}" data-side="${s}" ${open && !g.my ? '' : 'disabled'} aria-pressed="${g.my === s}">${logo(code, 72)}<b>${esc(name)}</b><small>${esc(f('predWins', code))}</small></button>`;
+  const sp = g.split;
+  return `<div class="card pg"><div class="pgm">${side('H', g.home, g.home_name)}<span class="nbvs">VS</span>${side('A', g.away, g.away_name)}</div>
+    ${g.my ? (sp ? `<div class="pbar" aria-label="${_('Fans’ prediction')}"><span class="${g.my === 'H' ? 'mine' : ''}" style="flex:${Math.max(sp.H, 3)}">${sp.H}%</span><span class="${g.my === 'A' ? 'mine' : ''}" style="flex:${Math.max(sp.A, 3)}">${sp.A}%</span></div>
+        <div class="mut small" style="text-align:center">${_('Fans’ prediction')} · ${_('Your pick')}: <b style="color:var(--txt)">${esc(g.my === 'H' ? g.home_name : g.away_name)}</b></div>` : '')
+      : `<div class="mut small" style="text-align:center">${open ? _('Tap the team you think wins') : _('Picks are closed')}</div>`}</div>`;
+}
+async function predict() {
+  pageMeta = META.predict[LANG];
+  const j = await (await fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' })).json(), r = j.round;
+  if (!r) return `<h1>🎯 ${_('Predictions')}</h1><div class="empty">${_('No game to predict for now.')}</div>`;
+  const when = r.date ? fmtDay(r.date) : '', pct = r.of ? Math.round(100 * r.picked / r.of) : 0;
+  return `<div class="predhero card"><div class="ph1"><span class="pico">🎯</span><div><h1 style="margin:0">${_('Predictions')}</h1><div class="mut">${_('Day')} ${r.matchday}${when ? ' · ' + esc(when) : ''}</div></div></div>
+    <p class="mut" style="margin:10px 0">${_('Pick the winner of each game. One pick per game, and it is final. What the other fans think appears once you have picked that game.')}</p>
+    <div class="pprog"><div class="bar"><i style="width:${pct}%"></i></div><b>${esc(f('predProg', r.picked, r.of))}</b></div>
+    <div class="mut small" style="margin-top:6px">${r.open ? '⏳ ' + esc(f('predClose', when || _('Day') + ' ' + r.matchday)) : esc(_('Predictions are closed: they closed at noon on game day.'))}</div></div>
+  ${predMsg ? `<div class="votemsg${predMsg.ok ? '' : ' bad'}" role="status">${esc(predMsg.text)}</div>` : ''}
+  <div class="pgrid">${r.games.map(g => predGame(g, r.open)).join('')}</div>`;
+}
 let teamSplit = 'all';
 const TS_GROUPS = [
   ['Record and scoring', [['Games', 'gp', 'n'], ['Record', 'rec'], ['Win %', 'win_pct', 'p'], ['Points scored', 'ppg', 'd'], ['Points allowed', 'opp_ppg', 'd'], ['Point difference', 'diff', 's']]],
@@ -1258,6 +1493,8 @@ const TS_GROUPS = [
     ['Shots per game', 'fga', 'd'], ['3-pointers tried', 'p3a', 'd'], ['Share of 3-pointers', 'p3_rate', 'p'], ['Free throws per shot', 'ft_rate', 'p']]],
   ['Rebounding', [['Offensive rebounds', 'oreb', 'd'], ['Defensive rebounds', 'dreb', 'd'], ['Rebounds', 'reb', 'd'], ['Offensive rebound %', 'oreb_pct', 'p'], ['Defensive rebound %', 'dreb_pct', 'p']]],
   ['Ball control', [['Assists', 'ast', 'd'], ['Assist per turnover', 'ast_to', 'r'], ['Turnovers', 'tov', 'd'], ['Turnover %', 'tov_pct', 'p']]],
+  ['Scoring sources', [['Points in the paint', 'paint', 'd'], ['Second-chance points', 'second', 'd'], ['Fast-break points', 'fast', 'd'], ['Points off turnovers', 'tov_pts', 'd'], ['Bench points', 'bench', 'd'],
+    ['Paint points allowed', 'opp_paint', 'd'], ['Second-chance points allowed', 'opp_second', 'd'], ['Fast-break points allowed', 'opp_fast', 'd'], ['Points allowed off turnovers', 'opp_tov_pts', 'd']]],
   ['Defense', [['Steals', 'stl', 'd'], ['Blocks', 'blk', 'd'], ['Fouls', 'pf', 'd'], ['Opponent FG %', 'opp_fg_pct', 'p'], ['Opponent 3-point %', 'opp_p3_pct', 'p'], ['Opponent eFG %', 'opp_efg_pct', 'p'], ['Turnovers forced %', 'opp_tov_pct', 'p']]]];
 // Team statistics: overall / at home / away, each value with its rank among the teams in the same view
 function teamStatsBlock(t) {
@@ -1273,7 +1510,7 @@ function teamStatsBlock(t) {
   return `<h2>${_('Team statistics')}</h2>
   <div class="seg" role="group">${[['all', 'Overall'], ['home', 'At home'], ['away', 'Away']].map(([k, l]) => `<button data-split="${k}" class="${teamSplit === k ? 'on' : ''}" aria-pressed="${teamSplit === k}">${_(l)} <span class="mut small">${t.splits[k].gp}</span></button>`).join('')}</div>
   ${none ? `<div class="banner">${none}</div>` : ''}
-  <div class="grid g2">${TS_GROUPS.map(([name, rows]) => `<div class="card tsg"><b>${_(name)}</b><table><tbody>${rows.map(([label, k, kind]) => `<tr style="cursor:default"><td class="l">${_(label)}${kind !== 'p' && ['oreb', 'dreb', 'reb', 'ast', 'tov', 'stl', 'blk', 'pf', 'fga', 'p3a'].includes(k) ? ` <span class="mut small">${_('per game')}</span>` : ''}</td><td class="v">${val(k, kind)}</td><td class="r">${rk(k)}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div>
+  <div class="grid g2">${TS_GROUPS.map(([name, rows]) => `<div class="card tsg"><b>${_(name)}</b>${name === 'Scoring sources' && sp.extra_games ? ` <span class="mut small">· ${sp.extra_games} ${_('sheets with these lines')}</span>` : ''}<table><tbody>${rows.map(([label, k, kind]) => `<tr style="cursor:default"><td class="l">${_(label)}${kind !== 'p' && ['oreb', 'dreb', 'reb', 'ast', 'tov', 'stl', 'blk', 'pf', 'fga', 'p3a', 'paint', 'second', 'fast', 'tov_pts', 'bench', 'opp_paint', 'opp_second', 'opp_fast', 'opp_tov_pts'].includes(k) ? ` <span class="mut small">${_('per game')}</span>` : ''}</td><td class="v">${val(k, kind)}</td><td class="r">${rk(k)}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div>
   <div class="note">${_('Rank 1 is the best of the league for the same view (home, away or overall); for turnovers, points allowed and what the opponents shoot, the lowest value is the best. Record, points and the ratings of the first group come from every official result; the rest from the box scores we have. Ratings are points scored or allowed per 100 possessions; the effective FG % counts a 3-pointer for 1.5 shots; the turnover % is turnovers per 100 plays; the rebound % is the share of the rebounds available to the team.')} ${esc(f('splitBox', t.splits[teamSplit].box, t.splits[teamSplit].gp))}</div>`;
 }
 async function team(codeArg) {
@@ -1283,13 +1520,13 @@ async function team(codeArg) {
   pageMeta = [f('metaTeam', t.name, t.code), st ? `${t.name} · ${f('rankIn', st.rank)} · ${st.w}${W} ${st.l}${Ls}` : t.name];
   const dayRows = [...t.results].reverse().map(r => `<tr ${r.game_id ? `data-go="${gameUrl(r.game_id)}"` : 'style="cursor:default"'}><td class="l">J${r.matchday}</td>
     <td class="l"><span class="tn"><span class="mut small">${r.home ? _('vs') : '@'}</span>${logo(r.opp, 26)}${teamLink(r.opp, r.opp_name)}</span></td>
-    <td><span class="pill ${r.won ? 'w' : 'l'}">${r.won ? W : Ls}</span></td><td><b>${r.pf} – ${r.pa}</b></td>
+    <td>${r.game_id ? `<a class="pillink" href="${gameUrl(r.game_id)}" title="${esc(_('Match stats ›'))}">` : ''}<span class="pill ${r.won ? 'w' : 'l'}">${r.won ? W : Ls}</span>${r.game_id ? '</a>' : ''}</td><td><b>${r.pf} – ${r.pa}</b></td>
     <td class="mut small">${r.game_id ? `<a href="${gameUrl(r.game_id)}">${_('Match stats ›')}</a>` : _('No box score yet')}</td></tr>`).join('');
   return `<a class="mut" href="${url('standings')}">← ${_('Standings')}</a>
   <div class="card" style="margin-top:10px">
     <div class="row">${logo(t.code, 64)}<h1 style="margin:0">${esc(t.name)} <span class="mut" style="font-size:16px">${esc(t.code)}</span></h1><span class="sp"></span>
-      <span class="pill">${_('Regular season')}</span></div>
-    <div style="margin-top:8px">${st ? `<span class="pill">${esc(f('rankIn', st.rank))}</span> <span class="pill w">${st.w}${W}</span> <span class="pill l">${st.l}${Ls}</span> <span class="pill">${st.pts} ${_('Pts').toLowerCase()}</span> <span class="pill ${st.diff >= 0 ? 'w' : 'l'}">${signed(st.diff)}</span> ` : ''}${inPool ? `<span class="pill mvp">${_('MVP pool')}</span>` : ''}</div>
+      <button class="fbtn${favTeam === t.code ? ' on' : ''}" data-follow="${esc(t.code)}" aria-pressed="${favTeam === t.code}">${favTeam === t.code ? '⭐ ' + _('Following') : '☆ ' + _('Follow')}</button><span class="pill">${_('Regular season')}</span></div>
+    <div style="margin-top:8px">${st ? `<span class="pill">${esc(f('rankIn', st.rank))}</span> <span class="pill w">${st.w}${W}</span> <span class="pill l">${st.l}${Ls}</span> <span class="pill">${st.pts} ${_('Pts').toLowerCase()}</span> <span class="pill ${st.diff >= 0 ? 'w' : 'l'}">${signed(st.diff)}</span> ` : ''}${st ? zonePill(st.rank) : ''}${inPool ? `<span class="mvpdot" title="${esc(_('MVP pool'))}">★ <span class="mut small">${_('MVP pool')}</span></span>` : ''}</div>
   </div>
   ${teamStatsBlock(t)}
   ${t.lineup.length ? `<h2>${_('Most-played five')}</h2>
@@ -1478,12 +1715,17 @@ function bind() {
   document.querySelectorAll('[data-rvote]').forEach(b => b.onclick = () => castRoundVote(+b.dataset.round, b.dataset.rvote));
   document.querySelectorAll('[data-pick]').forEach(b => b.onclick = () => castPick(b.dataset.pick, b.dataset.side));
   document.querySelectorAll('[data-split]').forEach(b => b.onclick = () => { teamSplit = b.dataset.split; route(true); });
+  document.querySelectorAll('[data-psplit]').forEach(b => b.onclick = () => { playerSplit = b.dataset.psplit; route(true); });
+  document.querySelectorAll('[data-follow]').forEach(b => b.onclick = async () => { await setFav(favTeam === b.dataset.follow ? '' : b.dataset.follow); route(true); });
+  document.querySelectorAll('[data-followopen]').forEach(b => b.onclick = openFollow);
+  document.querySelectorAll('[data-followlater]').forEach(b => b.onclick = () => { try { localStorage.setItem('fdismiss', String(Date.now())); } catch (e) { /* ignore */ } route(true); });
   const pf = $('#phasefold'); if (pf) pf.ontoggle = () => { phaseOpen = pf.open; };
   const sf = $('#statsfold'); if (sf) sf.ontoggle = () => { chartOpen = sf.open; };
   const lf = $('#leadfold'); if (lf) lf.ontoggle = () => { leadOpen = lf.open; };
   const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
+  const n1 = $('#n1t'); if (n1) n1.onchange = () => { n1Team = n1.value; route(true); };
   const gt = $('#gt'); if (gt) gt.onchange = () => { gamesTeam = gt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };
 }
@@ -1507,6 +1749,8 @@ if (location.hash.startsWith('#/')) {
 // a visitor who chose English earlier goes straight to the English home page (deep links and search engines are never redirected)
 if (location.pathname === '/' && localStorage.getItem('lang') === 'en') location.replace('/en/');
 
+renderClubBtn(); $('#clubbtn').onclick = openFollow; updateHot();
+$('#predbtn').lastElementChild.textContent = _('Predictions');
 $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
 $('#theme').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 $('#lang').value = LANG;

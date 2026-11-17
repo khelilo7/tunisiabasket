@@ -51,6 +51,10 @@
   .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; } .kpi b { display:block; font-size:28px; line-height:1.1; } .kpi span { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
   .kpi.live b { color:var(--good); } .kpi.live b::before { content:""; display:inline-block; width:9px; height:9px; border-radius:50%; background:var(--good); margin-right:8px; vertical-align:middle; box-shadow:0 0 0 4px var(--pillok); }
   h3.sub { margin:14px 0 8px; font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
+  .kpi small { display:block; font-size:11px; margin-top:3px; } .kpi small.up { color:var(--good); } .kpi small.down { color:var(--bad); }
+  table.daily { width:100%; border-collapse:collapse; font-size:13px; } table.daily th { font-size:11px; color:var(--mut); text-transform:uppercase; letter-spacing:.06em; font-weight:600; padding:6px 8px; text-align:right; white-space:nowrap; }
+  table.daily td { padding:6px 8px; text-align:right; border-top:1px solid var(--line); white-space:nowrap; } table.daily .l { text-align:left; } table.daily td.bar { width:34%; min-width:90px; } table.daily td.bar i { display:block; height:8px; border-radius:4px; background:var(--good); opacity:.85; }
+  table.daily tr.today td { background:rgba(255,138,31,.10); } table.daily tr.we .l { color:var(--mut); } .dailycard { margin-bottom:12px; } .tgrid .card.wide { grid-column:1 / -1; }
   .tgrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:12px; } .tgrid .card { margin:0; }
   .tgrid h3 { margin:0 0 8px; font-size:12px; color:var(--mut); text-transform:uppercase; letter-spacing:.08em; }
   .brow { display:grid; grid-template-columns:1fr auto; gap:2px 10px; padding:5px 0; font-size:13px; position:relative; } .brow .n { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .brow b { font-variant-numeric:tabular-nums; }
@@ -76,13 +80,14 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button><button data-tab="analytics">📋 Analytics</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="news">📰 News</button><button data-tab="nat1">🏀 Nationale 1</button><button data-tab="analytics">📋 Analytics</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-analytics" hidden><div id="analyticsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="roundbox"></div><div id="mvpbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-nat1" hidden><div class="row" style="margin:12px 0"><b>Nationale 1</b></div><div id="nat1box"><div class="mut">Loading…</div></div></div>
   <div id="tab-traffic" hidden>
     <div class="row" style="margin:12px 0"><b>Traffic</b><span class="sp"></span><label class="mut small">Period</label>
       <select id="tdays"><option value="7">7 days</option><option value="30" selected>30 days</option><option value="90">90 days</option><option value="365">1 year</option></select></div>
@@ -308,15 +313,20 @@ async function loadTraffic() {
   const box = $('#traffic');
   const { ok, body: t } = await api('traffic?days=' + $('#tdays').value);
   if (!ok) { box.innerHTML = '<div class="problems">Could not load the statistics.</div>'; return; }
-  const pageName = p => { const [pg, arg] = p.split('/'); return arg ? `${pg} · ${esc(arg)}` : esc(pg); };
+  const pageName = r => { const [pg, arg] = r[0].split('/'); return r[3] ? `${esc(r[3])} <span class="mut small">${esc(pg)}</span>` : arg ? `${esc(pg)} · ${esc(arg)}` : esc(pg); };
+  const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const trend = (now, before) => before ? `<small class="${now >= before ? 'up' : 'down'}">${now >= before ? '▲' : '▼'} ${Math.abs(Math.round(100 * (now - before) / before))}% vs the ${t.days} days before</small>` : '';
+  const best = t.series.reduce((m, d) => d.visitors > m.visitors ? d : m, t.series[0] || { visitors: 0 });
+  const daily = t.series.slice().reverse(), maxV = Math.max(1, ...t.series.map(d => d.visitors));
+  const dayRow = (d, i) => `<tr class="${i === 0 ? 'today' : ''} ${d.weekday >= 5 ? 'we' : ''}"><td class="l">${d.day.slice(5).replace('-', '/')} <span class="mut small">${WD[d.weekday]}${i === 0 ? ' · today' : ''}</span></td><td><b>${d.visitors}</b></td><td>${d.views}</td><td>${d.visitors ? (d.views / d.visitors).toFixed(1) : '–'}</td><td>${d.new}</td><td class="bar"><i style="width:${Math.max(d.visitors ? 3 : 0, 100 * d.visitors / maxV)}%"></i></td></tr>`;
   const total = t.devices.reduce((a, r) => a + r[1], 0) || 1;
   box.innerHTML = `
     <div class="kpis">
       <div class="kpi live"><b>${t.online}</b><span>online now (5 min)</span></div>
       <div class="kpi"><b>${t.today.visitors}</b><span>visitors today</span></div>
       <div class="kpi"><b>${t.today.views}</b><span>page views today</span></div>
-      <div class="kpi"><b>${t.visitors}</b><span>visitors · ${t.days} days</span></div>
-      <div class="kpi"><b>${t.views}</b><span>page views · ${t.days} days</span></div>
+      <div class="kpi"><b>${t.visitors}</b><span>visitors · ${t.days} days</span>${trend(t.visitors, t.previous.visitors)}</div>
+      <div class="kpi"><b>${t.views}</b><span>page views · ${t.days} days</span>${trend(t.views, t.previous.views)}</div>
       <div class="kpi"><b>${t.views && t.visitors ? (t.views / t.visitors).toFixed(1) : '–'}</b><span>pages per visit</span></div>
     </div>
     <h3 class="sub">People: new or returning?</h3>
@@ -327,17 +337,40 @@ async function loadTraffic() {
       <div class="kpi"><b>${t.people.total ? Math.round(100 * t.people.returning / t.people.total) + '%' : '–'}</b><span>return rate</span></div>
     </div>
     <div class="card">${chart(t.series)}</div>
+    <h3 class="sub">Day by day <span class="mut small" style="font-weight:400">· ${esc(t.tz)}${best.visitors ? ` · best day: ${best.day.slice(5).replace('-', '/')} (${best.visitors} visitors)` : ''}</span></h3>
+    <div class="card dailycard"><div class="scroll"><table class="daily"><thead><tr><th class="l">Day</th><th>Visitors</th><th>Page views</th><th>Pages / visit</th><th>New people</th><th class="l"></th></tr></thead><tbody>
+      ${daily.slice(0, 14).map(dayRow).join('')}${daily.length > 14 ? `<tbody class="more" hidden>${daily.slice(14).map((d, i) => dayRow(d, i + 14)).join('')}</tbody>` : ''}</tbody></table></div>
+      ${daily.length > 14 ? `<button id="dailymore" style="margin-top:8px">Show all ${daily.length} days</button>` : ''}</div>
     <div class="tgrid">
       <div class="card"><h3>Countries (visitors)</h3>${t.country_known ? bars(t.countries, r => `${flag(r[0])} ${esc(cname(r[0]))}`, x => x) : `<div class="warns">No country received yet. Countries come from Cloudflare, so the site has to be served through it: in Cloudflare → DNS switch the <b>@</b> and <b>www</b> records to <b>Proxied</b> (orange cloud), with SSL/TLS = Full (strict). Countries then appear on the next visits, nothing else to install. Until then visits are still counted, just without a country.</div>`}</div>
       <div class="card"><h3>How often people come (days with a visit)</h3>${t.people.total ? bars(Object.entries(t.people.frequency).filter(r => r[1]), r => ({ '1': '1 day', '2-3': '2–3 days', '4-7': '4–7 days', '8+': '8 days or more' }[r[0]]), x => x) : '<div class="mut small">No data yet: returning visitors are recognised from the moment this version is live.</div>'}
         ${t.people.unidentified ? `<div class="mut small" style="margin-top:8px">${t.people.unidentified} visits came from browsers that block storage: counted as visitors, but not as new or returning.</div>` : ''}</div>
-      <div class="card"><h3>Most viewed pages</h3>${bars(t.pages, r => pageName(r[0]))}</div>
+      <div class="card wide"><h3>Clubs: who follows, who reads <span class="mut small" style="font-weight:400">· ${t.followers} people chose a club</span></h3>
+        <div class="scroll"><table class="daily"><thead><tr><th class="l">Club</th><th title="people who chose this club in the follow window">Followers</th><th title="new followers in the period">New</th><th title="people who opened its team page or one of its players' pages">Readers</th><th>Page views</th></tr></thead><tbody>
+        ${t.clubs.map(c => `<tr><td class="l"><b>${esc(c.code)}</b> <span class="mut small">${esc(c.name)}</span></td><td><b>${c.followers}</b></td><td>${c.new_followers ? '+' + c.new_followers : '–'}</td><td>${c.visitors}</td><td>${c.views}</td></tr>`).join('')}</tbody></table></div>
+        <p class="mut small" style="margin:8px 0 0">Followers are optional choices made in the “Follow a club” window (one per browser, stored as a hash). Readers and views count the club's team page and its players' pages over the period.</p></div>
+      <div class="card"><h3>Most viewed pages</h3>${bars(t.pages, r => pageName(r))}</div>
       <div class="card"><h3>Where visitors come from</h3><div class="brow"><span class="n">Direct / bookmarks / apps</span><b>${t.direct}</b><i style="width:${Math.max(2, 100 * t.direct / Math.max(1, t.visitors))}%"></i></div>${bars(t.referrers, r => esc(r[0]))}</div>
       <div class="card"><h3>Devices</h3>${t.devices.map(r => `<div class="brow"><span class="n">${{ mobile: '📱 Phone', desktop: '🖥️ Computer', tablet: '📟 Tablet' }[r[0]] || esc(r[0])}</span><b>${Math.round(100 * r[1] / total)}%</b><i style="width:${100 * r[1] / total}%"></i></div>`).join('') || '<div class="mut small">No data yet.</div>'}
         <h3 style="margin-top:14px">Language</h3>${bars(t.langs, r => ({ fr: '🇫🇷 French', en: '🇬🇧 English' }[r[0]] || esc(r[0])))}</div>
-      <div class="card"><h3>Busiest hours (server time)</h3>${bars(t.hours.slice().sort((a, b) => b[1] - a[1]).slice(0, 6), r => String(r[0]).padStart(2, '0') + ':00 – ' + String(r[0]).padStart(2, '0') + ':59')}</div>
+      <div class="card"><h3>Busiest hours (Tunisia time)</h3>${bars(t.hours.slice().sort((a, b) => b[1] - a[1]).slice(0, 6), r => String(r[0]).padStart(2, '0') + ':00 – ' + String(r[0]).padStart(2, '0') + ':59')}</div>
     </div>
+    <h3 class="sub">Social media pages</h3>
+    <div class="card" id="socialcard"><div class="mut small" style="margin-bottom:8px">Addresses of the club's pages. Each one with an address gets a round icon in the footer and on the home page; leave it empty to hide it.</div><div id="socialform">Loading…</div></div>
     <p class="mut small" style="margin-top:12px">Private by design: no cookies, no IP address stored. “Visitors” are a hash that changes every day, so people are counted once per day. “People” use a random id kept in the browser (stored only as a hash): one person using a phone and a computer counts twice, and clearing the browser data makes them look new. Search-engine crawlers and your own admin visits are ignored. "Visitors" over several days adds up the people of each day.</p>`;
+  loadSocial();
+  const dm = $('#dailymore'); if (dm) dm.onclick = () => { box.querySelector('tbody.more').hidden = false; dm.remove(); };
+}
+async function loadSocial() {
+  const { ok, body } = await api('social'), box = $('#socialform');
+  if (!ok) { box.textContent = 'Could not load.'; return; }
+  box.innerHTML = body.networks.map(n => `<div class="row" style="margin:6px 0"><label class="small" style="width:90px">${esc(n.name)}</label><input data-soc="${n.key}" value="${esc(body.values[n.key] || '')}" placeholder="https://…" style="flex:1;min-width:240px"></div>`).join('') +
+    `<div class="row" style="margin-top:8px"><button class="primary" id="socsave">Save</button> <span class="small mut" id="socmsg"></span></div>`;
+  $('#socsave').onclick = async () => {
+    const values = Object.fromEntries([...box.querySelectorAll('[data-soc]')].map(i => [i.dataset.soc, i.value.trim()]));
+    const r = await api('social', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(values) });
+    $('#socmsg').textContent = r.ok ? 'Saved. The icons show on the site within a minute.' : (r.body.error || 'Could not save.');
+  };
 }
 function ballotBlock(p) {
   if (!p.candidates.length) return '';        // a phase with no games yet has nobody to choose from
@@ -389,7 +422,8 @@ async function loadMvp() {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
+  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'news', 'nat1', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
+  if (b.dataset.tab === 'nat1' && window.loadNat1) window.loadNat1();
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
@@ -418,6 +452,7 @@ boot();
 <script src="/admin-spotlight.js"></script>
 <script src="/admin-content.js"></script>
 <script src="/admin-rounds.js"></script>
+<script src="/admin-nat1.js"></script>
 <script src="/admin-analytics.js"></script>
 </body>
 </html>
