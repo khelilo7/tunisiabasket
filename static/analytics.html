@@ -67,7 +67,6 @@
   .pickbar { background:#173d2a; } .pickbar b { color:#7be0a3; }
   #subm { position:fixed; inset:0; background:rgba(5,8,18,.6); display:grid; place-items:center; z-index:8; } #subm > div { background:var(--panel); border-radius:14px; padding:16px; width:min(380px, 92vw); max-height:84vh; overflow:auto; }
   #subm h4 { margin:0 0 10px; font-size:15px; } #subm button.o { display:flex; gap:8px; width:100%; margin-bottom:6px; align-items:center; text-align:left; } #subm button.o small { color:var(--muted); margin-left:auto; }
-  .vlist { margin:6px 0 4px; background:var(--panel); border-radius:10px; padding:4px 12px 10px; } .vlist > summary { padding:10px 0; font-weight:600; } .vlist .saved { background:var(--bg); }
   #who { font-size:13px; } .name-note { color:var(--muted); font-size:13px; margin:-4px 0 8px; }
   .other { background:#3a2a0a; border-left-color:#ffb020; }
   .hist { margin-top:26px; } .hist .hbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:8px; } .hist .hbar input { flex:1; min-width:180px; }
@@ -205,40 +204,26 @@ function renderHome() {
   const mine = D.games.filter(g => !g.analyst || g.analyst === S.me.name).sort((a, b) => (a.analyst ? 1 : 0) - (b.analyst ? 1 : 0)), byId = Object.fromEntries(mine.map(g => [g.base, g]));     // an old game without a name is continued as it is; a version of mine wins over it      // "Continue" is about my own version
   const days = [...new Set(D.matches.map(m => m.matchday))].sort((a, b) => a - b);
   const next = days.find(d => D.matches.some(m => m.matchday === d && !m.played)) ?? days[0];
-  const order = [next, ...days.filter(d => d > next).slice(0, 2)];
+  const pick = S.md && days.includes(S.md) ? S.md : next;          // any round can be chosen: the games of a round already played can be opened to edit them (never live)
   const card = m => {
     const g = byId[`j${m.matchday}-${m.home.toLowerCase()}-${m.away.toLowerCase()}`];
     return `<button class="match ${g ? "has" : ""}" data-md="${m.matchday}" data-home="${m.home}" data-away="${m.away}" data-date="${m.date || ""}">
-      <b>${esc(tn(m.home))}</b> <span class="muted">vs</span> <b>${esc(tn(m.away))}</b><br><span class="muted">${esc([m.date, m.time].filter(Boolean).join(" · "))}</span>
+      <b>${esc(tn(m.home))}</b> <span class="muted">vs</span> <b>${esc(tn(m.away))}</b><br><span class="muted">${esc([m.date, m.time].filter(Boolean).join(" · "))}${m.played ? " · played · edit only" : ""}</span>
       ${g ? `<br><span style="color:var(--accent)">▶ Continue · ${g.home_score} – ${g.away_score}</span>` : ""}</button>`;
   };
-  const vidMine = Object.fromEntries(mine.filter(g => g.kind === "video").map(g => [g.base, g]));
-  const vrow = v => {
-    const g = vidMine[v.base], two = (v.recorded_all || []).length > 1, why = v.status === "none" ? "No box score" : two ? "Partial: both teams counted, some players missing" : v.complete ? `Partial: only ${tn(v.recorded)} was recorded` : `Partial: some of ${tn(v.recorded)}'s players`;
-    return `<div class="saved"><b>${esc(tn(v.home))} ${v.home_score} – ${v.away_score} ${esc(tn(v.away))}</b><span class="muted">J${v.matchday}</span><span class="pill ${v.status === "none" ? "rejected" : "submitted"}">${why}</span><span class="sp"></span>
-      ${g ? `<button data-open="${g.id}" title="It is on your board: open it">✔ On your board · open</button>` : `<button class="accent" data-vadd="${v.matchday}|${v.home}|${v.away}|${v.date || ""}">＋ Add to my board</button>`}</div>`;
-  };
-  const todo = (D.video || []).length ? `<details class="vlist" ${S.vopen ? "open" : ""}><summary>🎥 Games without a full box score <span class="muted">(${D.video.length}): add the ones you want to count from the video to your board</span></summary>${D.video.map(vrow).join("")}</details>` : "";
   const gameRow = g => `<div class="saved"><b>${esc(tn(g.home))} ${g.home_score} – ${g.away_score} ${esc(tn(g.away))}</b>
       <span class="pill ${g.status}">${STATE[g.status]}</span>${g.matchday ? `<span class="muted">J${g.matchday}</span>` : ""}${g.analyst ? `<span class="pill" title="the analyst who counted this version">✎ ${esc(g.analyst)}</span>` : ""}<span class="muted">${esc(g.created)} · ${g.events} actions</span><span class="sp"></span>
       <button data-open="${g.id}">Open</button><a href="/analytics/api/games/${g.id}/export.csv"><button>CSV</button></a>${g.status === "published" ? "" : `<button data-del="${g.id}">Delete</button>`}</div>`;
-  const curGames = D.games.filter(g => g.kind !== "video"), vidGames = D.games.filter(g => g.kind === "video"), who = S.me.admin ? "every version" : "yours";
+  const curGames = D.games, who = S.me.admin ? "every version" : "yours";
   const opts = Object.keys(D.roster).sort((a, b) => tn(a).localeCompare(tn(b))).map(c => `<option value="${c}">${esc(tn(c))}</option>`).join("");
   app.innerHTML = `
-    ${order.map((d, i) => `${i ? `<details><summary>Matchday ${d}</summary>` : `<h2>Matchday ${d}</h2>`}<div class="matches">${D.matches.filter(m => m.matchday === d).map(card).join("")}</div>${i ? "</details>" : ""}`).join("")}
+    <h2>Matchday <select id="mdsel">${days.map(d => `<option value="${d}" ${d === pick ? "selected" : ""}>J${d}${d === next ? " · next" : ""}</option>`).join("")}</select></h2>
+    <div class="matches">${D.matches.filter(m => m.matchday === pick).map(card).join("")}</div>
     <h2>Any other game</h2>
     <div class="row-actions"><select id="h">${opts}</select> <span class="muted">vs</span> <select id="a">${opts}</select><button class="accent" id="go">Start</button></div>
-    <h2>🎥 From video</h2>${todo}
-    ${vidGames.length ? `<h2>Your games · from video <span class="muted" style="font-size:13px;font-weight:400">${who}</span></h2>${vidGames.map(gameRow).join("")}` : `<p class="muted">Nothing added from the video list yet.</p>`}
     ${curGames.length ? `<h2>Your games · current <span class="muted" style="font-size:13px;font-weight:400">${who}</span></h2>${curGames.map(gameRow).join("")}` : ""}`;
   $("#a").selectedIndex = 1;
-  const vd = app.querySelector("details.vlist"); if (vd) vd.ontoggle = () => { S.vopen = vd.open; };
-  app.querySelectorAll("[data-vadd]").forEach(b => b.onclick = async () => {
-    const [md, home, away, date] = b.dataset.vadd.split("|");
-    b.disabled = true; S.vopen = true;
-    try { await api("/games", "POST", { home, away, matchday: +md, date, video: true }); toast("Added to your board.", true); } catch { b.disabled = false; return; }
-    load();
-  });
+  $("#mdsel").onchange = e => { S.md = +e.target.value; renderHome(); };
   app.querySelectorAll(".match").forEach(b => b.onclick = () => { const ex = byId[`j${b.dataset.md}-${b.dataset.home.toLowerCase()}-${b.dataset.away.toLowerCase()}`]; ex ? open(ex.id) : start({ home: b.dataset.home, away: b.dataset.away, matchday: +b.dataset.md, date: b.dataset.date }); });
   $("#go").onclick = () => start({ home: $("#h").value, away: $("#a").value });
   app.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));

@@ -28,6 +28,10 @@ for method, path in (("get", "/admin/api/schedule"), ("post", "/admin/api/schedu
 check(post("/admin/api/schedule", {"key": key, "time": "18:30", "featured": 2}).status_code == 200, "time and rank saved")
 g = next(x for m in plan() for x in m["games"] if x["key"] == key)
 check(g["time"] == "18:30" and g["featured"] == 2, f"the calendar carries them: {g}")
+mnext = c.get("/admin/api/matchday", headers=H).get_json().get("next")
+if mnext and mnext["matchday"] == md:
+    ng = next((x for x in mnext["games"] if f"{md}:{x['home']}-{x['away']}" == key), None)
+    check(ng is not None and ng["time"] == "18:30", f"the pictures of the next matchday get each game's time: {ng}")
 check(post("/admin/api/schedule", {"key": key, "time": "25:99"}).status_code == 422, "a bad time is refused")
 check(post("/admin/api/schedule", {"key": key, "featured": 500}).status_code == 422, "a rank above 99 is refused")
 check(post("/admin/api/schedule", {"key": key, "date": "tomorrow"}).status_code == 422, "a bad date is refused")

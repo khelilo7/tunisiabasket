@@ -5,6 +5,7 @@ one by one or a pasted list) and they live in `data/nat1.json`, kept across depl
 
     {"season": "2026-2027", "teams": {"ESM": "ES Marsa", ...}, "results": [{"matchday": 3, "home": "ESM", "away": "EOS", "home_score": 78, "away_score": 71, "date": "2026-10-04"}],
      "fixtures": [{"matchday": 5, "home": "BS", "away": "EZS", "date": "2026-11-21", "projected": false}],
+     "playoff": {"games": {"qf1": [{"home": "EZS", "home_score": 80, "away_score": 70, "date": "2027-04-25"}]}},
      "official": {"published": "2026-11-15", "source": "FTBB", "rows": [{"code": "EZS", "j": 4, "w": 4, "l": 0, "diff": 97, "pts": 8}]}}
 
 `fixtures` is the calendar (a game with no result yet is shown as "to come", or "score missing" once its day has passed). `official` is the federation's own table: when it is there it IS the table
@@ -23,6 +24,10 @@ import config
 FILE = config.DATA_DIR / "nat1.json"
 CODE = re.compile(r"^[A-Z0-9]{2,8}$")
 _lock = threading.Lock()
+# How a club comes up to the Pro A (FTBB, "Formule du championnat de Tunisie Nationale 1 seniors garçons", season 2025-2026; the regulation of 2026-2027 is not published yet, so `confirmed` stays False and
+# the page says so): 22 matchdays, then the first `playoff` clubs play quarter-finals and semi-finals, each a best-of-three (the first game and a possible decider at the better ranked club); the
+# TWO semi-final winners go up to the Pro A and play the final in ONE game on neutral ground for the title; the others play the Coupe de la Ligue.
+FORMAT = {"playoff": 8, "promoted": 2, "season": "2025-2026", "confirmed": False, "source": "https://www.ftbb.org.tn/wp-content/uploads/2025/11/formule-NATIONALE-1.pdf"}
 
 
 def load():
@@ -32,10 +37,13 @@ def load():
         d = {}
     return {"season": str(d.get("season") or ""), "teams": {k: v for k, v in (d.get("teams") or {}).items() if isinstance(v, str)},
             "results": [r for r in d.get("results") or [] if isinstance(r, dict)], "fixtures": [r for r in d.get("fixtures") or [] if isinstance(r, dict)],
-            "official": d.get("official") if isinstance(d.get("official"), dict) and d["official"].get("rows") else None}
+            "official": d.get("official") if isinstance(d.get("official"), dict) and d["official"].get("rows") else None,
+            "playoff_on": bool(d.get("playoff_on")),
+            "playoff": {k: [g for g in v if isinstance(g, dict)] for k, v in ((d.get("playoff") or {}).get("games") or {}).items() if isinstance(v, list)}}
 
 
 def _write(d):
+    d = {**d, "playoff": {"games": d.get("playoff") or {}}}              # the play-off games are stored under {"playoff": {"games": {series id: [games]}}}
     config.DATA_DIR.mkdir(parents=True, exist_ok=True)
     tmp = FILE.with_suffix(".tmp")
     tmp.write_text(json.dumps(d, indent=1, ensure_ascii=False))
@@ -74,6 +82,79 @@ def standings(d=None):
     return out
 
 
+# The play-off bracket (the ids are the keys of the games stored in data/nat1.json "playoff"): seeds are the first eight of the table, "S:league:N" is the club ranked N
+PLAYOFF_SERIES = [("qf1", "Quarter-finals", "S:league:1", "S:league:8", 3), ("qf2", "Quarter-finals", "S:league:4", "S:league:5", 3), ("qf3", "Quarter-finals", "S:league:2", "S:league:7", 3),
+                  ("qf4", "Quarter-finals", "S:league:3", "S:league:6", 3), ("sf1", "Semi-finals", "W:qf1", "W:qf2", 3), ("sf2", "Semi-finals", "W:qf3", "W:qf4", 3), ("final", "Championship final", "W:sf1", "W:sf2", 1)]
+
+
+def playoff(d=None):
+    """The play-off as the page draws it: the eight best clubs of the table seeded 1v8, 4v5, 2v7, 3v6, semi-finals, then the final in one game on neutral ground. Until the regular season is over
+    (the last game of the calendar is past) the seeds are provisional. The two semi-final winners are `promoted` (they go up to the Pro A); the final decides the title. None when fewer clubs than places."""
+    import finals                                                   # (imported here: finals imports cup, which imports this module)
+    d = d or load()
+    n = FORMAT["playoff"]
+    rows = standings(d)[:n]
+    if len(rows) < n:
+        return None
+    dates = [f["date"] for f in d["fixtures"] if f.get("date")]
+    over = bool(dates) and max(dates) < _today() and not any(f.get("projected") for f in d["fixtures"])
+    teams = [{"code": r["code"], "name": r["name"], "start_rank": r["rank"], "start_pts": r["pts"]} for r in rows]
+    series = [{"id": i, "round": rd, "a": a, "b": b, "best_of": bo, "games": d["playoff"].get(i, [])} for i, rd, a, b, bo in PLAYOFF_SERIES]
+    out = finals._series({"groups": {"p": {"series": series}}}, "p", teams, {"league": {r["rank"]: r["code"] for r in rows}}, over)
+    by = {s["id"]: s for rd in out["rounds"] for s in rd["series"]}
+    out["promoted"] = [by[i]["winner"] for i in ("sf1", "sf2") if by[i]["winner"]]
+    out["seeds_final"] = over
+    out["promote_round"] = "Semi-finals"
+    return out
+
+
+def put_playoff_games(text):
+    """Lines `GAME, series id, HOME, home score, away score[, date]` (ids: qf1..qf4, sf1, sf2, final). The games written for a series replace its games. All or nothing."""
+    ids = {i for i, *_ in PLAYOFF_SERIES}
+    games = {}
+    for n, line in enumerate(str(text or "").splitlines(), 1):
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        p = [x.strip() for x in re.split(r"[;,\t]", line)]
+        try:
+            if p[0].upper() != "GAME" or len(p) < 5:
+                raise ValueError("write GAME, series, HOME, home score, away score[, date]")
+            sid = p[1].lower()
+            if sid not in ids:
+                raise ValueError(f"unknown series {p[1]} (qf1 qf2 qf3 qf4 sf1 sf2 final)")
+            g = {"home": p[2].upper(), "home_score": _int(p[3], 0, 250), "away_score": _int(p[4], 0, 250)}
+            if g["home_score"] == g["away_score"]:
+                raise ValueError("the scores are equal")
+            if len(p) > 5 and p[5]:
+                if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", p[5]):
+                    raise ValueError("the date is YYYY-MM-DD")
+                g["date"] = p[5]
+        except ValueError as e:
+            raise ValueError(f"line {n}: {e}") from None
+        games.setdefault(sid, []).append(g)
+    with _lock:
+        d = load()
+        d["playoff"] = {**d["playoff"], **games}
+        _write(d)
+    return sum(len(v) for v in games.values())
+
+
+def set_playoff_on(on):
+    """The admin announces (or hides again) the play-off: until then the public site shows no Play-off tab."""
+    with _lock:
+        d = load()
+        d["playoff_on"] = bool(on)
+        _write(d)
+
+
+def clear_playoff():
+    with _lock:
+        d = load()
+        d["playoff"] = {}
+        _write(d)
+
+
 def _today():
     return datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=1))).strftime("%Y-%m-%d")
 
@@ -100,7 +181,7 @@ def view():
         days.append({"matchday": md, "date": date, "played": played, "projected": all(g["projected"] for g in gs),
                      "missing": sum(g["home_score"] is None for g in gs) if played else 0, "games": sorted(gs, key=lambda g: g["home"])})
     off = d["official"]
-    return {"season": d["season"] or season_default(), "teams": names, "standings": standings(d), "matchdays": days, "games": len(d["results"]),
+    return {"season": d["season"] or season_default(), "teams": names, "standings": standings(d), "matchdays": days, "games": len(d["results"]), "format": FORMAT, "playoff": playoff(d), "playoff_on": d["playoff_on"],
             "official": {"published": off.get("published"), "source": off.get("source") or "FTBB"} if off else None}
 
 

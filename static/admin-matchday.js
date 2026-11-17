@@ -166,13 +166,15 @@
       await logo(ctx, g.home, 66, y + 14, 78); await logo(ctx, g.away, W - 66 - 78, y + 14, 78);
       txt(ctx, g.home_name, 162, y + 62, { size: 29, weight: 800, maxW: 290 });
       txt(ctx, g.away_name, W - 162, y + 62, { size: 29, weight: 800, maxW: 290, align: 'right' });
-      txt(ctx, 'VS', W / 2, y + 66, { size: 34, weight: 900, color: C.acc, align: 'center' });
+      txt(ctx, 'VS', W / 2, y + (g.time ? 52 : 66), { size: 34, weight: 900, color: C.acc, align: 'center' });
+      if (g.time) txt(ctx, `${g.date && g.date !== nx.date ? day(g.date).split(' ').slice(0, 2).join(' ') + ' · ' : ''}${g.time}`, W / 2, y + 88, { size: 26, weight: 800, color: C.mut, align: 'center', maxW: 300 });
     }
     const by = top + nx.games.length * RH + 6;
     ctx.fillStyle = C.acc; rr(ctx, 40, by, W - 80, 86, 43); ctx.fill();
     txt(ctx, '🔮 ' + T_.predict, W / 2, by + 56, { size: 29, weight: 900, color: '#10131c', align: 'center', maxW: W - 140 });
-    caption(lang() === 'fr' ? `📅 La journée ${nx.matchday} de la Pro A, ${day(nx.date)} !\n🔮 Qui va gagner ? Faites vos pronostics avant le début de la journée et découvrez l'avis des autres fans : tunisiabasket.com\nQuel match attendez-vous le plus ? 👇\n${tags}`
-      : `📅 Pro A matchday ${nx.matchday}, ${day(nx.date)}!\n🔮 Who wins? Make your predictions before the matchday starts and see what other fans think: tunisiabasket.com\nWhich game are you waiting for? 👇\n${tags}`);
+    const prog = nx.games.map(g => `${g.home_name} – ${g.away_name}${g.time ? ' · ' + g.time : ''}`).join('\n');
+    caption(lang() === 'fr' ? `📅 La journée ${nx.matchday} de la Pro A, ${day(nx.date)} !\n${prog}\n🔮 Qui va gagner ? Faites vos pronostics avant le début de la journée et découvrez l'avis des autres fans : tunisiabasket.com\nQuel match attendez-vous le plus ? 👇\n${tags}`
+      : `📅 Pro A matchday ${nx.matchday}, ${day(nx.date)}!\n${prog}\n🔮 Who wins? Make your predictions before the matchday starts and see what other fans think: tunisiabasket.com\nWhich game are you waiting for? 👇\n${tags}`);
     download(`tunisia-basket-j${nx.matchday}-programme.png`);
   }
   async function drawFans() {
@@ -187,6 +189,7 @@
       await logo(ctx, g.home, 62, y + 12, 52); await logo(ctx, g.away, W - 62 - 52, y + 12, 52);
       txt(ctx, g.home_name, 128, y + 48, { size: 25, weight: 800, maxW: 300 });
       txt(ctx, g.away_name, W - 128, y + 48, { size: 25, weight: 800, maxW: 300, align: 'right' });
+      if (g.time) txt(ctx, g.time, W / 2, y + 48, { size: 24, weight: 800, color: C.mut, align: 'center' });
       const bx = 62, bw = W - 124, by = y + 72, bh = 30, hwid = hp ? Math.max(24, bw * hp / 100) : 0;
       ctx.fillStyle = C.blue; rr(ctx, bx, by, bw, bh, 15); ctx.fill(); if (hwid) { ctx.fillStyle = C.acc; rr(ctx, bx, by, hwid, bh, 15); ctx.fill(); }
       txt(ctx, hp + '%', bx + 16, by + 23, { size: 22, weight: 900, color: '#10131c' }); txt(ctx, ap + '%', bx + bw - 16, by + 23, { size: 22, weight: 900, color: '#fff', align: 'right' });

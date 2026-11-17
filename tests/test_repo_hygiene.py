@@ -28,6 +28,13 @@ for f in files:
             bad.append(f"{f}: {label}: {m.group(0)[:12]}...")
 forbidden = [f for f in files if f.startswith("data/") or f.endswith((".env", ".pem")) or "admin_token" in f]
 bad += [f"{f}: must not be tracked" for f in forbidden]
+# a top-level function or constant declared twice in a page script silently replaces the first one (a finals chart once replaced the MVP chart and broke that page)
+import collections  # noqa: E402
+for page in ("static/index.html", "static/analytics.html", "static/admin.html"):
+    seen = collections.defaultdict(int)
+    for m in re.finditer(r"^(?:async )?function (\w+)\(|^(?:const|let|var) (\w+) =", (root / page).read_text(), re.M):
+        seen[m.group(1) or m.group(2)] += 1
+    bad += [f"{page}: '{n}' is declared {k} times" for n, k in seen.items() if k > 1]
 print("repo hygiene:", "FAILED" if bad else f"ok ({len(files) - 1} files scanned)")
 for b in bad:
     print("  FAIL", b)

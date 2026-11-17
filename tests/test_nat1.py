@@ -87,6 +87,30 @@ check(post({"op": "official", "text": ""}).status_code == 200 and c.get("/api/na
 import tools.build_nat1_seed as _seed  # noqa: E402
 missing = [code for code in _seed.TEAMS if not (Path(__file__).resolve().parent.parent / "static" / "img" / "teams" / f"{code}.png").exists()]
 check(not missing, f"a badge for every National One club: missing {missing}")
+# the play-off for the promotion: eight clubs seeded 1v8, 4v5, 2v7, 3v6, semi-finals, a one-game final; the two semi-final winners go up
+check(c.get("/api/nat1").get_json()["playoff"] is None, "fewer than eight clubs: no play-off yet")
+for i in range(1, 9):
+    post({"op": "team", "code": f"PO{i}", "name": f"Club {i}"})
+post({"op": "official", "text": "date: 2026-11-15\n" + "\n".join(f"PO{i}, 4, {5 - i if i < 5 else 0}, {i - 1 if i < 5 else 4}, {20 - i}, {2 * (5 - i if i < 5 else 0) + (i - 1 if i < 5 else 4)}" for i in range(1, 9))})
+po = c.get("/api/nat1").get_json()["playoff"]
+check(po is not None and [r["name"] for r in po["rounds"]] == ["Quarter-finals", "Semi-finals", "Championship final"], f"quarter-finals, semi-finals, final: {po and [r['name'] for r in po['rounds']]}")
+qf = {s["id"]: s for s in po["rounds"][0]["series"]}
+check([(qf[k]["a"]["code"], qf[k]["b"]["code"]) for k in ("qf1", "qf2", "qf3", "qf4")] == [("PO1", "PO8"), ("PO4", "PO5"), ("PO2", "PO7"), ("PO3", "PO6")], "1v8, 4v5, 2v7, 3v6")
+check(all(s["best_of"] == 3 for s in qf.values()) and po["rounds"][2]["series"][0]["best_of"] == 1, "quarter-finals best of three, the final one game")
+check(qf["qf1"]["a"]["provisional"] and not po["seeds_final"], "seeds are provisional while the calendar is not over")
+check(post({"op": "playoff_games", "text": "GAME, qf9, PO1, 80, 70"}).status_code == 422 and post({"op": "playoff_games", "text": "GAME, qf1, PO1, 70, 70"}).status_code == 422, "an unknown series or equal scores are refused")
+r = post({"op": "playoff_games", "text": "GAME, qf1, PO1, 80, 70, 2027-04-24\nGAME, qf1, PO1, 75, 70\nGAME, qf4, PO3, 60, 65\nGAME, qf4, PO3, 60, 65\nGAME, qf2, PO4, 70, 60\nGAME, qf2, PO4, 70, 60\nGAME, qf3, PO2, 70, 60\nGAME, qf3, PO2, 70, 60"})
+check(r.status_code == 200, f"play-off games saved: {r.get_json()}")
+po = c.get("/api/nat1").get_json()["playoff"]
+sf = {s["id"]: s for s in po["rounds"][1]["series"]}
+check(sf["sf1"]["a"].get("code") == "PO1" and sf["sf1"]["b"].get("code") == "PO4" and sf["sf2"]["a"].get("code") == "PO2" and sf["sf2"]["b"].get("code") == "PO6", "the winners meet in the semi-finals (1-8 v 4-5, 2-7 v 3-6)")
+post({"op": "playoff_games", "text": "GAME, sf1, PO1, 80, 70\nGAME, sf1, PO1, 80, 70\nGAME, sf2, PO2, 80, 70\nGAME, sf2, PO2, 80, 70\nGAME, final, PO1, 90, 85"})
+po = c.get("/api/nat1").get_json()["playoff"]
+check(po["promoted"] == ["PO1", "PO2"] and po["champion"]["code"] == "PO1", f"two clubs go up, the one-game final gives the champion: {po['promoted']} {po['champion']}")
+check(c.get("/nationale-1/playoff").status_code == 200 and c.get("/en/national-one/play-off").status_code == 200, "the play-off tab answers in French and in English")
+check(c.get("/api/competitions").get_json()["nat1_playoff"] is False, "the National One play-off tab is hidden until the admin announces it")
+check(post({"op": "playoff_announce", "on": True}).status_code == 200 and c.get("/api/competitions").get_json()["nat1_playoff"] is True, "announced: the tab shows")
+check(post({"op": "playoff_clear"}).status_code == 200 and not any(x["games"] for rd in c.get("/api/nat1").get_json()["playoff"]["rounds"] for x in rd["series"]), "the play-off games can be removed")
 print("nationale 1, about, menu:", "FAILED" if fails else "ok")
 for m in fails:
     print(" -", m)

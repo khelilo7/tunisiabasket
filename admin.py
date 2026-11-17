@@ -25,6 +25,9 @@ import config
 import stats
 import mvp
 import predict
+import cup
+import finals
+import game_sources
 import nat1
 import social
 import traffic
@@ -277,7 +280,7 @@ def nat1_admin_view():
 
 @bp.post("/admin/api/nat1")
 def nat1_admin_edit():
-    """Body {"op": "team" | "remove_team" | "result" | "paste" | "fixtures" | "official" | "remove_result" | "season", ...}: the teams and results of Nationale 1 (nat1.py)."""
+    """Body {"op": "team" | "remove_team" | "result" | "paste" | "fixtures" | "official" | "remove_result" | "season" | "playoff_games" | "playoff_clear", ...}: the teams and results of Nationale 1 (nat1.py)."""
     b = request.get_json(silent=True) or {}
     op, msg = b.get("op"), "Saved."
     try:
@@ -305,12 +308,99 @@ def nat1_admin_edit():
         elif op == "season":
             nat1.set_season(b.get("season"))
             msg = "Season saved."
+        elif op == "playoff_games":
+            msg = f"{nat1.put_playoff_games(b.get('text'))} play-off game(s) saved."
+        elif op == "playoff_announce":
+            nat1.set_playoff_on(bool(b.get("on")))
+            msg = "The National One play-off is announced: its tab is now visible." if b.get("on") else "The National One play-off tab is hidden again."
+        elif op == "playoff_clear":
+            nat1.clear_playoff()
+            msg = "The play-off games are removed."
         else:
             return jsonify(error="Unknown operation."), 422
     except ValueError as e:
         return jsonify(error=str(e)), 422
     auth.audit("nat1", f"{op}")
     return jsonify(ok=True, message=msg, **nat1.view())
+
+
+@bp.get("/admin/api/cup")
+def cup_admin_view():
+    return jsonify(**cup.view(), known=cup.known_teams())
+
+
+@bp.post("/admin/api/cup")
+def cup_admin_edit():
+    """Body {"op": "title" | "team" | "draw" | "result" | "sides" | "round" | "reset", ...}: the Cup (cup.py)."""
+    b = request.get_json(silent=True) or {}
+    op, msg = b.get("op"), "Saved."
+    try:
+        if op == "title":
+            cup.set_title(b.get("name"), b.get("season"))
+        elif op == "team":
+            cup.add_team(b.get("code"), b.get("name"), b.get("league", "other"))
+            msg = "Club saved."
+        elif op == "draw":
+            n = cup.draw(b.get("round_name"), b.get("text"), b.get("date") or "")
+            msg = f"Draw saved: {n} rounds, from the first round to the final."
+        elif op == "result":
+            cup.set_result(b.get("tie"), b.get("home_score"), b.get("away_score"), b.get("date"), b.get("note"))
+            msg = "Result saved."
+        elif op == "sides":
+            cup.set_sides(b.get("tie"), str(b.get("home") or "").upper(), str(b.get("away") or "").upper())
+        elif op == "round":
+            cup.set_round(b.get("key"), b.get("name"), b.get("date"))
+        elif op == "reset":
+            cup.reset()
+            msg = "The bracket is empty."
+        else:
+            return jsonify(error="Unknown operation."), 422
+    except ValueError as e:
+        return jsonify(error=str(e)), 422
+    auth.audit("cup", str(op))
+    return jsonify(ok=True, message=msg, **cup.view(), known=cup.known_teams())
+
+
+@bp.get("/admin/api/finals")
+def finals_admin_view():
+    return jsonify(finals.view())
+
+
+@bp.post("/admin/api/finals")
+def finals_admin_edit():
+    """Body {"op": "config" | "announce" | "teams" | "auto_teams" | "league_games" | "series" | "clear", "group": "playoff" | "playout", ...}: the play-off and the play-out (finals.py)."""
+    b = request.get_json(silent=True) or {}
+    op, g, msg = b.get("op"), b.get("group"), "Saved."
+    try:
+        if op == "config":
+            finals.configure(b.get("season"), b.get("carry"), b.get("preview"), b.get("stakes"), b.get("formats"), b.get("qualify"), b.get("relegation"))
+        elif op == "announce":
+            finals.configure(announced=bool(b.get("on")))
+            msg = "The play-off and the play-out are announced: the site now shows them instead of the championship standings." if b.get("on") else "Announcement withdrawn: the site shows the championship standings again."
+        elif op == "teams":
+            finals.set_teams(g, re.split(r"[\s,;]+", str(b.get("text") or "")))
+        elif op == "auto_teams":
+            rows = stats.official_standings(stats.load_official())
+            finals.set_teams("playoff", [r["code"] for r in rows[:finals.ZONE]])
+            finals.set_teams("playout", [r["code"] for r in rows[finals.ZONE:]])
+            msg = "The groups are the six best and the six last of the regular season as it stands."
+        elif op == "league_games":
+            msg = f"{finals.put_league_games(g, b.get('text'))} game(s) saved."
+        elif op == "super_scaffold":
+            finals.scaffold_super()
+            msg = "Super play-off set up: 1 v 4, 2 v 3 of the play-off, then the final, best of three."
+        elif op == "series":
+            a, n = finals.put_series(g, b.get("text"))
+            msg = f"{a} series and {n} game(s) saved."
+        elif op == "clear":
+            finals.clear_group(g)
+            msg = "This group is empty."
+        else:
+            return jsonify(error="Unknown operation."), 422
+    except ValueError as e:
+        return jsonify(error=str(e)), 422
+    auth.audit("finals", str(op))
+    return jsonify(ok=True, message=msg, **finals.view())
 
 
 @bp.get("/admin/api/social")
@@ -656,7 +746,8 @@ def matchday_view():
         picks = {(g["home"], g["away"]): g for g in pr["games"]} if pr and pr["matchday"] == nxt["matchday"] else {}
         nxt_out = {"matchday": nxt["matchday"], "date": nxt["date"], "open": bool(pr and pr["matchday"] == nxt["matchday"] and pr["open"]),
                    "games": [{"home": g["home"], "away": g["away"], "home_name": names.get(g["home"], g["home"]), "away_name": names.get(g["away"], g["away"]),
-                              "home_picks": picks.get((g["home"], g["away"]), {}).get("home_picks", 0), "away_picks": picks.get((g["home"], g["away"]), {}).get("away_picks", 0)}
+                              "home_picks": picks.get((g["home"], g["away"]), {}).get("home_picks", 0), "away_picks": picks.get((g["home"], g["away"]), {}).get("away_picks", 0),
+                              "time": g.get("time"), "date": g.get("game_date") or nxt["date"]}
                              for g in nxt["games"] if not g["played"]]}
     out.update(md=md, date=cal.get(md), results=results, standings=table, next=nxt_out)
     return jsonify(out)
@@ -869,6 +960,9 @@ def _save(it, body):
             game["forced_with_problems"] = problems
         game["uploaded"] = True
         GAMES.mkdir(parents=True, exist_ok=True)
+        if game_sources.intake(game) == "kept":            # the admin chose which version of this game is published: this one is only kept as another source (Admin, tab Sources)
+            it["status"] = "saved"
+            return jsonify(ok=True, kept=True, message=f"Game {game['teams'][0]['code']} – {game['teams'][1]['code']} ({game['id']}) is kept as ANOTHER SOURCE: the version you chose stays published. Compare them in the Sources tab."), 200
         (GAMES / f"{game['id']}.json").write_text(json.dumps(game, indent=1, ensure_ascii=False))
         msg = f"Saved game {game['teams'][0]['code']} {game['teams'][0]['points']} – {game['teams'][1]['points']} {game['teams'][1]['code']}."
         a, b = game["teams"]
@@ -882,5 +976,7 @@ def _save(it, body):
 
 
 import admin_content  # noqa: E402
+import admin_sources  # noqa: E402
 
-admin_content.init()      # the schedule, result and news routes are registered on this blueprint when the module loads
+admin_content.init()
+admin_sources.init()      # the schedule, result and news routes are registered on this blueprint when the module loads

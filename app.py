@@ -11,6 +11,8 @@ from flask import Flask, Response, abort, jsonify, make_response, redirect, requ
 import auth
 import config
 import content
+import cup
+import finals
 import lineups
 import mvp
 import nat1
@@ -142,7 +144,7 @@ def overview():
         recent=[{k: g.get(k) for k in ("id", "date", "date_approx", "matchday", "mvp", "score_note")} | {
             "teams": [{"code": t["code"], "name": t["name"], "points": t["points"]} for t in g["teams"]]}
             for g in reversed(d["games"][-6:])],
-        standings=[{**r, "box": counts.get(r["code"], 0)} for r in d["standings"]], status=public_status(),
+        standings=[{**r, "box": counts.get(r["code"], 0)} for r in d["standings"]], status=public_status(), movement=finals.movement(force=request.args.get("move") == "1"),
     )
 
 
@@ -330,6 +332,36 @@ def nat1_view():
     r = jsonify(nat1.view())
     r.headers["Cache-Control"] = "no-cache"
     return r
+
+
+@app.get("/api/competitions")
+def competitions():
+    """Which extra competitions exist (the page's switches show only those): the Cup once it has a bracket, the play-off / play-out once the ADMIN has announced them (until then the public site does not change),
+    and the National One play-off once the admin has announced it."""
+    fv = finals.view()
+    return jsonify(cup=bool(cup.load()["rounds"]), finals=bool(fv["announced"]), started=bool(fv["announced"]), nat1=bool(nat1.load()["teams"]), nat1_playoff=bool(nat1.load()["playoff_on"]))
+
+
+@app.get("/api/cup")
+def cup_view():
+    """The Cup bracket (cup.py): rounds, ties with their clubs resolved, upsets, the champion."""
+    r = jsonify(cup.view())
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
+@app.get("/api/finals")
+def finals_view():
+    """The play-off and the play-out (finals.py), with the season's journey and the regular season as it stands."""
+    r = jsonify(finals.view())
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
+@app.get("/api/rank-history")
+def rank_history():
+    """The rank of every Pro A club after every matchday (the race chart of the Standings page)."""
+    return jsonify(finals.rank_history())
 
 
 @app.get("/api/social")

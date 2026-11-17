@@ -396,6 +396,7 @@
   .ini { display:inline-grid; place-items:center; width:26px; height:26px; border-radius:50%; background:var(--pill); color:var(--mut); font-size:9px; font-weight:800; flex:none; }
   .n1grid { grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr)); }
   .n1table td.l { white-space:normal; min-width:150px; } .n1table .tn { align-items:center; }
+  .n1c { display:flex; flex-direction:column; align-items:center; line-height:1.25; } .n1c small { color:var(--mut); font-size:11px; }
   .n1g .n1s { text-align:center; }
   .n1g { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--line); } .n1g .tn:last-child { justify-content:flex-end; text-align:right; } .n1g .win { font-weight:800; }
   .seg.league { margin-bottom:8px; } .seg.league a.on { background:var(--acc); color:#1a1205; }
@@ -406,6 +407,42 @@
   @media (max-width:760px) {
     header .brand { flex:1; } .hdrbtn { display:inline-flex; } .clubbtn span { max-width:70px; overflow:hidden; text-overflow:ellipsis; } .socialcard .socbig { width:100%; } .sb { flex:1 1 auto; justify-content:center; }
   }
+
+  /* Cup and play-off / play-out: bracket, series cards, journey ribbon, race chart */
+  .cuphero { background:var(--mvp-grad); border-color:var(--mvp-line); } .cuphero .ch1 { display:flex; gap:14px; align-items:center; } .cuphero .trophy { font-size:44px; }
+  .cstats { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; } .cstats .pill { font-size:12px; padding:4px 11px; }
+  .bracketwrap { overflow-x:auto; padding:6px 2px 14px; margin:12px -2px 0; } .bracket { display:flex; gap:34px; min-width:max-content; }
+  .bcol { display:flex; flex-direction:column; width:268px; } .bcol .bhead { display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; margin-bottom:10px; min-height:38px; } .bcol .bhead b { text-transform:uppercase; letter-spacing:.08em; font-size:12px; color:var(--acc); }
+  .bties { display:flex; flex-direction:column; justify-content:space-around; flex:1; gap:16px; } .pair { display:flex; flex-direction:column; gap:12px; justify-content:space-around; position:relative; flex:1; }
+  .bcol:not(.last) .pair::after { content:''; position:absolute; right:-17px; top:25%; bottom:25%; border-right:2px solid var(--line); }
+  .bcol:not(.last) .tie::after { content:''; position:absolute; right:-17px; top:50%; width:17px; border-top:2px solid var(--line); } .bcol:not(:first-child) .tie::before { content:''; position:absolute; left:-17px; top:50%; width:17px; border-top:2px solid var(--line); }
+  .bcol:not(.last) .pair::before { content:''; position:absolute; right:-34px; top:50%; width:17px; border-top:2px solid var(--line); }
+  .tie { position:relative; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px 0 2px; } .tie.played { border-color:var(--line); } .tie.upset { border-color:var(--acc); box-shadow:0 0 0 1px var(--acc) inset, 0 6px 18px var(--glow); }
+  .tie .ts { display:flex; align-items:center; gap:8px; padding:7px 12px; min-height:38px; } .tie .ts .tnm { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600; } .tie .ts b { min-width:26px; text-align:right; font-size:16px; font-variant-numeric:tabular-nums; }
+  .tie .ts.w { background:linear-gradient(90deg, var(--glow), transparent); } .tie .ts.w .tnm, .tie .ts.w b { color:var(--txt); font-weight:800; } .tie .ts.l { opacity:.55; } .tie .ts.tbd, .tie .ts.bye { color:var(--mut); font-style:italic; }
+  .tie .ts + .ts { border-top:1px solid var(--line); } .tie .tm { display:flex; gap:10px; flex-wrap:wrap; align-items:center; padding:3px 12px 6px; font-size:12px; color:var(--mut); } .tie .tm:empty { display:none; }
+  .lg { font-style:normal; font-size:10px; font-weight:800; padding:1px 6px; border-radius:99px; background:var(--pill); color:var(--mut); } .lg.a { background:var(--pillw); color:var(--good); } .lg.n { background:rgba(79,147,255,.18); color:#6aa9ff; }
+  .ups { font-weight:800; color:var(--acc); } .ups.ok { color:var(--good); } .ups.live { color:var(--bad); } .seed { font-size:11px; color:var(--mut); } .dots { display:inline-flex; gap:3px; } .dot { width:9px; height:9px; border-radius:50%; border:2px solid var(--line); } .dot.on { background:var(--acc); border-color:var(--acc); }
+  .tie.ser.liveser { border-color:var(--bad); } .cuplist { display:none; } .rchips { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:6px; scrollbar-width:none; } .rchips::-webkit-scrollbar { display:none; } .rchip { white-space:nowrap; border-radius:99px; padding:6px 14px; font-size:13px; font-weight:700; color:var(--mut); } .rchip.on { background:var(--acc); border-color:var(--acc); color:#1a1205; }
+  .fgrid2 { display:grid; grid-template-columns:1fr; gap:22px; } .fpanel { min-width:0; } .fhead { display:flex; gap:12px; align-items:center; margin:8px 0 10px; } .fico { font-size:30px; }
+  .fpanel.playoff .fhead h2 { color:var(--acc); } .fpanel.playout .fhead h2 { color:#6aa9ff; } .tstrip { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; } .tchip { display:inline-flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:99px; padding:4px 12px 4px 6px; }
+  .rkz .mv { display:block; margin:0; font-size:10px; line-height:1; } .mv.eq { color:var(--mut); font-weight:400; } .movebar { margin:10px 2px 0; font-size:13px; font-weight:600; color:var(--acc); }
+  .ftable td.l { white-space:normal; } .zone.z-cup { background:var(--pill); color:var(--mut); } tr.zone-cup td:first-child { box-shadow:inset 4px 0 0 var(--line); } .zlegend i.z-cup { background:var(--line); }
+  .promo { margin-top:16px; background:var(--mvp-grad); border-color:var(--mvp-line); } .promo .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px; } .pstep { list-style:none; margin:0 0 8px; padding:0; display:grid; gap:8px; } .pstep li { display:flex; gap:10px; align-items:flex-start; } .pstep .pn { flex:none; width:26px; height:26px; border-radius:50%; background:var(--acc); color:#1a1205; display:grid; place-items:center; font-weight:800; font-size:13px; } .ftable tr.fz-up td:first-child { box-shadow:inset 4px 0 0 var(--good); } .ftable tr.fz-down td:first-child { box-shadow:inset 4px 0 0 var(--bad); } .ftable tr.prov { opacity:.85; } .ftable tr.fz-up.prov td:first-child { box-shadow:inset 4px 0 0 rgba(62,207,142,.5); }
+  .tie .ts.prov { font-style:italic; opacity:.8; } .fmt ol { margin:0 0 8px 18px; padding:0; } .fmt li { margin:4px 0; } .mv { font-size:11px; font-weight:800; margin-left:8px; } .mv.up { color:var(--good); } .mv.dn { color:var(--bad); } .ftable td.rkz { font-weight:800; }
+  .race { padding:12px; } .race svg { width:100%; height:auto; } .race .rt { fill:var(--mut); font-size:11px; } .race .rl { cursor:pointer; transition:opacity .2s; } .race .rl.dim { opacity:.15; } .rleg { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .rleg .rchip { padding:3px 10px; font-size:12px; display:inline-flex; gap:6px; align-items:center; } .rleg .rchip i { width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .compstrip { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0; } .compstrip a { background:var(--card); border:1px solid var(--line); border-radius:99px; padding:6px 14px; font-size:13px; font-weight:700; } .compstrip a:hover { border-color:var(--acc); color:var(--acc); }
+  .stages { display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); gap:26px; align-items:start; } .stagebar { display:none; } .stn { font-style:normal; width:30px; height:30px; border-radius:50%; background:var(--acc); color:#1a1205; display:grid; place-items:center; font-weight:800; font-size:15px; flex:none; }
+  .stg2 .fhead h2 { color:var(--acc); } .promoted { margin:10px 0; background:var(--mvp-grad); border-color:var(--mvp-line); } .promoted .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px; } .prow { display:flex; gap:8px; flex-wrap:wrap; } .stg2 .seed { display:none; } .stg2 .bcol { width:226px; } .stg2 .bracket { gap:30px; } .stg2 .bracketwrap { margin-top:4px; } .cnote { font-size:12px; color:var(--mut); margin:8px 2px 0; opacity:.85; }
+  .sgames { display:flex; gap:5px; flex-wrap:wrap; padding:4px 12px 2px; border-top:1px solid var(--line); } .sg { font-size:11px; font-variant-numeric:tabular-nums; padding:1px 7px 1px 3px; border-radius:99px; background:var(--pill); color:var(--mut); } .sg i { font-style:normal; font-weight:800; color:var(--mut); margin-right:4px; opacity:.7; } .sg.a { color:var(--txt); } .sg.b { opacity:.8; }
+  @media (max-width:979px) {
+    .stages { display:block; } .stg { display:none; } .stages[data-stage="1"] .stg1, .stages[data-stage="2"] .stg2 { display:block; }
+    .stagebar { display:flex; align-items:center; gap:8px; margin:0 0 6px; } .stagebar button { flex:1; display:flex; gap:10px; align-items:center; text-align:left; padding:8px 12px; border-radius:14px; background:var(--card); border:1px solid var(--line); color:var(--mut); cursor:pointer; } .stagebar button.on { border-color:var(--acc); color:var(--txt); box-shadow:0 4px 14px var(--glow); }
+    .stagebar button .stn { background:var(--pill); color:var(--mut); } .stagebar button.on .stn { background:var(--acc); color:#1a1205; } .stagebar small { display:block; color:var(--mut); font-size:11px; font-weight:500; } .stagebar b { font-size:13px; } .sarrow { color:var(--mut); font-weight:800; }
+    .stg .fhead { display:none; }
+  }
+  @media (max-width:640px) { .stg2 .bracketwrap, .nat1po .bracketwrap { overflow:visible; margin:0; } .stg2 .bracket, .nat1po .bracket { flex-direction:column; min-width:0; gap:14px; } .stg2 .bcol, .nat1po .bcol { width:100%; } .stg2 .bcol .tie::before, .nat1po .bcol .tie::before, .stg2 .bcol .tie::after, .nat1po .bcol .tie::after, .stg2 .bcol .pair::after, .nat1po .bcol .pair::after, .stg2 .bcol .pair::before, .nat1po .bcol .pair::before { display:none; } .stg2 .bties, .nat1po .bties, .stg2 .pair, .nat1po .pair { gap:10px; } }
+  @media (max-width:899px) { .bracketwrap { display:none; } .cuplist { display:block; } .fpanel .bracketwrap { display:block; } .fpanel .bracket { gap:26px; } }
 </style>
 </head>
 <body>
@@ -571,6 +608,40 @@ const FR = {
   'Home and away assumed until the federation publishes them': 'Domicile et extérieur supposés en attendant la publication de la fédération',
   'the next three by minutes': 'les trois suivants au temps de jeu',
   'Never show this again': 'Ne plus me le proposer',
+  'Cup': 'Coupe', 'Upset': 'Surprise', 'upset': 'surprise', 'upsets': 'surprises', 'clubs': 'clubs', 'Bye: goes through': 'Exempt : qualifié', 'Winner of': 'Vainqueur de', 'To be drawn': 'À tirer au sort',
+  'Demonstration data: the real draw is not out yet.': 'Données de démonstration : le vrai tirage n’est pas encore connu.', 'The draw of the Cup will appear here.': 'Le tirage de la Coupe apparaîtra ici.', 'Cup winner': 'Vainqueur de la Coupe',
+  'Clubs of the Pro A and of the National One meet in single games: the winner goes through to the next round.': 'Les clubs de Pro A et de Nationale 1 se rencontrent en match sec : le vainqueur passe au tour suivant.',
+  '⚡ Upset: a club of a lower division beats a club of a higher one.': '⚡ Surprise : un club d’une division inférieure bat un club d’une division supérieure.',
+  'Play-off': 'Play-off', 'Play-out': 'Play-out', 'Phase 1': 'Phase 1', 'Return leg': 'Phase retour', 'Both': 'Les deux', 'Regular season': 'Saison régulière', 'The regular season, as it ended': 'La saison régulière, telle qu’elle s’est terminée',
+  'The history stays here while the play-off and the play-out are played.': 'L’historique reste ici pendant le play-off et le play-out.', 'Race of the standings': 'Course au classement',
+  'Demonstration data: the real play-off and play-out have not started.': 'Données de démonstration : le vrai play-off et le vrai play-out n’ont pas commencé.', 'The groups are the six best and the six last of the table as it stands today.': 'Les groupes sont les six premiers et les six derniers du classement actuel.',
+  'Qualified': 'Qualifié', 'In progress': 'En cours', 'Champion': 'Champion', 'Reg.': 'Rég.', 'Carry': 'Report', 'Rank at the end of the regular season': 'Rang en fin de saison régulière', 'Points carried over from the regular season': 'Points reportés de la saison régulière',
+  'rounds': 'journées', 'Round': 'Journée',
+  'Places gained since the previous round': 'Places gagnées depuis la journée précédente', 'Places lost since the previous round': 'Places perdues depuis la journée précédente',
+  'Super play-off': 'Super play-off', 'Relegation': 'Descente', 'All': 'Tout', 'Final table.': 'Classement définitif.', 'How the end of the season works': 'Comment fonctionne la fin de saison', 'Format': 'Formule',
+  'Regular season: 22 matchdays. The six best clubs play the play-off, the six others the play-out, and they start it with the points they have.': 'Saison régulière : 22 journées. Les six meilleurs clubs jouent le play-off, les six autres le play-out, avec les points qu’ils ont déjà.',
+  'The first four go to the super play-off.': 'Les quatre premiers vont au super play-off.',
+  'Best-of-five series: 1 v 4, 2 v 3, then the final.': 'Séries au meilleur des cinq : 1 contre 4, 2 contre 3, puis la finale.',
+  'The last two clubs go down to the Nationale 1.': 'Les deux derniers clubs descendent en Nationale 1.',
+  'Play-off: a mini-championship of the six, home and away. The first four go to the super play-off.': 'Play-off : un mini-championnat à six, en aller-retour. Les quatre premiers vont au super play-off.',
+  'Super play-off: semi-finals 1st v 4th and 2nd v 3rd, then the final: each is a series of up to five games (first to win three).': 'Super play-off : demi-finales 1er contre 4e et 2e contre 3e, puis la finale : chacune est une série en cinq matchs maximum (le premier à trois victoires).',
+  'Report: each club keeps the points of its regular season (2 for a win, 1 for a loss) and adds those of each game played here.': 'Report : chaque club garde les points de sa saison régulière (2 par victoire, 1 par défaite) et y ajoute ceux de chaque match joué ici.',
+  'Report: each club keeps half of its regular-season points (rounded), then adds those of each game played here.': 'Report : chaque club garde la moitié des points de sa saison régulière (arrondie), puis y ajoute ceux de chaque match joué ici.',
+  'Everyone starts again from zero: only the games played here count.': 'Tout le monde repart de zéro : seuls les matchs joués ici comptent.',
+  'The National One play-off starts at the end of the regular season. This page will come alive then.': 'Le play-off de la Nationale 1 commence à la fin de la saison régulière. Cette page s’animera à ce moment-là.', 'The play-off and the play-out start at the end of the regular season. This page will come alive then.': 'Le play-off et le play-out commencent à la fin de la saison régulière. Cette page s’animera à ce moment-là.',
+  'Source: Wikipedia, to be verified': 'Source : Wikipédia, à vérifier',
+  'Mini-championship': 'Mini-championnat', 'Game': 'Match', 'Quarter-finals': 'Quarts de finale', 'Semi-finals': 'Demi-finales', 'Championship final': 'Finale', 'Goes up to the Pro A': 'Monte en Pro A', 'One game, neutral ground': 'Match unique, terrain neutre',
+  'Promoted to the Pro A': 'Promus en Pro A', 'See the play-off': 'Voir le play-off', 'The play-off will appear here once eight clubs are in the table.': 'Le play-off apparaîtra ici dès que huit clubs seront au classement.',
+  'The first eight of the table play it: the two winners of the semi-finals go up to the Pro A, and meet in the final for the title.': 'Les huit premiers du classement le jouent : les deux vainqueurs des demi-finales montent en Pro A et se retrouvent en finale pour le titre.',
+  'Provisional: the seeds follow the table as it stands, and change until the regular season is over.': 'Provisoire : les têtes de série suivent le classement actuel et changent jusqu’à la fin de la saison régulière.',
+  'Quarter-finals and semi-finals: series of three games (the first game, and a decider if needed, at the better ranked club). The final is a single game on neutral ground.': 'Quarts et demi-finales : séries en trois matchs (le premier match, et la belle éventuelle, chez le mieux classé). La finale se joue en un seul match sur terrain neutre.',
+  'Play-out: a mini-championship of the six others. The last two clubs go down to the Nationale 1 (the first two of the Nationale 1 come up).': 'Play-out : un mini-championnat des six autres. Les deux derniers clubs descendent en Nationale 1 (les deux premiers de la Nationale 1 montent).',
+  'Based on last season’s rules and the federation’s announcements: the official regulation of this season is not published yet, and we will correct this page if it differs.': 'D’après le règlement de la saison dernière et les annonces de la fédération : le règlement officiel de cette saison n’est pas encore publié, et nous corrigerons cette page s’il diffère.',
+  'League Cup': 'Coupe de la Ligue', 'How to go up to the Pro A': 'Comment monter en Pro A',
+  'Play-off quarter-finals: 1st v 8th, 2nd v 7th, 3rd v 6th, 4th v 5th. Each is a series of three games (the first game, and a decider if needed, at the better ranked club).': 'Quarts de finale des play-offs : 1er contre 8e, 2e contre 7e, 3e contre 6e, 4e contre 5e. Chacun est une série en trois matchs (le premier match, et la belle éventuelle, chez le mieux classé).',
+  'Semi-finals, the same way: the winner of 1-8 v the winner of 4-5, the winner of 2-7 v the winner of 3-6.': 'Demi-finales, de la même façon : le vainqueur de 1-8 contre celui de 4-5, le vainqueur de 2-7 contre celui de 3-6.',
+  'The two semi-final winners go up to the Pro A.': 'Les deux vainqueurs des demi-finales montent en Pro A.', 'They play the final in a single game on neutral ground: the champion of the Nationale 1.': 'Ils jouent la finale en un seul match sur terrain neutre : le champion de la Nationale 1.',
+  'The clubs below the eighth place play the League Cup instead.': 'Les clubs au-delà de la huitième place jouent la Coupe de la Ligue.',
   // dark / light
   'Dark mode': 'Mode sombre', 'Light mode': 'Mode clair'
 };
@@ -600,7 +671,9 @@ const SENT = {
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
     topNote: n => `The season MVP can only come from the top ${n} teams.`,
     rankIn: n => `#${n} in the standings`, race: (r, of) => `MVP race: #${r} of ${of}`, notPool: n => `Not in the MVP pool (team outside the top ${n})`,
-    scoresMissing: n => `${n} score${n === 1 ? '' : 's'} missing`, nat1Official: (src, d) => `Official ${src} table of ${d}.`,
+    ofPlayoff: n => `${n === 1 ? '1st' : n === 2 ? '2nd' : n === 3 ? '3rd' : n + 'th'} of the play-off`, qualTop: n => `The first ${n} go to the super play-off`, relegNote: n => `The last ${n} go down to the Nationale 1`, provisional: (a, b) => `Provisional: ${a} of ${b} games played.`,
+    n1Step1: n => `The regular season: 22 matchdays, home and away. The first ${n} play the play-off.`, n1Legend: n => `Top ${n}: play-off, with the chance to go up`, n1Source: s => `This is the federation’s formula of season ${s}; the regulation of this season is not published yet, and we will correct it if it differs.`,
+    moveNote: (md, d) => `Moves after round J${md}: who went up, who went down. Shown until ${d}.`, bestOf: n => `Best of ${n}`, honLeague: (n, y) => `Tunisian champion ×${n} (last: ${y})`, honCup: (n, y) => `Tunisian Cup ×${n} (last: ${y})`, honAfrica: y => `Africa Champions Cup winner ${y}`, honBal: y => `BAL champion ${y}`, honAfricaFinal: y => `Africa Champions Cup runner-up ${y}`, honArab: y => `Arab Club Championship winner ${y}`, honArabFinal: y => `Arab Club Championship runner-up ${y}`, honMaghreb: y => `Maghreb Championship winner ${y}`, honMaghrebFinal: y => `Maghreb Championship runner-up ${y}`, honBalFinal: y => `BAL runner-up ${y}`, scoresMissing: n => `${n} score${n === 1 ? '' : 's'} missing`, nat1Official: (src, d) => `Official ${src} table of ${d}.`,
     avgTitle: n => `Season averages · ${n} games`, history: n => `Match history · ${n} played`, liveAgo: n => n < 8 ? 'updated just now' : `updated ${n} s ago`, splitBox: (n, g) => `Box-score statistics: ${n} box score${n === 1 ? '' : 's'} out of ${g} game${g === 1 ? '' : 's'} in this view.`, mvpCount: n => `${n}× game MVP`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Official result shown. ${s}.`, benchOf: n => `Bench · ${n}`, seasonOf: s => `Season ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – results, stats and calendar | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – stats ${s} | Tunisia Basket`,
@@ -622,7 +695,9 @@ const SENT = {
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
     topNote: n => `Le MVP de la saison ne peut venir que des ${n} premières équipes.`,
     rankIn: n => `${n}${n === 1 ? 'er' : 'e'} au classement`, race: (r, of) => `Course au MVP : ${r}e sur ${of}`, notPool: n => `Hors course au MVP (équipe hors du top ${n})`,
-    scoresMissing: n => `${n} score${n > 1 ? 's' : ''} manquant${n > 1 ? 's' : ''}`, nat1Official: (src, d) => `Classement officiel ${src} du ${d}.`,
+    ofPlayoff: n => `${n}${n === 1 ? 'er' : 'e'} du play-off`, qualTop: n => `Les ${n} premiers vont au super play-off`, relegNote: n => `Les ${n} derniers descendent en Nationale 1`, provisional: (a, b) => `Provisoire : ${a} matchs sur ${b} joués.`,
+    n1Step1: n => `La saison régulière : 22 journées, aller-retour. Les ${n} premiers jouent le play-off.`, n1Legend: n => `${n} premiers : play-off, avec la chance de monter`, n1Source: s => `C’est la formule de la fédération pour la saison ${s} ; le règlement de cette saison n’est pas encore publié, et nous le corrigerons s’il diffère.`,
+    moveNote: (md, d) => `Mouvements après la J${md} : qui monte, qui descend. Affiché jusqu’au ${d}.`, bestOf: n => `Au meilleur des ${n}`, honLeague: (n, y) => `Champion de Tunisie ×${n} (dernier : ${y})`, honCup: (n, y) => `Coupe de Tunisie ×${n} (dernière : ${y})`, honAfrica: y => `Vainqueur de la Coupe d’Afrique des clubs champions ${y}`, honBal: y => `Champion de la BAL ${y}`, honAfricaFinal: y => `Finaliste de la Coupe d’Afrique des clubs champions ${y}`, honArab: y => `Vainqueur de la Coupe arabe des clubs champions ${y}`, honArabFinal: y => `Finaliste de la Coupe arabe des clubs champions ${y}`, honMaghreb: y => `Vainqueur du Championnat maghrébin ${y}`, honMaghrebFinal: y => `Finaliste du Championnat maghrébin ${y}`, honBalFinal: y => `Finaliste de la BAL ${y}`, scoresMissing: n => `${n} score${n > 1 ? 's' : ''} manquant${n > 1 ? 's' : ''}`, nat1Official: (src, d) => `Classement officiel ${src} du ${d}.`,
     avgTitle: n => `Moyennes de la saison · ${n} matchs`, history: n => `Historique des matchs · ${n} joués`, liveAgo: n => n < 8 ? 'mis à jour à l’instant' : `mis à jour il y a ${n} s`, splitBox: (n, g) => `Statistiques des feuilles de match : ${n} feuille${n > 1 ? 's' : ''} sur ${g} match${g > 1 ? 's' : ''} dans cette vue.`, mvpCount: n => `${n}× MVP de match`, mvpTag: n => `${n}× MVP`,
     officialNote: s => `Résultat officiel affiché. ${s}.`, benchOf: n => `Banc · ${n}`, seasonOf: s => `Saison ${s}`,
     metaTeam: (n, c) => `${n} (${c}) – résultats, statistiques et calendrier | Tunisia Basket`, metaPlayer: (n, t, s) => `${n} (${t}) – statistiques ${s} | Tunisia Basket`,
@@ -633,8 +708,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', cup: 'cup', finals: 'playoff-playout', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', cup: 'coupe', finals: 'playoff-playout', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -722,33 +797,41 @@ function prefetchFor(pathname) {
   const r = parsePath(pathname); if (!r) return;
   const g = u => fetch(u).catch(() => {});
   ({ home: () => g('/api/home'), standings: () => api('overview').catch(() => {}), games: () => api('games').catch(() => {}), planning: () => g('/api/planning'), players: () => api('players').catch(() => {}),
-     nat1: () => g('/api/nat1'), mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
+     nat1: () => g('/api/nat1'), cup: () => g('/api/cup'), finals: () => { g('/api/finals'); g('/api/rank-history'); }, mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
      team: () => api('teams/' + encodeURIComponent(r.arg)).catch(() => {}), player: () => api('players/' + ((r.arg || '').match(/^([a-z0-9]+-\d+)/) || [, r.arg])[1]).catch(() => {}), game: () => g('/api/games/' + encodeURIComponent(r.arg)) }[r.page] || (() => {}))();
 }
+let routeSeq = 0;       // only the latest navigation may draw: a slower earlier one (e.g. started before /api/competitions answered) must not overwrite it
 async function route(keepScroll) {
+  const mine = ++routeSeq;
   busy(true);
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', mvp: 'players' }[r.page] || r.page)));
+  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', cup: 'standings', finals: 'standings', mvp: 'players' }[r.page] || r.page)));
   $('#morebtn').classList.toggle('on', ['predict', 'news'].includes(r.page));      // on a phone the MVP vote and the news sit behind "More"
   closePop();
   const app = $('#app');
   app.classList.toggle('wide', ['games'].includes(r.page));     // these pages have a side panel next to the table
   courtData = null; pageMeta = null; clearInterval(nbTimer); clearInterval(liveTimer);
   try {
-    app.innerHTML = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1 }[r.page] || home)(r.arg);
+    const html = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1, cup, finals }[r.page] || home)(r.arg);
+    if (mine !== routeSeq) return;
+    app.innerHTML = html;
     foldify(r.page);
     bind();
     startBanner();
     drawCourt();
     if (pageMeta) setMeta(...pageMeta);
     track();
-  } catch (e) { app.innerHTML = `<div class="empty">${_('Could not load this page')} (${esc(e.message)}).</div>`; }
-  busy(false);
+  } catch (e) { if (mine === routeSeq) app.innerHTML = `<div class="empty">${_('Could not load this page')} (${esc(e.message)}).</div>`; }
+  if (mine === routeSeq) busy(false);
   if (!keepScroll) window.scrollTo(0, 0);
 }
 
 // ---------------------------------------------------------------- pages
 const META = {
+  cup: { en: ['Tunisia Basketball Cup – bracket, results and draw – Tunisia Basket', 'The Tunisian basketball Cup: Pro A and National One clubs meet in single-game ties. The bracket, the results, the upsets.'],
+         fr: ['Coupe de Tunisie de basket – tableau, résultats et tirage – Tunisia Basket', 'La Coupe de Tunisie de basket : les clubs de Pro A et de Nationale 1 se rencontrent en match sec. Le tableau, les résultats, les surprises.'] },
+  finals: { en: ['Pro A play-off and play-out – tables, series and results – Tunisia Basket', 'After the regular season the six best Pro A clubs play the play-off and the six others the play-out.'],
+            fr: ['Play-off et play-out Pro A – classements, séries et résultats – Tunisia Basket', 'Après la saison régulière, les six meilleurs clubs de Pro A jouent le play-off et les six autres le play-out.'] },
   about: { en: ['About Tunisia Basket – basketball statistics for Tunisia, made for free by fans', 'Tunisia Basket is a team of people who love basketball, working for free to improve the visibility and the use of basketball statistics in Tunisia.'],
            fr: ['À propos de Tunisia Basket – les statistiques du basket tunisien, faites gratuitement par des passionnés', 'Tunisia Basket est une équipe de passionnés de basket qui travaillent gratuitement pour améliorer la visibilité et l’usage des statistiques du basket en Tunisie.'] },
   nat1: { en: ['National One basketball results and standings – Tunisia Basket', 'Results and standings of the National One, the second basketball league below the Tunisian Pro A.'],
@@ -895,11 +978,13 @@ document.addEventListener('click', e => {
   if (m) { const on = m.closest('.nrow').classList.toggle('open'); m.textContent = on ? _('Show less') : _('Read more'); }
   if (c) { const k = c.dataset.nchip; document.querySelectorAll('[data-nchip]').forEach(x => x.classList.toggle('on', x === c)); document.querySelectorAll('.nrow[data-l]').forEach(r => { r.hidden = !!k && r.dataset.l !== k; }); }
 });
+const compStrip = () => `<div class="compstrip">${COMP.finals ? `<a href="${url('finals')}">🔥 ${_('Play-off')} · ${_('Play-out')}</a>` : ''}${COMP.cup ? `<a href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}<a href="${url('nat1')}">${_('National One')}</a></div>`;
 async function home() {
   const [h, plan, pj] = await Promise.all([fetch('/api/home', { cache: 'no-cache' }).then(r => r.json()), fetch('/api/planning', { cache: 'no-cache' }).then(r => r.json()).catch(() => null), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
   predRound = pj && pj.round; pageMeta = META.home[LANG];
   return `
   ${nextBanner(plan, h.standings)}
+  ${compStrip()}
   ${roundCard(h.round_vote)}${!h.round_vote || (h.phase_mvp && h.phase_mvp.voting_open) ? phaseCard(h.phase_mvp) : ''}
   ${h.news.length ? `<h2>${_('News')} <a class="mut small" href="${url('news')}" style="text-transform:none;letter-spacing:0;font-weight:400">${_('All news')} →</a></h2><div class="nlist two">${h.news.map(n => newsCard(n)).join('')}</div>` : ''}
   <h2>${_('Latest games')}</h2>
@@ -1426,27 +1511,35 @@ async function game(id) {
 const PLAYOFF_N = 6;      // the six best go to the playoffs, the others to the playout
 const zoneOf = rank => rank <= PLAYOFF_N ? 'po' : 'pl';
 const zonePill = rank => `<span class="zone z-${zoneOf(rank)}">${rank <= PLAYOFF_N ? _('Playoff') : _('Playout')}</span>`;
+// After the last game of a round, for one day: who went up, who went down (the server sends `movement` only then)
+const moveTag = (mv, code) => { const m = mv && mv.moves ? mv.moves[code] : 0; return m > 0 ? `<span class="mv up" title="${esc(_('Places gained since the previous round'))}">▲${m}</span>` : m < 0 ? `<span class="mv dn" title="${esc(_('Places lost since the previous round'))}">▼${-m}</span>` : mv && mv.moves ? '<span class="mv eq">–</span>' : ''; };
 function standTable(d, compact) {
   const top = new Set(d.top_teams), pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA';
   return `<div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Team')}</th><th class="hm">J</th><th>${W}</th><th>${Ls}</th>${compact ? '' : `<th class="hm">${pf}</th><th class="hm">${pa}</th>`}<th>${_('Diff')}</th><th>${_('Pts')}</th>${compact ? '' : `<th class="hm" title="${_('Box scores available in the app')}">${_('Box scores')}</th>`}</tr></thead><tbody>
-  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}" class="${['zone-' + zoneOf(t.rank), t.rank === PLAYOFF_N ? 'zend' : '', t.code === favTeam ? 'fav' : ''].join(' ').trim()}"><td class="rkz">${t.rank}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a>${zonePill(t.rank)}${top.has(t.code) ? `<span class="mvpdot hm" title="${esc(_('MVP pool'))}">★</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
+  ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}" class="${['zone-' + zoneOf(t.rank), t.rank === PLAYOFF_N ? 'zend' : '', t.code === favTeam ? 'fav' : ''].join(' ').trim()}"><td class="rkz">${t.rank}${moveTag(d.movement, t.code)}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a>${zonePill(t.rank)}${top.has(t.code) ? `<span class="mvpdot hm" title="${esc(_('MVP pool'))}">★</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
-const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a></div>`;
-const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
+let COMP = { cup: true, finals: false, started: false, nat1_playoff: false };
+const previewMode = () => new URLSearchParams(location.search).get('preview') === '1';      // the admin looks at a page that is not announced yet          // which competitions exist (from /api/competitions): the Cup always shows (an empty bracket says "draw soon"), the finals once they are set up
+const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a>${COMP.cup ? `<a role="tab" aria-selected="${on === 'cup'}" class="${on === 'cup' ? 'on' : ''}" href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}</div>`;
+const finTab = ['finals', '🔥 ' + _('Play-off') + ' · ' + _('Play-out')];
+// Once the play-off / play-out have started they take the place of the championship (regular-season) standings; the regular season stays under their "Regular season" tab
+const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[...(COMP.started ? [finTab] : [['standings', '🏆 ' + _('Standings')]]), ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.finals && !COMP.started ? [finTab] : [])].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function standings() {
-  const d = await api('overview');
+  if (COMP.started) return finals();
+  const d = await api('overview' + (new URLSearchParams(location.search).get('move') === '1' ? '?move=1' : ''));      // ?move=1 shows the last round's rises and falls whatever the date (to look at them)
   pageMeta = META.standings[LANG];
   return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
+  ${d.movement ? `<div class="movebar">⚡ ${esc(f('moveNote', d.movement.matchday, fmtDay(d.movement.until)))}</div>` : ''}
   <div class="zlegend"><span><i class="z-po"></i>${_('Playoff')} · ${_('top 6')}</span><span><i class="z-pl"></i>${_('Playout')} · ${_('the other 6')}</span><span class="mut small"><b class="mvpdot">★</b> ${_('MVP pool')}</span></div>
   <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>`;
 }
 
 // ---------------------------------------------------------------- National One (the league below the Pro A): results and table only, no statistics
 let n1Team = '';
-const N1SUB = { en: { games: 'games', planning: 'calendar' }, fr: { games: 'matchs', planning: 'calendrier' } };
+const N1SUB = { en: { games: 'games', planning: 'calendar', playoff: 'play-off' }, fr: { games: 'matchs', planning: 'calendrier', playoff: 'playoff' } };
 const nat1Url = tab => tab === 'standings' ? url('nat1') : url('nat1', N1SUB[LANG][tab]);
-const n1Nav = on => `<div class="seg" role="tablist">${[['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${nat1Url(k)}">${l}</a>`).join('')}</div>`;
+const n1Nav = on => `<div class="seg" role="tablist">${[['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.nat1_playoff || on === 'playoff' ? [['playoff', '🔥 ' + _('Play-off')]] : [])].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${nat1Url(k)}">${l}</a>`).join('')}</div>`;
 // Nationale 1 has the same three tabs as the Pro A: Standings, Games (the results) and Calendar (what is still to play)
 async function nat1(arg) {
   const tab = Object.entries(N1SUB[LANG]).find(([, v]) => v === arg)?.[0] || 'standings';
@@ -1461,14 +1554,128 @@ async function nat1(arg) {
   if (!d.standings.length) return `${head}<div class="empty">${_('The National One results are coming soon.')}</div>`;
   const filter = `<div class="toolbar"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
   const game = (g, isPlayed) => { const has = g.home_score != null, hw = has && g.home_score > g.away_score;
-    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span>${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}<span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
+    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span><span class="n1c">${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}${g.date ? `<small>${esc(fmtDate(g.date))}</small>` : ''}</span><span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
   const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
+  if (tab === 'playoff') {
+    const po = d.playoff, fm = d.format;
+    if (!d.playoff_on && !previewMode()) return `${head}<div class="empty">${_('The National One play-off starts at the end of the regular season. This page will come alive then.')}</div>`;
+    if (!po) return `${head}<div class="empty">${_('The play-off will appear here once eight clubs are in the table.')}</div>`;
+    const prom = po.promoted.length ? `<div class="card promoted"><div class="crown">⬆️ ${_('Promoted to the Pro A')}</div><div class="prow">${po.promoted.map(c => `<span class="tchip">${badge(c)}<b>${esc(names[c] || c)}</b></span>`).join('')}</div></div>` : '';
+    return `${head}<div class="fpanel nat1po"><div class="fhead" style="margin-top:4px"><span class="fico">🔥</span><div><h2 style="margin:0;color:var(--acc)">${_('Play-off')}</h2><div class="mut small">${_('The first eight of the table play it: the two winners of the semi-finals go up to the Pro A, and meet in the final for the title.')}</div></div></div>
+    ${po.seeds_final ? '' : `<div class="banner">${_('Provisional: the seeds follow the table as it stands, and change until the regular season is over.')}</div>`}
+    ${prom}${seriesBracket(po, { key: 'nat1', promote: po.promote_round })}
+    <div class="note">${_('Quarter-finals and semi-finals: series of three games (the first game, and a decider if needed, at the better ranked club). The final is a single game on neutral ground.')} ${fm.confirmed ? '' : esc(f('n1Source', fm.season))} <a href="${esc(fm.source)}" target="_blank" rel="noopener">FTBB ↗</a></div></div>`;
+  }
   if (tab === 'games') return `${head}${filter}<div class="grid n1grid">${played.map(m => day(m, true)).join('') || `<div class="empty">${_('No games.')}</div>`}</div>`;
   if (tab === 'planning') return `${head}${filter}${coming.length ? `<h2>${_('Next games')}</h2><div class="grid n1grid">${coming.slice(0, 2).map(m => day(m, false)).join('')}</div>${coming.length > 2 ? `<details class="fold" style="margin-top:10px"><summary><span>${_('Full calendar')}</span><span class="sub mut">J${coming[2].matchday}–J${coming.at(-1).matchday}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${coming.slice(2).map(m => day(m, false)).join('')}</div></details>` : ''}` : `<div class="empty">${_('No games.')}</div>`}`;
   const table = `<div class="card scroll"><table class="n1table"><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>J</th><th>${W}</th><th>${Ls}</th>${hasPF ? `<th class="hm">${pf}</th><th class="hm">${pa}</th>` : ''}<th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
-    ${d.standings.map(t => `<tr style="cursor:default"><td>${t.rank}</td><td class="l"><span class="tn">${badge(t.code)}<span>${esc(t.name)}</span></span></td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${hasPF ? `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>` : ''}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+    ${d.standings.map(t => `<tr style="cursor:default" class="${t.rank <= d.format.playoff ? 'zone-po' : 'zone-cup'}${t.rank === d.format.playoff ? ' zend' : ''}"><td class="rkz">${t.rank}</td><td class="l"><span class="tn">${badge(t.code)}<span>${esc(t.name)}</span></span>${t.rank <= d.format.playoff ? `<span class="zone z-po">${_('Play-off')}</span>` : `<span class="zone z-cup">${_('League Cup')}</span>`}</td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td>${hasPF ? `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>` : ''}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+  const fm = d.format, steps = [['1', f('n1Step1', fm.playoff)], ['2', _('Play-off quarter-finals: 1st v 8th, 2nd v 7th, 3rd v 6th, 4th v 5th. Each is a series of three games (the first game, and a decider if needed, at the better ranked club).')],
+    ['3', _('Semi-finals, the same way: the winner of 1-8 v the winner of 4-5, the winner of 2-7 v the winner of 3-6.')], ['⬆️', `${_('The two semi-final winners go up to the Pro A.')}`], ['🏆', _('They play the final in a single game on neutral ground: the champion of the Nationale 1.')]];
+  const promo = `<div class="card promo"><div class="crown">⬆️ ${_('How to go up to the Pro A')}</div><ol class="pstep">${steps.map(([n, t]) => `<li><span class="pn">${n}</span><span>${esc(t)}</span></li>`).join('')}</ol>
+    <div class="mut small">${_('The clubs below the eighth place play the League Cup instead.')} ${fm.confirmed ? '' : esc(f('n1Source', fm.season))} <a href="${esc(fm.source)}" target="_blank" rel="noopener">FTBB ↗</a>${d.playoff_on || previewMode() ? ` · <a href="${nat1Url('playoff')}">🔥 ${_('See the play-off')}</a>` : ''}</div></div>`;
   return `${head}${table}
+  <div class="zlegend"><span><i class="z-po"></i>${esc(f('n1Legend', fm.playoff))}</span><span><i class="z-cup"></i>${_('League Cup')}</span></div>
+  ${promo}
   <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>`;
+}
+
+// ---------------------------------------------------------------- Cup: a knockout bracket of Pro A and Nationale 1 clubs, one game per tie
+let cupRound = null;
+const lgTag = l => l === 'proa' ? '<i class="lg a" title="Pro A">A</i>' : l === 'nat1' ? '<i class="lg n" title="' + esc(_('National One')) + '">N1</i>' : '';
+function cupSide(x, score, win, lose) {
+  if (x.bye) return `<div class="ts bye"><span class="mut small">${_('Bye: goes through')}</span></div>`;
+  if (x.code) return `<div class="ts${win ? ' w' : ''}${lose ? ' l' : ''}">${logo(x.code, 24)}<span class="tnm">${esc(x.name)}</span>${lgTag(x.league)}<b>${score ?? ''}</b></div>`;
+  return `<div class="ts tbd"><span class="mut small">${x.label ? esc(_('Winner of')) + ' ' + esc(x.label) : _('To be drawn')}</span></div>`;
+}
+function cupTie(t) {
+  const hw = t.winner && t.winner === t.home.code, aw = t.winner && t.winner === t.away.code;
+  return `<div class="tie${t.upset ? ' upset' : ''}${t.played ? ' played' : ''}">${cupSide(t.home, t.home_score, hw, aw)}${cupSide(t.away, t.away_score, aw, hw)}
+    <div class="tm">${t.upset ? `<span class="ups">⚡ ${_('Upset')}</span>` : ''}${t.date && !t.played ? `<span>${esc(fmtDate(t.date))}</span>` : t.played && t.date ? `<span class="mut">${esc(fmtDate(t.date))}</span>` : ''}${t.note ? `<span class="mut">${esc(t.note)}</span>` : ''}</div></div>`;
+}
+async function cup() {
+  const d = await fetch('/api/cup', { cache: 'no-cache' }).then(r => r.json());
+  pageMeta = META.cup[LANG];
+  if (cupRound === null || cupRound >= d.rounds.length) cupRound = d.current;
+  const head = `${leagueNav('cup')}<div class="cuphero card"><div class="ch1"><span class="trophy">🏆</span><div><h1 style="margin:0">${esc(d.name)}</h1><div class="mut">${esc(d.season)}</div></div></div>
+    ${d.rounds.length ? `<div class="cstats"><span class="pill">${Object.values(d.clubs).reduce((a, b) => a + b, 0)} ${_('clubs')}</span><span class="pill w">${d.clubs.proa} Pro A</span><span class="pill">${d.clubs.nat1} ${_('National One')}</span><span class="pill">${d.games} ${_('Games').toLowerCase()}</span>${d.upsets ? `<span class="pill mvp">⚡ ${d.upsets} ${d.upsets > 1 ? _('upsets') : _('upset')}</span>` : ''}</div>` : ''}
+    <p class="mut" style="margin:10px 0 0">${_('Clubs of the Pro A and of the National One meet in single games: the winner goes through to the next round.')}</p></div>
+    ${d.demo ? `<div class="banner">${_('Demonstration data: the real draw is not out yet.')}</div>` : ''}`;
+  if (!d.rounds.length) return `${head}<div class="empty">${_('The draw of the Cup will appear here.')}</div>`;
+  const champ = d.champion ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Cup winner')}</div><div class="nm">${logo(d.champion.code, 64)}<span>${esc(d.champion.name)}</span></div></div></div>` : '';
+  const cols = d.rounds.map((r, ri) => { const last = ri === d.rounds.length - 1, ties = r.ties.map(cupTie);
+    const inner = last ? ties.join('') : ties.reduce((acc, t, i) => i % 2 ? acc : acc + `<div class="pair">${t}${ties[i + 1] || ''}</div>`, '');
+    return `<div class="bcol${last ? ' last' : ''}"><div class="bhead"><b>${esc(r.name)}</b>${r.date ? `<span class="mut small">${esc(fmtDay(r.date))}</span>` : ''}${r.done ? '<span class="pill w">✓</span>' : ''}</div><div class="bties">${inner}</div></div>`; });
+  const chips = d.rounds.map((r, i) => `<button class="rchip${i === cupRound ? ' on' : ''}" data-cupr="${i}">${esc(r.name)}${r.done ? ' ✓' : ''}</button>`).join('');
+  return `${head}${champ}
+  <div class="bracketwrap"><div class="bracket">${cols.join('')}</div></div>
+  <div class="cuplist"><div class="rchips">${chips}</div><div class="grid g2">${d.rounds[cupRound].ties.map(cupTie).join('')}</div></div>
+  <div class="note">${_('⚡ Upset: a club of a lower division beats a club of a higher one.')}</div>`;
+}
+
+// ---------------------------------------------------------------- Play-off and play-out, with the season behind them
+let fTab = 'playoff', fStage = 0, raceSel = '';
+const dots = (n, need) => Array.from({ length: need }, (_x, i) => `<i class="dot${i < n ? ' on' : ''}"></i>`).join('');
+function rankRaceChart(h) {
+  const ms = h.matchdays, codes = Object.keys(h.teams), N = codes.length, Wd = 720, Ht = 360, px = i => 34 + i * (Wd - 70) / Math.max(1, ms.length - 1), py = r => 22 + (r - 1) * (Ht - 44) / Math.max(1, N - 1);
+  const color = (c, i) => LINES[i % LINES.length];
+  const lines = codes.map((c, i) => { const rk = h.teams[c].ranks, on = !raceSel || raceSel === c, pts = rk.map((r, k) => r == null ? null : [px(k), py(r)]).filter(Boolean);
+    return `<g class="rl${on ? '' : ' dim'}" data-race="${esc(c)}"><polyline fill="none" stroke="${color(c, i)}" stroke-width="${raceSel === c ? 4 : 2.2}" stroke-linejoin="round" points="${pts.map(q => q.join(',')).join(' ')}"/><circle cx="${pts.at(-1)[0]}" cy="${pts.at(-1)[1]}" r="${raceSel === c ? 6 : 4}" fill="${color(c, i)}"/></g>`; }).join('');
+  const grid = Array.from({ length: N }, (_x, i) => `<text x="12" y="${py(i + 1) + 4}" class="rt">${i + 1}</text>`).join('') + ms.filter((_m, i) => i % 2 === 0 || ms.length < 9).map((m, i) => `<text x="${px(ms.indexOf(m))}" y="${Ht - 4}" class="rt" text-anchor="middle">J${m}</text>`).join('');
+  return `<div class="card race"><svg viewBox="0 0 ${Wd} ${Ht}" role="img" aria-label="${esc(_('Race of the standings'))}">${grid}${lines}</svg>
+    <div class="rleg">${codes.map((c, i) => `<button class="rchip${raceSel === c ? ' on' : ''}" data-racesel="${esc(c)}"><i style="background:${color(c, i)}"></i>${esc(c)}</button>`).join('')}</div></div>`;
+}
+// A bracket of series (best-of-N), shared by the Pro A super play-off and the Nationale 1 play-off. opts.key: class of the panel; opts.promote: the round whose winners go up to the Pro A
+const lbl = t => String(t || '').replace(/^(.*) #(\d+)$/, (_m, a, n) => _(a) + ' #' + n);
+function seriesBracket(g, opts = {}) {
+  const cols = g.rounds.map((r, ri) => { const last = ri === g.rounds.length - 1;
+    const cards = r.series.map(x => { const side = z => z.code ? `<div class="ts${x.winner === z.code ? ' w' : x.winner ? ' l' : ''}${z.provisional ? ' prov' : ''}">${logo(z.code, 24)}<span class="tnm">${esc(z.name)}</span><span class="seed" title="${opts.key === 'super' ? esc(f('ofPlayoff', z.seed)) : ''}">#${z.seed ?? ''}</span><span class="dots">${dots(z.wins, x.need)}</span><b>${z.wins}</b></div>` : `<div class="ts tbd"><span class="mut small">${z.label ? _('Winner of') + ' ' + esc(lbl(z.label)) : _('To be drawn')}</span></div>`;
+      const up = opts.promote && r.name === opts.promote;
+      const st = x.winner ? (up ? `<span class="ups ok">⬆️ ${_('Goes up to the Pro A')}</span>` : `<span class="ups ok">✓ ${_('Qualified')}</span>`) : x.live ? `<span class="ups live">● ${_('In progress')}</span>` : '';
+      const gl = x.games.filter(y => y.played).map((y, i) => { const as = y.home === x.a.code ? [y.home_score, y.away_score] : [y.away_score, y.home_score]; return `<span class="sg ${as[0] > as[1] ? 'a' : 'b'}" title="${esc(_('Game') + ' ' + (i + 1))}"><i>${i + 1}</i>${as[0]}–${as[1]}</span>`; }).join('');
+      return `<div class="tie ser${x.live ? ' liveser' : ''}">${side(x.a)}${side(x.b)}${gl ? `<div class="sgames">${gl}</div>` : ''}<div class="tm"><span class="mut">${x.best_of === 1 ? _('One game, neutral ground') : esc(f('bestOf', x.best_of))}</span>${st}</div></div>`; });
+    const inner = last ? cards.join('') : cards.reduce((acc, t, i) => i % 2 ? acc : acc + `<div class="pair">${t}${cards[i + 1] || ''}</div>`, '');
+    return `<div class="bcol${last ? ' last' : ''}"><div class="bhead"><b>${esc(_(r.name))}</b></div><div class="bties">${inner}</div></div>`; });
+  return `${g.champion ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Champion')}</div><div class="nm">${logo(g.champion.code, 56)}<span>${esc(g.champion.name)}</span></div></div></div>` : ''}<div class="bracketwrap"><div class="bracket">${cols.join('')}</div></div>`;
+}
+function finPanel(g, carry, stage) {
+  const icon = stage ? `<i class="stn">${stage}</i>` : { playoff: '🔥', super: '⚡', playout: '🛟' }[g.key], title = stage === 1 ? _('Mini-championship') : { playoff: _('Play-off'), super: _('Super play-off'), playout: _('Play-out') }[g.key];
+  let body;
+  if (g.format === 'series') {
+    body = seriesBracket(g, { key: g.key });
+  } else {
+    body = `<div class="card scroll"><table class="ftable"><thead><tr><th>#</th><th class="l">${_('Team')}</th><th title="${esc(_('Points carried over from the regular season'))}">${_('Carry')}</th><th>J</th><th>${W}</th><th>${Ls}</th><th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
+      ${g.table.map(t => `<tr style="cursor:default" class="${t.zone ? 'fz-' + t.zone + (t.final ? '' : ' prov') : ''}"><td class="rkz">${t.rank}</td><td class="l"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 28)}<span>${esc(t.name)}</span></a>${t.move > 0 ? `<span class="mv up">▲${t.move}</span>` : t.move < 0 ? `<span class="mv dn">▼${-t.move}</span>` : ''}${t.zone === 'up' ? `<span class="zone z-po" title="${esc(_('Super play-off'))}">⚡</span>` : t.zone === 'down' ? `<span class="zone z-pl">${_('Relegation')}</span>` : ''}</td><td class="mut">${t.carry ? '+' + t.carry : '–'}</td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td><td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>
+      ${g.table.some(t => t.zone) ? `<div class="zlegend">${g.table.some(t => t.zone === 'up') ? `<span><i class="z-po"></i>${esc(f('qualTop', g.table.filter(t => t.zone === 'up').length))}</span>` : ''}${g.table.some(t => t.zone === 'down') ? `<span><i class="z-pl"></i>${esc(f('relegNote', g.table.filter(t => t.zone === 'down').length))}</span>` : ''}<span class="mut small">${g.done ? _('Final table.') : esc(f('provisional', g.played, g.expected))}</span></div>` : ''}
+      <div class="cnote">${esc({ full: _('Report: each club keeps the points of its regular season (2 for a win, 1 for a loss) and adds those of each game played here.'), half: _('Report: each club keeps half of its regular-season points (rounded), then adds those of each game played here.'), none: _('Everyone starts again from zero: only the games played here count.') }[carry] || '')}</div>
+      ${g.rounds.length ? `<details class="fold"><summary><span>${_('Games')}</span><span class="sub mut">${g.rounds.length} ${_('rounds')}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${g.rounds.map(r => `<div class="card"><div class="row"><b>${_('Round')} ${r.round}</b></div>${r.games.map(x => { const hw = x.played && x.home_score > x.away_score; return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${logo(x.home, 24)}<span>${esc(x.home)}</span></span>${x.played ? `<b>${x.home_score} – ${x.away_score}</b>` : `<span class="mut small n1s">${x.date ? esc(fmtDate(x.date)) : _('to come')}</span>`}<span class="tn ${x.played && !hw ? 'win' : ''}"><span>${esc(x.away)}</span>${logo(x.away, 24)}</span></div>`; }).join('')}</div>`).join('')}</div></details>` : ''}`;
+  }
+  return `<section class="fpanel ${g.key}"><div class="fhead"><span class="fico">${icon}</span><div><h2 style="margin:0">${title}${stage === 1 ? ` <span class="mut small" style="font-weight:600">· ${_('Play-off')}</span>` : ''}</h2>${g.stakes ? `<div class="mut small">${esc(_(g.stakes))}</div>` : ''}</div></div>${body}</section>`;
+}
+// How the end of the season works, in four lines, and how sure we are of it
+const formatBox = d => `<details class="fold" style="margin:0 0 14px"><summary><span>ℹ️ ${_('How the end of the season works')}</span><span class="sub mut">${_('Format')}</span><span class="chev">▾</span></summary>
+  <div class="card fmt"><ol><li>${_('Regular season: 22 matchdays. The six best clubs play the play-off, the six others the play-out, and they start it with the points they have.')}</li>
+  <li>${_('Play-off: a mini-championship of the six, home and away. The first four go to the super play-off.')}</li>
+  <li>${_('Super play-off: semi-finals 1st v 4th and 2nd v 3rd, then the final: each is a series of up to five games (first to win three).')}</li>
+  <li>${_('Play-out: a mini-championship of the six others. The last two clubs go down to the Nationale 1 (the first two of the Nationale 1 come up).')}</li></ol>
+  <div class="mut small">${_('Based on last season’s rules and the federation’s announcements: the official regulation of this season is not published yet, and we will correct this page if it differs.')}</div></div></details>`;
+async function finals() {
+  const [d, h] = await Promise.all([fetch('/api/finals', { cache: 'no-cache' }).then(r => r.json()), fetch('/api/rank-history').then(r => r.json())]);
+  pageMeta = META.finals[LANG];
+  if (!d.announced && !previewMode()) return `${standNav('finals')}<h1>🔥 ${_('Play-off')} · ${_('Play-out')}</h1><div class="empty">${_('The play-off and the play-out start at the end of the regular season. This page will come alive then.')}</div>`;
+  const tabs = `<div class="seg" role="group">${[['playoff', '🔥 ' + _('Play-off')], ['playout', '🛟 ' + _('Play-out')], ['history', '📜 ' + _('Regular season')]].map(([k, l]) => `<button data-ftab="${k}" class="${fTab === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  const hist = `<section class="fpanel hist"><div class="fhead"><span class="fico">📜</span><div><h2 style="margin:0">${_('The regular season, as it ended')}</h2><div class="mut small">${_('The history stays here while the play-off and the play-out are played.')}</div></div></div>
+    ${standTable({ standings: d.regular, top_teams: [] }, true)}<div class="zlegend"><span><i class="z-po"></i>${_('Playoff')} · ${_('top 6')}</span><span><i class="z-pl"></i>${_('Playout')} · ${_('the other 6')}</span></div>
+    <h3 style="margin:18px 0 8px">${_('Race of the standings')}</h3>${rankRaceChart(h)}</section>`;
+  // The play-off and its super play-off are ONE page: two stages side by side on a computer (never a scroll to find the super play-off), a two-step switch on a phone
+  const sp = d.groups.super, stage = fStage || (sp.rounds.some(r => r.series.some(x => x.live || x.done)) ? 2 : 1);
+  const stageBar = `<div class="stagebar"><button data-fstage="1" class="${stage === 1 ? 'on' : ''}"><i class="stn">1</i><span><b>${_('Mini-championship')}</b><small>${d.groups.playoff.played}/${d.groups.playoff.expected} ${_('Games').toLowerCase()}</small></span></button><span class="sarrow">→</span><button data-fstage="2" class="${stage === 2 ? 'on' : ''}"><i class="stn">2</i><span><b>${_('Super play-off')}</b><small>${esc(f('qualTop', d.qualify))}</small></span></button></div>`;
+  const body = fTab === 'history' ? hist : fTab === 'playout' ? `<div class="fgrid2 one">${finPanel(d.groups.playout, d.carry)}</div>`
+    : `${stageBar}<div class="stages" data-stage="${stage}"><div class="stg stg1">${finPanel(d.groups.playoff, d.carry, 1)}</div><div class="stg stg2">${finPanel(sp, d.carry, 2)}</div></div>`;
+  return `${standNav('finals')}<h1>🔥 ${_('Play-off')} · ${_('Play-out')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>
+  ${d.demo ? `<div class="banner">${_('Demonstration data: the real play-off and play-out have not started.')}${d.preview ? ' ' + _('The groups are the six best and the six last of the table as it stands today.') : ''}</div>` : ''}
+  ${formatBox(d)}${tabs}
+  ${body}`;
 }
 
 // ---------------------------------------------------------------- About us
@@ -1540,6 +1747,13 @@ function teamStatsBlock(t) {
   <div class="grid g2">${TS_GROUPS.map(([name, rows]) => `<div class="card tsg"><b>${_(name)}</b>${name === 'Scoring sources' && sp.extra_games ? ` <span class="mut small">· ${sp.extra_games} ${_('sheets with these lines')}</span>` : ''}<table><tbody>${rows.map(([label, k, kind]) => `<tr style="cursor:default"><td class="l">${_(label)}${kind !== 'p' && ['oreb', 'dreb', 'reb', 'ast', 'tov', 'stl', 'blk', 'pf', 'fga', 'p3a', 'paint', 'second', 'fast', 'tov_pts', 'bench', 'opp_paint', 'opp_second', 'opp_fast', 'opp_tov_pts'].includes(k) ? ` <span class="mut small">${_('per game')}</span>` : ''}</td><td class="v">${val(k, kind)}</td><td class="r">${rk(k)}</td></tr>`).join('')}</tbody></table></div>`).join('')}</div>
   <div class="note">${_('Rank 1 is the best of the league for the same view (home, away or overall); for turnovers, points allowed and what the opponents shoot, the lowest value is the best. Record, points and the ratings of the first group come from every official result; the rest from the box scores we have. Ratings are points scored or allowed per 100 possessions; the effective FG % counts a 3-pointer for 1.5 shots; the turnover % is turnovers per 100 plays; the rebound % is the share of the rebounds available to the team.')} ${esc(f('splitBox', t.splits[teamSplit].box, t.splits[teamSplit].gp))}</div>`;
 }
+// What the club has won: a small mention (Tunisian championship and Cup) and, when it has won them, a side note for the African Champions Cup and the BAL (assets/honours.json)
+function honoursLine(h) {
+  if (!h) return '';
+  const main = [h.league && `<span title="${esc(h.league.seasons.join(', '))}">🏆 ${esc(f('honLeague', h.league.n, h.league.last))}</span>`, h.cup && `<span title="${esc(h.cup.seasons.join(', '))}">🏆 ${esc(f('honCup', h.cup.n, h.cup.last))}</span>`].filter(Boolean);
+  const side = [['africa', 'honAfrica'], ['bal', 'honBal'], ['arab', 'honArab'], ['maghreb', 'honMaghreb'], ['africa_final', 'honAfricaFinal'], ['bal_final', 'honBalFinal'], ['arab_final', 'honArabFinal'], ['maghreb_final', 'honMaghrebFinal']].filter(([k]) => h[k]).map(([k, fk]) => esc(f(fk, h[k].join(', '))));      // wins first, then lost finals
+  return `<div class="honours">${main.join('<span class="mut"> · </span>')}<a class="hsrc" href="${esc(h.sources.league || '#')}" target="_blank" rel="noopener" title="${esc(_('Source: Wikipedia, to be verified'))}">ⓘ</a>${side.length ? `<div class="hside">★ ${side.join(' · ')}</div>` : ''}</div>`;
+}
 async function team(codeArg) {
   const t = await api('teams/' + encodeURIComponent(codeArg)), st = t.standing, inPool = t.top_teams.includes(t.code);
   const played = t.results.length;
@@ -1554,6 +1768,7 @@ async function team(codeArg) {
     <div class="row">${logo(t.code, 64)}<h1 style="margin:0">${esc(t.name)} <span class="mut" style="font-size:16px">${esc(t.code)}</span></h1><span class="sp"></span>
       <button class="fbtn${favTeam === t.code ? ' on' : ''}" data-follow="${esc(t.code)}" aria-pressed="${favTeam === t.code}">${favTeam === t.code ? '⭐ ' + _('Following') : '☆ ' + _('Follow')}</button><span class="pill">${_('Regular season')}</span></div>
     <div style="margin-top:8px">${st ? `<span class="pill">${esc(f('rankIn', st.rank))}</span> <span class="pill w">${st.w}${W}</span> <span class="pill l">${st.l}${Ls}</span> <span class="pill">${st.pts} ${_('Pts').toLowerCase()}</span> <span class="pill ${st.diff >= 0 ? 'w' : 'l'}">${signed(st.diff)}</span> ` : ''}${st ? zonePill(st.rank) : ''}${inPool ? `<span class="mvpdot" title="${esc(_('MVP pool'))}">★ <span class="mut small">${_('MVP pool')}</span></span>` : ''}</div>
+    ${honoursLine(t.honours)}
   </div>
   ${teamStatsBlock(t)}
   ${t.lineup.length ? `<h2>${_('Most-played five')}</h2>
@@ -1751,6 +1966,11 @@ function bind() {
   const ma = $('#mvpall'); if (ma) ma.onclick = () => { mvpAll = !mvpAll; route(true); };
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
+  document.querySelectorAll('[data-cupr]').forEach(b => b.onclick = () => { cupRound = +b.dataset.cupr; route(true); });
+  document.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { fTab = b.dataset.ftab; route(true); });
+  document.querySelectorAll('[data-fstage]').forEach(b => b.onclick = () => { fStage = +b.dataset.fstage; route(true); });
+  document.querySelectorAll('[data-racesel]').forEach(b => b.onclick = () => { raceSel = raceSel === b.dataset.racesel ? '' : b.dataset.racesel; route(true); });
+  document.querySelectorAll('.race .rl').forEach(g => g.onclick = () => { raceSel = raceSel === g.dataset.race ? '' : g.dataset.race; route(true); });
   const n1 = $('#n1t'); if (n1) n1.onchange = () => { n1Team = n1.value; route(true); };
   const gt = $('#gt'); if (gt) gt.onchange = () => { gamesTeam = gt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };
@@ -1776,6 +1996,7 @@ if (location.hash.startsWith('#/')) {
 if (location.pathname === '/' && localStorage.getItem('lang') === 'en') location.replace('/en/');
 
 renderClubBtn(); $('#clubbtn').onclick = openFollow; updateHot();
+fetch('/api/competitions').then(r => r.json()).then(c => { const changed = c.finals !== COMP.finals || c.cup !== COMP.cup || c.started !== COMP.started || c.nat1_playoff !== COMP.nat1_playoff; COMP = c; if (changed) route(true); }).catch(() => {});
 $('#predbtn').lastElementChild.textContent = _('Predictions');
 $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';
 $('#theme').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');

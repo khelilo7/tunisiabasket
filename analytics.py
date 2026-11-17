@@ -329,7 +329,7 @@ def line(r):
 
 def summary(game):
     s = scores(game)
-    return {"id": game["id"], "home": game["home"], "away": game["away"], "matchday": game.get("matchday"), "date": game.get("date"), "status": game["status"],
+    return {"id": game["id"], "home": game["home"], "away": game["away"], "matchday": game.get("matchday"), "date": game.get("date"), "status": game["status"], "old": is_old(game),
             "created": game["created"], "analyst": game.get("analyst"), "kind": game.get("kind", "live"), "base": game.get("base") or game["id"], "live": bool(game.get("live")), "events": len(game["events"]), "home_score": s[game["home"]], "away_score": s[game["away"]], "note": game.get("note", "")}
 
 
@@ -340,28 +340,13 @@ def _roster(codes):
     return {c: [{"id": p["id"], "name": p["name"], "number": p["number"]} for p in rows if p["team"] == c] for c in codes}
 
 
-def video_todo():
-    """The games that were played (official result) but have no full box score on the site: nothing at all ("none") or only a hand-kept sheet of one team or of some
-    players ("partial"). These are the ones an analyst can count from the video. Oldest matchday first."""
-    d = stats.build()
-    pair = lambda g: (stats.matchday_hint(g), frozenset(t["code"] for t in g["teams"]))
-    full = {pair(g) for g in d["games"]}
-    partial = {pair(g): g for g in d["partials"]}
-    cal = stats.load_calendar()
-    out = []
-    for r in sorted(stats.load_official()["results"], key=lambda r: (r["matchday"], r["home"])):
-        k = (r["matchday"], frozenset([r["home"], r["away"]]))
-        if k in full:
-            continue
-        pg = partial.get(k)
-        if pg and set(pg.get("recorded_all", [])) == {r["home"], r["away"]} and pg["complete"]:
-            continue                                                    # both teams are already counted and add up to the official score: nothing left to count
-        rec = next((t for t in pg["teams"] if t["recorded"]), None) if pg else None
-        out.append({"matchday": r["matchday"], "home": r["home"], "away": r["away"], "base": f"v{r['matchday']}-{r['home'].lower()}-{r['away'].lower()}",
-                    "home_score": r["home_score"], "away_score": r["away_score"],
-                    "date": (pg or {}).get("date") or cal.get(r["matchday"]), "status": "partial" if pg else "none",
-                    "recorded": rec["code"] if rec else None, "recorded_all": pg.get("recorded_all", []) if pg else [], "complete": bool(pg and pg["complete"])})
-    return out
+def is_old(game, official=None):
+    """An OLD game: it was already played (it has an official result, or its date is past). Counting one is only for editing / redoing its numbers: it is never live."""
+    o = official or stats.load_official()
+    if any(r["matchday"] == game.get("matchday") and {r["home"], r["away"]} == {game["home"], game["away"]} for r in o["results"]):
+        return True
+    day = game.get("date")
+    return bool(day) and day < time.strftime("%Y-%m-%d", time.gmtime(time.time() + 3600))      # Tunisia is UTC+1 all year
 
 
 # ---------------------------------------------------------------- live: what the public sees of a game the ADMIN has switched on
@@ -382,7 +367,7 @@ def live_games():
             g = json.loads(f.read_text())
         except (OSError, ValueError):
             continue
-        if not g.get("live") or g.get("status") not in OPEN_STATES or g.get("kind") == "video":
+        if not g.get("live") or g.get("status") not in OPEN_STATES or g.get("kind") == "video" or is_old(g):
             continue
         t, c, mins, sc = tally(g), court(g), minutes(g), scores(g)
         who_ = {p["id"]: (code, p) for code, ps in g["players"].items() for p in ps}
@@ -418,7 +403,7 @@ def live_games():
 def data():
     plan = stats.planning()
     photos = stats.load_photos()
-    games = [summary(g) for g in (json.loads(f.read_text()) for f in sorted(DIR.glob("*.json"), reverse=True)) if _mine(g)] if DIR.exists() else []
+    games = [summary(g) for g in (json.loads(f.read_text()) for f in sorted(DIR.glob("*.json"), reverse=True)) if _mine(g) and g.get("kind") != "video"] if DIR.exists() else []     # counting from the video is gone
     roster = {}
     for p in stats.build()["players"]:
         roster.setdefault(p["team"], []).append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "min": p.get("total_min") or 0})
@@ -428,7 +413,13 @@ def data():
     fives = {c: [p["id"] for p in lineups.expected_five(d, c)] for c in roster}            # the five most likely to start (starts this season and in the last games, absences left out)
     matches = [{"key": f"{md['matchday']}:{g['home']}-{g['away']}", "matchday": md["matchday"], "date": g.get("game_date") or md.get("date"), "time": g.get("time"),
                 "home": g["home"], "away": g["away"], "played": g["played"]} for md in plan["matchdays"] for g in md["games"]]
-    return jsonify(teams=plan["teams"], roster=roster, fives=fives, matches=matches, games=games, video=video_todo(), me=dict(zip(("name", "admin"), (who()[0], auth.is_admin()))))
+    have = {(m["matchday"], frozenset((m["home"], m["away"]))) for m in matches}
+    cal = stats.load_calendar()
+    for r in sorted(stats.load_official()["results"], key=lambda r: (r["matchday"], r["home"])):          # the rounds of the first phase too: any game of any round can be opened
+        if (r["matchday"], frozenset((r["home"], r["away"]))) not in have:
+            matches.append({"key": f"{r['matchday']}:{r['home']}-{r['away']}", "matchday": r["matchday"], "date": cal.get(r["matchday"]), "time": None, "home": r["home"], "away": r["away"], "played": True})
+    matches.sort(key=lambda m: (m["matchday"], m["home"]))
+    return jsonify(teams=plan["teams"], roster=roster, fives=fives, matches=matches, games=games, me=dict(zip(("name", "admin"), (who()[0], auth.is_admin()))))
 
 
 @bp.post("/analytics/api/games")
@@ -440,23 +431,18 @@ def create():
         return jsonify(error="Pick two different teams."), 422
     md = b.get("matchday") if isinstance(b.get("matchday"), int) and 1 <= b["matchday"] <= 60 else None
     name, slug = who()
-    video, date = bool(b.get("video")), b.get("date")
+    if b.get("video"):
+        return jsonify(error="Counting a game from the video is no longer offered: pick the game of its round instead."), 422
+    date = b.get("date")
     base = f"j{md}-{home.lower()}-{away.lower()}" if md else f"x-{home.lower()}-{away.lower()}-{time.strftime('%m%d-%H%M')}"
-    if md and not video and any(stats.matchday_hint(g) == md and {t["code"] for t in g["teams"]} == {home, away} for g in stats.build()["games"]):
-        return jsonify(error="This game already has a full box score on the site: it can no longer be counted."), 422
-    if video:                                        # a game counted from the video: only one that has no full box score (nothing at all, or a one-team / some-players sheet)
-        todo = next((v for v in video_todo() if v["matchday"] == md and {v["home"], v["away"]} == {home, away}), None)
-        if not todo:
-            return jsonify(error="Only a game that has no box score, or only a partial one, can be counted from video: this one already has a full box score, or no official result yet."), 422
-        home, away, date = todo["home"], todo["away"], todo["date"] or date
-        base = todo["base"]
+    # any game of any round can be opened, even one that already has a full box score (to edit or redo its numbers); an old game is simply never live
     gid = f"{base}--{slug}"                          # two analysts with two names count the same game on two separate sheets
     with _file_lock:
         if not _path(gid).exists():
-            g = {"id": gid, "base": base, "kind": "video" if video else "live", "analyst": name, "analyst_slug": slug, "home": home, "away": away, "matchday": md,
+            g = {"id": gid, "base": base, "kind": "live", "analyst": name, "analyst_slug": slug, "home": home, "away": away, "matchday": md,
                  "date": date if re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(date or "")) else None,
                  "status": "open", "created": time.strftime("%Y-%m-%d %H:%M"), "players": _roster([home, away]), "events": [], "log": []}
-            _log(g, name, "start", "added this game from the video list" if video else "started counting this game")
+            _log(g, name, "start", "started counting this game")
             _save(g)
             auth.audit("analytics-new-game", f"{gid} by {name}")
     return jsonify(_view(_load_mine(gid)))
@@ -679,8 +665,8 @@ def _partial_write(g, sheets):
 def admin_live(gid):
     """Body {"on": true|false}: show this game, while it is being counted, on the public Live page (or stop showing it)."""
     g = _load(gid)
-    if g.get("kind") == "video":
-        return jsonify(error="A game counted from the video is not played live."), 409
+    if g.get("kind") == "video" or is_old(g):
+        return jsonify(error="An old game (already played) cannot be live: it can only be edited."), 409
     if g["status"] not in OPEN_STATES:
         return jsonify(error="Only a game that is being counted can be live."), 409
     on = bool((request.get_json(silent=True) or {}).get("on"))
@@ -703,6 +689,8 @@ def admin_list():
     counting = []
     for f in sorted(DIR.glob("*.json"), reverse=True) if DIR.exists() else []:
         g = json.loads(f.read_text())
+        if g.get("kind") == "video" and g["status"] != "published":
+            continue                            # counting from the video is gone
         if g["status"] in OPEN_STATES:
             s = scores(g)
             counting.append({**summary(g), "live": bool(g.get("live")), "score": f"{g['home']} {s[g['home']]} – {s[g['away']]} {g['away']}"})

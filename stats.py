@@ -12,6 +12,7 @@ import time
 from collections import Counter, defaultdict
 
 import config
+import honours
 
 config.ensure_data()
 import game_fixes  # noqa: E402
@@ -1020,7 +1021,7 @@ def team_view(code, season=None):
     team_players = [p for p in d["players"] if p["team"] == code]
     return {"code": code, "name": o["teams"][code], "standing": row, "results": results, "upcoming": upcoming,
             "lineup": team_lineup(team_players), "bench": team_bench(team_players), "splits": team_splits(season, d)[code], "teams_ranked": len(o["teams"]),
-            "projected": plan["projected"], "top_teams": d["top_teams"],
+            "projected": plan["projected"], "top_teams": d["top_teams"], "honours": honours.for_club(code),
             "players": [{k: v for k, v in p.items() if k != "log"} for p in d["players"] if p["team"] == code]}
 
 

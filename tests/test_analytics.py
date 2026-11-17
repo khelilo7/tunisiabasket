@@ -47,14 +47,12 @@ check(analyst.get("/analytics/api/data").headers.get("X-Robots-Tag", "").startsw
 d = analyst.get("/analytics/api/data").get_json()
 check({"CA", "ESG"} <= set(d["roster"]) and d["roster"]["CA"][0]["id"].startswith("ca-") and d["matches"] and "CA" in d["teams"], "teams, players and matches come from the site")
 ca, esg = d["roster"]["CA"], d["roster"]["ESG"]
-# the games an analyst can count from the video: played, but no full box score (nothing at all, or a one-team / some-players sheet)
+# the video list is gone; any game of any round (first phase included) can be opened
 built = stats.build()
 full = {(stats.matchday_hint(g), frozenset(t["code"] for t in g["teams"])) for g in built["games"]}
-todo = d["video"]
-check(all((v["matchday"], frozenset([v["home"], v["away"]])) not in full for v in todo), "no game with a full box score is offered for video")
-check(len(todo) + sum((r["matchday"], frozenset([r["home"], r["away"]])) in full for r in stats.load_official()["results"]) == len(stats.load_official()["results"]), "every other played game is offered")
-check(all(v["status"] in ("none", "partial") and isinstance(v["home_score"], int) for v in todo) and (not any(v["status"] == "partial" for v in todo) or all(v["recorded"] for v in todo if v["status"] == "partial")), "each says why: no box score, or partial with the team recorded")
-check(any(v["status"] == "partial" and v["recorded"] == "CA" for v in todo) or not built["partials"], "a hand-kept one-team sheet (J1 ESG-CA) is listed as partial")
+check("video" not in d, "the list of games to count from the video is gone")
+mds = {m["matchday"] for m in d["matches"]}
+check(1 in mds and any(m["played"] for m in d["matches"] if m["matchday"] == 1), "the matches cover every round, the first phase too")
 
 # 3. counting
 g = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 12, "date": "2026-11-11"}).get_json()
@@ -258,27 +256,18 @@ live_(gb["id"], True)
 cnt = {x["id"]: x["live"] for x in adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["counting"]}
 check(cnt.get(gb["id"]) and not cnt.get(ga["id"]) and [g["id"] for g in anon.get("/api/live").get_json()["games"] if g["id"].startswith("j16-")] == [gb["id"]], f"only one version of a game is live: {cnt}")
 
-# 11. games from the video list: added to the board on request, and only a game without a full box score
-dv = analyst.get("/analytics/api/data").get_json()
-todo0 = dv["video"][0]
-check(todo0["base"] == f"v{todo0['matchday']}-{todo0['home'].lower()}-{todo0['away'].lower()}", "each game of the video list has its own key")
+# 11. no more counting from the video; any played game can be opened to edit it, and is never live
+check(analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 12, "video": True}).status_code == 422, "counting from the video is refused")
 full_game = next(g for g in stats.build()["games"] if g.get("matchday_no"))
 fa, fb = [t["code"] for t in full_game["teams"]]
-r = analyst.post("/analytics/api/games", json={"home": fa, "away": fb, "matchday": full_game["matchday_no"], "video": True})
-check(r.status_code == 422 and "full box score" in r.get_json()["error"], "a game that already has a full box score cannot be added from the video list")
-check(analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 55, "video": True}).status_code == 422, "nor a game with no official result")
-check(analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "video": True}).status_code == 422, "nor one with no matchday")
-r = analyst.post("/analytics/api/games", json={"home": todo0["away"], "away": todo0["home"], "matchday": todo0["matchday"], "video": True})
-vg = r.get_json()
-check(r.status_code == 200 and vg["kind"] == "video" and vg["id"] == f"{todo0['base']}--tester-one" and (vg["home"], vg["away"]) == (todo0["home"], todo0["away"]), f"a game without a full box score is added to the board (as in the official result): {vg.get('id')}")
-check(analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "matchday": todo0["matchday"], "video": True}).get_json()["id"] == vg["id"], "adding it twice gives the same game")
-check(any(g["id"] == vg["id"] and g["kind"] == "video" for g in analyst.get("/analytics/api/data").get_json()["games"]) and not any(g["kind"] == "video" for g in two.get("/analytics/api/data").get_json()["games"]), "it is on this analyst's board only, flagged as a video game")
-live_c = analyst.post("/analytics/api/games", json={"home": todo0["home"], "away": todo0["away"], "matchday": todo0["matchday"]}).get_json()
-check(live_c["kind"] == "live" and live_c["id"] != vg["id"], "counting the same match live is a separate game")
-check(adm.post(f"/admin/api/analytics/{vg['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62")).status_code == 409, "a video game is never live")
-check(analyst.post(f"/analytics/api/games/{vg['id']}/event", json={"pid": vg["players"][vg["home"]][0]["id"], "stat": "p2_m"}).status_code == 200, "and it is counted like any other game")
-for gid_ in (vg["id"], live_c["id"]):
-    analyst.delete(f"/analytics/api/games/{gid_}")
+r = analyst.post("/analytics/api/games", json={"home": fa, "away": fb, "matchday": full_game["matchday_no"]})
+old = r.get_json()
+check(r.status_code == 200 and old["kind"] == "live", f"a game that already has a full box score can be opened to edit it: {r.status_code} {old.get('error')}")
+check(next(x for x in analyst.get("/analytics/api/data").get_json()["games"] if x["id"] == old["id"])["old"] is True, "it is flagged old")
+check(adm.post(f"/admin/api/analytics/{old['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62")).status_code == 409, "an old game can never be live")
+check(analyst.post(f"/analytics/api/games/{old['id']}/event", json={"pid": old["players"][old["home"]][0]["id"], "stat": "p2_m"}).status_code == 200, "and it is counted like any other game")
+check(not any(g["id"] == old["id"] for g in anon.get("/api/live").get_json()["games"]), "it is not in the Live section")
+analyst.delete(f"/analytics/api/games/{old['id']}")
 
 print("FAILED:\n  " + "\n  ".join(fails) if fails else "analytics checks passed")
 sys.exit(1 if fails else 0)
