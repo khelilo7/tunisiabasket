@@ -505,10 +505,39 @@ def official_standings(official=None):
     for r in out:
         r["diff"] = r["pf"] - r["pa"]
         r["pts"] = 2 * r["w"] + r["l"]  # 2 points for a win, 1 for a loss
-    out.sort(key=lambda r: (-r["pts"], -r["diff"]))
+    out = rank_rows(out, o["results"])
     for i, r in enumerate(out, 1):
         r["rank"] = i
     return out
+
+
+def rank_rows(rows, results):
+    """The table order: league points first. Teams level on points are separated by the games they played AMONG THEMSELVES (the points those games gave, 2 for a win and 1 for
+    a loss, then the point difference of those games), then by the point difference of all games, then by the points scored in all games. With three teams or more, as soon as
+    some are separated the rule starts again for the ones still level, with only their own games."""
+    out = []
+    for pts in sorted({r["pts"] for r in rows}, reverse=True):
+        out.extend(_split_ties([r for r in rows if r["pts"] == pts], results))
+    return out
+
+
+def _split_ties(group, results):
+    overall = lambda r: (-r["diff"], -r["pf"], r["code"])
+    if len(group) < 2:
+        return group
+    codes = {r["code"] for r in group}
+    mini = {c: [0, 0] for c in codes}                        # the points and the point difference of the games between these teams
+    for g in results:
+        if g["home"] in codes and g["away"] in codes:
+            for c, f, a in ((g["home"], g["home_score"], g["away_score"]), (g["away"], g["away_score"], g["home_score"])):
+                mini[c][0] += 2 if f > a else 1
+                mini[c][1] += f - a
+    key = lambda r: (-mini[r["code"]][0], -mini[r["code"]][1])
+    ordered = sorted(group, key=key)
+    parts = [[r for r in ordered if key(r) == k] for k in dict.fromkeys(key(r) for r in ordered)]
+    if len(parts) == 1:                                      # these games separate nobody: the whole season decides
+        return sorted(group, key=overall)
+    return [r for part in parts for r in _split_ties(part, results)]
 
 
 def matchday_hint(g):
