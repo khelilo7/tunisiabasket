@@ -36,7 +36,7 @@ The sheets print a number, not a person, so a player who changes number, or a ne
 `tests/test_numbers.py` checks all of this.
 
 ## Official data (data/official.json)
-Federation results for matchdays 1-11 and team names. The standings page is computed from it (2 pts win, 1 pt loss). Teams level on points are ordered by the games they played among themselves (their points, then their point difference; with three or more the rule starts again for those still level), then by the point difference and the points scored in all games (`stats.rank_rows`, `tests/test_tiebreak.py`)
+Federation results for matchdays 1-11 and team names. The standings page is computed from it (2 pts win, 1 pt loss). The order is the FTBB's law, written out in `ranking.py` (General Regulations of 10/08/2024, articles 182 to 184 and 194; link in the footnote of every table): points first; teams level on points are separated by the point difference of the games between them (two teams), or by a second table with only the games among them (three or more), then the goal average (a division) of those games, then the point difference of all the games; a pair left over starts again. A result may carry `"forfeit": CODE` (that team loses 0 point and ranks last among the teams level). Test: `tests/test_tiebreak.py`
 and it is the source of truth for scores: a box score whose total differs keeps its player stats but shows the
 official score plus a note. Game MVP = best player of the WINNING team. Season MVP = best average impact among
 players of the top 4 teams (`MVP_TOP_TEAMS` in stats.py). Add new matchdays to `results` in that file.
