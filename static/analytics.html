@@ -200,7 +200,7 @@ async function load() {
 
 /* ---- home ---- */
 function renderHome() {
-  const D = S.data, app = $("#app");
+  const D = S.data, app = $("#app"); S.shown = null;           // the next game opened starts clean
   const mine = D.games.filter(g => !g.analyst || g.analyst === S.me.name).sort((a, b) => (a.analyst ? 1 : 0) - (b.analyst ? 1 : 0)), byId = Object.fromEntries(mine.map(g => [g.base, g]));     // an old game without a name is continued as it is; a version of mine wins over it      // "Continue" is about my own version
   const days = [...new Set(D.matches.map(m => m.matchday))].sort((a, b) => a - b);
   const next = days.find(d => D.matches.some(m => m.matchday === d && !m.played)) ?? days[0];
@@ -262,6 +262,7 @@ async function startFives(codes) {
 
 function renderGame() {
   const g = S.game, app = $("#app"), t = tally(g), ed = editable(g), mob = isMobile();
+  if (S.shown !== g.id) { S.pick = null; S.sel = null; S.tab = null; S.shown = g.id; }       // what was half done in another game (the five being picked, the selected player) must not follow you here: it turned every substitution button into a "pick the five" tap
   const photos = Object.fromEntries(Object.values(S.data.roster).flat().map(p => [p.id, p.photo]));
   const total = code => g.players[code].reduce((n, p) => n + ptsOf(t[p.id]), 0);
   const cc = g.court, picking = S.pick;
