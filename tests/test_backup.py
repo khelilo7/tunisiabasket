@@ -85,8 +85,10 @@ check(r.returncode == 0, f"a backup during a pending write still verifies: {r.st
 old_small = out / "small-20200101-0000.tgz"
 old_small.write_bytes(b"x"); os.utime(old_small, (time.time() - 5 * 86400,) * 2)
 a, b, c3 = out / "data-20250101-000000.tgz", out / "data-20250115-000000.tgz", out / "data-20261001-000000.tgz"
-for f, days in ((a, 300), (b, 290), (c3, 30)):
-    f.write_bytes(b"x"); os.utime(f, (time.time() - days * 86400,) * 2)
+import datetime
+first = (datetime.date.today() - datetime.timedelta(days=300)).replace(day=1)       # two backups 4 and 19 days into the same month, about 10 months ago whatever day the test runs
+for f, when in ((a, time.mktime((first + datetime.timedelta(days=4)).timetuple())), (b, time.mktime((first + datetime.timedelta(days=19)).timetuple())), (c3, time.time() - 30 * 86400)):
+    f.write_bytes(b"x"); os.utime(f, (when,) * 2)
 run()
 check(not old_small.exists(), "old small backups are pruned")
 check(a.exists() and not b.exists(), "two old backups from the same month: the oldest is kept, the other pruned")
