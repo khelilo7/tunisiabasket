@@ -13,6 +13,7 @@ from collections import Counter, defaultdict
 
 import config
 import honours
+import ranking
 
 config.ensure_data()
 import game_fixes  # noqa: E402
@@ -491,9 +492,11 @@ def load_official():
 
 
 def official_standings(official=None):
-    """League table computed from ALL official results (including games without a box score)."""
+    """League table computed from ALL official results (including games without a box score), in the order the FTBB's law gives (ranking.py: points, then the games between
+    the teams level on points, then the point difference...)."""
     o = official or load_official()
     t = {c: {"code": c, "name": n, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for c, n in o["teams"].items()}
+    ff = defaultdict(int)
     for r in o["results"]:
         for c, f, a in ((r["home"], r["home_score"], r["away_score"]), (r["away"], r["away_score"], r["home_score"])):
             row = t.setdefault(c, {"code": c, "name": c, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0})
@@ -501,11 +504,13 @@ def official_standings(official=None):
             row["w" if f > a else "l"] += 1
             row["pf"] += f
             row["pa"] += a
+        if r.get("forfeit"):
+            ff[r["forfeit"]] += 1                              # a loss by forfeit or penalty gives no point at all (art. 182)
     out = list(t.values())
     for r in out:
         r["diff"] = r["pf"] - r["pa"]
-        r["pts"] = 2 * r["w"] + r["l"]  # 2 points for a win, 1 for a loss
-    out.sort(key=lambda r: (-r["pts"], -r["diff"]))
+        r["pts"] = 2 * r["w"] + r["l"] - ff[r["code"]]       # 2 points for a win, 1 for a loss, 0 for a loss by forfeit
+    out = ranking.rank(out, o["results"])
     for i, r in enumerate(out, 1):
         r["rank"] = i
     return out

@@ -13,9 +13,10 @@ from PIL import Image, ImageDraw
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import brand  # noqa: E402
 import stats  # noqa: E402
 from leader_images import ACCENT, BG_BOT, BG_TOP, H, M, MUTED, TEXT, W, fit, font, logo_of  # noqa: E402
-from starting_five_image import FOOTER_LOGO, RING, glow  # noqa: E402
+from starting_five_image import RING, glow  # noqa: E402
 
 GOOD, BAD = (46, 190, 108), (226, 83, 83)
 
@@ -89,11 +90,7 @@ def render(d, left, right, after):
     glow(img, W - 110, 380, 420, rb, 95)
     dr = ImageDraw.Draw(img)
 
-    mark = Image.open(ROOT / "static" / "img" / "logo.png").convert("RGBA")
-    mark = mark.resize((int(mark.width * 88 / mark.height), 88), Image.LANCZOS)
-    img.alpha_composite(mark, (M, 32))
-    dr.text((M + mark.width + 18, 44), "TUNISIA BASKET", font=font("black", 26), fill=ACCENT)
-    dr.text((M + mark.width + 18, 80), f"PRO A  ·  {d['season']}", font=font("med", 22), fill=MUTED)
+    brand.header(img, f"PRO A  ·  {d['season']}".upper(), M, 32, 88)
     dr.text((W - M, 44), f"AFTER J{after}" if after else "", font=font("black", 30), fill=TEXT, anchor="ra")
     dr.text((W // 2, 176), "HOME & AWAY FORM", font=fit(dr, "HOME & AWAY FORM", "black", 70, W - 2 * M), fill=TEXT, anchor="mm")
     sub = f"{ca} {'on the road' if va == 'away' else 'at home'}   ·   {cb} {'on the road' if vb == 'away' else 'at home'}"
@@ -172,10 +169,7 @@ def render(d, left, right, after):
 
     note = " · ".join(f"{c}: {f['boxes']} {v} box scores" for c, v, f in ((ca, va, fa), (cb, vb, fb)))
     dr.text((W // 2, H - 124), note, font=font("reg", 22), fill=MUTED, anchor="mm")
-    if FOOTER_LOGO.is_file():
-        fl = Image.open(FOOTER_LOGO).convert("RGBA")
-        fl = fl.resize((int(fl.width * 72 / fl.height), 72), Image.LANCZOS)
-        img.alpha_composite(fl, ((W - fl.width) // 2, H - 96))
+    brand.footer(img)
     return img.convert("RGB")
 
 

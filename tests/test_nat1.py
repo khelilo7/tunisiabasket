@@ -51,7 +51,7 @@ check(r.get_json()["games"] == 4, "the same pairing in the same matchday is repl
 # 4. the table and the public page
 v = c.get("/api/nat1").get_json()
 st = {t["code"]: t for t in v["standings"]}
-check([t["code"] for t in v["standings"]][:2] == ["CSK", "ESM"], f"table order (points, then difference): {[t['code'] for t in v['standings']]}")
+check([t["code"] for t in v["standings"]][:2] == ["CSK", "ASM"], f"table order (the law: points, then the game between ASM and ESM, level on 3 points, although ESM has the better difference): {[t['code'] for t in v['standings']]}")
 check(st["CSK"]["pts"] == 4 and st["CSK"]["w"] == 2 and st["EOS"]["pts"] == 2 and st["ESM"]["pf"] == 80 + 59 and st["ESM"]["diff"] == (80 + 59) - (71 + 61), "2 points a win, 1 a loss, points for and against")
 check([m["matchday"] for m in v["matchdays"]] == [1, 2] and v["matchdays"][0]["games"][0]["home_name"] and all(m["played"] for m in v["matchdays"]), "matchdays in order, with names, played because they have scores")
 check("<table" in c.get("/nationale-1").get_data(as_text=True) and "CS Korba" in c.get("/nationale-1").get_data(as_text=True), "the page carries the table for crawlers")

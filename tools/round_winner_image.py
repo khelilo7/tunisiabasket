@@ -16,8 +16,9 @@ from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageOp
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import brand  # noqa: E402
 from leader_images import ACCENT, BG_BOT, BG_TOP, H, M, MUTED, TEXT, W, avatar, fit, font, logo_of  # noqa: E402
-from starting_five_image import FOOTER_LOGO, glow  # noqa: E402
+from starting_five_image import glow  # noqa: E402
 
 RED = (214, 36, 52)
 GOLD = (245, 197, 66)
@@ -87,11 +88,7 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
     img.alpha_composite(shade)
 
     dr = ImageDraw.Draw(img)
-    mark = Image.open(ROOT / "static" / "img" / "logo.png").convert("RGBA")
-    mark = mark.resize((int(mark.width * 88 / mark.height), 88), Image.LANCZOS)
-    img.alpha_composite(mark, (M, 32))
-    dr.text((M + mark.width + 18, 44), "TUNISIA BASKET", font=font("black", 26), fill=ACCENT)
-    dr.text((M + mark.width + 18, 80), "PRO A  ·  2026-2027", font=font("med", 22), fill=MUTED)
+    brand.header(img, "PRO A  ·  2026-2027".upper(), M, 32, 88)
     dr.text((W - M, 44), f"DAY {rnd}", font=font("black", 30), fill=TEXT, anchor="ra")
     dr.text((W - M, 82), date, font=font("med", 24), fill=MUTED, anchor="ra")
 
@@ -130,10 +127,7 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
         dr.text((cx0 + 78, 1232), f"{k + 2}  ·  {' '.join(w.capitalize() for w in pl['name'].split())}", font=fit(dr, pl["name"], "bold", 25, 380), fill=TEXT, anchor="lm")
         dr.text((cx0 + 78, 1262), f"{pl['team']}  ·  {v} votes" + (f"  ·  {pc}%" if pc else ""), font=font("med", 20), fill=MUTED, anchor="lm")
 
-    if FOOTER_LOGO.is_file():
-        fl = Image.open(FOOTER_LOGO).convert("RGBA")
-        fl = fl.resize((int(fl.width * 58 / fl.height), 58), Image.LANCZOS)
-        img.alpha_composite(fl, ((W - fl.width) // 2, H - 66))
+    brand.footer(img)
     return img.convert("RGB")
 
 

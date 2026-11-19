@@ -8,7 +8,7 @@
   const W = 1080, H = 1350;
   const STATS = { pts: ['PTS', 'PTS'], reb: ['REB', 'REB'], ast: ['PD', 'AST'], stl: ['INT', 'STL'], blk: ['CTR', 'BLK'], p3m: ['3PT', '3PT'], tov: ['BP', 'TOV'], pm: ['+/-', '+/-'], pir: ['PIR', 'PIR'], min: ['MIN', 'MIN'] };
   const MAN = '__manual';
-  const st = { md: null, game: 0, pid: null, man: { id: '', pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, p3m: 0, tov: 0, pm: 0, pir: 0, min: 0 }, stats: ['pts', 'reb', 'ast', 'pir'], photo: null, photoName: '', badge: true, mark: true };
+  const st = { md: null, game: 0, pid: null, man: { id: '', pts: 0, reb: 0, ast: 0, stl: 0, blk: 0, p3m: 0, tov: 0, pm: 0, pir: 0, min: 0 }, stats: ['pts', 'reb', 'ast', 'pir'], photo: null, photoName: '', badge: true, mark: true, cutOn: true, cut: null };
   let M = null;
   const lang = () => K.lang();
   const signed = v => v > 0 ? '+' + v : String(v);
@@ -45,7 +45,9 @@
         <select id="g-mp">${sitePlayers().map(p => `<option value="${esc(p.id)}" ${p.id === (st.man.id || '') ? 'selected' : ''}>${esc(nm(p.name))} · ${p.team} · #${p.number}</option>`).join('')}</select>
         ${['pts', 'reb', 'ast', 'stl', 'blk', 'p3m', 'tov', 'pm', 'pir', 'min'].map(k => `<label class="small mut">${STATS[k][1]} <input type="number" data-mv="${k}" value="${st.man[k]}" style="width:62px"></label>`).join('')}</div>
       <div class="row" style="flex-basis:100%;gap:8px;align-items:center">
-        <label class="small mut">Photo of the player</label><input type="file" id="g-file" accept="image/*"><button id="g-nophoto" ${st.photo ? '' : 'hidden'}>Remove photo</button><span class="mut small" id="g-fname">${esc(st.photoName)}</span></div>
+        <label class="small mut">Photo of the player</label><input type="file" id="g-file" accept="image/*"><button id="g-nophoto" ${st.photo ? '' : 'hidden'}>Remove photo</button><span class="mut small" id="g-fname">${esc(st.photoName)}</span>
+        <label class="small" title="Cuts the player out of the photo, in your browser (nothing is uploaded), and puts him on the picture's own background"><input type="checkbox" id="g-cut" ${st.cutOn ? 'checked' : ''}> extract the player</label></div>
+      <div id="g-cutbox" style="flex-basis:100%"></div>
       <div class="row" style="flex-basis:100%;gap:10px;align-items:center"><span class="small mut">Numbers shown</span>${Object.keys(STATS).map(k => `<label class="small"><input type="checkbox" data-gs="${k}" ${st.stats.includes(k) ? 'checked' : ''}> ${STATS[k][1]}</label>`).join('')}
         <label class="small"><input type="checkbox" id="g-badge" ${st.badge ? 'checked' : ''}> club badge</label><label class="small"><input type="checkbox" id="g-mark" ${st.mark ? 'checked' : ''}> transparent logo behind</label></div>
       <div class="row" style="flex-basis:100%;align-items:flex-start;gap:8px"><textarea id="g-cap" rows="3" style="flex:1;min-width:260px;height:84px;min-height:0;font:inherit;resize:vertical" placeholder="Post text for Facebook"></textarea><button id="g-copy">📋 Copy the text</button></div>`;
@@ -64,14 +66,21 @@
     if (file) file.onchange = () => {
       const f = file.files[0]; if (!f) return;
       const url = URL.createObjectURL(f), img = new Image();
-      img.onload = () => { st.photo = img; st.photoName = f.name; $('#g-nophoto').hidden = false; $('#g-fname').textContent = f.name; redraw(); };
+      img.onload = () => { st.photo = img; st.photoName = f.name; st.cut = null; $('#g-nophoto').hidden = false; $('#g-fname').textContent = f.name; startCut(redraw); redraw(); };
       img.onerror = () => { $('#imgerr').textContent = 'That file is not a readable image.'; };
       img.src = url;
     };
-    const np = $('#g-nophoto'); if (np) np.onclick = () => { st.photo = null; st.photoName = ''; np.hidden = true; $('#g-fname').textContent = ''; if (file) file.value = ''; redraw(); };
+    on('#g-cut', e => { st.cutOn = e.target.checked; st.cut = null; startCut(redraw); redraw(); });
+    const np = $('#g-nophoto'); if (np) np.onclick = () => { st.photo = null; st.cut = null; startCut(redraw); st.photoName = ''; np.hidden = true; $('#g-fname').textContent = ''; if (file) file.value = ''; redraw(); };
     const cp = $('#g-copy'); if (cp) cp.onclick = async () => { const e = $('#g-cap'); try { await navigator.clipboard.writeText(e.value); cp.textContent = '✅ Copied'; } catch (x) { e.select(); } setTimeout(() => { cp.textContent = '📋 Copy the text'; }, 1500); };
   }
 
+  // the player taken out of the photo (Cutout, admin-cutout.js): you click on him, he is drawn in front of a blurred copy of the photo
+  function startCut(redraw) {
+    const box = $('#g-cutbox'); if (!box) return;
+    if (!st.photo || !st.cutOn || !window.Cutout) { box.innerHTML = ''; return; }
+    Cutout.picker(box, st.photo, c => { st.cut = c; redraw(); });
+  }
   // the photo, drawn big with soft edges: a sharp copy in the middle, its edges and bottom fading into the background
   function feathered(img, pw, ph) {
     const cv = document.createElement('canvas'); cv.width = pw; cv.height = ph; const c = cv.getContext('2d');
@@ -106,7 +115,12 @@
       ctx.save(); ctx.globalAlpha = 0.28; ctx.filter = 'blur(26px)'; const sh = Math.min(st.photo.height, st.photo.width * H / W); ctx.drawImage(st.photo, 0, 0, st.photo.width, sh, -40, -40, W + 80, H + 80); ctx.restore();
       ctx.fillStyle = 'rgba(8,12,26,.45)'; ctx.fillRect(0, 0, W, H);
       if (st.mark && lg) { const lw = 940, lh = lw * lg.height / lg.width; ctx.save(); ctx.globalAlpha = 0.10; ctx.drawImage(lg, (W - lw) / 2, 470 - lh / 2, lw, lh); ctx.restore(); }
-      const pw = 780, ph = 940, f = feathered(st.photo, pw, ph); ctx.drawImage(f, (W - pw) / 2, 150, pw, ph);
+      if (st.cutOn && st.cut) {                                              // him alone: as tall as the space allows, his feet fading into the dark band under him
+        const s = Math.min(930 / st.cut.height, 900 / st.cut.width), cw = st.cut.width * s, chh = st.cut.height * s, cvs = document.createElement('canvas'); cvs.width = Math.ceil(cw); cvs.height = Math.ceil(chh);
+        const c2 = cvs.getContext('2d'); c2.imageSmoothingQuality = 'high'; c2.drawImage(st.cut, 0, 0, cw, chh);
+        c2.globalCompositeOperation = 'destination-in'; const fg = c2.createLinearGradient(0, 0, 0, chh); fg.addColorStop(0, '#000'); fg.addColorStop(0.62, '#000'); fg.addColorStop(1, 'rgba(0,0,0,0)'); c2.fillStyle = fg; c2.fillRect(0, 0, cw, chh);
+        ctx.drawImage(cvs, (W - cw) / 2, 195);
+      } else { const pw = 780, ph = 940, f = feathered(st.photo, pw, ph); ctx.drawImage(f, (W - pw) / 2, 150, pw, ph); }
     } else {
       const bd = await loadImg(`/img/teams/${p.team}.png`); if (bd) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 560, 250, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip(); ctx.drawImage(bd, W / 2 - 215, 345, 430, 430); ctx.restore(); }
     }
@@ -114,8 +128,8 @@
     const sd = ctx.createLinearGradient(0, 760, 0, H); sd.addColorStop(0, 'rgba(7,11,22,0)'); sd.addColorStop(0.35, 'rgba(7,11,22,.88)'); sd.addColorStop(1, 'rgba(7,11,22,.97)'); ctx.fillStyle = sd; ctx.fillRect(0, 760, W, H - 760);
     // top bar
     ctx.fillStyle = C.acc; ctx.fillRect(0, 0, W, 8);
-    if (lg) ctx.drawImage(lg, 48, 30, 56, 70);
-    txt(ctx, 'TUNISIA BASKET', 124, 66, { size: 30, weight: 900, color: C.acc, space: '2px' });
+    const mk = await loadImg('/img/brand/mark-dark.svg'), wm = await loadImg('/img/brand/wordmark-dark.svg');
+    if (mk) ctx.drawImage(mk, 48, 28, 66, 66); if (wm) ctx.drawImage(wm, 126, 40, 32 * wm.width / wm.height, 32);
     txt(ctx, `PRO A · ${(window.ImgKit.data() || {}).season || ''}`, 124, 98, { size: 21, weight: 600, color: C.mut });
     txt(ctx, `J${M.md}`, W - 48, 66, { size: 34, weight: 900, align: 'right' });
     if (M.date) txt(ctx, new Date(M.date + 'T12:00').toLocaleDateString(fr ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase(), W - 48, 98, { size: 21, color: C.mut, align: 'right' });

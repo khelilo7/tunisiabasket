@@ -267,7 +267,107 @@ check(next(x for x in analyst.get("/analytics/api/data").get_json()["games"] if 
 check(adm.post(f"/admin/api/analytics/{old['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62")).status_code == 409, "an old game can never be live")
 check(analyst.post(f"/analytics/api/games/{old['id']}/event", json={"pid": old["players"][old["home"]][0]["id"], "stat": "p2_m"}).status_code == 200, "and it is counted like any other game")
 check(not any(g["id"] == old["id"] for g in anon.get("/api/live").get_json()["games"]), "it is not in the Live section")
-analyst.delete(f"/analytics/api/games/{old['id']}")
+# 12. the admin list: an old game (even one a past version left flagged live) is in its own group, never shown as live, and the admin can delete it; the newest game comes first
+g_old = json.loads((config.DATA_DIR / "analytics" / f"{old['id']}.json").read_text())
+g_old["live"] = True                              # the stale flag an earlier version left
+(config.DATA_DIR / "analytics" / f"{old['id']}.json").write_text(json.dumps(g_old))
+newest = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 40, "date": "2099-01-01"}).get_json()
+cl = adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["counting"]
+by = {x["id"]: x for x in cl}
+check(by[old["id"]]["old"] is True and by[old["id"]]["live"] is False, f"an old game is flagged old and never shown as live: {by.get(old['id'])}")
+check(by[newest["id"]]["old"] is False and cl[0]["id"] == newest["id"], f"the game worked on last comes first: {[x['id'] for x in cl][:3]}")
+check(adm.post(f"/admin/api/analytics/{old['id']}/delete", json={}, environ_overrides=ip("198.51.100.62")).status_code == 200 and not (config.DATA_DIR / "analytics" / f"{old['id']}.json").exists(), "the admin can delete an old game")
+check(analyst.post(f"/admin/api/analytics/{newest['id']}/delete", json={}, environ_overrides=ip("198.51.100.3")).status_code == 401, "an analyst cannot use the admin delete")
+check(adm.post(f"/admin/api/analytics/{gb['id']}/delete", json={}, environ_overrides=ip("198.51.100.62")).status_code == 200, "a game still being counted can be deleted by the admin")
+analyst.delete(f"/analytics/api/games/{newest['id']}")
+
+# 13. the public live data carries each team's line so far (the sum of its players) and the tagged scoring lines
+lg = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 41, "date": "2099-02-02"}).get_json()
+LA = f"/analytics/api/games/{lg['id']}"
+pl = lambda code, i: lg["players"][code][i]["id"]
+for code, i, st, tags in [("CA", 0, "p2_m", ["paint"]), ("CA", 0, "p3_x", None), ("CA", 1, "p3_m", None), ("CA", 1, "oreb", None), ("CA", 2, "ast", None), ("ESG", 0, "ft_m", None), ("ESG", 0, "ft_x", None), ("ESG", 1, "tov", None)]:
+    body = {"pid": pl(code, i), "stat": st, **({"tags": tags} if tags else {})}
+    r = analyst.post(f"{LA}/event", json=body)
+    if tags and r.status_code == 200 and r.get_json()["events"][-1].get("tags") != tags:
+        analyst.post(f"{LA}/edit", json={"n": r.get_json()["events"][-1]["n"], "tags": tags})
+adm.post(f"/admin/api/analytics/{lg['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62"))
+lv = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == lg["id"])
+ca_t, esg_t = lv["teams"]["CA"]["totals"], lv["teams"]["ESG"]["totals"]
+check((ca_t["pts"], ca_t["fgm"], ca_t["fga"], ca_t["p3m"], ca_t["p3a"], ca_t["oreb"], ca_t["reb"], ca_t["ast"]) == (5, 2, 3, 1, 2, 1, 1, 1), f"the live team line is the sum of its players: {ca_t}")
+check((esg_t["pts"], esg_t["ftm"], esg_t["fta"], esg_t["tov"]) == (1, 1, 2, 1), f"and the other team's: {esg_t}")
+check(lv["teams"]["CA"]["extra"].get("paint") == 2 and lv["teams"]["ESG"]["extra"].get("paint") == 0, f"the points in the paint of the tagged baskets are public too: {lv['teams']['CA']['extra']}")
+analyst.delete(f"/analytics/api/games/{lg['id']}")
+
+# 14. which team has the ball: deduced from the last action, or set by the analyst until the next action
+bg = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 42, "date": "2099-03-03"}).get_json()
+BA = f"/analytics/api/games/{bg['id']}"
+ev = lambda code, i, st: analyst.post(f"{BA}/event", json={"pid": bg["players"][code][i]["id"], "stat": st}).get_json()["ball"]
+check(analyst.get(BA).get_json()["ball"]["team"] is None, "nobody has the ball before the first action")
+steps = [("CA", "p2_m", "ESG"), ("ESG", "p2_x", None), ("CA", "dreb", "CA"), ("CA", "tov", "ESG"), ("CA", "stl", "CA"), ("CA", "pf", "ESG"), ("ESG", "fd", "ESG"),
+         ("ESG", "p3_m", "CA"), ("ESG", "ast", "CA"),                    # an assist entered after its basket does not give the ball back
+         ("ESG", "ft_m", "ESG"), ("ESG", "ft_m", "CA"),                  # a first free throw: still his; the second one made: the other team
+         ("CA", "p2_x", None), ("ESG", "oreb", "ESG")]
+for code, st, want in steps:
+    got = ev(code, 0, st)["team"]
+    check(got == want, f"ball after {code} {st}: wanted {want}, got {got}")
+r = analyst.post(f"{BA}/ball", json={"team": "CA"})
+check(r.status_code == 200 and r.get_json()["ball"] == {"team": "CA", "how": "manual", "manual": True}, f"the analyst can set the ball: {r.get_json().get('ball')}")
+check(analyst.post(f"{BA}/ball", json={"team": "XXX"}).status_code == 422, "only one of the two teams can have the ball")
+check(ev("ESG", 0, "p2_m")["manual"] is False, "the next action takes over again")
+analyst.post(f"{BA}/ball", json={"team": "ESG"})
+check(analyst.post(f"{BA}/ball", json={"team": None}).get_json()["ball"]["manual"] is False, "and tapping again clears the manual ball")
+adm.post(f"/admin/api/analytics/{bg['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62"))
+lvb = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == bg["id"])
+check(lvb["ball"]["team"] == "CA" and lvb["ball"]["how"] == "basket", f"the public live data carries the ball: {lvb['ball']}")
+analyst.delete(f"/analytics/api/games/{bg['id']}")
+
+# 15. how the game went: biggest lead, longest run, lead changes and ties, from the points in game order
+fgm = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 43, "date": "2099-04-04"}).get_json()
+FA = f"/analytics/api/games/{fgm['id']}"
+for code, st in [("CA", "p3_m"), ("CA", "p2_m"), ("ESG", "p2_m"), ("ESG", "p3_m"), ("ESG", "p2_m"), ("CA", "ft_m"), ("CA", "p2_m"), ("CA", "p2_m"), ("ESG", "ft_m")]:
+    analyst.post(f"{FA}/event", json={"pid": fgm["players"][code][0]["id"], "stat": st})
+adm.post(f"/admin/api/analytics/{fgm['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62"))
+fl = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == fgm["id"])["flow"]
+# CA 3, 5 | ESG 2, 5(tie), 7 | CA 8, 10, 12 | ESG 13?? -> scores: CA3-0, CA5-0, 5-2, 5-5 (tie), 5-7 (ESG ahead), CA 6-7, 8-7 (CA ahead), 10-7, 10-8
+check(fl["lead"] == {"CA": 5, "ESG": 2} and fl["run"] == {"CA": 5, "ESG": 7}, f"biggest lead and longest run: {fl}")
+check(fl["changes"] == 2 and fl["ties"] == 1, f"lead changes and ties: {fl}")
+check(next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == fgm["id"])["quarters"] is None, "without the game clock there is no score by quarter")
+analyst.post(f"{FA}/event", json={"pid": fgm["players"]["CA"][0]["id"], "stat": "p3_m", "q": 2, "t": 300})      # CA +3 in the 2nd quarter
+analyst.post(f"{FA}/event", json={"pid": fgm["players"]["ESG"][0]["id"], "stat": "p2_m", "q": 4, "t": 10})      # ESG +2 in the 4th
+qs = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == fgm["id"])["quarters"]
+check(qs and qs["periods"] == 4 and qs["pts"]["CA"][1] == 3 and qs["pts"]["ESG"][3] == 2 and sum(qs["pts"]["CA"]) == 13 and sum(qs["pts"]["ESG"]) == 10, f"the score by quarter follows the game clock: {qs}")
+analyst.post(f"{FA}/event", json={"pid": fgm["players"]["CA"][1]["id"], "stat": "p2_m", "q": 5, "t": 120})       # overtime: a fifth column appears by itself
+qs = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == fgm["id"])["quarters"]
+check(qs and qs["periods"] == 5 and qs["pts"]["CA"][4] == 2 and sum(qs["pts"]["CA"]) == 15, f"an overtime adds its own period to the score by quarter: {qs}")
+analyst.delete(f"/analytics/api/games/{fgm['id']}")
+
+# 16. technical fouls, injury, ejection, timeouts, team rebounds / turnovers
+tg = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 44, "date": "2099-05-05"}).get_json()
+TA = f"/analytics/api/games/{tg['id']}"
+pid_ = lambda code, i: tg["players"][code][i]["id"]
+for code, i, st in [("CA", 0, "pf"), ("CA", 0, "tf"), ("CA", 1, "inj"), ("ESG", 0, "ej"), ("ESG", 1, "tov")]:
+    check(analyst.post(f"{TA}/event", json={"pid": pid_(code, i), "stat": st}).status_code == 200, f"player action {st} is accepted")
+for code, st in [("CA", "timeout"), ("CA", "timeout"), ("ESG", "t_tov"), ("CA", "t_dreb"), ("CA", "tf_c"), ("ESG", "tf_b")]:
+    r = analyst.post(f"{TA}/team", json={"team": code, "stat": st})
+    check(r.status_code == 200, f"team action {st} is accepted: {r.status_code} {r.get_json()}")
+check(analyst.post(f"{TA}/team", json={"team": "XXX", "stat": "timeout"}).status_code == 422 and analyst.post(f"{TA}/team", json={"team": "CA", "stat": "p2_m"}).status_code == 422, "an unknown team or a player action is refused on the team route")
+v = analyst.get(TA).get_json()
+ca_, esg_ = v["totals"]["CA"], v["totals"]["ESG"]
+check(ca_["timeouts"] == 2 and ca_["pf"] == 2 and ca_["team_reb"] == 1 and ca_["dreb"] == 1 and ca_["reb"] == 1 and ca_["techs"] == 2, f"CA totals: {ca_}")
+check(esg_["tov"] == 2 and esg_["team_tov"] == 1 and esg_["techs"] == 1, f"ESG totals (a team turnover adds to the turnovers): {esg_}")
+check(next(e for e in v["events"] if e["stat"] == "timeout")["pid"] is None and v["team_events"]["CA"]["timeout"] == 2, "team events belong to no player")
+check(sum(ptsv for ptsv in analyst.get(TA).get_json()["court"]["pm"].values()) == 0, "team events never touch the court")
+adm.post(f"/admin/api/analytics/{tg['id']}/live", json={"on": True}, environ_overrides=ip("198.51.100.62"))
+lv_ = next(x for x in anon.get("/api/live").get_json()["games"] if x["id"] == tg["id"])
+texts = [p["text"] for p in lv_["plays"]]
+check("timeout" in texts and "team turnover" in texts and "technical foul" in texts and "injured" in texts and "ejected" in texts, f"the live plays name them: {texts}")
+row_ = next(p for p in lv_["teams"]["ESG"]["players"] if p["id"] == pid_("ESG", 0))
+check(row_["ej"] is True and next(p for p in lv_["teams"]["CA"]["players"] if p["id"] == pid_("CA", 1))["inj"] is True, "the live rows flag the ejected and the injured players")
+check(lv_["teams"]["CA"]["totals"]["timeouts"] == 2, "the public totals carry the timeouts")
+tev = next(e for e in v["events"] if e["stat"] == "timeout")
+check(analyst.post(f"{TA}/edit", json={"n": tev["n"], "stat": "t_oreb", "team": "ESG"}).status_code == 200 and analyst.get(TA).get_json()["team_events"]["ESG"].get("t_oreb") == 1, "a team event can be changed")
+check(analyst.post(f"{TA}/ball", json={"team": "CA"}).status_code == 200, "the ball still works with team events")
+analyst.delete(f"/analytics/api/games/{tg['id']}")
 
 print("FAILED:\n  " + "\n  ".join(fails) if fails else "analytics checks passed")
 sys.exit(1 if fails else 0)

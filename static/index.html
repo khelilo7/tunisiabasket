@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#0f1420">
 <!--HEAD-->
+<link rel="icon" type="image/svg+xml" href="/img/brand/mark-small.svg">
 <link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="icon" type="image/png" sizes="48x48" href="/img/favicon-48.png">
 <link rel="icon" type="image/png" sizes="96x96" href="/img/favicon-96.png">
@@ -16,13 +17,13 @@
 <script>document.documentElement.dataset.theme = localStorage.getItem('theme') || 'dark';</script>
 <style>
   :root, :root[data-theme=dark] { color-scheme:dark;
-    --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c;
+    --logo-red:#EE4B52; --bg:#0f1420; --card:#181f30; --line:#27304a; --txt:#e8ecf6; --mut:#8b95b0; --acc:#ff8a1f; --good:#3ecf8e; --bad:#ff5d6c;
     --hdr:#0b101a; --hover:#1e2740; --pill:#2a3350; --pillw:#143d2c; --pilll:#44202a; --track:#2a3350;
     --banner-bg:#3a2a0a; --banner-line:#7a5a1a; --banner-txt:#ffd89a;
     --glow:rgba(255,138,31,.14); --mvp-grad:linear-gradient(135deg,#2a1a08,#181f30 60%); --mvp-line:#5a3a12; --mvp-in:#1d1710;
     --court:#1b2742; --court-paint:#22325a; --court-line:#5d6f9c; --court-b:#0f1a30; }
   :root[data-theme=light] { color-scheme:light;
-    --bg:#f2f4fa; --card:#ffffff; --line:#dbe1ee; --txt:#18202f; --mut:#5d6985; --acc:#e06c00; --good:#12804f; --bad:#cf2f46;
+    --logo-red:#D9323A; --bg:#f2f4fa; --card:#ffffff; --line:#dbe1ee; --txt:#18202f; --mut:#5d6985; --acc:#e06c00; --good:#12804f; --bad:#cf2f46;
     --hdr:#ffffff; --hover:#eef2fb; --pill:#e6eaf4; --pillw:#d9f2e6; --pilll:#fbdfe4; --track:#dfe4f1;
     --banner-bg:#fff3d9; --banner-line:#e6c685; --banner-txt:#7a5200;
     --glow:rgba(224,108,0,.13); --mvp-grad:linear-gradient(135deg,#ffeed8,#ffffff 60%); --mvp-line:#f0c58a; --mvp-in:#fff7ec;
@@ -31,7 +32,6 @@
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
   a { color:inherit; text-decoration:none; }
   header { position:sticky; top:0; z-index:5; background:var(--hdr); border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:center; padding:8px 16px; flex-wrap:wrap; }
-  header .logo { font-weight:800; letter-spacing:.5px; } header .logo b { color:var(--acc); }
   nav { display:flex; gap:2px; flex:1; flex-wrap:wrap; } nav a { padding:6px 10px; border-radius:8px; color:var(--mut); }
   nav a.on, nav a:hover { background:var(--card); color:var(--txt); }
   select, input, button { background:var(--card); color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font:inherit; }
@@ -94,7 +94,7 @@
   :root, :root[data-theme=dark] { --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 6px 18px rgba(0,0,0,.28); --ov:rgba(5,8,16,.72); }
   :root[data-theme=light] { --shadow:0 1px 2px rgba(24,32,47,.06), 0 8px 22px rgba(24,32,47,.07); --ov:rgba(24,32,47,.45); }
   .card { box-shadow:var(--shadow); } a.card { display:block; transition:transform .15s, border-color .15s; } a.card:hover { transform:translateY(-2px); border-color:var(--acc); }
-  header { backdrop-filter:blur(10px); } header .logo { font-size:17px; }
+  header { backdrop-filter:blur(10px); }
   nav a { transition:background .15s, color .15s; } nav a.on { box-shadow:inset 0 -2px 0 var(--acc); border-radius:8px 8px 4px 4px; }
   :focus-visible { outline:2px solid var(--acc); outline-offset:2px; border-radius:6px; }
   ::-webkit-scrollbar { height:9px; width:9px; } ::-webkit-scrollbar-thumb { background:var(--line); border-radius:6px; } ::-webkit-scrollbar-thumb:hover { background:var(--mut); }
@@ -134,7 +134,7 @@
   .match b { white-space:nowrap; }
   @media (max-width:760px) {
     .court-wide { display:none; } .court-narrow { display:block; } main { padding:12px; }
-    header { padding:8px 12px; gap:8px; } header .logo { font-size:15px; }
+    header { padding:8px 12px; gap:8px; }
     #season { margin-left:auto; } h1 { font-size:20px; }
     .match { gap:6px; } .match a, .match span { font-size:15px; }
   }
@@ -166,13 +166,13 @@
   .sw { width:12px; height:12px; border-radius:50%; display:inline-block; }
   footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
   footer a:hover { color:var(--txt); }
-  .brand { display:flex; align-items:center; gap:9px; } .brand img { display:block; height:42px; width:auto; }
+  .brand { display:flex; align-items:center; gap:9px; } .brand .bm { display:block; width:38px; height:38px; flex:none; } .brand .wm { display:block; height:21px; width:auto; color:var(--txt); flex:none; }
   .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
   .tlogo { flex:none; display:inline-block; vertical-align:middle; }   /* the files are already round, same-size badges */
   td .tlogo { margin-right:4px; } .tn .tlogo { margin:0; }
   #lang { padding:5px 8px; } header .adm { color:var(--mut); font-size:13px; }
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
-  @media (max-width:760px) { .brand img { height:34px; } }
+  @media (max-width:760px) { .brand .bm { width:34px; height:34px; } .brand .wm { height:19px; } }
 .bio{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:6px;font-size:14px}.bio b{font-weight:700}
   .face { position:relative; display:inline-block; flex:none; } .face img.ph { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; border:2px solid var(--acc); background:var(--bg); }
   .face img.ph.generic { border-color:var(--bd,#3b4966); }
@@ -301,7 +301,7 @@
   #scrim { position:fixed; inset:0; background:rgba(5,8,18,.55); z-index:4; } #scrim[hidden] { display:none; }
   @media (max-width:1000px) and (min-width:761px) { nav a:not(.on) span { display:none; } nav a { padding:7px 10px; } }
   @media (max-width:760px) {
-    header { flex-wrap:nowrap; padding:6px 12px; min-height:50px; backdrop-filter:none; } header .brand { flex:1; min-width:0; } header .brand img { height:32px; } #phase, .gear { display:none; }
+    header { flex-wrap:nowrap; padding:6px 12px; min-height:50px; backdrop-filter:none; } header .brand { flex:1; min-width:0; } #phase, .gear { display:none; }
     nav { position:fixed; left:0; right:0; bottom:0; z-index:25; margin:0; padding:4px 4px calc(4px + env(safe-area-inset-bottom)); background:var(--hdr); border-top:1px solid var(--line); display:flex; gap:0; flex:none; }
     nav a, nav .more { flex:1 1 0; min-width:0; flex-direction:column; justify-content:center; align-items:center; gap:3px; padding:7px 2px 5px; font-size:11px; font-weight:600; border-radius:10px; color:var(--mut); background:none; border:0; min-height:52px; }
     nav a.sec { display:none; } nav .more { display:flex; cursor:pointer; font:inherit; font-size:11px; font-weight:600; }
@@ -325,6 +325,22 @@
   .livetile .lt { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; margin:10px 0 6px; } .livetile .tm { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; font-weight:700; color:var(--mut); }
   .livetile .sc { display:flex; align-items:baseline; gap:6px; } .livetile .sc b { font-size:32px; font-weight:800; line-height:1; font-variant-numeric:tabular-nums; } .livetile .sc span { color:var(--mut); }
   .playsfold { margin-top:16px; }
+  .livecard { max-width:820px; } .liveboard { margin:8px 0; gap:8px; } .liveboard .tm { font-size:14px; } .liveboard .big { font-size:34px; } .liveboard .sep { font-size:20px; }
+  .ltabs { display:flex; width:fit-content; margin:2px auto 8px; max-width:100%; } .ltabs button { padding:5px 13px; font-size:13px; }
+  .tspanel { display:grid; gap:8px; max-width:640px; margin:0 auto; } .tsbox { background:var(--bg); border-radius:12px; padding:4px 14px 8px; }
+  .tsgrp { margin:8px 0 0; font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--acc); } .tsnote { margin-top:6px; text-align:center; font-size:11.5px; color:var(--mut); } .tsnote b { color:var(--txt); }
+  .tsrow { display:grid; grid-template-columns:minmax(58px, 1fr) minmax(90px, 1.3fr) minmax(58px, 1fr); align-items:baseline; column-gap:8px; padding:5px 0 0; font-size:12.5px; font-variant-numeric:tabular-nums; }
+  .tsrow .tl { text-align:center; color:var(--mut); font-size:11px; letter-spacing:.02em; } .tsrow .tv { font-weight:500; color:var(--mut); } .tsrow .tv:first-child { text-align:left; } .tsrow .tv:nth-child(3) { text-align:right; }
+  .tsrow .tv small { display:inline; font-size:10px; color:var(--mut); font-weight:400; margin-left:3px; } .tsrow .tv.best { color:var(--txt); font-weight:800; }
+  .tsrow .tsbar { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:3px; height:5px; margin:3px 0 4px; } .tsrow .tsbar i { display:block; height:100%; border-radius:3px; } .tsrow .tsbar i.a { justify-self:end; background:var(--acc); } .tsrow .tsbar i.b { background:var(--lb); } .tsrow .tsbar i.dim { opacity:.4; }
+  :root { --lb:#5b9dff; } .tshead { padding:0 14px; font-size:11px; } .tshead .tv { font-size:11px; letter-spacing:.12em; color:var(--txt); font-weight:800; } .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin:0 6px; } .dot.a { background:var(--acc); } .dot.b { background:var(--lb); }
+  .lsc { width:100%; max-width:420px; margin:0 auto 6px; font-size:12px; } .livecard .scroll:has(.lsc) { overflow:visible; } .lsc th, .lsc td { padding:4px 8px; text-align:center; } .lsc th.l, .lsc td.l { text-align:left; } .lsc th { color:var(--mut); font-weight:600; font-size:11px; }
+  .h2hhead { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; text-align:center; } .h2hteam { display:flex; flex-direction:column; align-items:center; gap:3px; font-size:13px; }
+  .meet { display:grid; grid-template-columns:34px 1fr auto 1fr; gap:8px; align-items:center; padding:5px 0; font-size:13px; border-top:1px solid var(--line); } .meet:first-of-type { border-top:0; } .meet span:nth-child(3), .meet b { text-align:center; } .meet span:last-child { text-align:right; } .meet .win { font-weight:800; color:var(--acc); }
+  .h2hform { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; padding:5px 0; font-size:13px; } .h2hform .r, .fdots.r { text-align:right; justify-self:end; } .fdots { display:flex; gap:4px; } .fd { font-style:normal; width:20px; height:20px; border-radius:50%; display:grid; place-items:center; font-size:10.5px; font-weight:800; } .fd.w { background:rgba(43,182,115,.2); color:var(--good); } .fd.l { background:rgba(255,101,116,.18); color:#ff6574; }
+  .flagx { font-size:10px; font-weight:800; border-radius:6px; padding:1px 5px; vertical-align:middle; } .flagx.ej { background:var(--bad); color:#fff; } .flagx.inj { background:#7a5a1a; color:#fff; }
+  .hb { height:22px; line-height:22px; } .hasball { display:inline-block; font-size:17px; animation:ballpulse 1.6s ease-in-out infinite; } @keyframes ballpulse { 50% { transform:translateY(-3px); } } @media (prefers-reduced-motion:reduce) { .hasball { animation:none; } }
+  .livetile .hasball { font-size:13px; margin-right:3px; animation:none; } .liveboard .loose { margin-top:6px; }
   .livecard tr.on td:first-child { box-shadow:inset 3px 0 0 var(--good); }
 
   /* social pages, the optional "follow a club" window, the side panels of Players and Games */
@@ -399,11 +415,12 @@
   .n1c { display:flex; flex-direction:column; align-items:center; line-height:1.25; } .n1c small { color:var(--mut); font-size:11px; }
   .n1g .n1s { text-align:center; }
   .n1g { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--line); } .n1g .tn:last-child { justify-content:flex-end; text-align:right; } .n1g .win { font-weight:800; }
+  .lawnote { margin-top:6px; font-size:11px; line-height:1.4; color:var(--mut); opacity:.7; } .lawnote a { text-decoration:underline; text-underline-offset:2px; } .lawnote:hover { opacity:1; }
   .seg.league { margin-bottom:8px; } .seg.league a.on { background:var(--acc); color:#1a1205; }
   .about { max-width:760px; margin:0 auto; } .abhero { display:flex; gap:16px; align-items:center; margin:6px 0 14px; } .abtext p { font-size:16px; line-height:1.65; margin:0 0 14px; } .abtext p:last-child { margin:0; color:var(--mut); font-size:14px; }
   .predhero { background:var(--mvp-grad); border-color:var(--mvp-line); } .predhero .ph1 { display:flex; gap:14px; align-items:center; } .predhero .pico { font-size:38px; }
   .pprog { display:flex; align-items:center; gap:12px; } .pprog .bar { flex:1; height:10px; border-radius:6px; background:var(--track); overflow:hidden; } .pprog .bar i { display:block; height:100%; background:linear-gradient(90deg,var(--acc),#ffc46b); border-radius:6px; transition:width .4s; }
-  @media (max-width:480px) { header .brand .logo { display:none; } header .brand img { height:34px; flex:none; } }
+  @media (max-width:480px) { header .brand .wm { display:none; } header .brand .bm { width:36px; height:36px; } }
   @media (max-width:760px) {
     header .brand { flex:1; } .hdrbtn { display:inline-flex; } .clubbtn span { max-width:70px; overflow:hidden; text-overflow:ellipsis; } .socialcard .socbig { width:100%; } .sb { flex:1 1 auto; justify-content:center; }
   }
@@ -447,7 +464,7 @@
 </head>
 <body>
 <header>
-  <a class="brand" href="{{HOME}}"><img src="/img/logo-96.png" alt="Tunisia Basket" width="34" height="42"><span class="logo"><b>TUNISIA</b> BASKET</span></a>
+  <a class="brand" href="{{HOME}}" aria-label="Tunisia Basket"><svg class="bm" viewBox="0 0 220 220" aria-hidden="true" focusable="false"><g transform="translate(110 110) scale(1.0400)"><mask id="lgm" maskUnits="userSpaceOnUse" x="-110" y="-110" width="220" height="220"><rect x="-110" y="-110" width="220" height="220" fill="#fff"/><path d="M-104,-31 Q0,6 104,-31" stroke="#000" stroke-width="9.5" fill="none" stroke-linecap="round"/><path d="M-104,31 Q0,-6 104,31" stroke="#000" stroke-width="9.5" fill="none" stroke-linecap="round"/><path d="M44,-106 Q80,0 44,106" stroke="#000" stroke-width="9.5" fill="none" stroke-linecap="round"/></mask><circle r="100" style="fill:var(--logo-red)" mask="url(#lgm)"/><circle r="42.0" fill="#FFFFFF"/><g transform="scale(1.0)"><path d="M15.42,-17.29 A26,26 0 1 0 15.42,17.29 A21,21 0 1 1 15.42,-17.29Z" style="fill:var(--logo-red)"/><path d="M7.00,-11.00 L9.47,-3.40 L17.46,-3.40 L11.00,1.30 L13.47,8.90 L7.00,4.20 L0.53,8.90 L3.00,1.30 L-3.46,-3.40 L4.53,-3.40Z" style="fill:var(--logo-red)"/></g></g></svg><svg class="wm" viewBox="0 0 539 64" aria-hidden="true" focusable="false"><path fill="currentColor" d="M41.1 1.06V11.51Q41.1 11.96 40.79 12.27Q40.48 12.58 40.03 12.58H29.05Q28.61 12.58 28.61 13.02V60.94Q28.61 61.38 28.3 61.69Q27.99 62 27.55 62H14.97Q14.53 62 14.22 61.69Q13.91 61.38 13.91 60.94V13.02Q13.91 12.58 13.46 12.58H2.92Q2.48 12.58 2.17 12.27Q1.86 11.96 1.86 11.51V1.06Q1.86 0.62 2.17 0.31Q2.48 0 2.92 0H40.03Q40.48 0 40.79 0.31Q41.1 0.62 41.1 1.06Z M46.85 43.93V1.06Q46.85 0.62 47.16 0.31Q47.47 0 47.92 0H60.49Q60.94 0 61.25 0.31Q61.56 0.62 61.56 1.06V45.35Q61.56 47.47 62.58 48.8Q63.59 50.13 65.28 50.13Q66.96 50.13 67.98 48.8Q69 47.47 69 45.35V1.06Q69 0.62 69.31 0.31Q69.62 0 70.06 0H82.64Q83.08 0 83.39 0.31Q83.7 0.62 83.7 1.06V43.93Q83.7 49.51 81.4 53.76Q79.09 58.01 74.93 60.36Q70.77 62.71 65.28 62.71Q59.79 62.71 55.62 60.36Q51.46 58.01 49.16 53.76Q46.85 49.51 46.85 43.93Z M117 0H129.4Q129.85 0 130.16 0.31Q130.47 0.62 130.47 1.06V60.94Q130.47 61.38 130.16 61.69Q129.85 62 129.4 62H115.32Q114.35 62 114.08 61.11L105.31 30.29Q105.22 30.03 105 29.98Q104.78 29.94 104.78 30.29L104.96 60.94Q104.96 61.38 104.65 61.69Q104.34 62 103.89 62H91.49Q91.05 62 90.74 61.69Q90.43 61.38 90.43 60.94V1.06Q90.43 0.62 90.74 0.31Q91.05 0 91.49 0H105.4Q106.37 0 106.64 0.89L115.5 31.89Q115.59 32.15 115.81 32.15Q116.03 32.15 116.03 31.8L115.94 1.06Q115.94 0.62 116.25 0.31Q116.56 0 117 0Z M137.73 60.94V1.06Q137.73 0.62 138.04 0.31Q138.35 0 138.79 0H151.37Q151.81 0 152.12 0.31Q152.43 0.62 152.43 1.06V60.94Q152.43 61.38 152.12 61.69Q151.81 62 151.37 62H138.79Q138.35 62 138.04 61.69Q137.73 61.38 137.73 60.94Z M158.81 46.23V43.49Q158.81 43.05 159.12 42.74Q159.43 42.43 159.87 42.43H172.27Q172.71 42.43 173.02 42.74Q173.33 43.05 173.33 43.49V45.53Q173.33 47.65 174.35 48.89Q175.37 50.13 176.97 50.13Q178.56 50.13 179.58 48.94Q180.6 47.74 180.6 45.88Q180.6 43.84 179 42.2Q177.41 40.57 172.63 37.11Q168.2 33.92 165.36 31.4Q162.53 28.87 160.49 25.11Q158.45 21.35 158.45 16.39Q158.45 11.34 160.71 7.44Q162.97 3.54 167.09 1.42Q171.21 -0.71 176.52 -0.71Q181.93 -0.71 186.04 1.46Q190.16 3.63 192.42 7.57Q194.68 11.51 194.68 16.65V18.78Q194.68 19.22 194.37 19.53Q194.06 19.84 193.62 19.84H181.31Q180.86 19.84 180.55 19.53Q180.24 19.22 180.24 18.78V16.3Q180.24 14.35 179.18 13.11Q178.12 11.87 176.52 11.87Q174.93 11.87 173.95 13.11Q172.98 14.35 172.98 16.39Q172.98 18.6 174.49 20.37Q175.99 22.14 180.6 25.51Q186.18 29.67 189.01 32.24Q191.85 34.81 193.44 37.95Q195.03 41.1 195.03 45.35Q195.03 53.32 190.03 58.01Q185.03 62.71 176.88 62.71Q171.47 62.71 167.4 60.63Q163.33 58.55 161.07 54.78Q158.81 51.02 158.81 46.23Z M200.88 60.94V1.06Q200.88 0.62 201.19 0.31Q201.5 0 201.94 0H214.52Q214.96 0 215.27 0.31Q215.58 0.62 215.58 1.06V60.94Q215.58 61.38 215.27 61.69Q214.96 62 214.52 62H201.94Q201.5 62 201.19 61.69Q200.88 61.38 200.88 60.94Z M248.44 61.03 247.29 53.32Q247.29 52.88 246.76 52.88H237.19Q236.66 52.88 236.66 53.32L235.6 61.03Q235.51 62 234.45 62H221.87Q220.72 62 220.99 60.85L233.83 0.97Q234.01 0 234.98 0H249.42Q250.39 0 250.57 0.97L263.32 60.85L263.41 61.2Q263.41 62 262.44 62H249.59Q248.53 62 248.44 61.03ZM238.97 41.54H244.9Q245.25 41.54 245.25 41.1L242.07 20.9Q241.98 20.55 241.8 20.55Q241.62 20.55 241.53 20.9L238.61 41.1Q238.61 41.54 238.97 41.54Z"/><path style="fill:var(--logo-red)" d="M305.48 62H287.59Q287.15 62 286.84 61.69Q286.53 61.38 286.53 60.94V1.06Q286.53 0.62 286.84 0.31Q287.15 0 287.59 0H303.18Q312.39 0 317.66 4.3Q322.93 8.59 322.93 17.18Q322.93 25.69 317.35 29.67Q316.91 29.94 317.26 30.2Q323.99 35.16 323.99 44.73Q323.99 53.05 318.77 57.53Q313.54 62 305.48 62ZM301.23 13.02V24.36Q301.23 24.8 301.67 24.8H303.36Q305.84 24.8 307.17 23.25Q308.49 21.7 308.49 18.78Q308.49 15.77 307.17 14.17Q305.84 12.58 303.36 12.58H301.67Q301.23 12.58 301.23 13.02ZM309.29 42.51Q309.29 39.24 307.96 37.29Q306.63 35.34 304.42 35.34H301.67Q301.23 35.34 301.23 35.78V48.89Q301.23 49.33 301.67 49.33H304.33Q306.63 49.33 307.96 47.56Q309.29 45.79 309.29 42.51Z M353.84 61.03 352.69 53.32Q352.69 52.88 352.16 52.88H342.59Q342.06 52.88 342.06 53.32L341 61.03Q340.91 62 339.85 62H327.27Q326.12 62 326.39 60.85L339.23 0.97Q339.41 0 340.38 0H354.82Q355.79 0 355.97 0.97L368.72 60.85L368.81 61.2Q368.81 62 367.84 62H354.99Q353.93 62 353.84 61.03ZM344.37 41.54H350.3Q350.65 41.54 350.65 41.1L347.47 20.9Q347.38 20.55 347.2 20.55Q347.02 20.55 346.93 20.9L344.01 41.1Q344.01 41.54 344.37 41.54Z M371.11 46.23V43.49Q371.11 43.05 371.42 42.74Q371.73 42.43 372.18 42.43H384.58Q385.02 42.43 385.33 42.74Q385.64 43.05 385.64 43.49V45.53Q385.64 47.65 386.66 48.89Q387.68 50.13 389.27 50.13Q390.87 50.13 391.88 48.94Q392.9 47.74 392.9 45.88Q392.9 43.84 391.31 42.2Q389.71 40.57 384.93 37.11Q380.5 33.92 377.67 31.4Q374.83 28.87 372.8 25.11Q370.76 21.35 370.76 16.39Q370.76 11.34 373.02 7.44Q375.28 3.54 379.4 1.42Q383.51 -0.71 388.83 -0.71Q394.23 -0.71 398.35 1.46Q402.47 3.63 404.73 7.57Q406.99 11.51 406.99 16.65V18.78Q406.99 19.22 406.68 19.53Q406.37 19.84 405.92 19.84H393.61Q393.17 19.84 392.86 19.53Q392.55 19.22 392.55 18.78V16.3Q392.55 14.35 391.49 13.11Q390.42 11.87 388.83 11.87Q387.23 11.87 386.26 13.11Q385.29 14.35 385.29 16.39Q385.29 18.6 386.79 20.37Q388.3 22.14 392.9 25.51Q398.48 29.67 401.32 32.24Q404.15 34.81 405.75 37.95Q407.34 41.1 407.34 45.35Q407.34 53.32 402.34 58.01Q397.33 62.71 389.18 62.71Q383.78 62.71 379.71 60.63Q375.63 58.55 373.37 54.78Q371.11 51.02 371.11 46.23Z M413.19 60.94V1.06Q413.19 0.62 413.5 0.31Q413.81 0 414.25 0H426.83Q427.27 0 427.58 0.31Q427.89 0.62 427.89 1.06V21.08Q427.89 21.43 428.07 21.43Q428.24 21.43 428.42 21.17L437.72 0.8Q438.07 0 438.96 0H452.25Q452.87 0 453.09 0.31Q453.31 0.62 453.04 1.24L440.2 27.28Q440.11 27.63 440.11 27.81L453.57 60.76Q453.66 60.94 453.66 61.29Q453.66 62 452.78 62H439.4Q438.43 62 438.16 61.2L430.19 40.48Q430.1 40.21 429.93 40.21Q429.75 40.21 429.57 40.48L427.98 43.67Q427.89 43.84 427.89 44.2V60.94Q427.89 61.38 427.58 61.69Q427.27 62 426.83 62H414.25Q413.81 62 413.5 61.69Q413.19 61.38 413.19 60.94Z M491.93 12.58H474.12Q473.68 12.58 473.68 13.02V24.18Q473.68 24.62 474.12 24.62H483.87Q484.31 24.62 484.62 24.93Q484.93 25.24 484.93 25.69V36.23Q484.93 36.67 484.62 36.98Q484.31 37.29 483.87 37.29H474.12Q473.68 37.29 473.68 37.73V48.98Q473.68 49.42 474.12 49.42H491.93Q492.37 49.42 492.68 49.73Q492.99 50.04 492.99 50.49V60.94Q492.99 61.38 492.68 61.69Q492.37 62 491.93 62H460.04Q459.6 62 459.29 61.69Q458.98 61.38 458.98 60.94V1.06Q458.98 0.62 459.29 0.31Q459.6 0 460.04 0H491.93Q492.37 0 492.68 0.31Q492.99 0.62 492.99 1.06V11.51Q492.99 11.96 492.68 12.27Q492.37 12.58 491.93 12.58Z M537.1 1.06V11.51Q537.1 11.96 536.79 12.27Q536.48 12.58 536.03 12.58H525.05Q524.61 12.58 524.61 13.02V60.94Q524.61 61.38 524.3 61.69Q523.99 62 523.55 62H510.97Q510.53 62 510.22 61.69Q509.91 61.38 509.91 60.94V13.02Q509.91 12.58 509.46 12.58H498.92Q498.48 12.58 498.17 12.27Q497.86 11.96 497.86 11.51V1.06Q497.86 0.62 498.17 0.31Q498.48 0 498.92 0H536.03Q536.48 0 536.79 0.31Q537.1 0.62 537.1 1.06Z"/></svg></a>
   <span class="pill" id="phase">{{REGULAR}}</span>
   <nav id="nav"><!--NAV--><button class="more" id="morebtn" aria-expanded="false" aria-controls="pop"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg><span id="moretxt">More</span></button></nav>
   <button class="clubbtn" id="clubbtn" type="button"></button>
@@ -501,6 +518,7 @@ const FR = {
   'Season MVP': 'MVP de la saison', 'MVP pool': 'Candidats MVP', 'Latest games': 'Derniers matchs', 'MVP': 'MVP', 'GAME MVP': 'MVP DU MATCH', '★ SEASON MVP': '★ MVP DE LA SAISON',
   'Player': 'Joueur', 'Team': 'Équipe', 'Rating': 'Note', 'Pts': 'Pts', 'Diff': 'Diff', 'Box scores': 'Feuilles de match', 'Box scores available in the app': 'Feuilles de match disponibles sur le site',
   'Search player…': 'Rechercher un joueur…', 'All teams': 'Toutes les équipes', 'No players match.': 'Aucun joueur trouvé.', 'No games.': 'Aucun match.',
+  'Ranking as in the FTBB General Regulations (articles 182 to 184): 2 points for a win, 1 for a loss, 0 for a forfeit. Teams level on points are separated by the games between them (point difference), then by the point difference of all the games.': 'Classement selon les Règlements Généraux de la FTBB (articles 182 à 184) : 2 points pour une victoire, 1 pour une défaite, 0 pour un forfait. Les équipes à égalité de points sont départagées par les matchs joués entre elles (différence de points), puis par la différence de points de tous les matchs.', 'FTBB regulations': 'Règlements FTBB',
   'Click a team for its match history and calendar.': "Cliquez sur une équipe pour son historique et son calendrier.",
   '2 points for a win, 1 for a loss.': '2 points pour une victoire, 1 pour une défaite.',
   'Player stats only exist for games with a box score (last column).': 'Les statistiques des joueurs n’existent que pour les matchs avec feuille de match (dernière colonne).',
@@ -561,7 +579,7 @@ const FR = {
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
   'This game is not live any more.': 'Ce match n’est plus en direct.', 'Its box score will be on the site once it is approved.': 'Sa feuille de match sera sur le site une fois validée.', 'All live games': 'Tous les matchs en direct', 'Tap a game to follow it.': 'Touchez un match pour le suivre.',
-  'Live': 'Direct', 'LIVE': 'DIRECT', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
+  'Live': 'Direct', 'LIVE': 'DIRECT', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Field goals': 'Tirs', 'technical foul': 'faute technique', 'injured': 'blessé', 'ejected': 'exclu', 'team offensive rebound': 'rebond offensif d’équipe', 'team defensive rebound': 'rebond défensif d’équipe', 'team turnover': 'balle perdue d’équipe', 'timeout': 'temps mort', 'technical foul on the coach': 'faute technique sur l’entraîneur', 'technical foul on the bench': 'faute technique sur le banc', 'Technical fouls': 'Fautes techniques', 'Timeouts used': 'Temps morts pris', 'Play by play': 'Fil du match', 'Head to head': 'Face à face', 'Free-throw %': 'Réussite aux lancers', 'Form': 'Forme', 'Top scorer': 'Meilleur marqueur', 'Season so far': 'Saison jusqu’ici', 'Previous meetings': 'Confrontations précédentes', 'No meeting yet this season': 'Pas encore de confrontation cette saison', 'Loading…': 'Chargement…', 'No head-to-head data yet.': 'Pas encore de données de face à face.', 'Last 5': '5 derniers', 'Game flow': 'Déroulement du match', 'Biggest lead': 'Plus grand écart', 'Longest run': 'Plus longue série', 'Lead changes': 'Changements de leader', 'Ties': 'Égalités', 'Possession': 'Possession', 'Loose ball': 'Balle libre', 'Three-pointers': 'Tirs à 3 points', 'Free throws': 'Lancers francs', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
   'No game is live right now.': 'Aucun match en direct pour le moment.', 'When a game is followed live, its score, box score and last plays appear here and update by themselves.': 'Quand un match est suivi en direct, son score, sa feuille de match et ses dernières actions apparaissent ici et se mettent à jour tout seuls.',
   'See the calendar': 'Voir le calendrier', 'Make your picks': 'Faire vos pronostics', 'Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.': 'Compté à la main par un analyste pendant le match : les chiffres peuvent être corrigés jusqu’à la sortie de la feuille de match.',
   'free throw made': 'lancer franc réussi', '2-pointer made': 'tir à 2 pts réussi', '3-pointer made': 'tir à 3 pts réussi', 'free throw missed': 'lancer franc raté', '2-pointer missed': 'tir à 2 pts raté', '3-pointer missed': 'tir à 3 pts raté',
@@ -1525,6 +1543,9 @@ const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" ar
 const finTab = ['finals', '🔥 ' + _('Play-off') + ' · ' + _('Play-out')];
 // Once the play-off / play-out have started they take the place of the championship (regular-season) standings; the regular season stays under their "Regular season" tab
 const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[...(COMP.started ? [finTab] : [['standings', '🏆 ' + _('Standings')]]), ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.finals && !COMP.started ? [finTab] : [])].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
+// the law behind the order of every table, small on purpose: the FTBB's General Regulations, articles 182 to 184
+const LAW_URL = 'https://www.ftbb.org.tn/wp-content/uploads/2025/11/Reglements-Generaux-de-la-FTBB_2024-2.pdf';
+const lawNote = () => `<div class="lawnote">${_('Ranking as in the FTBB General Regulations (articles 182 to 184): 2 points for a win, 1 for a loss, 0 for a forfeit. Teams level on points are separated by the games between them (point difference), then by the point difference of all the games.')} <a href="${LAW_URL}" target="_blank" rel="noopener">${_('FTBB regulations')} ↗</a></div>`;
 async function standings() {
   if (COMP.started) return finals();
   const d = await api('overview' + (new URLSearchParams(location.search).get('move') === '1' ? '?move=1' : ''));      // ?move=1 shows the last round's rises and falls whatever the date (to look at them)
@@ -1532,7 +1553,7 @@ async function standings() {
   return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
   ${d.movement ? `<div class="movebar">⚡ ${esc(f('moveNote', d.movement.matchday, fmtDay(d.movement.until)))}</div>` : ''}
   <div class="zlegend"><span><i class="z-po"></i>${_('Playoff')} · ${_('top 6')}</span><span><i class="z-pl"></i>${_('Playout')} · ${_('the other 6')}</span><span class="mut small"><b class="mvpdot">★</b> ${_('MVP pool')}</span></div>
-  <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>`;
+  <div class="note">${_('Click a team for its match history and calendar.')} ${_('2 points for a win, 1 for a loss.')} ${_('Player stats only exist for games with a box score (last column).')} ${esc(f('topNote', d.top_teams.length))}</div>${lawNote()}`;
 }
 
 // ---------------------------------------------------------------- National One (the league below the Pro A): results and table only, no statistics
@@ -1577,7 +1598,7 @@ async function nat1(arg) {
   return `${head}${table}
   <div class="zlegend"><span><i class="z-po"></i>${esc(f('n1Legend', fm.playoff))}</span><span><i class="z-cup"></i>${_('League Cup')}</span></div>
   ${promo}
-  <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>`;
+  <div class="note">${official ? esc(f('nat1Official', official.source, fmtDay(official.published))) + ' ' : ''}${_('2 points for a win, 1 for a loss.')} ${_('We only have results for the National One: there are no player or box-score statistics yet.')}</div>${lawNote()}`;
 }
 
 // ---------------------------------------------------------------- Cup: a knockout bracket of Pro A and Nationale 1 clubs, one game per tie
@@ -1647,7 +1668,7 @@ function finPanel(g, carry, stage) {
     body = `<div class="card scroll"><table class="ftable"><thead><tr><th>#</th><th class="l">${_('Team')}</th><th title="${esc(_('Points carried over from the regular season'))}">${_('Carry')}</th><th>J</th><th>${W}</th><th>${Ls}</th><th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>
       ${g.table.map(t => `<tr style="cursor:default" class="${t.zone ? 'fz-' + t.zone + (t.final ? '' : ' prov') : ''}"><td class="rkz">${t.rank}</td><td class="l"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 28)}<span>${esc(t.name)}</span></a>${t.move > 0 ? `<span class="mv up">▲${t.move}</span>` : t.move < 0 ? `<span class="mv dn">▼${-t.move}</span>` : ''}${t.zone === 'up' ? `<span class="zone z-po" title="${esc(_('Super play-off'))}">⚡</span>` : t.zone === 'down' ? `<span class="zone z-pl">${_('Relegation')}</span>` : ''}</td><td class="mut">${t.carry ? '+' + t.carry : '–'}</td><td>${t.j}</td><td>${t.w}</td><td>${t.l}</td><td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>
       ${g.table.some(t => t.zone) ? `<div class="zlegend">${g.table.some(t => t.zone === 'up') ? `<span><i class="z-po"></i>${esc(f('qualTop', g.table.filter(t => t.zone === 'up').length))}</span>` : ''}${g.table.some(t => t.zone === 'down') ? `<span><i class="z-pl"></i>${esc(f('relegNote', g.table.filter(t => t.zone === 'down').length))}</span>` : ''}<span class="mut small">${g.done ? _('Final table.') : esc(f('provisional', g.played, g.expected))}</span></div>` : ''}
-      <div class="cnote">${esc({ full: _('Report: each club keeps the points of its regular season (2 for a win, 1 for a loss) and adds those of each game played here.'), half: _('Report: each club keeps half of its regular-season points (rounded), then adds those of each game played here.'), none: _('Everyone starts again from zero: only the games played here count.') }[carry] || '')}</div>
+      <div class="cnote">${esc({ full: _('Report: each club keeps the points of its regular season (2 for a win, 1 for a loss) and adds those of each game played here.'), half: _('Report: each club keeps half of its regular-season points (rounded), then adds those of each game played here.'), none: _('Everyone starts again from zero: only the games played here count.') }[carry] || '')}</div>${lawNote()}
       ${g.rounds.length ? `<details class="fold"><summary><span>${_('Games')}</span><span class="sub mut">${g.rounds.length} ${_('rounds')}</span><span class="chev">▾</span></summary><div class="grid n1grid" style="margin-top:10px">${g.rounds.map(r => `<div class="card"><div class="row"><b>${_('Round')} ${r.round}</b></div>${r.games.map(x => { const hw = x.played && x.home_score > x.away_score; return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${logo(x.home, 24)}<span>${esc(x.home)}</span></span>${x.played ? `<b>${x.home_score} – ${x.away_score}</b>` : `<span class="mut small n1s">${x.date ? esc(fmtDate(x.date)) : _('to come')}</span>`}<span class="tn ${x.played && !hw ? 'win' : ''}"><span>${esc(x.away)}</span>${logo(x.away, 24)}</span></div>`; }).join('')}</div>`).join('')}</div></details>` : ''}`;
   }
   return `<section class="fpanel ${g.key}"><div class="fhead"><span class="fico">${icon}</span><div><h2 style="margin:0">${title}${stage === 1 ? ` <span class="mut small" style="font-weight:600">· ${_('Play-off')}</span>` : ''}</h2>${g.stakes ? `<div class="mut small">${esc(_(g.stakes))}</div>` : ''}</div></div>${body}</section>`;
@@ -1692,7 +1713,7 @@ const ABOUT = {
 async function about() {
   pageMeta = META.about[LANG];
   const t = document.querySelector('#socbig'), btns = t ? t.innerHTML.trim() : '';
-  return `<div class="about"><div class="abhero"><img src="/img/logo-96.png" alt="" width="64" height="80"><div><h1 style="margin:0">${_('About us')}</h1><div class="mut">${_('Basketball statistics for Tunisia, made for free by fans')}</div></div></div>
+  return `<div class="about"><div class="abhero"><img src="/img/brand/mark.svg" alt="" width="72" height="72"><div><h1 style="margin:0">${_('About us')}</h1><div class="mut">${_('Basketball statistics for Tunisia, made for free by fans')}</div></div></div>
   <div class="card abtext">${ABOUT[LANG].map(p => `<p>${esc(p)}</p>`).join('')}</div>
   <div class="card socialcard"><div class="sl"><b>${_('Follow Tunisia Basket')}</b><div class="mut small">${_('Your engagement means a lot to us. Thank you!')}</div></div>${btns}</div>
   <div class="card followcard"><div class="fl"><span class="fstar">⭐</span><div><b>${_('Follow your club')}</b><div class="mut small">${_('Pick your club: it is highlighted for you, and we learn which clubs our readers follow.')}</div></div></div><div class="fr"><button class="vote" data-followopen>${favTeam ? _('Change') : _('Choose a club')}</button></div></div></div>`;
@@ -1818,14 +1839,77 @@ async function planning() {
 }
 
 // ---------------------------------------------------------------- live (proof of concept): games the admin switched on while an analyst counts them
-let liveTimer, livePlaysOpen = false;
+let liveTimer, livePlaysOpen = false, liveTab = 'stats', liveLast = null;
 const qLabel = q => q > 4 ? 'OT' + (q - 4) : 'Q' + q, clockTxt = t => `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
 // the list: one small tile per live game (logos, score, clock), side by side; a click opens the game
 function liveTile(g) {
   const [a, b] = [g.home, g.away].map(c => g.teams[c]);
   return `<a class="livetile" href="${url('live', g.id)}"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="sp"></span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span></div>
-    <div class="lt"><div class="tm">${logo(a.code, 44)}<span>${esc(a.code)}</span></div><div class="sc"><b>${a.score}</b><span>–</span><b>${b.score}</b></div><div class="tm">${logo(b.code, 44)}<span>${esc(b.code)}</span></div></div>
+    <div class="lt"><div class="tm">${logo(a.code, 44)}<span>${g.ball && g.ball.team === a.code ? '<span class="hasball">🏀</span>' : ''}${esc(a.code)}</span></div><div class="sc"><b>${a.score}</b><span>–</span><b>${b.score}</b></div><div class="tm">${logo(b.code, 44)}<span>${g.ball && g.ball.team === b.code ? '<span class="hasball">🏀</span>' : ''}${esc(b.code)}</span></div></div>
     <div class="mut small" style="text-align:center">${esc(a.name)} – ${esc(b.name)}</div></a>`;
+}
+// the ball: lit under the team that has it (deduced from the last action, or set by the analyst)
+const ballMark = (g, code) => `<span class="hb">${g.ball && g.ball.team === code ? `<span class="hasball" title="${esc(_('Possession'))}">🏀</span>` : ''}</span>`;
+// the two teams side by side: shooting, rebounds, assists..., and the scoring lines (paint, second chance, fast break, off turnovers, bench) when the analyst tagged baskets; the better figure of each line is lit
+// one line of a comparison: the two values with a thin bar from the centre (orange = the first team, blue = the second); the better figure is bold and its bar full colour
+const lvBest = (x, y, better) => x !== null && y !== null && x !== y && (x - y) * better > 0;
+const lvWid = (x, y) => { const m = Math.max(x || 0, y || 0); return m ? Math.round(100 * (x || 0) / m) : 0; };
+function liveRow([label, ta, tb, va, vb, better = 1]) {
+  const ba = lvBest(va, vb, better), bb = lvBest(vb, va, better);
+  return `<div class="tsrow"><span class="tv${ba ? ' best' : ''}">${ta}</span><span class="tl">${_(label)}</span><span class="tv${bb ? ' best' : ''}">${tb}</span><span class="tsbar"><i class="a${ba || va === vb ? '' : ' dim'}" style="width:${lvWid(va, vb)}%"></i><i class="b${bb || va === vb ? '' : ' dim'}" style="width:${lvWid(vb, va)}%"></i></span></div>`;
+}
+const lvHead = (a, b) => `<div class="tsrow tshead"><span class="tv"><i class="dot a"></i>${esc(a.code)}</span><span class="tl"></span><span class="tv">${esc(b.code)}<i class="dot b"></i></span></div>`;
+function liveTeamStats(a, b, g) {
+  const A = a.totals || {}, B = b.totals || {}, pct = (m, n) => n ? Math.round(100 * m / n) : null;
+  const small = v => v === null ? '' : ` <small>${v}%</small>`;
+  const shot = (k, m, n) => { const pa = pct(A[m] || 0, A[n] || 0), pb = pct(B[m] || 0, B[n] || 0); return [k, `${A[m] || 0}/${A[n] || 0}${small(pa)}`, `${B[m] || 0}/${B[n] || 0}${small(pb)}`, pa, pb, 1]; };
+  const plain = (k, key, better = 1) => [k, A[key] || 0, B[key] || 0, A[key] || 0, B[key] || 0, better];
+  const main = [shot('Field goals', 'fgm', 'fga'), shot('Three-pointers', 'p3m', 'p3a'), shot('Free throws', 'ftm', 'fta'), plain('Rebounds', 'reb'), plain('Offensive rebounds', 'oreb'), plain('Assists', 'ast'),
+    plain('Steals', 'stl'), plain('Blocks', 'blk'), plain('Turnovers', 'tov', -1), plain('Fouls', 'pf', -1)];
+  if ((A.techs || 0) + (B.techs || 0)) main.push(plain('Technical fouls', 'techs', -1));
+  if ((A.timeouts || 0) + (B.timeouts || 0)) main.push(plain('Timeouts used', 'timeouts', 0));
+  // where the points come from: the baskets the analyst tagged (a dash until some are), and the bench once both fives are marked
+  const ea = a.extra || {}, eb = b.extra || {}, lines = [['paint', 'Points in the paint'], ['second', 'Second-chance points'], ['fast', 'Fast-break points'], ['tov_pts', 'Points off turnovers'], ['bench', 'Bench points']];
+  const tagging = lines.slice(0, 4).some(([k]) => (ea[k] || 0) + (eb[k] || 0) > 0);           // once some baskets are tagged, a line at 0 is a real 0
+  const scoring = lines.map(([k, label]) => { const x = ea[k], y = eb[k], none = x === undefined || y === undefined || (k !== 'bench' && !tagging); return none ? [label, '–', '–', null, null, 1] : [label, x, y, x, y, 1]; });
+  const fl = g.flow || { lead: {}, run: {}, changes: 0, ties: 0 }, started = a.score + b.score > 0;
+  const flow = started ? [['Biggest lead', fl.lead[a.code] || 0, fl.lead[b.code] || 0, fl.lead[a.code] || 0, fl.lead[b.code] || 0, 1], ['Longest run', fl.run[a.code] || 0, fl.run[b.code] || 0, fl.run[a.code] || 0, fl.run[b.code] || 0, 1]] : [];
+  return `<div class="tspanel">${lvHead(a, b)}<div class="tsbox">${main.map(liveRow).join('')}</div>
+    <div class="tsbox"><div class="tsgrp">${_('Scoring sources')}</div>${scoring.map(liveRow).join('')}</div>
+    ${flow.length ? `<div class="tsbox"><div class="tsgrp">${_('Game flow')}</div>${flow.map(liveRow).join('')}<div class="tsnote">${_('Lead changes')} <b>${fl.changes}</b> · ${_('Ties')} <b>${fl.ties}</b></div></div>` : ''}</div>`;
+}
+// the score by quarter, under the teams (only when the analyst uses the game clock)
+function liveQuarters(g, a, b) {
+  const q = g.quarters, per = n => n > 4 ? 'OT' + (n - 4) : 'Q' + n;
+  if (!q) return '';
+  return `<div class="scroll"><table class="lsc"><thead><tr><th class="l"></th>${q.pts[a.code].map((_x, i) => `<th>${per(i + 1)}</th>`).join('')}<th>PTS</th></tr></thead><tbody>${[a, b].map(t => `<tr><td class="l"><b>${esc(t.code)}</b></td>${q.pts[t.code].map(v => `<td>${v}</td>`).join('')}<td><b>${t.score}</b></td></tr>`).join('')}</tbody></table></div>`;
+}
+// the play by play: the last actions, newest first
+function livePlaysTab(g) {
+  return `<div class="tspanel"><div class="tsbox"><div class="tsgrp">${_('Play by play')}</div><ul class="plays">${g.plays.map(p => `<li><span class="tm2">${p.q ? qLabel(p.q) + ' ' + clockTxt(p.t) : ''}</span><span><b>${esc(title(p.name))}</b> <span class="mut">${esc(p.team)} · ${_(p.text)}</span></span>${p.pts ? `<span class="pp">+${p.pts}</span>` : ''}</li>`).join('') || `<li class="mut">${_('Nothing counted yet.')}</li>`}</ul></div></div>`;
+}
+// head to head, from what the site already knows: the season so far of each team, their meetings, their form and their best scorer
+const liveH2H = {};
+function liveH2HTab(g, a, b) {
+  const key = g.home + '-' + g.away, m = liveH2H[key];
+  if (m === undefined) {
+    liveH2H[key] = null;
+    fetch(`/api/matchup?home=${g.home}&away=${g.away}`).then(r => r.ok ? r.json() : false).then(d => { liveH2H[key] = d || false; if (liveTab === 'h2h' && liveLast && $('#livebox')) { $('#livebox').innerHTML = liveBody(liveLast.games, liveLast.now, liveLast.id); liveWire(); } }).catch(() => { liveH2H[key] = false; });
+  }
+  if (!m) return `<div class="tspanel"><div class="tsnote">${m === false ? _('No head-to-head data yet.') : _('Loading…')}</div></div>`;
+  const A = m.home || {}, B = m.away || {}, n = v => v === undefined || v === null ? null : v, num = (k, better = 1, suffix = '') => [k, n(A[k]) === null ? '–' : A[k] + suffix, n(B[k]) === null ? '–' : B[k] + suffix, n(A[k]), n(B[k]), better];
+  const rows = [['Points scored', A.ppg, B.ppg, A.ppg, B.ppg, 1], ['Points allowed', A.opp_ppg, B.opp_ppg, A.opp_ppg, B.opp_ppg, -1], ['Point difference', signed(A.diff_pg ?? 0), signed(B.diff_pg ?? 0), A.diff_pg ?? 0, B.diff_pg ?? 0, 1],
+    num('fg_pct', 1, '%'), num('p3_pct', 1, '%'), num('ft_pct', 1, '%'), num('reb'), num('ast'), num('stl'), num('blk'), num('tov', -1)]
+    .map(r => ({ fg_pct: 'Field goal %', p3_pct: '3-point %', ft_pct: 'Free-throw %', reb: 'Rebounds', ast: 'Assists', stl: 'Steals', blk: 'Blocks', tov: 'Turnovers' }[r[0]] ? [{ fg_pct: 'Field goal %', p3_pct: '3-point %', ft_pct: 'Free-throw %', reb: 'Rebounds', ast: 'Assists', stl: 'Steals', blk: 'Blocks', tov: 'Turnovers' }[r[0]], ...r.slice(1)] : r));
+  const card = (t, T) => `<div class="h2hteam">${logo(t.code, 34)}<b>${esc(t.name)}</b><span class="mut small">${T.rank ? '#' + T.rank + ' · ' : ''}${T.w ?? 0}–${T.l ?? 0}</span></div>`;
+  const dots = c => (m.form[c] || []).map(x => `<i class="fd ${x.won ? 'w' : 'l'}" title="J${x.matchday} ${esc(x.opp)}">${x.won ? 'W' : 'L'}</i>`).join('') || '<span class="mut small">–</span>';
+  const meet = m.meetings.length ? m.meetings.map(x => { const hw = x.home_score > x.away_score; return `<div class="meet"><span class="mut small">J${x.matchday}</span><span class="${hw ? 'win' : ''}">${esc(x.home)}</span><b>${x.home_score} – ${x.away_score}</b><span class="${hw ? '' : 'win'}">${esc(x.away)}</span></div>`; }).join('') : `<div class="mut small">${_('No meeting yet this season')}</div>`;
+  const top = c => { const t = (c === g.home ? A : B).top_scorer; return t ? `${esc(title(t.name))} <b>${t.pts}</b>` : '–'; };
+  return `<div class="tspanel"><div class="h2hhead">${card(a, A)}<span class="mut">${_('vs')}</span>${card(b, B)}</div>
+    <div class="tsbox"><div class="tsgrp">${_('Season so far')}</div>${rows.map(liveRow).join('')}</div>
+    <div class="tsbox"><div class="tsgrp">${_('Previous meetings')}</div>${meet}</div>
+    <div class="tsbox"><div class="tsgrp">${_('Form')}</div><div class="h2hform"><span class="fdots">${dots(g.home)}</span><span class="mut small">${_('Last 5')}</span><span class="fdots r">${dots(g.away)}</span></div>
+      <div class="h2hform small"><span>${top(g.home)}</span><span class="mut small">${_('Top scorer')}</span><span class="r">${top(g.away)}</span></div></div></div>`;
 }
 // the game itself: score, the fives, the box score, and the last plays folded (closed until the visitor opens them)
 function liveCard(g, now) {
@@ -1833,23 +1917,30 @@ function liveCard(g, now) {
   const five = t => t.players.filter(p => p.on).map(p => `<span class="ch"><span class="nn">${esc(p.number)}</span>${esc(title(p.name).split(' ').slice(-1)[0])}</span>`).join('');
   const table = t => `<h3 style="margin:16px 0 6px;font-size:15px"><span class="tn">${logo(t.code, 22)}<span>${esc(t.name)}</span></span></h3>${uc ? `<div class="fivebar"><span class="mut small">${_('On court')}</span>${five(t)}</div>` : ''}
     <div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th>${uc ? '<th>MIN</th>' : ''}<th>PTS</th><th>REB</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('PF')}</th><th>${H('FG')}</th><th>${H('3P')}</th><th>${H('FT')}</th>${uc ? '<th>+/-</th>' : ''}</tr></thead><tbody>
-    ${t.players.map(p => `<tr class="${p.on ? 'on' : ''}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.id, name: p.name }, esc(title(p.name)))}</td>${uc ? `<td>${clockTxt(p.sec || 0)}</td>` : ''}<td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pf}</td><td>${p.fgm}/${p.fga}</td><td>${p.p3m}/${p.p3a}</td><td>${p.ftm}/${p.fta}</td>${uc ? `<td>${signed(p.pm || 0)}</td>` : ''}</tr>`).join('') || `<tr><td colspan="13" class="mut">${_('Nothing counted yet.')}</td></tr>`}</tbody></table></div>`;
+    ${t.players.map(p => `<tr class="${p.on ? 'on' : ''}"><td>${esc(p.number)}</td><td class="l">${plink({ id: p.id, name: p.name }, esc(title(p.name)))}${p.ej ? ' <span class="flagx ej" title="' + esc(_('ejected')) + '">EJ</span>' : ''}${p.inj ? ' <span class="flagx inj" title="' + esc(_('injured')) + '">🤕</span>' : ''}</td>${uc ? `<td>${clockTxt(p.sec || 0)}</td>` : ''}<td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pf}</td><td>${p.fgm}/${p.fga}</td><td>${p.p3m}/${p.p3a}</td><td>${p.ftm}/${p.fta}</td>${uc ? `<td>${signed(p.pm || 0)}</td>` : ''}</tr>`).join('') || `<tr><td colspan="13" class="mut">${_('Nothing counted yet.')}</td></tr>`}</tbody></table></div>`;
+  const tab = ['stats', a.code, b.code, 'plays', 'h2h'].includes(liveTab) ? liveTab : 'stats';
+  const tabs = `<div class="seg ltabs" role="tablist">${[['stats', _('Team stats')], [a.code, a.code], [b.code, b.code], ['plays', _('Play by play')], ['h2h', _('Head to head')]].map(([k, l]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-ltab="${esc(k)}">${esc(l)}</button>`).join('')}</div>`;
+  const body = tab === 'stats' ? liveTeamStats(a, b, g) : tab === 'plays' ? livePlaysTab(g) : tab === 'h2h' ? liveH2HTab(g, a, b) : table(tab === a.code ? a : b);
   return `<div class="card livecard"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span><span class="sp"></span><span class="mut small">${esc(f('liveAgo', ago))}</span></div>
-    <div class="liveboard"><div class="tm">${logo(a.code, 48)}<span>${esc(a.name)}</span></div><div><span class="big">${a.score}</span><span class="sep"> – </span><span class="big">${b.score}</span></div><div class="tm">${logo(b.code, 48)}<span>${esc(b.name)}</span></div></div>
-    ${table(a)}${table(b)}
-    <details class="fold playsfold" ${livePlaysOpen ? 'open' : ''}><summary><span>${_('Last plays')}</span><span class="chev">▾</span></summary><ul class="plays">${g.plays.map(p => `<li><span class="tm2">${p.q ? qLabel(p.q) + ' ' + clockTxt(p.t) : ''}</span><span><b>${esc(title(p.name))}</b> <span class="mut">${esc(p.team)} · ${_(p.text)}</span></span>${p.pts ? `<span class="pp">+${p.pts}</span>` : ''}</li>`).join('') || `<li class="mut">${_('Nothing counted yet.')}</li>`}</ul></details>
+    <div class="liveboard"><div class="tm">${logo(a.code, 40)}<span>${esc(a.name)}</span>${ballMark(g, a.code)}</div><div><span class="big">${a.score}</span><span class="sep"> – </span><span class="big">${b.score}</span>${g.ball && g.ball.how && !g.ball.team ? `<div class="mut small loose">${_('Loose ball')}</div>` : ''}</div><div class="tm">${logo(b.code, 40)}<span>${esc(b.name)}</span>${ballMark(g, b.code)}</div></div>
+    ${liveQuarters(g, a, b)}
+    ${tabs}${body}
     <div class="note">${_('Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.')}</div></div>`;
 }
 const liveEmpty = () => `<div class="card"><b>${_('No game is live right now.')}</b><p class="mut" style="margin:6px 0 12px">${_('When a game is followed live, its score, box score and last plays appear here and update by themselves.')}</p>
      <div class="row"><a class="vote" href="${url('planning')}">${_('See the calendar')}</a><a class="vote" href="${url('predict')}">${_('Make your picks')}</a></div></div>`;
 function liveBody(games, now, id) {
+  liveLast = { games, now, id };
   if (id) {
     const g = games.find(x => x.id === id);
     return g ? liveCard(g, now) : `<div class="card"><b>${_('This game is not live any more.')}</b><p class="mut" style="margin:6px 0 12px">${_('Its box score will be on the site once it is approved.')}</p><a class="vote" href="${url('live')}">${_('All live games')}</a></div>`;
   }
   return games.length ? `<p class="mut" style="margin:0 0 12px">${_('Tap a game to follow it.')}</p><div class="livegrid">${games.map(liveTile).join('')}</div>` : liveEmpty();
 }
-function liveWire() { const d = $('#livebox details.playsfold'); if (d) d.ontoggle = () => { livePlaysOpen = d.open; }; }
+function liveWire() {
+  const d = $('#livebox details.playsfold'); if (d) d.ontoggle = () => { livePlaysOpen = d.open; };
+  document.querySelectorAll('#livebox [data-ltab]').forEach(b => b.onclick = () => { liveTab = b.dataset.ltab; if (!liveLast) return; $('#livebox').innerHTML = liveBody(liveLast.games, liveLast.now, liveLast.id); liveWire(); stickyCols(); });
+}
 async function live(id) {
   pageMeta = META.live[LANG];
   const get = () => fetch('/api/live', { cache: 'no-store' }).then(r => r.json());

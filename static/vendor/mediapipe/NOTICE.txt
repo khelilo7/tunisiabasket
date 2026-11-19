@@ -1,0 +1,4 @@
+MediaPipe Tasks Vision 1.2.2 (@mediapipe/tasks-vision on npm) and the Magic Touch interactive segmentation model (interactive_segmenter/magic_touch of the MediaPipe model garden).
+Copyright Google LLC, licensed under the Apache License 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+Used by the admin picture generators (static/admin-cutout.js) to separate a player from the background of a photo, in the admin's browser: the photo is never uploaded.
+Files: vision_bundle.mjs, wasm/vision_wasm_internal.{js,wasm}, magic_touch.tflite (unchanged).

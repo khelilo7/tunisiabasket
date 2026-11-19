@@ -22,6 +22,7 @@ import threading
 
 import config
 import cup
+import ranking
 import stats
 
 FILE = config.DATA_DIR / "finals.json"
@@ -164,7 +165,8 @@ def _league(d, g, teams):
     for x in out:
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = x["carry"] + 2 * x["w"] + x["l"]
-    out.sort(key=lambda x: (-x["pts"], -x["diff"], x["start_rank"] or 99, x["code"]))
+    # the order of the FTBB's law (ranking.py: art. 184) with the games of this group; what the law leaves open is decided by the rank at the end of the regular season
+    out = ranking.rank(out, [r for rr in rounds.values() for r in rr if r["played"]], fallback=lambda c: rows[c]["start_rank"] or 99)
     played = sum(1 for rr in rounds.values() for x in rr if x["played"])
     done = bool(expected) and played >= expected
     for i, x in enumerate(out, 1):
