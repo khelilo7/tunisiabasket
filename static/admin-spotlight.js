@@ -29,13 +29,14 @@
     if (!players.length) { el.innerHTML = '<div class="card" style="margin:12px 0"><div class="row"><b>📸 Player photo image</b><span class="sp"></span><button id="sp-close">✕</button></div><div class="mut small" style="margin-top:6px">This game has no box score yet, so there are no player stats to show. Add its box score (Data tab), then come back.</div></div>';
       el.querySelector('#sp-close').onclick = () => { el.innerHTML = ''; }; return; }
     const mvpName = game.mvp && game.mvp.name;
-    const st = { fmt: 'portrait', lang: 'fr', pid: '', stats: ['pts', 'reb', 'ast', 'pir'], zoom: 100, ox: 0, oy: 60, dark: 60, head: '', touched: false, img: null, own: false };
+    const st = { fmt: 'portrait', lang: 'fr', pid: '', stats: ['pts', 'reb', 'ast', 'pir'], zoom: 100, ox: 0, oy: 60, dark: 60, head: '', touched: false, img: null, own: false, cutOn: true, cut: null };
     const key = p => p.id || `${p.team}-${p.number}`;
     st.pid = key(players.find(p => p.name === mvpName) || players[0]);
     el.innerHTML = `<div class="card" style="margin:12px 0;border-color:var(--acc)"><div class="row"><b>📸 Player photo image</b><span class="sp"></span><button id="sp-close" title="Close">✕</button></div>
       <div class="row" style="margin-top:8px"><select id="sp-player">${players.map(p => `<option value="${esc(key(p))}" ${key(p) === st.pid ? 'selected' : ''}>${esc(nm(p.name))} · ${esc(p.team)} · ${p.pts} pts</option>`).join('')}</select>
         <select id="sp-fmt">${Object.entries(F).map(([k, v]) => `<option value="${k}">${v[2]}</option>`).join('')}</select><select id="sp-lang"><option value="fr">Français</option><option value="en">English</option></select></div>
-      <div class="row" style="margin-top:8px"><label class="small mut">Photo</label><input type="file" id="sp-file" accept="image/*"><span class="mut small" id="sp-fnote">Upload a recent photo of the game (it fills the background). Without one, the site’s photo of the player is used.</span></div>
+      <div class="row" style="margin-top:8px"><label class="small mut">Photo</label><input type="file" id="sp-file" accept="image/*"><label class="small" title="Cuts the player out of your photo, in your browser, and puts him in front of a blurred copy of it"><input type="checkbox" id="sp-cut" checked> extract the player</label><span class="mut small" id="sp-fnote">Upload a recent photo of the game (it fills the background). Without one, the site’s photo of the player is used.</span></div>
+      <div id="sp-cutbox" style="margin-top:6px"></div>
       <div class="row" style="margin-top:8px"><label class="small mut">Headline</label><input id="sp-head" list="sp-heads" maxlength="80" style="min-width:280px;flex:1" placeholder="Freestyle: Homme du match, Il a dominé…"><datalist id="sp-heads"></datalist></div>
       <div class="row" style="margin-top:8px"><span class="small mut">Stats</span>${Object.entries(STATS).map(([k, v]) => `<label class="small"><input type="checkbox" data-stat="${k}" ${st.stats.includes(k) ? 'checked' : ''}> ${v[1]}</label>`).join('')}<span class="mut small">(up to 6)</span></div>
       <div class="row" style="margin-top:8px;gap:14px"><label class="small mut">Zoom <input type="range" id="sp-zoom" min="100" max="300" value="100"></label><label class="small mut">← → <input type="range" id="sp-ox" min="-100" max="100" value="0"></label>
@@ -46,6 +47,11 @@
     const q = s => el.querySelector(s), cv = q('#sp-cv'), cur = () => players.find(p => key(p) === st.pid);
     const defHead = () => HEADS[st.lang][cur().name === mvpName ? 0 : 1];
     let busy = false, again = false, lay = { rx: 0, ry: 0 };
+    function startCut() {                                                  // the player out of the uploaded photo: you click on him
+      const box = q('#sp-cutbox'); st.cut = null;
+      if (!st.own || !st.img || !st.cutOn || !window.Cutout) { box.innerHTML = ''; return; }
+      Cutout.picker(box, st.img, c => { st.cut = c; draw(); });
+    }
 
     async function siteImage() { const p = cur(), sp = (await sitePlayers()).find(x => x.id === p.id); return sp && sp.photo ? loadImg(sp.photo) : null; }
     async function draw() {
@@ -54,7 +60,12 @@
         const [W, H] = F[st.fmt], p = cur(), lang = st.lang, ctx = cv.getContext('2d'); cv.width = W; cv.height = H;
         ctx.fillStyle = '#0b1020'; ctx.fillRect(0, 0, W, H);
         const img = st.img || await siteImage();
-        if (img) {
+        if (img && st.own && st.cutOn && st.cut) {                          // a blurred copy of the photo behind, him alone in front (the zoom and the arrows move him)
+          const base = Math.max(W / img.width, H / img.height); ctx.save(); ctx.filter = 'blur(24px)'; ctx.drawImage(img, (W - img.width * base) / 2 - 30, (H - img.height * base) / 2 - 30, img.width * base + 60, img.height * base + 60); ctx.restore();
+          const s2 = Math.min(H * 0.86 / st.cut.height, W * 0.95 / st.cut.width) * st.zoom / 100, cw = st.cut.width * s2, chh = st.cut.height * s2;
+          lay = { rx: Math.max(0, (cw - W) / 2) + W * 0.25, ry: H * 0.25 };
+          ctx.drawImage(st.cut, (W - cw) / 2 + st.ox / 100 * lay.rx, H * 0.9 - chh + (st.oy - 60) / 100 * lay.ry, cw, chh);
+        } else if (img) {
           const base = Math.max(W / img.width, H / img.height) * st.zoom / 100, dw = img.width * base, dh = img.height * base; lay = { rx: Math.max(0, (dw - W) / 2), ry: Math.max(0, (dh - H) / 2) };
           ctx.drawImage(img, (W - dw) / 2 + st.ox / 100 * lay.rx, (H - dh) / 2 + st.oy / 100 * lay.ry, dw, dh);
         } else { const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.bg2); g.addColorStop(1, '#070b16'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H); await K.logo(ctx, p.team, W / 2 - 200, H * 0.2, 400); }
@@ -64,9 +75,7 @@
         g = ctx.createLinearGradient(0, H * 0.34, 0, H); g.addColorStop(0, 'rgba(7,11,22,0)'); g.addColorStop(0.55, `rgba(7,11,22,${0.5 + a * 0.35})`); g.addColorStop(1, `rgba(7,11,22,${0.78 + a * 0.2})`); ctx.fillStyle = g; ctx.fillRect(0, H * 0.34, W, H * 0.66);
         ctx.fillStyle = C.acc; ctx.fillRect(0, 0, W, 8);
         // header: the brand on the left, the score of the game on the right
-        const lg = await loadImg('/img/logo-96.png'); if (lg) ctx.drawImage(lg, 48, 34, 52, 64);
-        txt(ctx, 'TUNISIA', 118, 78, { size: 34, weight: 900, color: C.acc, space: '2px' }); ctx.font = `900 34px ${FONT}`; ctx.letterSpacing = '2px'; const w1 = ctx.measureText('TUNISIA ').width; ctx.letterSpacing = '0px';
-        txt(ctx, 'BASKET', 118 + w1, 78, { size: 34, weight: 900, space: '2px' });
+        const lg = await loadImg('/img/brand/mark-dark.svg'), wm = await loadImg('/img/brand/wordmark-dark.svg'); if (lg) ctx.drawImage(lg, 48, 32, 66, 66); if (wm) ctx.drawImage(wm, 128, 50, 36 * wm.width / wm.height, 36);       // the new brand: the mark and TUNISIA BASKET (outlines, no font needed)
         const sc = `${game.home} ${game.home_score} – ${game.away_score} ${game.away}`; ctx.font = `800 30px ${FONT}`; const cw = ctx.measureText(sc).width + 150;
         ctx.fillStyle = 'rgba(11,16,32,.72)'; rr(ctx, W - 48 - cw, 30, cw, 70, 35); ctx.fill();
         await K.logo(ctx, game.home, W - 48 - cw + 12, 40, 50); await K.logo(ctx, game.away, W - 48 - 62, 40, 50);
@@ -105,9 +114,10 @@
     q('#sp-head').oninput = e => { st.touched = true; st.head = e.target.value; upd(); };
     el.querySelectorAll('[data-stat]').forEach(b => b.onchange = () => { st.stats = [...el.querySelectorAll('[data-stat]:checked')].map(x => x.dataset.stat); draw(); });
     [['zoom', 'zoom'], ['ox', 'ox'], ['oy', 'oy'], ['dark', 'dark']].forEach(([id, k]) => q('#sp-' + id).oninput = e => { st[k] = +e.target.value; draw(); });
+    q('#sp-cut').onchange = e => { st.cutOn = e.target.checked; startCut(); draw(); };
     q('#sp-file').onchange = e => {
       const f = e.target.files[0]; if (!f) return; const i = new Image(), u = URL.createObjectURL(f);
-      i.onload = () => { st.img = i; st.own = true; st.zoom = 100; st.ox = 0; st.oy = 60; q('#sp-zoom').value = 100; q('#sp-ox').value = 0; q('#sp-oy').value = 60; q('#sp-fnote').textContent = f.name; draw(); };
+      i.onload = () => { st.img = i; st.own = true; startCut(); st.zoom = 100; st.ox = 0; st.oy = 60; q('#sp-zoom').value = 100; q('#sp-ox').value = 0; q('#sp-oy').value = 60; q('#sp-fnote').textContent = f.name; draw(); };
       i.onerror = () => { q('#sp-err').textContent = 'This file is not an image the browser can read.'; URL.revokeObjectURL(u); }; i.src = u;
     };
     let drag = null;                                                     // drag the picture to place it

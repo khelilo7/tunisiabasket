@@ -13,12 +13,14 @@ from collections import Counter, defaultdict
 
 import config
 import honours
+import ranking
 
 config.ensure_data()
 import game_fixes  # noqa: E402
 
 game_fixes.apply()   # corrections that ship with this release (once each; see game_fixes.py)
 GAMES_DIR = config.DATA_DIR / "games"
+HISTORY_GAMES_DIR = config.ASSETS_DIR / "history" / "games"     # box scores of past seasons (tools/import_history.py): read-only, shipped with the code
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
 BIOS_FILE = config.DATA_DIR / "players_info.json"  # optional corrections to assets/players_info.json
@@ -100,9 +102,14 @@ def game_dates():
 def load_games():
     raw = []
     fixed = game_dates()
-    for f in sorted(GAMES_DIR.glob("*.json")):
+    seen = set()
+    history_files = [] if os.environ.get("NO_HISTORY_GAMES") else sorted(HISTORY_GAMES_DIR.glob("*.json"))      # tests that count games switch the past seasons off
+    for f in [*sorted(GAMES_DIR.glob("*.json")), *history_files]:
         g = json.loads(f.read_text())
         g["id"] = g.get("id") or f.stem
+        if g["id"] in seen:
+            continue
+        seen.add(g["id"])
         if g["id"] in fixed:
             g["date"], g["date_approx"] = fixed[g["id"]], False
         raw.append(g)
@@ -120,7 +127,11 @@ def load_games():
             games.remove(prev)
         by_key[key] = g
         games.append(g)
-    _canonicalise(games)
+    by_season = defaultdict(list)                          # a jersey number is only a player's identity within one season (CA #1 of 2018 is not CA #1 of 2026): each season names its own players
+    for g in games:
+        by_season[season_of(g["date"])].append(g)
+    for group in by_season.values():
+        _canonicalise(group)
     games.sort(key=lambda g: (g["date"], g["id"]))
     return games
 
@@ -460,7 +471,7 @@ def _cached(fn):
     def wrapper(*a, **k):
         if os.environ.get("NO_STATS_CACHE"):
             return fn(*a, **k)
-        key, fp = (fn.__name__, a, tuple(sorted(k.items()))), _fingerprint()
+        key, fp = (fn.__module__, fn.__name__, a, tuple(sorted(k.items()))), _fingerprint()      # module too: records.py has cached functions of its own
         hit = _CACHE.get(key)
         if hit and hit[0] == fp and time.monotonic() - hit[1] < CACHE_SECONDS:
             return hit[2]
@@ -491,9 +502,11 @@ def load_official():
 
 
 def official_standings(official=None):
-    """League table computed from ALL official results (including games without a box score)."""
+    """League table computed from ALL official results (including games without a box score), in the order the FTBB's law gives (ranking.py: points, then the games between
+    the teams level on points, then the point difference...)."""
     o = official or load_official()
     t = {c: {"code": c, "name": n, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for c, n in o["teams"].items()}
+    ff = defaultdict(int)
     for r in o["results"]:
         for c, f, a in ((r["home"], r["home_score"], r["away_score"]), (r["away"], r["away_score"], r["home_score"])):
             row = t.setdefault(c, {"code": c, "name": c, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0})
@@ -501,43 +514,16 @@ def official_standings(official=None):
             row["w" if f > a else "l"] += 1
             row["pf"] += f
             row["pa"] += a
+        if r.get("forfeit"):
+            ff[r["forfeit"]] += 1                              # a loss by forfeit or penalty gives no point at all (art. 182)
     out = list(t.values())
     for r in out:
         r["diff"] = r["pf"] - r["pa"]
-        r["pts"] = 2 * r["w"] + r["l"]  # 2 points for a win, 1 for a loss
-    out = rank_rows(out, o["results"])
+        r["pts"] = 2 * r["w"] + r["l"] - ff[r["code"]]       # 2 points for a win, 1 for a loss, 0 for a loss by forfeit
+    out = ranking.rank(out, o["results"])
     for i, r in enumerate(out, 1):
         r["rank"] = i
     return out
-
-
-def rank_rows(rows, results):
-    """The table order: league points first. Teams level on points are separated by the games they played AMONG THEMSELVES (the points those games gave, 2 for a win and 1 for
-    a loss, then the point difference of those games), then by the point difference of all games, then by the points scored in all games. With three teams or more, as soon as
-    some are separated the rule starts again for the ones still level, with only their own games."""
-    out = []
-    for pts in sorted({r["pts"] for r in rows}, reverse=True):
-        out.extend(_split_ties([r for r in rows if r["pts"] == pts], results))
-    return out
-
-
-def _split_ties(group, results):
-    overall = lambda r: (-r["diff"], -r["pf"], r["code"])
-    if len(group) < 2:
-        return group
-    codes = {r["code"] for r in group}
-    mini = {c: [0, 0] for c in codes}                        # the points and the point difference of the games between these teams
-    for g in results:
-        if g["home"] in codes and g["away"] in codes:
-            for c, f, a in ((g["home"], g["home_score"], g["away_score"]), (g["away"], g["away_score"], g["home_score"])):
-                mini[c][0] += 2 if f > a else 1
-                mini[c][1] += f - a
-    key = lambda r: (-mini[r["code"]][0], -mini[r["code"]][1])
-    ordered = sorted(group, key=key)
-    parts = [[r for r in ordered if key(r) == k] for k in dict.fromkeys(key(r) for r in ordered)]
-    if len(parts) == 1:                                      # these games separate nobody: the whole season decides
-        return sorted(group, key=overall)
-    return [r for part in parts for r in _split_ties(part, results)]
 
 
 def matchday_hint(g):

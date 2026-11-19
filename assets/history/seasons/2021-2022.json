@@ -1,0 +1,279 @@
+{
+ "season": "2021-2022",
+ "league": "Championnat National A 2021–22",
+ "source": {
+  "wikipedia": "Championnat National A 2021–22"
+ },
+ "champion": "US Monastir",
+ "runner_up": "Ezzahra Sports",
+ "third": "Stade Nabeulien",
+ "relegated": "SS Sfaxien",
+ "teams": "10",
+ "dates": "25 September 2021 – 10 May 2022",
+ "phases": [
+  {
+   "name": "Regular season",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "w": 15,
+     "l": 3
+    },
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 13,
+     "l": 5
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 13,
+     "l": 5
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 11,
+     "l": 7
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 10,
+     "l": 8
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 8,
+     "l": 10,
+     "pf": 5,
+     "pa": 0
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 8,
+     "l": 10
+    },
+    {
+     "code": null,
+     "name": "JS Manazeh",
+     "w": 7,
+     "l": 11
+    },
+    {
+     "code": "USA",
+     "name": "US Ansar",
+     "w": 5,
+     "l": 13
+    },
+    {
+     "code": "SSS",
+     "name": "SS Sfaxien",
+     "w": 0,
+     "l": 18
+    }
+   ]
+  },
+  {
+   "name": "Relegation round",
+   "kind": "table",
+   "rows": [
+    {
+     "code": null,
+     "name": "JS Manazeh",
+     "w": 6,
+     "l": 0
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 3,
+     "l": 3
+    },
+    {
+     "code": "USA",
+     "name": "US Ansar",
+     "w": 2,
+     "l": 3
+    },
+    {
+     "code": "SSS",
+     "name": "SS Sfaxien",
+     "w": 0,
+     "l": 5
+    }
+   ]
+  },
+  {
+   "name": "Play-offs",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 8,
+     "l": 2
+    },
+    {
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "w": 8,
+     "l": 2
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 6,
+     "l": 4
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 5,
+     "l": 5,
+     "pf": 5,
+     "pa": 0
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 3,
+     "l": 7
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 3,
+     "l": 7
+    }
+   ]
+  },
+  {
+   "name": "Super play-offs",
+   "kind": "series",
+   "series": [
+    {
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "SN",
+      "name": "Stade Nabeulien"
+     },
+     "games": [
+      [
+       89,
+       84
+      ],
+      [
+       80,
+       62
+      ],
+      [
+       82,
+       79
+      ]
+     ],
+     "round": "Semi-finals"
+    },
+    {
+     "a": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "b": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "games": [
+      [
+       78,
+       74
+      ],
+      [
+       74,
+       57
+      ],
+      [
+       65,
+       68
+      ],
+      [
+       69,
+       79
+      ],
+      [
+       82,
+       74
+      ]
+     ],
+     "round": "Semi-finals"
+    },
+    {
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "games": [
+      [
+       75,
+       71
+      ],
+      [
+       71,
+       67
+      ],
+      [
+       72,
+       74
+      ],
+      [
+       79,
+       63
+      ]
+     ],
+     "round": "Final"
+    },
+    {
+     "a": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "b": {
+      "code": "SN",
+      "name": "Stade Nabeulien"
+     },
+     "games": [
+      [
+       79,
+       75
+      ],
+      [
+       83,
+       94
+      ],
+      [
+       74,
+       92
+      ],
+      [
+       73,
+       79
+      ]
+     ],
+     "round": "Third place"
+    }
+   ]
+  }
+ ]
+}

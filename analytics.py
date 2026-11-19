@@ -37,7 +37,10 @@ COOKIE = "proa_analyst"
 SESSION_HOURS = 12
 MAX_EVENTS = 6000
 LOG_MAX = 4000                              # entries of a game's change log
-STATS = ("ft_m", "p2_m", "p3_m", "ft_x", "p2_x", "p3_x", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf", "fd")
+STATS = ("ft_m", "p2_m", "p3_m", "ft_x", "p2_x", "p3_x", "oreb", "dreb", "ast", "stl", "blk", "tov", "pf", "fd", "tf", "inj", "ej")
+# what belongs to a team, not to a player (the sheet's "Team / Coach" row): team rebounds, a team turnover, a timeout, a technical foul on the coach or the bench. Stored like a lineup:
+# pid None and "team": the code.
+TEAM_STATS = ("t_oreb", "t_dreb", "t_tov", "timeout", "tf_c", "tf_b")
 POINTS = {"ft_m": 1, "p2_m": 2, "p3_m": 3}
 # Tags on a made shot, one tap each after the basket (the team lines of a box score): in the paint (2-pointers only), second-chance points, fast-break points, points off a turnover.
 TAGS = {"p2_m": ("paint", "second", "fast", "tov"), "p3_m": ("second", "fast", "tov"), "ft_m": ("second", "fast", "tov")}
@@ -220,11 +223,20 @@ def tally(game):
     """{player id: {stat: count}}"""
     t = {}
     for e in game["events"]:
-        if e["stat"] == "lineup":
-            continue                                   # who is on the court is not a statistic (see court())
+        if e["stat"] == "lineup" or e.get("pid") is None:
+            continue                                   # who is on the court is not a statistic (see court()); a team event belongs to no player (see team_tally())
         r = t.setdefault(e["pid"], {})
         r[e["stat"]] = r.get(e["stat"], 0) + 1
     return t
+
+
+def team_tally(game):
+    """{team: {stat: count}} of the team events (team rebounds and turnovers, timeouts, technical fouls on the coach or the bench)."""
+    out = {c: {} for c in game["players"]}
+    for e in game["events"]:
+        if e.get("pid") is None and e["stat"] in TEAM_STATS and e.get("team") in out:
+            out[e["team"]][e["stat"]] = out[e["team"]].get(e["stat"], 0) + 1
+    return out
 
 
 def qlen(q):
@@ -279,8 +291,52 @@ def minutes(game):
     return out
 
 
+st_is_team = lambda e: e.get("pid") is None and e.get("stat") in TEAM_STATS
+
+
+def possession(game):
+    """Which team has the ball: {"team": code or None, "how": why, "manual": bool}. Deduced from the last action in game order (a made basket gives the ball to the other team, a rebound,
+    a steal or a foul drawn gives it to that player's team, a turnover or a foul committed to the other team; a miss or a block leaves it loose until the rebound), unless the analyst set
+    it by hand and nothing was counted after that."""
+    team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
+    other = lambda c: next((x for x in game["players"] if x != c), None)
+    top = max((e["n"] for e in game["events"]), default=0)
+    m = game.get("ball")
+    if m and m.get("team") in game["players"] and top <= m.get("n", 0):
+        return {"team": m["team"], "how": "manual", "manual": True}
+    team, how, prev = None, None, None
+    for _, e in ordered(game):
+        st, c = e["stat"], team_of.get(e.get("pid")) or (e.get("team") if st_is_team(e) else None)
+        if st == "lineup" or c is None:
+            continue
+        if st in ("p2_m", "p3_m"):
+            team, how = other(c), "basket"
+        elif st == "ft_m":
+            team, how = (other(c), "basket") if prev and prev[0] in ("ft_m", "ft_x") and prev[1] == c else (c, "free throws")
+        elif st == "ft_x":
+            team, how = (None, "miss") if prev and prev[0] in ("ft_m", "ft_x") and prev[1] == c else (c, "free throws")
+        elif st in ("p2_x", "p3_x"):
+            team, how = None, "miss"
+        elif st == "blk":
+            team, how = None, "block"
+        elif st in ("oreb", "dreb", "t_oreb", "t_dreb"):
+            team, how = c, "rebound"
+        elif st == "stl":
+            team, how = c, "steal"
+        elif st in ("tov", "t_tov"):
+            team, how = other(c), "turnover"
+        elif st == "pf":
+            team, how = other(c), "foul"
+        elif st == "fd":
+            team, how = c, "foul drawn"
+        elif st == "ast" and not (prev and prev[0] in ("p2_m", "p3_m") and prev[1] == c):      # an assist entered after its basket must not give the ball back
+            team, how = c, "assist"
+        prev = (st, c)
+    return {"team": team, "how": how, "manual": False}
+
+
 def _view(game):
-    return {**game, "court": court(game), "extra": team_extra(game)}
+    return {**game, "court": court(game), "extra": team_extra(game), "ball": possession(game), "team_events": team_tally(game), "totals": {c: team_totals(game, c) for c in game["players"]}}
 
 
 def clean_tags(stat, tags):
@@ -324,7 +380,7 @@ def line(r):
     g = lambda k: r.get(k, 0)
     fgm, fga = g("p2_m") + g("p3_m"), g("p2_m") + g("p3_m") + g("p2_x") + g("p3_x")
     return {"pts": points_of(r), "fgm": fgm, "fga": fga, "p3m": g("p3_m"), "p3a": g("p3_m") + g("p3_x"), "ftm": g("ft_m"), "fta": g("ft_m") + g("ft_x"),
-            "oreb": g("oreb"), "dreb": g("dreb"), "ast": g("ast"), "stl": g("stl"), "blk": g("blk"), "tov": g("tov"), "pf": g("pf"), "fd": g("fd")}
+            "oreb": g("oreb"), "dreb": g("dreb"), "ast": g("ast"), "stl": g("stl"), "blk": g("blk"), "tov": g("tov"), "pf": g("pf") + g("tf"), "fd": g("fd")}         # a technical foul on a player is one of his fouls (FIBA)
 
 
 def summary(game):
@@ -351,7 +407,65 @@ def is_old(game, official=None):
 
 # ---------------------------------------------------------------- live: what the public sees of a game the ADMIN has switched on
 PLAY = {"ft_m": "free throw made", "p2_m": "2-pointer made", "p3_m": "3-pointer made", "ft_x": "free throw missed", "p2_x": "2-pointer missed", "p3_x": "3-pointer missed",
-        "oreb": "offensive rebound", "dreb": "defensive rebound", "ast": "assist", "stl": "steal", "blk": "block", "tov": "turnover", "pf": "foul", "fd": "foul drawn"}
+        "oreb": "offensive rebound", "dreb": "defensive rebound", "ast": "assist", "stl": "steal", "blk": "block", "tov": "turnover", "pf": "foul", "fd": "foul drawn",
+        "tf": "technical foul", "inj": "injured", "ej": "ejected", "t_oreb": "team offensive rebound", "t_dreb": "team defensive rebound", "t_tov": "team turnover", "timeout": "timeout",
+        "tf_c": "technical foul on the coach", "tf_b": "technical foul on the bench"}
+
+
+def team_totals(game, code, t=None):
+    """The team's line so far, in the columns of a box score: the sum of what its players have counted (a player with nothing yet adds nothing)."""
+    t = t or tally(game)
+    tot = {}
+    for p in game["players"][code]:
+        for k, v in line(t.get(p["id"], {})).items():
+            tot[k] = tot.get(k, 0) + v
+    tt = team_tally(game)[code]
+    tot["team_reb"], tot["team_tov"] = tt.get("t_oreb", 0) + tt.get("t_dreb", 0), tt.get("t_tov", 0)        # the "Team" row of the sheet: counted for the team, not for a player
+    tot["oreb"], tot["dreb"], tot["tov"] = tot.get("oreb", 0) + tt.get("t_oreb", 0), tot.get("dreb", 0) + tt.get("t_dreb", 0), tot.get("tov", 0) + tt.get("t_tov", 0)
+    tot["reb"] = tot["oreb"] + tot["dreb"]
+    tot["timeouts"] = tt.get("timeout", 0)
+    tot["techs"] = sum((t.get(p["id"]) or {}).get("tf", 0) for p in game["players"][code]) + tt.get("tf_c", 0) + tt.get("tf_b", 0)
+    return tot
+
+
+def game_flow(game):
+    """How the game went, from the points in game order: {"lead": {team: biggest lead}, "run": {team: most unanswered points}, "changes": lead changes, "ties": times the score was level again}."""
+    team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
+    codes = list(game["players"])
+    if len(codes) != 2:
+        return {"lead": {}, "run": {}, "changes": 0, "ties": 0}
+    sc, lead, run, cur, last, leader, changes, ties = {c: 0 for c in codes}, {c: 0 for c in codes}, {c: 0 for c in codes}, {c: 0 for c in codes}, None, None, 0, 0
+    for _, e in ordered(game):
+        c = team_of.get(e.get("pid"))
+        if e["stat"] not in POINTS or c is None:
+            continue
+        o = codes[1] if c == codes[0] else codes[0]
+        sc[c] += POINTS[e["stat"]]
+        cur[c] = cur[c] + POINTS[e["stat"]] if last == c else POINTS[e["stat"]]
+        cur[o], last = 0, c
+        run[c] = max(run[c], cur[c])
+        lead[c] = max(lead[c], sc[c] - sc[o])
+        now = c if sc[c] > sc[o] else o if sc[o] > sc[c] else None
+        if now is None:
+            ties += 1
+        elif leader and now != leader:
+            changes += 1
+        leader = now or leader
+    return {"lead": lead, "run": run, "changes": changes, "ties": ties}
+
+
+def line_score(game):
+    """Points per period when the analyst uses the game clock: {"periods": n, "pts": {team: [per period]}}, None otherwise (the order of entry says nothing about the quarter)."""
+    if not any("q" in e for e in game["events"]):
+        return None
+    team_of = {p["id"]: c for c, ps in game["players"].items() for p in ps}
+    rows = [(now, e) for now, e in ordered(game) if e["stat"] in POINTS and team_of.get(e.get("pid"))]
+    period = lambda now: next((q for q in range(1, 9) if now <= elapsed(q, 0)), 8)
+    n = max([period(now) for now, _ in rows] + [4] + [e["q"] for e in game["events"] if "q" in e])
+    pts = {c: [0] * n for c in game["players"]}
+    for now, e in rows:
+        pts[team_of[e["pid"]]][max(1, period(now)) - 1] += POINTS[e["stat"]]
+    return {"periods": n, "pts": pts}
 
 
 def live_games():
@@ -382,20 +496,25 @@ def live_games():
                 if not r and not on:
                     continue
                 l = line(r)
-                rows.append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "on": on, **l, "reb": l["oreb"] + l["dreb"],
+                rows.append({"id": p["id"], "name": p["name"], "number": p["number"], "photo": photos.get(p["id"]), "on": on, **l, "reb": l["oreb"] + l["dreb"], "tf": r.get("tf", 0), "inj": bool(r.get("inj")), "ej": bool(r.get("ej")),
                              **({"sec": mins.get(p["id"], 0), "pm": c["pm"].get(p["id"], 0)} if c["used"] else {})})
             rows.sort(key=lambda x: (-x["on"], -x["pts"], x["number"]))
-            teams[code] = {"code": code, "name": names.get(code, code), "score": sc[code], "players": rows}
+            teams[code] = {"code": code, "name": names.get(code, code), "score": sc[code], "players": rows, "totals": team_totals(g, code, t), "extra": team_extra(g).get(code, {})}
         plays = []
         for _, e in reversed(seq):
-            if e["stat"] == "lineup" or e["pid"] not in who_:
+            if e["stat"] == "lineup":
                 continue
-            code, p = who_[e["pid"]]
-            plays.append({"q": e.get("q"), "t": e.get("t"), "team": code, "name": p["name"], "number": p["number"], "text": PLAY[e["stat"]], "pts": POINTS.get(e["stat"], 0)})
+            if st_is_team(e):                                                  # a timeout, a team rebound...: no player
+                plays.append({"q": e.get("q"), "t": e.get("t"), "team": e["team"], "name": "", "number": None, "text": PLAY[e["stat"]], "pts": 0})
+            elif e["pid"] in who_:
+                code, p = who_[e["pid"]]
+                plays.append({"q": e.get("q"), "t": e.get("t"), "team": code, "name": p["name"], "number": p["number"], "text": PLAY[e["stat"]], "pts": POINTS.get(e["stat"], 0)})
+            else:
+                continue
             if len(plays) >= 14:
                 break
         out.append({"id": g["id"], "home": g["home"], "away": g["away"], "matchday": g.get("matchday"), "clock": stamp, "teams": teams, "plays": plays,
-                    "used_court": c["used"], "updated": int(f.stat().st_mtime), "since": g.get("live_since")})
+                    "used_court": c["used"], "ball": possession(g), "flow": game_flow(g), "quarters": line_score(g), "updated": int(f.stat().st_mtime), "since": g.get("live_since")})
     return out
 
 
@@ -484,6 +603,8 @@ def describe(g, e):
     names = {p["id"]: p["name"] for ps in g["players"].values() for p in ps}
     if e["stat"] == "lineup":
         return f"five of {e['team']}: " + (", ".join(names.get(i, i) for i in e["on"]) or "nobody") + _clock(e)
+    if e.get("pid") is None:
+        return f"{e.get('team')} · {PLAY.get(e['stat'], e['stat'])}" + _clock(e)
     tags = (" (" + ", ".join(TAG_LABEL[t] for t in e["tags"]) + ")") if e.get("tags") else ""
     return f"{names.get(e['pid'], e['pid'])} · {PLAY.get(e['stat'], e['stat'])}{tags}" + _clock(e)
 
@@ -498,7 +619,7 @@ def _next_n(g):
 
 @bp.post("/analytics/api/games/<gid>/<op>")
 def change(gid, op):
-    if op not in ("event", "lineup", "edit", "undo", "remove", "submit", "reopen"):
+    if op not in ("event", "team", "lineup", "edit", "undo", "remove", "submit", "reopen", "ball"):
         abort(404)
     b = request.get_json(silent=True) or {}
     name, _ = who()
@@ -524,6 +645,24 @@ def change(gid, op):
             _stamp(e, b)
             g["events"].append(e)
             _log(g, name, "add", "added " + describe(g, e))
+        elif op == "team":                                     # a team event: team rebound / turnover, timeout, technical foul on the coach or the bench
+            if b.get("stat") not in TEAM_STATS or b.get("team") not in g["players"]:
+                return jsonify(error="Unknown team or action."), 422
+            if len(g["events"]) >= MAX_EVENTS:
+                return jsonify(error="Too many actions in one game."), 422
+            e = {"n": _next_n(g), "pid": None, "stat": b["stat"], "team": b["team"], "at": time.strftime("%H:%M:%S"), "by": name}
+            _stamp(e, b)
+            g["events"].append(e)
+            _log(g, name, "add", "added " + describe(g, e))
+        elif op == "ball":                                     # optional: the analyst says which team has the ball (null = back to the deduction from the last action)
+            code = b.get("team")
+            if code is not None and code not in g["players"]:
+                return jsonify(error="Pick one of the two teams."), 422
+            if code is None:
+                g.pop("ball", None)
+            else:
+                g["ball"] = {"team": code, "n": max((e["n"] for e in g["events"]), default=0), "by": name, "at": time.strftime("%H:%M:%S")}
+            _log(g, name, "ball", f"set the ball to {code}" if code else "took the ball back to the automatic guess")
         elif op == "lineup":
             code, ids = b.get("team"), b.get("on")
             known = {p["id"] for p in g["players"].get(code, [])}
@@ -546,6 +685,11 @@ def change(gid, op):
                 if not isinstance(ids, list) or len(ids) > 5 or len(set(ids)) != len(ids) or any(i not in known for i in ids):
                     return jsonify(error="Pick up to five players of this team."), 422
                 e["on"] = ids
+            elif e.get("pid") is None:                           # a team event: its action and its team
+                stat, team = b.get("stat", e["stat"]), b.get("team", e.get("team"))
+                if stat not in TEAM_STATS or team not in g["players"]:
+                    return jsonify(error="Unknown team or action."), 422
+                e["stat"], e["team"] = stat, team
             else:
                 pid, stat = b.get("pid", e["pid"]), b.get("stat", e["stat"])
                 if stat not in STATS or pid not in {p["id"] for ps in g["players"].values() for p in ps}:
@@ -686,14 +830,15 @@ def admin_live(gid):
 
 @bp.get("/admin/api/analytics")
 def admin_list():
-    counting = []
-    for f in sorted(DIR.glob("*.json"), reverse=True) if DIR.exists() else []:
+    counting, official = [], stats.load_official()
+    for f in sorted(DIR.glob("*.json"), key=lambda f: f.stat().st_mtime, reverse=True) if DIR.exists() else []:      # the game worked on last comes first
         g = json.loads(f.read_text())
         if g.get("kind") == "video" and g["status"] != "published":
             continue                            # counting from the video is gone
         if g["status"] in OPEN_STATES:
-            s = scores(g)
-            counting.append({**summary(g), "live": bool(g.get("live")), "score": f"{g['home']} {s[g['home']]} – {s[g['away']]} {g['away']}"})
+            s, old = scores(g), is_old(g, official)
+            # an old game is never public, whatever flag an earlier version left on it: it is only shown as live when the public really sees it
+            counting.append({**summary(g), "live": bool(g.get("live")) and not old, "old": old, "updated": int(f.stat().st_mtime), "score": f"{g['home']} {s[g['home']]} – {s[g['away']]} {g['away']}"})
     rows = []
     for f in sorted(DIR.glob("*.json"), reverse=True) if DIR.exists() else []:
         g = json.loads(f.read_text())
@@ -705,6 +850,18 @@ def admin_list():
                      "box": {c: [{"name": p["name"], "number": p["number"], **line(t[p["id"]])} for p in ps if p["id"] in t] for c, ps in g["players"].items()},
                      "log": g.get("log", [])[-300:], "editable": g["status"] in ("submitted", "open", "rejected")})
     return jsonify(games=rows, counting=counting)
+
+
+@bp.post("/admin/api/analytics/<gid>/delete")
+def admin_delete(gid):
+    """Throw away a game that is still being counted (an old test, a game started by mistake). A published one is unpublished first."""
+    with _file_lock:
+        g = _load(gid)
+        if g["status"] == "published":
+            return jsonify(error="This game is published: remove it from the site first."), 409
+        _path(gid).unlink(missing_ok=True)
+    auth.audit("analytics-delete-game", f"{gid} (admin)")
+    return jsonify(ok=True, message="Game deleted.")
 
 
 @bp.post("/admin/api/analytics/<gid>/approve")

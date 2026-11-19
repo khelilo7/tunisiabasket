@@ -12,7 +12,10 @@ import auth
 import config
 import content
 import cup
+import fantasy
 import finals
+import history
+import records
 import lineups
 import mvp
 import nat1
@@ -86,6 +89,7 @@ for _lang in seo.LANGS:   # French: /, /classement, /equipe/CA ...   English: /e
         app.add_url_rule(seo.path(_lang, _page), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
     for _tab in seo.NAT1_TABS[_lang]:                  # Nationale 1: its table, games and calendar tabs have their own addresses
         app.add_url_rule(seo.path(_lang, "nat1", _tab), f"page_{_lang}_nat1_{_tab}", partial(_page_view, _lang, "nat1", _tab))
+    app.add_url_rule(seo.path(_lang, "history", "<arg>"), f"page_{_lang}_history_season", partial(_page_view, _lang, "history"))      # /historique/2018-2019
     app.add_url_rule(seo.path(_lang, "live", "<arg>"), f"page_{_lang}_live_game", partial(_page_view, _lang, "live"))      # the detail of one live game
     for _page in seo.ITEM_PAGES:
         app.add_url_rule(seo.path(_lang, _page, "<arg>"), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
@@ -264,6 +268,43 @@ def games():
         for g in reversed(allg)])
 
 
+@app.get("/api/schedule")
+def schedule():
+    """Every matchday of the season in one list, for the mobile app: the results (with the box score's id when there is one, and its MVP) and the games still to play
+    (with the date and time the admin set). `current` is the first matchday with a game left to play."""
+    season = stats.build()["season"]
+    box = {}
+    for g in stats.build_all_games():
+        if stats.season_of(g["date"]) == season and g.get("matchday_no"):
+            box[(g["matchday_no"], frozenset(t["code"] for t in g["teams"]))] = g
+    days = {}
+
+    def add(md, home, away, hs, as_, played, date=None, time_=None):
+        d = days.setdefault(md, {"matchday": md, "date": None, "games": []})
+        b = box.get((md, frozenset((home, away))))
+        for x in d["games"]:
+            if (x["home"], x["away"]) == (home, away):
+                x["time"] = x["time"] or time_
+                x["date"] = x["date"] or date
+                return
+        d["games"].append({"home": home, "away": away, "home_score": hs, "away_score": as_, "played": played, "id": b["id"] if b else None,
+                           "date": (b["date"] if b else None) or date, "time": time_, "mvp": b.get("mvp") if b else None})
+    for r in stats.load_official().get("results") or []:
+        add(r["matchday"], r["home"], r["away"], r["home_score"], r["away_score"], r["home_score"] is not None)
+    plan = stats.planning()
+    for md in plan["matchdays"]:
+        days.setdefault(md["matchday"], {"matchday": md["matchday"], "date": None, "games": []})["date"] = md["date"]
+        for g in md["games"]:
+            add(md["matchday"], g["home"], g["away"], g["home_score"], g["away_score"], g["played"], g.get("game_date") or md["date"], g.get("time"))
+    out = sorted(days.values(), key=lambda d: d["matchday"])
+    for d in out:
+        d["date"] = d["date"] or min((g["date"] for g in d["games"] if g["date"]), default=None)
+    current = next((d["matchday"] for d in out if any(not g["played"] for g in d["games"])), out[-1]["matchday"] if out else None)
+    r = jsonify(season=season, teams=plan["teams"], matchdays=out, current=current)
+    r.headers["Cache-Control"] = "public, max-age=60"
+    return r
+
+
 @app.get("/api/games/<gid>")
 def game(gid):
     g = next((g for g in stats.build_all_games() if g["id"] == gid), None)
@@ -273,7 +314,7 @@ def game(gid):
             abort(404)
         return jsonify(g)
     pos = {p["id"]: p for p in stats.build(stats.season_of(g["date"]))["players"]}
-    return jsonify({**g, "lineups": stats.game_lineups(g, pos)})
+    return jsonify({**g, "lineups": stats.game_lineups(g, pos), "records": records.for_game(gid)})
 
 
 @app.get("/api/teams/<code>")
@@ -342,6 +383,100 @@ def competitions():
     return jsonify(cup=bool(cup.load()["rounds"]), finals=bool(fv["announced"]), started=bool(fv["announced"]), nat1=bool(nat1.load()["teams"]), nat1_playoff=bool(nat1.load()["playoff_on"]))
 
 
+@app.get("/api/history")
+def history_index():
+    """Past seasons: every champion since 1955-56 and the seasons with a detail page (history.py)."""
+    r = jsonify(history.index())
+    r.headers["Cache-Control"] = "public, max-age=300"
+    return r
+
+
+# ---------------------------------------------------------------- Fantasy Pro A (hidden: 404 unless the server runs with FANTASY=1; fantasy.py)
+def _fantasy_on():
+    if not fantasy.enabled():
+        abort(404)
+
+
+@app.get("/api/fantasy/config")
+def fantasy_config():
+    _fantasy_on()
+    return jsonify(fantasy.config_view())
+
+
+@app.get("/api/fantasy/pool")
+def fantasy_pool():
+    _fantasy_on()
+    return jsonify(players=fantasy.pool(), budget=fantasy.BUDGET)
+
+
+@app.get("/api/fantasy/me")
+def fantasy_me():
+    _fantasy_on()
+    return jsonify(fantasy.me(str(request.args.get("vid", ""))[:64]))
+
+
+@app.post("/api/fantasy/team")
+def fantasy_team():
+    _fantasy_on()
+    r = fantasy.save(request.get_json(silent=True) or {})
+    return jsonify(r), (200 if r["ok"] else 400)
+
+
+@app.post("/api/fantasy/league")
+def fantasy_league():
+    _fantasy_on()
+    r = fantasy.league(request.get_json(silent=True) or {})
+    return jsonify(r), (200 if r["ok"] else 400)
+
+
+@app.get("/api/fantasy/ranking")
+def fantasy_ranking():
+    _fantasy_on()
+    rows = fantasy.ranking(request.args.get("league"))
+    return (jsonify(rows=rows), 200) if rows is not None else (jsonify(error="unknown league"), 404)
+
+
+@app.get("/api/fantasy/player/<pid>")
+def fantasy_player(pid):
+    _fantasy_on()
+    v = fantasy.player_view(pid)
+    return (jsonify(v), 200) if v else (jsonify(error="unknown player"), 404)
+
+
+@app.get("/api/fantasy/dream/<int:md>")
+def fantasy_dream(md):
+    _fantasy_on()
+    return jsonify(md=md, team=fantasy.dream_team(md))
+
+
+@app.get("/api/privacy")
+def privacy_view():
+    """The privacy policy (privacy.py) in the visitor's language: the page /confidentialite, /en/privacy, and the app's link."""
+    import privacy
+    r = jsonify(privacy.view(request.args.get("lang", "fr")))
+    r.headers["Cache-Control"] = "public, max-age=3600"
+    return r
+
+
+@app.get("/api/records")
+def records_view():
+    """League records: best single-game performances (players, teams), best season averages, titles and streaks (records.py)."""
+    r = jsonify(records.all_records())
+    r.headers["Cache-Control"] = "public, max-age=120"
+    return r
+
+
+@app.get("/api/history/<season>")
+def history_season(season):
+    """One past season: its format, tables, series, results and the box scores the site holds."""
+    v = history.view(season)
+    if v is None:
+        return jsonify(error="unknown season"), 404
+    r = jsonify(v)
+    r.headers["Cache-Control"] = "public, max-age=300"
+    return r
+
+
 @app.get("/api/cup")
 def cup_view():
     """The Cup bracket (cup.py): rounds, ties with their clubs resolved, upsets, the champion."""
@@ -401,6 +536,12 @@ def hit():
 
 @app.after_request
 def _headers(resp):
+    # The mobile app (mobile/) reads the public API; in its web preview that is another origin. Public data only: no credentials are ever allowed,
+    # and the only cross-origin POSTs accepted are the fantasy game's (anonymous, keyed by the device's id).
+    if request.path.startswith("/api/") and not request.path.startswith("/api/admin"):
+        resp.headers["Access-Control-Allow-Origin"] = "*"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST" if request.path.startswith("/api/fantasy/") else "GET"
+        resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return auth.add_security_headers(resp)
 
 

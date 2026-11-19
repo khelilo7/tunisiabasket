@@ -1,0 +1,341 @@
+{
+ "season": "2014-2015",
+ "league": "Tunisian Men's Basketball League 2014–15",
+ "source": {
+  "wikipedia": "Tunisian Men's Basketball League 2014–15"
+ },
+ "champion": "Club Africain",
+ "phases": [
+  {
+   "name": "Regular season · Group A",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 12,
+     "l": 0,
+     "pf": 927,
+     "pa": 690,
+     "pts": 24
+    },
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 9,
+     "l": 3,
+     "pf": 928,
+     "pa": 857,
+     "pts": 21
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 6,
+     "l": 6,
+     "pf": 834,
+     "pa": 848,
+     "pts": 18
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 6,
+     "l": 6,
+     "pf": 778,
+     "pa": 809,
+     "pts": 18
+    },
+    {
+     "code": "CAB",
+     "name": "CA Bizertin",
+     "w": 5,
+     "l": 7,
+     "pf": 838,
+     "pa": 875,
+     "pts": 17
+    },
+    {
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "w": 4,
+     "l": 8,
+     "pf": 758,
+     "pa": 844,
+     "pts": 16
+    },
+    {
+     "code": "GST",
+     "name": "Gazelec Sport de Tunis",
+     "w": 0,
+     "l": 12,
+     "pf": 710,
+     "pa": 850,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Regular season · Group B",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 10,
+     "l": 2,
+     "pf": 841,
+     "pa": 723,
+     "pts": 22
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 10,
+     "l": 2,
+     "pf": 885,
+     "pa": 753,
+     "pts": 22
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 9,
+     "l": 3,
+     "pf": 812,
+     "pa": 697,
+     "pts": 21
+    },
+    {
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "w": 6,
+     "l": 6,
+     "pf": 804,
+     "pa": 733,
+     "pts": 18
+    },
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 5,
+     "l": 7,
+     "pf": 861,
+     "pa": 791,
+     "pts": 17
+    },
+    {
+     "code": "CSC",
+     "name": "Club Sportif des Cheminots",
+     "w": 2,
+     "l": 10,
+     "pf": 739,
+     "pa": 814,
+     "pts": 14
+    },
+    {
+     "code": "SRS",
+     "name": "Sfax Railways Sports",
+     "w": 0,
+     "l": 12,
+     "pf": 532,
+     "pa": 963,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Playoffs · Championship playoff",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 12,
+     "l": 2,
+     "pf": 1105,
+     "pa": 1000,
+     "pts": 26
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 9,
+     "l": 5,
+     "pf": 1069,
+     "pa": 994,
+     "pts": 24
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 9,
+     "l": 5,
+     "pf": 1061,
+     "pa": 990,
+     "pts": 24
+    },
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 7,
+     "l": 7,
+     "pf": 1094,
+     "pa": 1040,
+     "pts": 21
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 7,
+     "l": 7,
+     "pf": 942,
+     "pa": 959,
+     "pts": 21
+    },
+    {
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "w": 7,
+     "l": 7,
+     "pf": 972,
+     "pa": 1033,
+     "pts": 21
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 3,
+     "l": 11,
+     "pf": 968,
+     "pa": 1112,
+     "pts": 17
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 2,
+     "l": 12,
+     "pf": 962,
+     "pa": 1045,
+     "pts": 16
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs · Semifinals · (1) Étoile Sportive de Radès vs. (4) US Monastir",
+   "kind": "games",
+   "games": [
+    {
+     "date": "4 April 2015",
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 83,
+     "as": 76
+    },
+    {
+     "date": "11 April 2015",
+     "home": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "away": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "hs": 80,
+     "as": 68
+    },
+    {
+     "date": "18 April 2015",
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 61,
+     "as": 53
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs · Semifinals · (2) Club Africain vs. (3) Étoile du Sahel",
+   "kind": "games",
+   "games": [
+    {
+     "date": "4 April 2015",
+     "home": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "away": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "hs": 66,
+     "as": 65
+    },
+    {
+     "date": "11 April 2015",
+     "home": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "away": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "hs": 74,
+     "as": 84
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs · Finals · Game 1",
+   "kind": "games",
+   "games": [
+    {
+     "date": "2 May 2015",
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "hs": 61,
+     "as": 63
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs · Finals · Game 2",
+   "kind": "games",
+   "games": [
+    {
+     "date": "8 May 2015",
+     "home": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "away": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "hs": 78,
+     "as": 68
+    }
+   ]
+  }
+ ]
+}

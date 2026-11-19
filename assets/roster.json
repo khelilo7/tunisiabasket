@@ -13,7 +13,8 @@
   "usm-8": "Fedi Gharbi",
   "sn-28": "Mohamed Hamza Foudhayli",
   "sn-9": "Montassar Lajmi",
-  "sn-23": "Mohamed Amine Bouaouina"
+  "sn-23": "Mohamed Amine Bouaouina",
+  "esr-77": "Naiem Dhifallah"
  },
  "transfers": [
   {
@@ -172,6 +173,42 @@
    "from": "2026-10-30",
    "to": "2026-10-30",
    "note": "Hobel, printed under 23 on that sheet"
+  },
+  {
+   "team": "CA",
+   "number": 7,
+   "id": "esr-77",
+   "from": "2016-08-01",
+   "to": "2018-07-31",
+   "name": "Naiem Dhifallah",
+   "note": "Naiem Dhifallah (ES Radès #77 in 2026-27): Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia #77 at the start of 2021-22 (the 49-point game, sheet 'DHIFALLAH N'), then Ezzahra #77"
+  },
+  {
+   "team": "ESS",
+   "number": 7,
+   "id": "esr-77",
+   "from": "2018-08-01",
+   "to": "2019-07-31",
+   "name": "Naiem Dhifallah",
+   "note": "Naiem Dhifallah (ES Radès #77 in 2026-27): Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia #77 at the start of 2021-22 (the 49-point game, sheet 'DHIFALLAH N'), then Ezzahra #77"
+  },
+  {
+   "team": "DSG",
+   "number": 77,
+   "id": "esr-77",
+   "from": "2021-08-01",
+   "to": "2021-10-19",
+   "name": "Naiem Dhifallah",
+   "note": "Naiem Dhifallah (ES Radès #77 in 2026-27): Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia #77 at the start of 2021-22 (the 49-point game, sheet 'DHIFALLAH N'), then Ezzahra #77"
+  },
+  {
+   "team": "EZS",
+   "number": 77,
+   "id": "esr-77",
+   "from": "2021-10-20",
+   "to": "2022-07-31",
+   "name": "Naiem Dhifallah",
+   "note": "Naiem Dhifallah (ES Radès #77 in 2026-27): Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia #77 at the start of 2021-22 (the 49-point game, sheet 'DHIFALLAH N'), then Ezzahra #77"
   }
  ]
 }

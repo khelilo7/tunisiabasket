@@ -1,0 +1,662 @@
+{
+ "season": "2017-2018",
+ "champion": "ES Radès",
+ "relegated": "Avenir sportif de La Marsa",
+ "teams": "13",
+ "phases": [
+  {
+   "name": "Phase 1 · Poule A",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 10,
+     "w": 10,
+     "l": 0,
+     "pf": 740,
+     "pa": 551,
+     "pts": 20
+    },
+    {
+     "rank": 2,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 10,
+     "w": 6,
+     "l": 4,
+     "pf": 719,
+     "pa": 657,
+     "pts": 16
+    },
+    {
+     "rank": 3,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pf": 766,
+     "pa": 772,
+     "pts": 15
+    },
+    {
+     "rank": 4,
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pf": 811,
+     "pa": 784,
+     "pts": 15
+    },
+    {
+     "rank": 5,
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "j": 10,
+     "w": 4,
+     "l": 6,
+     "pf": 734,
+     "pa": 751,
+     "pts": 14
+    },
+    {
+     "rank": 6,
+     "code": "USA",
+     "name": "US Ansar",
+     "j": 10,
+     "w": 0,
+     "l": 10,
+     "pf": 505,
+     "pa": 763,
+     "pts": 10
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule A",
+   "kind": "games",
+   "games": [
+    {
+     "home": "CA",
+     "away": "ESR",
+     "hs": 50,
+     "as": 67
+    },
+    {
+     "home": "CA",
+     "away": "USA",
+     "hs": 65,
+     "as": 49
+    },
+    {
+     "home": "DSG",
+     "away": "CA",
+     "hs": 68,
+     "as": 70
+    },
+    {
+     "home": "DSG",
+     "away": "ESR",
+     "hs": 58,
+     "as": 76
+    },
+    {
+     "home": "ESG",
+     "away": "CA",
+     "hs": 67,
+     "as": 61
+    },
+    {
+     "home": "ESG",
+     "away": "DSG",
+     "hs": 89,
+     "as": 77
+    },
+    {
+     "home": "ESG",
+     "away": "USA",
+     "hs": 85,
+     "as": 55
+    },
+    {
+     "home": "ESR",
+     "away": "ESG",
+     "hs": 76,
+     "as": 54
+    },
+    {
+     "home": "ESR",
+     "away": "JSK",
+     "hs": 76,
+     "as": 72
+    },
+    {
+     "home": "ESR",
+     "away": "USA",
+     "hs": 20,
+     "as": 0
+    },
+    {
+     "home": "JSK",
+     "away": "CA",
+     "hs": 65,
+     "as": 59
+    },
+    {
+     "home": "JSK",
+     "away": "DSG",
+     "hs": 97,
+     "as": 70
+    },
+    {
+     "home": "JSK",
+     "away": "ESG",
+     "hs": 89,
+     "as": 83
+    },
+    {
+     "home": "USA",
+     "away": "DSG",
+     "hs": 63,
+     "as": 93
+    },
+    {
+     "home": "USA",
+     "away": "JSK",
+     "hs": 66,
+     "as": 90
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule B",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 12,
+     "w": 11,
+     "l": 1,
+     "pf": 875,
+     "pa": 730,
+     "pts": 22
+    },
+    {
+     "rank": 2,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 12,
+     "w": 9,
+     "l": 3,
+     "pf": 888,
+     "pa": 725,
+     "pts": 21
+    },
+    {
+     "rank": 3,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 12,
+     "w": 7,
+     "l": 5,
+     "pf": 715,
+     "pa": 734,
+     "pts": 19
+    },
+    {
+     "rank": 4,
+     "code": "JSM",
+     "name": "JS Menazah",
+     "j": 12,
+     "w": 7,
+     "l": 5,
+     "pf": 790,
+     "pa": 801,
+     "pts": 10
+    },
+    {
+     "rank": 5,
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "j": 12,
+     "w": 5,
+     "l": 7,
+     "pf": 800,
+     "pa": 857,
+     "pts": 17
+    },
+    {
+     "rank": 6,
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "j": 12,
+     "w": 3,
+     "l": 9,
+     "pf": 717,
+     "pa": 742,
+     "pts": 15
+    },
+    {
+     "rank": 7,
+     "code": "ASM",
+     "name": "AS La Marsa",
+     "j": 12,
+     "w": 0,
+     "l": 12,
+     "pf": 659,
+     "pa": 855,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule B",
+   "kind": "games",
+   "games": [
+    {
+     "home": "ASH",
+     "away": "ASM",
+     "hs": 71,
+     "as": 59
+    },
+    {
+     "home": "ASH",
+     "away": "ESS",
+     "hs": 54,
+     "as": 77
+    },
+    {
+     "home": "ASH",
+     "away": "EZS",
+     "hs": 67,
+     "as": 82
+    },
+    {
+     "home": "ASH",
+     "away": "SN",
+     "hs": 72,
+     "as": 69
+    },
+    {
+     "home": "ASM",
+     "away": "EZS",
+     "hs": 67,
+     "as": 68
+    },
+    {
+     "home": "ASM",
+     "away": "JSM",
+     "hs": 55,
+     "as": 68
+    },
+    {
+     "home": "ASM",
+     "away": "USM",
+     "hs": 49,
+     "as": 80
+    },
+    {
+     "home": "ESS",
+     "away": "ASM",
+     "hs": 71,
+     "as": 54
+    },
+    {
+     "home": "ESS",
+     "away": "JSM",
+     "hs": 69,
+     "as": 63
+    },
+    {
+     "home": "ESS",
+     "away": "SN",
+     "hs": 62,
+     "as": 44
+    },
+    {
+     "home": "EZS",
+     "away": "ESS",
+     "hs": 58,
+     "as": 80
+    },
+    {
+     "home": "EZS",
+     "away": "JSM",
+     "hs": 59,
+     "as": 56
+    },
+    {
+     "home": "EZS",
+     "away": "USM",
+     "hs": 58,
+     "as": 75
+    },
+    {
+     "home": "JSM",
+     "away": "ASH",
+     "hs": 65,
+     "as": 60
+    },
+    {
+     "home": "JSM",
+     "away": "USM",
+     "hs": 67,
+     "as": 66
+    },
+    {
+     "home": "SN",
+     "away": "ASM",
+     "hs": 56,
+     "as": 45
+    },
+    {
+     "home": "SN",
+     "away": "EZS",
+     "hs": 69,
+     "as": 72
+    },
+    {
+     "home": "SN",
+     "away": "JSM",
+     "hs": 57,
+     "as": 66
+    },
+    {
+     "home": "USM",
+     "away": "ASH",
+     "hs": 69,
+     "as": 57
+    },
+    {
+     "home": "USM",
+     "away": "ESS",
+     "hs": 82,
+     "as": 68
+    },
+    {
+     "home": "USM",
+     "away": "SN",
+     "hs": 61,
+     "as": 51
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Matchs de barrage",
+   "kind": "games",
+   "games": [
+    {
+     "home": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "away": {
+      "code": "JSM",
+      "name": "JS Menazah"
+     },
+     "hs": 88,
+     "as": 70,
+     "date": "2018-02-03"
+    },
+    {
+     "home": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "away": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "hs": 70,
+     "as": 64,
+     "date": "2018-02-03"
+    },
+    {
+     "home": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "away": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "hs": 63,
+     "as": 62,
+     "date": "2018-02-10"
+    },
+    {
+     "home": {
+      "code": "JSM",
+      "name": "JS Menazah"
+     },
+     "away": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "hs": 99,
+     "as": 96,
+     "date": "2018-02-11"
+    },
+    {
+     "home": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "away": {
+      "code": "JSM",
+      "name": "JS Menazah"
+     },
+     "hs": 81,
+     "as": 72,
+     "date": "2018-02-14"
+    },
+    {
+     "home": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "away": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "hs": 75,
+     "as": 69,
+     "date": "2018-02-14"
+    }
+   ]
+  },
+  {
+   "name": "Phase 2 · Play-off",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 10,
+     "w": 10,
+     "l": 0,
+     "pf": 834,
+     "pa": 687,
+     "pts": 20
+    },
+    {
+     "rank": 2,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 10,
+     "w": 6,
+     "l": 4,
+     "pf": 737,
+     "pa": 684,
+     "pts": 16
+    },
+    {
+     "rank": 3,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 10,
+     "w": 4,
+     "l": 6,
+     "pf": 767,
+     "pa": 763,
+     "pts": 14
+    },
+    {
+     "rank": 4,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 10,
+     "w": 4,
+     "l": 6,
+     "pf": 774,
+     "pa": 825,
+     "pts": 14
+    },
+    {
+     "rank": 5,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 10,
+     "w": 4,
+     "l": 6,
+     "pf": 714,
+     "pa": 752,
+     "pts": 14
+    },
+    {
+     "rank": 6,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 10,
+     "w": 2,
+     "l": 8,
+     "pf": 668,
+     "pa": 786,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Phase 3 (super play-off) · Demi-finale",
+   "kind": "games",
+   "games": [
+    {
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "hs": 51,
+     "as": 32,
+     "date": "2018-04-08"
+    },
+    {
+     "home": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "away": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "hs": 79,
+     "as": 103
+    },
+    {
+     "home": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 65,
+     "as": 64,
+     "date": "2018-04-09"
+    },
+    {
+     "home": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "away": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "hs": 73,
+     "as": 59,
+     "date": "2018-04-14"
+    },
+    {
+     "home": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 61,
+     "as": 82,
+     "date": "2018-04-18"
+    }
+   ]
+  },
+  {
+   "name": "Phase 3 (super play-off) · Finale",
+   "kind": "games",
+   "games": [
+    {
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 97,
+     "as": 67,
+     "date": "2018-04-21"
+    },
+    {
+     "home": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "away": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "hs": 72,
+     "as": 62,
+     "date": "2018-04-28"
+    },
+    {
+     "home": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "away": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "hs": 91,
+     "as": 68,
+     "date": "2018-05-05"
+    }
+   ]
+  }
+ ]
+}

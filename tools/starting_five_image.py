@@ -21,12 +21,12 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import leader_images  # noqa: E402
+import brand  # noqa: E402
 import stats  # noqa: E402
 from lineups import expected_five  # noqa: E402
 from leader_images import ACCENT, BG_BOT, BG_TOP, H, M, MUTED, PANEL, TEXT, W, avatar, fit, font, logo_of  # noqa: E402
 
 RING = {"JSK": (31, 166, 84), "USM": (56, 132, 224)}
-FOOTER_LOGO = ROOT / "exports" / "logo" / "tunisiabasket-footer-light-text.png"
 ORD = {1: "1st", 2: "2nd", 3: "3rd"}
 
 
@@ -85,11 +85,7 @@ def render(d, a, b, opt):
     dr = ImageDraw.Draw(img)
 
     # top bar
-    mark = Image.open(ROOT / "static" / "img" / "logo.png").convert("RGBA")
-    mark = mark.resize((int(mark.width * 88 / mark.height), 88), Image.LANCZOS)
-    img.alpha_composite(mark, (M, 32))
-    dr.text((M + mark.width + 18, 44), "TUNISIA BASKET", font=font("black", 26), fill=ACCENT)
-    dr.text((M + mark.width + 18, 80), f"PRO A  ·  {d['season']}", font=font("med", 22), fill=MUTED)
+    brand.header(img, f"PRO A  ·  {d['season']}".upper(), M, 32, 88)
     if opt["matchday"]:
         dr.text((W - M, 44), f"MATCHDAY {opt['matchday']}", font=font("black", 30), fill=TEXT, anchor="ra")
     if opt["date"]:
@@ -173,12 +169,7 @@ def render(d, a, b, opt):
 
     # footer
     dr.text((W // 2, H - 124), "Based on starts this season and in recent games", font=font("reg", 22), fill=MUTED, anchor="mm")
-    if FOOTER_LOGO.is_file():
-        fl = Image.open(FOOTER_LOGO).convert("RGBA")
-        fl = fl.resize((int(fl.width * 72 / fl.height), 72), Image.LANCZOS)
-        img.alpha_composite(fl, ((W - fl.width) // 2, H - 96))
-    else:
-        dr.text((W // 2, H - 60), "tunisiabasket.com", font=font("bold", 30), fill=ACCENT, anchor="mm")
+    brand.footer(img)
     return img.convert("RGB")
 
 

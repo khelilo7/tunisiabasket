@@ -76,9 +76,7 @@
     const g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, C.bg2); g.addColorStop(0.5, C.bg1); g.addColorStop(1, '#070b16'); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
     const glow = ctx.createRadialGradient(W - 60, 40, 10, W - 60, 40, 560); glow.addColorStop(0, col + '47'); glow.addColorStop(1, col + '00'); ctx.fillStyle = glow; ctx.fillRect(0, 0, W, Math.min(H, 640));
     ctx.fillStyle = col; ctx.fillRect(0, 0, W, 10);
-    const lg = await loadImg('/img/logo-96.png'); if (lg) ctx.drawImage(lg, 48, 34, 52, 64);
-    txt(ctx, 'TUNISIA', 118, 78, { size: 34, weight: 900, color: C.acc, space: '2px' }); ctx.font = `900 34px ${FONT}`; ctx.letterSpacing = '2px';
-    const w1 = ctx.measureText('TUNISIA ').width; ctx.letterSpacing = '0px'; txt(ctx, 'BASKET', 118 + w1, 78, { size: 34, weight: 900, space: '2px' });
+    const lg = await loadImg('/img/brand/mark-dark.svg'), wm = await loadImg('/img/brand/wordmark-dark.svg'); if (lg) ctx.drawImage(lg, 48, 32, 66, 66); if (wm) ctx.drawImage(wm, 128, 50, 36 * wm.width / wm.height, 36);       // the new brand: the mark and TUNISIA BASKET (outlines, no font needed)
     txt(ctx, 'PRO A', W - 48, 76, { size: 22, weight: 700, color: C.mut, align: 'right', space: '2px' });
     ctx.fillStyle = C.line; ctx.fillRect(48, H - 78, W - 96, 2);
     txt(ctx, 'tunisiabasket.com', 48, H - 36, { size: 26, weight: 800, color: C.acc });

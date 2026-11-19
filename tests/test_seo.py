@@ -35,7 +35,7 @@ def head_of(html):
 d = stats.build()
 players = d["players"]
 game_ids = [g["id"] for g in d["games"]]
-pages = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None)]
+pages = [("home", None), ("standings", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("history", None), ("history", "2018-2019"), ("privacy", None)]
 pages += [("team", code) for code in stats.load_official()["teams"]]
 pages += [("player", seo.player_ref(p)) for p in players[:25]] + [("game", gid) for gid in game_ids[:12]]
 
@@ -108,6 +108,17 @@ for code in stats.load_official()["teams"]:
     check((root / "static" / "img" / "teams" / f"{code}.png").exists(), f"missing team logo {code}")
 check(Image.open(root / "static" / "img" / "og-image.jpg").size == (1200, 630), "og-image must be 1200x630")
 check(Image.open(root / "static" / "img" / "apple-touch-icon.png").size == (180, 180), "apple-touch-icon must be 180x180")
+brand = root / "static" / "img" / "brand"
+for f in ("logo-primary.svg", "logo-primary-dark.svg", "logo-header.svg", "logo-header-light.svg", "social-icon.svg", "mark.svg", "mark-small.svg"):
+    check((brand / f).exists() and (brand / f).read_text().startswith("<svg"), f"brand/{f} must be an SVG")
+home = c.get("/").get_data(as_text=True)
+check('class="bm"' in home and 'class="wm"' in home and "logo-96.png" not in home, "the header shows the new mark and wordmark (inline SVG)")
+check('type="image/svg+xml" href="/img/brand/mark-small.svg"' in home, "the home page links the SVG icon")
+check("--logo-red" in home, "the logo red follows the theme")
+for f in ("admin-cutout.js", "admin-nat1img.js", "vendor/mediapipe/vision_bundle.mjs", "vendor/mediapipe/wasm/vision_wasm_internal.js", "vendor/mediapipe/wasm/vision_wasm_internal.wasm", "vendor/mediapipe/magic_touch.tflite",
+          "img/brand/wordmark-dark.svg", "img/brand/mark-dark.svg"):
+    check(c.get("/" + f).status_code == 200, f"/{f} must be served (admin picture generators)")
+check(b"/vendor/mediapipe/" in (root / "static" / "admin-cutout.js").read_bytes() and (root / "static" / "vendor" / "mediapipe" / "NOTICE.txt").exists(), "the cut-out files come with their licence notice")
 manifest = json.loads((root / "static" / "site.webmanifest").read_text())
 check(manifest["name"] == "Tunisia Basket" and len(manifest["icons"]) >= 2, "web manifest")
 for f in ("favicon.ico", "img/logo-96.png", "img/logo.png", "img/favicon-32.png", "img/icon-192.png", "img/icon-512.png"):

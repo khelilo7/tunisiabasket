@@ -14,7 +14,7 @@ STATS = re.compile(rf"^{MA}\s+{MA}\s+{MA}\s+{MA}\s+(.*)$")
 NAMELESS = re.compile(r"^(\*?)(\d{1,2})\s+(\d{1,3}:\d{2})\s+(.*)$")
 NAMEPART = re.compile(r"^[A-Za-zÀ-ÿ'.()\- ]{1,40}$")
 NOT_NAME = ("Team/Coach", "Totals", "Coach", "Field", "Legend", "No Name")
-HEAD = re.compile(r"^(.+?)\s*\(\s*([A-Za-z0-9 ]{2,6}?)\s*\)​?\s+Assistant Coach")
+HEAD = re.compile(r"^(.+?)\s*\(\s*([A-Za-z0-9 .]{2,6}?)\s*\)​?\s+Assistant Coach")
 
 
 def parse_text_pdf(path, page=0):
@@ -51,7 +51,7 @@ def parse_text_pdf(path, page=0):
             continue
         h = HEAD.match(ln)
         if h:
-            cur = {"code": re.sub(r"\s+", "", h.group(2)).upper(), "name": h.group(1).strip().title(),
+            cur = {"code": re.sub(r"[\s.]+", "", h.group(2)).upper(), "name": h.group(1).strip().title(),
                    "coach": prev_coach.title(), "players": [], "points": None}
             teams.append(cur)
             continue

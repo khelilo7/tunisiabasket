@@ -15,6 +15,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 import config  # noqa: E402
+import brand  # noqa: E402
 import stats  # noqa: E402
 
 W, H, M = 1080, 1350, 48
@@ -133,11 +134,7 @@ def render(key, title, unit, fmt, d, upto):
     dr = ImageDraw.Draw(img)
 
     # header
-    mark = Image.open(ROOT / "static" / "img" / "logo.png").convert("RGBA")
-    mark = mark.resize((int(mark.width * 96 / mark.height), 96), Image.LANCZOS)
-    img.alpha_composite(mark, (M, 36))
-    dr.text((M + mark.width + 20, 46), "TUNISIA BASKET", font=font("black", 26), fill=ACCENT)
-    dr.text((M + mark.width + 20, 82), f"PRO A  ·  {d['season']}  ·  AFTER {upto}", font=font("med", 22), fill=MUTED)
+    brand.header(img, f"PRO A  ·  {d['season']}  ·  AFTER {upto}".upper(), M, 36, 96)
     dr.text((M, 168), title, font=fit(dr, title, "black", 64, W - 2 * M), fill=TEXT)
     dr.text((M, 244), f"{unit}  ·  top 10", font=font("med", 26), fill=MUTED)
     dr.rectangle((M, 288, M + 90, 293), fill=ACCENT)
@@ -196,8 +193,8 @@ def render(key, title, unit, fmt, d, upto):
     note = f"Min. {rows[0][1]['games_needed']} games played" if rows else ""
     if hidden:
         note += f"  ·  {hidden} more player{'s' if hidden > 1 else ''} tied with the 10th"
-    dr.text((M, H - 70), note, font=font("reg", 22), fill=MUTED)
-    dr.text((W - M, H - 70), "tunisiabasket.com", font=font("bold", 26), fill=ACCENT, anchor="ra")
+    dr.text((M, H - 118), note, font=font("reg", 22), fill=MUTED)
+    brand.footer(img)
     return img.convert("RGB")
 
 

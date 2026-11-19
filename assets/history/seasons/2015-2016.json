@@ -1,0 +1,46 @@
+{
+ "season": "2015-2016",
+ "champion": "Club Africain",
+ "runner_up": "ES Sahel",
+ "source": {
+  "press": "Webdo, 30 April 2016 (final report)"
+ },
+ "phases": [
+  {
+   "name": "Final",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Final",
+     "a": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "b": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "games": [
+      [
+       69,
+       73
+      ],
+      [
+       64,
+       56
+      ],
+      [
+       59,
+       56
+      ]
+     ],
+     "wins": [
+      2,
+      1
+     ],
+     "dates": "16 April (Sousse), 23 April (Tunis), 30 April 2016 (Sousse)"
+    }
+   ]
+  }
+ ]
+}

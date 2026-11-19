@@ -20,6 +20,7 @@ import re
 import threading
 
 import config
+import ranking
 
 FILE = config.DATA_DIR / "nat1.json"
 CODE = re.compile(r"^[A-Z0-9]{2,8}$")
@@ -76,7 +77,7 @@ def standings(d=None):
     for x in out:
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = 2 * x["w"] + x["l"]
-    out.sort(key=lambda x: (-x["pts"], -x["diff"], -x["pf"], x["name"]))
+    out = ranking.rank(out, [r for r in d["results"] if r["home"] in t and r["away"] in t])       # the FTBB's law (ranking.py), like the Pro A table
     for i, x in enumerate(out, 1):
         x["rank"] = i
     return out

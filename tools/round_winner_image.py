@@ -16,8 +16,9 @@ from PIL import Image, ImageChops, ImageDraw, ImageEnhance, ImageFilter, ImageOp
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import brand  # noqa: E402
 from leader_images import ACCENT, BG_BOT, BG_TOP, H, M, MUTED, TEXT, W, avatar, fit, font, logo_of  # noqa: E402
-from starting_five_image import FOOTER_LOGO, glow  # noqa: E402
+from starting_five_image import glow  # noqa: E402
 
 RED = (214, 36, 52)
 GOLD = (245, 197, 66)
@@ -45,7 +46,7 @@ def runner(site, spec):
     return {"id": pid, "name": p["name"], "team": p["team"]}, votes, pct
 
 
-def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEMBER 2026", third_stat="ast"):
+def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEMBER 2026", third_stat="ast", cut=None):
     ring = RED
     img = Image.new("RGB", (W, H), BG_TOP)
     px = ImageDraw.Draw(img)
@@ -61,6 +62,15 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
     img.alpha_composite(bg)
     glow(img, W // 2, 520, 420, ring, 60)
 
+    if cut is not None:                                                   # only the winner, cut out of the photo, in front of the blurred photo
+        s2 = 780 / cut.height
+        sub = cut.resize((round(cut.width * s2), 780), Image.LANCZOS)
+        fade = Image.new("L", sub.size, 255)
+        fd = ImageDraw.Draw(fade)
+        for y in range(300):
+            fd.line((0, sub.height - 300 + y, sub.width, sub.height - 300 + y), fill=int(255 * (1 - y / 300) ** 1.3))
+        sub.putalpha(ImageChops.multiply(sub.getchannel("A"), fade))
+        img.alpha_composite(sub, ((W - sub.width) // 2, 210))
     ph_w = 700
     crop = src.crop((0, 0, src.width, int(src.width * 1.32)))
     ph_h = int(ph_w * crop.height / crop.width)
@@ -79,7 +89,8 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
     for y in range(90):
         bd.line((0, y, ph_w, y), fill=int(255 * (y / 90)))
     ph.putalpha(ImageChops.multiply(ImageChops.multiply(side, bot), ph.getchannel("A")))
-    img.alpha_composite(ph, ((W - ph_w) // 2, 150))
+    if cut is None:
+        img.alpha_composite(ph, ((W - ph_w) // 2, 150))
     shade = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     sh = ImageDraw.Draw(shade)
     for y in range(760, H):
@@ -87,11 +98,7 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
     img.alpha_composite(shade)
 
     dr = ImageDraw.Draw(img)
-    mark = Image.open(ROOT / "static" / "img" / "logo.png").convert("RGBA")
-    mark = mark.resize((int(mark.width * 88 / mark.height), 88), Image.LANCZOS)
-    img.alpha_composite(mark, (M, 32))
-    dr.text((M + mark.width + 18, 44), "TUNISIA BASKET", font=font("black", 26), fill=ACCENT)
-    dr.text((M + mark.width + 18, 80), "PRO A  ·  2026-2027", font=font("med", 22), fill=MUTED)
+    brand.header(img, "PRO A  ·  2026-2027".upper(), M, 30, 70)
     dr.text((W - M, 44), f"DAY {rnd}", font=font("black", 30), fill=TEXT, anchor="ra")
     dr.text((W - M, 82), date, font=font("med", 24), fill=MUTED, anchor="ra")
 
@@ -130,10 +137,7 @@ def render(photo_path, g, team, opp, p, rnd, votes, pct, seconds, date="11 NOVEM
         dr.text((cx0 + 78, 1232), f"{k + 2}  ·  {' '.join(w.capitalize() for w in pl['name'].split())}", font=fit(dr, pl["name"], "bold", 25, 380), fill=TEXT, anchor="lm")
         dr.text((cx0 + 78, 1262), f"{pl['team']}  ·  {v} votes" + (f"  ·  {pc}%" if pc else ""), font=font("med", 20), fill=MUTED, anchor="lm")
 
-    if FOOTER_LOGO.is_file():
-        fl = Image.open(FOOTER_LOGO).convert("RGBA")
-        fl = fl.resize((int(fl.width * 58 / fl.height), 58), Image.LANCZOS)
-        img.alpha_composite(fl, ((W - fl.width) // 2, H - 66))
+    brand.footer(img)
     return img.convert("RGB")
 
 
@@ -150,12 +154,17 @@ def main():
     ap.add_argument("--second", required=True, help="player id:votes:share, e.g. usm-1:16:18.8")
     ap.add_argument("--third", required=True)
     ap.add_argument("--third-stat", default="ast", choices=["ast", "stl", "blk"], help="the third tile (assists by default; a rebounder with no assists shows blocks)")
+    ap.add_argument("--cutout-at", help="x,y (fractions of the photo): cut the person standing there out of the photo and show only him, e.g. 0.62,0.5")
     ap.add_argument("--out", default=str(ROOT / "exports" / "round-winner.png"))
     a = ap.parse_args()
     g, team, opp, p = row_of(a.site, a.game, a.player)
     out = Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    render(a.photo, g, team, opp, p, a.round, a.votes, a.pct, [runner(a.site, a.second), runner(a.site, a.third)], a.date, a.third_stat).save(out, optimize=True)
+    cut = None
+    if a.cutout_at:
+        from game_images import cutout
+        cut = cutout(a.photo, tuple(float(v) for v in a.cutout_at.split(",")))
+    render(a.photo, g, team, opp, p, a.round, a.votes, a.pct, [runner(a.site, a.second), runner(a.site, a.third)], a.date, a.third_stat, cut).save(out, optimize=True)
     print(out)
 
 

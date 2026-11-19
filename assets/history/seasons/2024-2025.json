@@ -1,0 +1,285 @@
+{
+ "season": "2024-2025",
+ "league": "Championnat Pro A 2024–25",
+ "source": {
+  "wikipedia": "Championnat Pro A 2024–25"
+ },
+ "champion": "Club Africain",
+ "runner_up": "US Monastir",
+ "relegated": "ES Goulettoise",
+ "phases": [
+  {
+   "name": "Regular season",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 16,
+     "l": 2
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 15,
+     "l": 3
+    },
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 15,
+     "l": 3
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 12,
+     "l": 6
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 8,
+     "l": 10
+    },
+    {
+     "code": "USA",
+     "name": "US Ansar",
+     "w": 7,
+     "l": 11
+    },
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 6,
+     "l": 12
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 6,
+     "l": 12
+    },
+    {
+     "code": "BCM",
+     "name": "BC Mahdia",
+     "w": 3,
+     "l": 15
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 2,
+     "l": 16
+    }
+   ]
+  },
+  {
+   "name": "Super 6",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 8,
+     "l": 2
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 8,
+     "l": 2
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 7,
+     "l": 3
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 4,
+     "l": 6
+    },
+    {
+     "code": "USA",
+     "name": "US Ansar",
+     "w": 2,
+     "l": 8
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 1,
+     "l": 9
+    }
+   ]
+  },
+  {
+   "name": "Relegation round",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 6,
+     "l": 0
+    },
+    {
+     "code": "BCM",
+     "name": "BC Mahdia",
+     "w": 3,
+     "l": 3
+    },
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 2,
+     "l": 4
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 1,
+     "l": 5
+    }
+   ]
+  },
+  {
+   "name": "Playouts",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 6,
+     "l": 3
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 6,
+     "l": 4
+    },
+    {
+     "code": "USA",
+     "name": "US Ansar",
+     "w": 5,
+     "l": 5
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 5,
+     "l": 5
+    },
+    {
+     "code": "BCM",
+     "name": "BC Mahdia",
+     "w": 5,
+     "l": 5
+    },
+    {
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "w": 3,
+     "l": 7
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "games": [
+      [
+       72,
+       55
+      ],
+      [
+       68,
+       61
+      ],
+      [
+       52,
+       57
+      ],
+      [
+       71,
+       74
+      ],
+      [
+       70,
+       51
+      ]
+     ]
+    },
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "b": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "games": [
+      [
+       87,
+       77
+      ],
+      [
+       82,
+       77
+      ],
+      [
+       63,
+       71
+      ]
+     ]
+    },
+    {
+     "round": "Final",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "games": [
+      [
+       73,
+       77
+      ],
+      [
+       73,
+       60
+      ],
+      [
+       53,
+       70
+      ],
+      [
+       75,
+       77
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}
