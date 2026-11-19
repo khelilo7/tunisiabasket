@@ -24,11 +24,11 @@ DEFAULT = "fr"          # the main language: its addresses have no prefix (/equi
 LANGS = ("fr", "en")
 SLUGS = {
     "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions", "news": "news", "live": "live",
-           "about": "about", "nat1": "national-one", "cup": "cup", "finals": "playoff-playout", "team": "team", "player": "player", "game": "game"},
+           "about": "about", "nat1": "national-one", "cup": "cup", "finals": "playoff-playout", "history": "history", "privacy": "privacy", "team": "team", "player": "player", "game": "game"},
     "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics", "news": "actualites", "live": "direct",
-           "about": "a-propos", "nat1": "nationale-1", "cup": "coupe", "finals": "playoff-playout", "team": "equipe", "player": "joueur", "game": "match"},
+           "about": "a-propos", "nat1": "nationale-1", "cup": "coupe", "finals": "playoff-playout", "history": "historique", "privacy": "confidentialite", "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "nat1", "cup", "finals")
+LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "nat1", "cup", "finals", "history", "privacy")
 ITEM_PAGES = ("team", "player", "game")
 NAT1_TABS = {"en": {"games": "games", "planning": "calendar", "playoff": "play-off"}, "fr": {"games": "matchs", "planning": "calendrier", "playoff": "playoff"}}      # the tabs of the Nationale 1 page: /nationale-1 (table), /nationale-1/matchs, /nationale-1/calendrier
 SITE = "Tunisia Basket"
@@ -74,6 +74,12 @@ T = {
         "follow_us": "Follow us",
         "cup_title": "Tunisia Basketball Cup – bracket, results and draw – Tunisia Basket",
         "cup_desc": "The Tunisian basketball Cup: Pro A and National One clubs meet in single-game ties. The bracket, the results, the upsets.", "cup_h1": "Cup",
+        "hi_title": "History of the Tunisian basketball league – champions, formats and box scores – Tunisia Basket",
+        "hi_desc": "Every Tunisian basketball champion since 1955-56 and, for the recent seasons, the format (play-off, play-out, super play-off), the tables, the series and the box scores.", "hi_h1": "History of the league",
+        "rc_title": "Tunisian basketball league records – most points in a game, biggest wins, titles – Tunisia Basket",
+        "rc_desc": "The records of the Tunisian basketball league: most points, rebounds and assists in a game, highest team scores, biggest wins, best season averages, most titles and title streaks.", "rc_h1": "League records",
+        "hs_title": "Tunisian Pro A {season}: champion, format, standings and box scores – Tunisia Basket",
+        "hs_desc": "The {season} Tunisian basketball season: champion {champion}, how it was played (play-off, play-out, super play-off), tables, series and results.",
         "fi_title": "Pro A play-off and play-out – tables, series and results – Tunisia Basket",
         "fi_desc": "After the regular season the six best Pro A clubs play the play-off and the six others the play-out: tables, series, results and the regular season history.", "fi_h1": "Play-off and play-out",
         "fb_hint": "Player, coach or club? We are still missing some box scores: send them to us, or ask for a correction, on our Facebook page.",
@@ -127,6 +133,12 @@ T = {
         "follow_us": "Suivez-nous",
         "cup_title": "Coupe de Tunisie de basket – tableau, résultats et tirage – Tunisia Basket",
         "cup_desc": "La Coupe de Tunisie de basket : les clubs de Pro A et de Nationale 1 se rencontrent en match sec. Le tableau, les résultats, les surprises.", "cup_h1": "Coupe",
+        "hi_title": "Historique du championnat de Tunisie de basket – champions, formules et feuilles de match – Tunisia Basket",
+        "hi_desc": "Tous les champions de Tunisie de basket depuis 1955-56 et, pour les saisons récentes, la formule (play-off, play-out, super play-off), les classements, les séries et les feuilles de match.", "hi_h1": "Historique du championnat",
+        "rc_title": "Records du championnat de Tunisie de basket – plus de points en un match, plus larges victoires, titres – Tunisia Basket",
+        "rc_desc": "Les records du championnat de Tunisie de basket : plus de points, rebonds et passes en un match, plus gros scores d’équipe, plus larges victoires, meilleures moyennes, titres et séries de titres.", "rc_h1": "Records du championnat",
+        "hs_title": "Pro A tunisienne {season} : champion, formule, classements et feuilles de match – Tunisia Basket",
+        "hs_desc": "La saison {season} du basket tunisien : champion {champion}, la formule (play-off, play-out, super play-off), les classements, les séries et les résultats.",
         "fi_title": "Play-off et play-out Pro A – classements, séries et résultats – Tunisia Basket",
         "fi_desc": "Après la saison régulière, les six meilleurs clubs de Pro A jouent le play-off et les six autres le play-out : classements, séries, résultats et historique de la saison régulière.", "fi_h1": "Play-off et play-out",
         "fb_hint": "Joueur, coach ou club ? Il nous manque encore des feuilles de match : envoyez-les-nous, ou demandez une correction, sur notre page Facebook.",
@@ -199,6 +211,8 @@ def parse_path(p):
         return (lang, page, parts[1] if len(parts) == 2 else None)
     if page in ITEM_PAGES:
         return (lang, page, parts[1]) if len(parts) == 2 else None
+    if page == "history" and len(parts) == 2:        # /historique/2018-2019
+        return (lang, page, parts[1]) if re.fullmatch(r"\d{4}-\d{4}|records", parts[1]) else None
     if page == "nat1" and len(parts) == 2:           # /nationale-1/matchs, /nationale-1/calendrier
         tab = next((k for k, v in NAT1_TABS[lang].items() if v == parts[1]), None)
         return (lang, page, tab) if tab else None
@@ -282,6 +296,32 @@ def meta(lang, page, arg=None):
         v = cup.view()
         body = "".join(f'<h2>{esc(r["name"])}</h2><ul>' + "".join(f'<li>{esc(x["home"].get("name") or x["home"].get("label") or "?")} {x["home_score"] if x["played"] else "-"}–{x["away_score"] if x["played"] else "-"} {esc(x["away"].get("name") or x["away"].get("label") or "?")}</li>' for x in r["ties"]) + "</ul>" for r in v["rounds"])
         out.update(title=t["cup_title"], description=t["cup_desc"], ssr=f'<h1>{t["cup_h1"]}</h1>{body}')
+    elif page == "privacy":
+        import privacy
+        v = privacy.view(lang)
+        out.update(title=f'{v["title"]} – {SITE}', description=v["intro"][:300],
+                   ssr=f'<h1>{esc(v["title"])}</h1><p>{esc(v["intro"])}</p>' + "".join(f'<h2>{esc(s["h"])}</h2>' + "".join(f"<p>{esc(x)}</p>" for x in s["p"]) for s in v["sections"]))
+    elif page == "history":
+        import history
+        if arg == "records":
+            import records
+            rec = records.all_records()
+            body = "".join(f'<h2>{esc(r["label"])}</h2><ol>' + "".join(f'<li>{x["value"]} – {esc(x.get("player") or x.get("club") or x.get("team") or "")} ({esc(x.get("season") or x.get("from") or "")})</li>' for x in r["top"][:5]) + "</ol>"
+                           for grp in ("player", "team", "league") for r in rec[grp])
+            out.update(title=t["rc_title"], description=t["rc_desc"], ssr=f'<h1>{t["rc_h1"]}</h1><p>{esc(t["rc_desc"])}</p>{body}')
+        elif arg:
+            v = history.view(arg)
+            if v is None:
+                return None
+            fm = (v.get("format") or {}).get(lang) or (v.get("format") or {}).get("en") or ""
+            line = f'{v["champion"]}' + (f' – {v["runner_up"]} ({v["final_score"]})' if v.get("runner_up") and v.get("final_score") else "")
+            body = "".join(f'<h2>{esc(sec["name"])}</h2>' + (
+                "<ol>" + "".join(f'<li>{esc(r["name"])} {r["w"]}-{r["l"]}</li>' for r in sec["table"]) + "</ol>" if sec["table"] else "") for sec in v["sections"])
+            out.update(title=t["hs_title"].format(season=arg.replace("-", "/")), description=t["hs_desc"].format(season=arg.replace("-", "/"), champion=v["champion"] or "-"),
+                       ssr=f'<h1>{t["hi_h1"]} {arg.replace("-", "/")}</h1><p>{esc(line)}</p><p>{esc(fm)}</p>{body}')
+        else:
+            rows = "".join(f'<li>{c["season"].replace("-", "/")}: {esc(c["champion"])}</li>' for c in reversed(history.champions()))
+            out.update(title=t["hi_title"], description=t["hi_desc"], ssr=f'<h1>{t["hi_h1"]}</h1><p>{esc(t["hi_desc"])}</p><ul>{rows}</ul>')
     elif page == "finals":
         out.update(title=t["fi_title"], description=t["fi_desc"], ssr=f'<h1>{t["fi_h1"]}</h1><p>{esc(t["fi_desc"])}</p>')
     elif page == "nat1":
@@ -446,7 +486,7 @@ def shell(lang, page, m):
             .replace("{{REGULAR}}", esc(T[lang]["regular"][0].upper() + T[lang]["regular"][1:]))
             .replace("{{LEGAL}}", esc(T[lang]["legal"].format(year=time.gmtime().tm_year)))
             .replace("{{FB}}", "https://www.facebook.com/people/Tunisia-Basket/61596371069928/").replace("{{FBHINT}}", esc(T[lang]["fb_hint"]))
-            .replace("{{PREDICT}}", path(lang, "predict")).replace("{{ABOUT}}", path(lang, "about")).replace("{{ABOUTLABEL}}", esc(T[lang]["ab_nav"]))
+            .replace("{{PREDICT}}", path(lang, "predict")).replace("{{ABOUT}}", path(lang, "about")).replace("{{PRIVACY}}", path(lang, "privacy")).replace("{{PRIVACYLABEL}}", "Confidentialité" if lang == "fr" else "Privacy").replace("{{ABOUTLABEL}}", esc(T[lang]["ab_nav"]))
             .replace("{{SOCIAL}}", social.html(T[lang]["follow_us"])).replace("{{SOCIALBIG}}", social.html(T[lang]["follow_us"], big=True))
             .replace("<!--NAV-->", nav_html(lang)).replace("<!--HEAD-->", head_html(lang, page, m))
             .replace("<!--SSR-->", m.get("ssr", "")))
@@ -460,9 +500,11 @@ def sitemap_xml():
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
     import content
-    entries = [("home", None), ("standings", None), ("nat1", None), ("nat1", "games"), ("nat1", "planning"), ("nat1", "playoff"), ("cup", None), ("finals", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None)]
+    entries = [("home", None), ("standings", None), ("nat1", None), ("nat1", "games"), ("nat1", "planning"), ("nat1", "playoff"), ("cup", None), ("finals", None), ("history", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None), ("privacy", None)]
     if content.load_news(1):                       # an empty news page is not worth indexing
         entries.append(("news", None))
+    import history
+    entries += [("history", "records")] + [("history", x) for x in history.season_ids()]
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]
     entries += [("game", g["id"]) for g in [*d["games"], *d["partials"]]]

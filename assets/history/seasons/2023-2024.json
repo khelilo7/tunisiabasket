@@ -1,0 +1,266 @@
+{
+ "season": "2023-2024",
+ "league": "Championnat Pro A 2023–24",
+ "source": {
+  "wikipedia": "Championnat Pro A 2023–24"
+ },
+ "champion": "US Monastir",
+ "runner_up": "Club Africain",
+ "phases": [
+  {
+   "name": "First phase",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 18,
+     "l": 0
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 16,
+     "l": 2
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 11,
+     "l": 7
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 10,
+     "l": 8
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 9,
+     "l": 9
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 9,
+     "l": 9
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 6,
+     "l": 12
+    },
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 6,
+     "l": 12
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 4,
+     "l": 14
+    },
+    {
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "w": 1,
+     "l": 17
+    }
+   ]
+  },
+  {
+   "name": "Playoffs",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 9,
+     "l": 1,
+     "pf": 501,
+     "pa": 444
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 9,
+     "l": 1,
+     "pf": 545,
+     "pa": 454
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 4,
+     "l": 6,
+     "pf": 519,
+     "pa": 479
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 4,
+     "l": 6,
+     "pf": 482,
+     "pa": 525
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 2,
+     "l": 7,
+     "pf": 446,
+     "pa": 515
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 1,
+     "l": 9,
+     "pf": 463,
+     "pa": 539
+    }
+   ]
+  },
+  {
+   "name": "Super Playoffs",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "games": [
+      [
+       66,
+       61
+      ],
+      [
+       83,
+       70
+      ],
+      [
+       58,
+       50
+      ]
+     ]
+    },
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "b": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "games": [
+      [
+       71,
+       60
+      ],
+      [
+       81,
+       46
+      ],
+      [
+       63,
+       57
+      ]
+     ]
+    },
+    {
+     "round": "Final",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "games": [
+      [
+       82,
+       72
+      ],
+      [
+       83,
+       72
+      ],
+      [
+       58,
+       81
+      ],
+      [
+       56,
+       69
+      ],
+      [
+       78,
+       58
+      ]
+     ]
+    },
+    {
+     "round": "Third place",
+     "a": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "b": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "games": [],
+     "aggregate": [
+      144,
+      74
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Play-out",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "JSM",
+     "name": "JS Menazah",
+     "w": 1,
+     "l": 0
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 1,
+     "l": 0
+    },
+    {
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "w": 0,
+     "l": 1
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 0,
+     "l": 1
+    }
+   ]
+  }
+ ]
+}

@@ -288,3 +288,48 @@ Undo, a list of the last actions with "remove", the score on top, and a CSV of t
 - **Analyst board, more actions:** technical foul on a player (counts as one of his fouls), injury, ejection (confirmed; the substitution window opens and he cannot come back on), and a team row per club: team rebounds and turnovers (the sheet's "Team / Coach" row), timeouts (the clock stops), technical fouls on the coach or the bench, with the team totals under it. The clock no longer starts by itself after a free throw, a technical, a timeout, an injury or an ejection (`DEAD` in `static/analytics.html`). Team events are stored like a lineup (`pid: null`, `team`), see `team_tally()`; the public Live page shows them (plays, timeouts and technicals in the team stats, EJ / injury flags).
 - **A bug fixed:** the board kept the half-done state of one game (the five being picked, the selected player) when another game was opened; with the same club the substitution buttons then only ticked players. The state is reset when the game changes (`S.shown`).
 - **Pictures:** `tools/brand.py` (header and footer of every poster tool) and the admin canvases draw the new mark and `wordmark-dark.svg`. `static/admin-cutout.js` takes the player out of an uploaded photo in the browser (MediaPipe Interactive Segmenter, Apache-2.0, vendored in `static/vendor/mediapipe/` with its notice: you click on the player, a second click adds a second one): Game MVP (photo) and Player photo images have an "extract the player" option. `static/admin-nat1img.js`: National One results of a matchday and standings (`/api/nat1`). `exports/brand-sheet.png` is the identity on one page (made by `tools/make_logo.py`).
+
+## History: past seasons (`history.py`, `assets/history`, pages `/historique` and `/en/history`)
+The league's past, read-only and shipped with the code: **champions** since 1955-56 (`champions.json`, with the final's score where known), **how each season was played** (`formats.json`: the play-off, play-out
+and super play-off changed almost every year, so every season carries its own text in English and French and its own phases), and per season (`seasons/<season>.json`) the tables, round-robin scores, barrage ties and
+series from Wikipedia (English and French pages) and the press. `history.view(season)` groups the phases under one English name each (`phase_name`; the page translates it), marks each game that has a box
+score and lists the box scores of that season. `GET /api/history` and `GET /api/history/<season>`; pages `/historique[/2018-2019]` and `/en/history[/...]`, in the sitemap, with a **🕘 History** tab beside Pro A / National One / Cup.
+* **Box scores.** `assets/history/games/*.json` are loaded by `stats.load_games` like any other game (so the season switch, the player pages and the team pages work for them). They come from the PDFs the FTBB
+  published on its old statistics pages (kept by the Internet Archive) and from the 2021-22 Google Drive sheet: `python tools/archive_ftbb.py` downloads them (slowly, the Archive refuses fast bulk downloads),
+  `python tools/import_history.py` reads them with the site's importer (`extractor.py`; `french_parser.py` reads the French-language sheets of 2017-19) and keeps a game only when every consistency check passes
+  (points, rebounds, shooting, minutes); the others are listed in `exports/history_raw/problems.json`. Club codes are made canonical from the club's name (`french_parser.canon`).
+* **Season pages.** `python tools/history_wikipedia.py DIR` (English pages: 2014-15, 2019-20, 2021-22 to 2024-25 and the champions list) and `python tools/history_wikifr.py DIR` (French pages: 2016-17 to 2018-19,
+  2020-21, 2025-26; `--force` replaces a season already built) write `assets/history/seasons/`. The two scripts keep Wikipedia's order for tables (the page's own tie-break) and drop a date that precedes the first game of its round.
+* **What is not there:** a season shows only what the files hold. 2015-16 has only the final (press report); the play-out tables of 2017-18 and 2018-19 are missing from the Wikipedia pages; seasons before
+  2014-15 list the champion only. Box scores on the site: 2016-17 (5), 2017-18 (40), 2018-19 (42), 2021-22 (113: the whole season from the FTBB's Google Sheet, tabs 1ère phase, P-OFF and P-OUT: regular season, play-off, super play-off with the final, play-out, super play-out and Cup); the FTBB's archived pages list 121 files and the
+  2021-22 sheet 237 Drive links (131 distinct box scores); 242 distinct files were read in all and 202 passed every check (200 games once duplicates are merged) (the rest are scans too poor to read, sheets with printed errors, a national U23 friendly...:
+  `exports/history_raw/problems.json`). No box score could be found online for 2019-20, 2020-21 and 2022-23 to 2025-26 (the FTBB's statistics page points to a spreadsheet that still holds 2021-22); their results come from Wikipedia. The three French sheet layouts of 2016-19 are in
+  `french_parser.py`; `NO_HISTORY_GAMES=1` leaves the past seasons out of `stats.load_games` (the test suite does, except `tests/test_history.py` and `tests/test_seo.py`).
+* **Players across seasons.** A jersey number only identifies a player within a season: `stats.load_games` names the players of each season on their own (CA #1 of 2018 is not CA #1 of 2026), so the past
+  seasons never rename or merge the players of the current one.
+* Test: `tests/test_history.py`.
+
+## League records (`records.py`, page `/historique/records`, `/en/history/records`)
+The best single-game performances (points, rebounds, assists, steals, blocks, threes, free throws, PIR) of players, the best team games (points scored, biggest win, highest-scoring
+game, team threes, assists, rebounds), the best season averages (at least 5 games with a box score) and the all-time records (most titles, longest title streak, unbeaten through a
+phase). Player records come from every box score the site holds (this season's and the past seasons' in `assets/history/games`); team scores and margins also use every result
+without a box score (this season's official results and the history pages, back to 2014-15); titles come from the champions since 1955-56. No list of Tunisian league records
+could be found online (FTBB, press, Afrobasket, Proballers were searched), so these are the site's own, and the page says over which seasons they are counted.
+**A record broken or equalled is shown on the game's page** (`/api/games/<id>` carries `records`: each record the game set or equalled, against every game played before it,
+with the previous holder), from the 31st game on. Values a sheet cannot hold (a misread 99) are left out (`PLAYER_STATS` caps); a two-legged tie given as one aggregate score
+(2023-24 third place, 144-74) is stored as `aggregate`, never as a game. `GET /api/records`. Test: `tests/test_records.py`.
+
+## Mobile app (`mobile/`) and the hidden Fantasy game (`fantasy.py`)
+**The app** is a native React Native app (Expo, Expo Router; Android first, then iOS; phones and tablets), not a wrapper of the website: see `mobile/README.md`. It reads the public
+API only (no admin in the app). For it the server has `GET /api/schedule` (every matchday of the season in one call: results with their box score's id and MVP, games to play with date
+and time) and answers the public API with `Access-Control-Allow-Origin: *` (GET only, no credentials; the fantasy routes also accept POST), which the app's web preview needs.
+The old Capacitor wrapper (`mobile/www`, never in git) is gone. The website shares the app's look (night navy, glass cards, pill navigation, Barlow Condensed for titles and
+numbers, served from `static/fonts/`).
+**Fantasy Pro A** is hidden: every `/api/fantasy/*` route answers 404 unless the server runs with `FANTASY=1`, and the app shows its tab only when built with
+`EXPO_PUBLIC_FANTASY=1`. Rules, scoring and chips are in the docstring of `fantasy.py`; squads, leagues and players' choices live in `DATA_DIR/fantasy.json`; no account, a device's
+random id and a nickname (a login can come later). `FANTASY_TEST=1` lets a squad be saved for a matchday already played (local testing on real results). Test: `tests/test_fantasy.py`.
+**Players across clubs:** `assets/roster.json` maps Naiem Dhifallah's earlier numbers (Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia then Ezzahra #77 in 2021-22) to his
+ES Radès profile (`esr-77`), so his 49-point game of 13 Oct 2021 (sheet: "DHIFALLAH N") is credited to him.
+
+## Privacy policy (`privacy.py`, pages `/confidentialite` and `/en/privacy`)
+One text (French and English) for the website, its crawler version and the app (More → Privacy); the store listings link to it. It describes what the code records (traffic.py, mvp.py, predict.py, follows, the app's local storage): change it when that changes, with `UPDATED`. `GET /api/privacy?lang=fr|en`.

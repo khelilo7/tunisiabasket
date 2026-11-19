@@ -1,0 +1,1559 @@
+{
+ "season": "2016-2017",
+ "champion": "ES Radès",
+ "relegated": "CS cheminots",
+ "teams": "14",
+ "phases": [
+  {
+   "name": "Phase 1 · Poule A",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 12,
+     "w": 12,
+     "l": 0,
+     "pf": 921,
+     "pa": 657,
+     "pts": 24
+    },
+    {
+     "rank": 2,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 12,
+     "w": 8,
+     "l": 4,
+     "pf": 807,
+     "pa": 653,
+     "pts": 20
+    },
+    {
+     "rank": 3,
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "j": 12,
+     "w": 8,
+     "l": 4,
+     "pf": 816,
+     "pa": 721,
+     "pts": 20
+    },
+    {
+     "rank": 4,
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "j": 12,
+     "w": 7,
+     "l": 5,
+     "pf": 797,
+     "pa": 902,
+     "pts": 19
+    },
+    {
+     "rank": 5,
+     "code": "CSC",
+     "name": "Club sportif des cheminots",
+     "j": 12,
+     "w": 3,
+     "l": 9,
+     "pf": 731,
+     "pa": 848,
+     "pts": 15
+    },
+    {
+     "rank": 6,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 12,
+     "w": 2,
+     "l": 10,
+     "pf": 718,
+     "pa": 804,
+     "pts": 14
+    },
+    {
+     "rank": 7,
+     "code": "SG",
+     "name": "Stade Gabèsien",
+     "j": 12,
+     "w": 2,
+     "l": 10,
+     "pf": 800,
+     "pa": 1005,
+     "pts": 14
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule A",
+   "kind": "games",
+   "games": [
+    {
+     "home": "ASH",
+     "away": "CA",
+     "hs": 67,
+     "as": 83
+    },
+    {
+     "home": "ASH",
+     "away": "CSC",
+     "hs": 68,
+     "as": 62
+    },
+    {
+     "home": "ASH",
+     "away": "ESG",
+     "hs": 72,
+     "as": 64
+    },
+    {
+     "home": "ASH",
+     "away": "SG",
+     "hs": 90,
+     "as": 72
+    },
+    {
+     "home": "ASH",
+     "away": "SN",
+     "hs": 66,
+     "as": 50
+    },
+    {
+     "home": "ASH",
+     "away": "USM",
+     "hs": 66,
+     "as": 56
+    },
+    {
+     "home": "CA",
+     "away": "ASH",
+     "hs": 99,
+     "as": 33
+    },
+    {
+     "home": "CA",
+     "away": "CSC",
+     "hs": 86,
+     "as": 61
+    },
+    {
+     "home": "CA",
+     "away": "ESG",
+     "hs": 79,
+     "as": 41
+    },
+    {
+     "home": "CA",
+     "away": "SG",
+     "hs": 96,
+     "as": 60
+    },
+    {
+     "home": "CA",
+     "away": "SN",
+     "hs": 64,
+     "as": 57
+    },
+    {
+     "home": "CA",
+     "away": "USM",
+     "hs": 75,
+     "as": 71
+    },
+    {
+     "home": "CSC",
+     "away": "ASH",
+     "hs": 68,
+     "as": 75
+    },
+    {
+     "home": "CSC",
+     "away": "CA",
+     "hs": 54,
+     "as": 70
+    },
+    {
+     "home": "CSC",
+     "away": "ESG",
+     "hs": 66,
+     "as": 60
+    },
+    {
+     "home": "CSC",
+     "away": "SG",
+     "hs": 71,
+     "as": 70
+    },
+    {
+     "home": "CSC",
+     "away": "SN",
+     "hs": 41,
+     "as": 77
+    },
+    {
+     "home": "CSC",
+     "away": "USM",
+     "hs": 56,
+     "as": 64
+    },
+    {
+     "home": "ESG",
+     "away": "ASH",
+     "hs": 76,
+     "as": 79
+    },
+    {
+     "home": "ESG",
+     "away": "CA",
+     "hs": 51,
+     "as": 59
+    },
+    {
+     "home": "ESG",
+     "away": "CSC",
+     "hs": 68,
+     "as": 60
+    },
+    {
+     "home": "ESG",
+     "away": "SG",
+     "hs": 91,
+     "as": 66
+    },
+    {
+     "home": "ESG",
+     "away": "SN",
+     "hs": 59,
+     "as": 62
+    },
+    {
+     "home": "ESG",
+     "away": "USM",
+     "hs": 38,
+     "as": 62
+    },
+    {
+     "home": "SG",
+     "away": "ASH",
+     "hs": 98,
+     "as": 74
+    },
+    {
+     "home": "SG",
+     "away": "CA",
+     "hs": 59,
+     "as": 83
+    },
+    {
+     "home": "SG",
+     "away": "CSC",
+     "hs": 62,
+     "as": 85
+    },
+    {
+     "home": "SG",
+     "away": "ESG",
+     "hs": 79,
+     "as": 76
+    },
+    {
+     "home": "SG",
+     "away": "SN",
+     "hs": 63,
+     "as": 83
+    },
+    {
+     "home": "SG",
+     "away": "USM",
+     "hs": 55,
+     "as": 88
+    },
+    {
+     "home": "SN",
+     "away": "ASH",
+     "hs": 84,
+     "as": 47
+    },
+    {
+     "home": "SN",
+     "away": "CA",
+     "hs": 53,
+     "as": 63
+    },
+    {
+     "home": "SN",
+     "away": "CSC",
+     "hs": 79,
+     "as": 62
+    },
+    {
+     "home": "SN",
+     "away": "ESG",
+     "hs": 67,
+     "as": 54
+    },
+    {
+     "home": "SN",
+     "away": "SG",
+     "hs": 87,
+     "as": 78
+    },
+    {
+     "home": "SN",
+     "away": "USM",
+     "hs": 66,
+     "as": 60
+    },
+    {
+     "home": "USM",
+     "away": "ASH",
+     "hs": 90,
+     "as": 60
+    },
+    {
+     "home": "USM",
+     "away": "CA",
+     "hs": 50,
+     "as": 64
+    },
+    {
+     "home": "USM",
+     "away": "CSC",
+     "hs": 68,
+     "as": 47
+    },
+    {
+     "home": "USM",
+     "away": "ESG",
+     "hs": 53,
+     "as": 39
+    },
+    {
+     "home": "USM",
+     "away": "SG",
+     "hs": 81,
+     "as": 36
+    },
+    {
+     "home": "USM",
+     "away": "SN",
+     "hs": 64,
+     "as": 51
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule B",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 12,
+     "w": 11,
+     "l": 1,
+     "pf": 956,
+     "pa": 722,
+     "pts": 23
+    },
+    {
+     "rank": 2,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 12,
+     "w": 11,
+     "l": 1,
+     "pf": 935,
+     "pa": 767,
+     "pts": 23
+    },
+    {
+     "rank": 3,
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "j": 12,
+     "w": 7,
+     "l": 5,
+     "pf": 839,
+     "pa": 828,
+     "pts": 19
+    },
+    {
+     "rank": 4,
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "j": 12,
+     "w": 6,
+     "l": 6,
+     "pf": 816,
+     "pa": 835,
+     "pts": 18
+    },
+    {
+     "rank": 5,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 12,
+     "w": 4,
+     "l": 8,
+     "pf": 773,
+     "pa": 825,
+     "pts": 16
+    },
+    {
+     "rank": 6,
+     "code": "JSM",
+     "name": "JS Menazah",
+     "j": 12,
+     "w": 3,
+     "l": 9,
+     "pf": 778,
+     "pa": 893,
+     "pts": 15
+    },
+    {
+     "rank": 7,
+     "code": "USA",
+     "name": "US Ansar",
+     "j": 12,
+     "w": 0,
+     "l": 12,
+     "pf": 672,
+     "pa": 899,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Poule B",
+   "kind": "games",
+   "games": [
+    {
+     "home": "DSG",
+     "away": "ESR",
+     "hs": 61,
+     "as": 78
+    },
+    {
+     "home": "DSG",
+     "away": "ESS",
+     "hs": 73,
+     "as": 90
+    },
+    {
+     "home": "DSG",
+     "away": "EZS",
+     "hs": 63,
+     "as": 61
+    },
+    {
+     "home": "DSG",
+     "away": "JSM",
+     "hs": 81,
+     "as": 76
+    },
+    {
+     "home": "DSG",
+     "away": "JSK",
+     "hs": 76,
+     "as": 71
+    },
+    {
+     "home": "DSG",
+     "away": "USA",
+     "hs": 67,
+     "as": 57
+    },
+    {
+     "home": "ESR",
+     "away": "DSG",
+     "hs": 82,
+     "as": 66
+    },
+    {
+     "home": "ESR",
+     "away": "ESS",
+     "hs": 76,
+     "as": 74
+    },
+    {
+     "home": "ESR",
+     "away": "EZS",
+     "hs": 82,
+     "as": 64
+    },
+    {
+     "home": "ESR",
+     "away": "JSM",
+     "hs": 101,
+     "as": 58
+    },
+    {
+     "home": "ESR",
+     "away": "JSK",
+     "hs": 92,
+     "as": 78
+    },
+    {
+     "home": "ESR",
+     "away": "USA",
+     "hs": 80,
+     "as": 39
+    },
+    {
+     "home": "ESS",
+     "away": "DSG",
+     "hs": 66,
+     "as": 55
+    },
+    {
+     "home": "ESS",
+     "away": "ESR",
+     "hs": 81,
+     "as": 55
+    },
+    {
+     "home": "ESS",
+     "away": "EZS",
+     "hs": 73,
+     "as": 56
+    },
+    {
+     "home": "ESS",
+     "away": "JSM",
+     "hs": 92,
+     "as": 56
+    },
+    {
+     "home": "ESS",
+     "away": "JSK",
+     "hs": 102,
+     "as": 72
+    },
+    {
+     "home": "ESS",
+     "away": "USA",
+     "hs": 74,
+     "as": 52
+    },
+    {
+     "home": "EZS",
+     "away": "DSG",
+     "hs": 59,
+     "as": 69
+    },
+    {
+     "home": "EZS",
+     "away": "ESR",
+     "hs": 65,
+     "as": 74
+    },
+    {
+     "home": "EZS",
+     "away": "ESS",
+     "hs": 63,
+     "as": 74
+    },
+    {
+     "home": "EZS",
+     "away": "JSM",
+     "hs": 71,
+     "as": 65
+    },
+    {
+     "home": "EZS",
+     "away": "JSK",
+     "hs": 56,
+     "as": 68
+    },
+    {
+     "home": "EZS",
+     "away": "USA",
+     "hs": 67,
+     "as": 48
+    },
+    {
+     "home": "JSM",
+     "away": "DSG",
+     "hs": 66,
+     "as": 64
+    },
+    {
+     "home": "JSM",
+     "away": "ESR",
+     "hs": 68,
+     "as": 73
+    },
+    {
+     "home": "JSM",
+     "away": "ESS",
+     "hs": 49,
+     "as": 70
+    },
+    {
+     "home": "JSM",
+     "away": "EZS",
+     "hs": 77,
+     "as": 79
+    },
+    {
+     "home": "JSM",
+     "away": "JSK",
+     "hs": 67,
+     "as": 70
+    },
+    {
+     "home": "JSM",
+     "away": "USA",
+     "hs": 65,
+     "as": 55
+    },
+    {
+     "home": "JSK",
+     "away": "DSG",
+     "hs": 80,
+     "as": 71
+    },
+    {
+     "home": "JSK",
+     "away": "ESR",
+     "hs": 64,
+     "as": 68
+    },
+    {
+     "home": "JSK",
+     "away": "ESS",
+     "hs": 58,
+     "as": 65
+    },
+    {
+     "home": "JSK",
+     "away": "EZS",
+     "hs": 55,
+     "as": 52
+    },
+    {
+     "home": "JSK",
+     "away": "JSM",
+     "hs": 67,
+     "as": 60
+    },
+    {
+     "home": "JSK",
+     "away": "USA",
+     "hs": 74,
+     "as": 44
+    },
+    {
+     "home": "USA",
+     "away": "DSG",
+     "hs": 49,
+     "as": 70
+    },
+    {
+     "home": "USA",
+     "away": "ESR",
+     "hs": 49,
+     "as": 74
+    },
+    {
+     "home": "USA",
+     "away": "ESS",
+     "hs": 57,
+     "as": 95
+    },
+    {
+     "home": "USA",
+     "away": "EZS",
+     "hs": 77,
+     "as": 80
+    },
+    {
+     "home": "USA",
+     "away": "JSM",
+     "hs": 70,
+     "as": 71
+    },
+    {
+     "home": "USA",
+     "away": "JSK",
+     "hs": 75,
+     "as": 79
+    }
+   ]
+  },
+  {
+   "name": "Phase 1 · Matchs de barrage",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Pour le bonus",
+     "a": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "b": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "games": [
+      [
+       87,
+       72
+      ],
+      [
+       77,
+       86
+      ],
+      [
+       78,
+       91
+      ]
+     ]
+    },
+    {
+     "round": "Pour le play-off",
+     "a": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "b": {
+      "code": "ASH",
+      "name": "AS Hammamet"
+     },
+     "games": [
+      [
+       76,
+       73
+      ],
+      [
+       92,
+       95
+      ],
+      [
+       83,
+       77
+      ]
+     ]
+    },
+    {
+     "round": "Pour le play-off",
+     "a": {
+      "code": "SN",
+      "name": "Stade Nabeulien"
+     },
+     "b": {
+      "code": "DSG",
+      "name": "DS Grombalia"
+     },
+     "games": [
+      [
+       56,
+       53
+      ],
+      [
+       57,
+       54
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Phase 2 · Play-off",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 10,
+     "w": 8,
+     "l": 2,
+     "pf": 728,
+     "pa": 609,
+     "pts": 18
+    },
+    {
+     "rank": 2,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 10,
+     "w": 7,
+     "l": 3,
+     "pf": 713,
+     "pa": 666,
+     "pts": 18
+    },
+    {
+     "rank": 3,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pf": 645,
+     "pa": 651,
+     "pts": 15
+    },
+    {
+     "rank": 4,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 10,
+     "w": 4,
+     "l": 6,
+     "pf": 646,
+     "pa": 641,
+     "pts": 14
+    },
+    {
+     "rank": 5,
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "j": 10,
+     "w": 3,
+     "l": 7,
+     "pf": 628,
+     "pa": 697,
+     "pts": 13
+    },
+    {
+     "rank": 6,
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "j": 10,
+     "w": 3,
+     "l": 7,
+     "pf": 610,
+     "pa": 706,
+     "pts": 13
+    }
+   ]
+  },
+  {
+   "name": "Phase 2 · Play-off",
+   "kind": "games",
+   "games": [
+    {
+     "home": "CA",
+     "away": "ESR",
+     "hs": 78,
+     "as": 64
+    },
+    {
+     "home": "CA",
+     "away": "ESS",
+     "hs": 63,
+     "as": 57
+    },
+    {
+     "home": "CA",
+     "away": "JSK",
+     "hs": 65,
+     "as": 70
+    },
+    {
+     "home": "CA",
+     "away": "SN",
+     "hs": 68,
+     "as": 56
+    },
+    {
+     "home": "CA",
+     "away": "USM",
+     "hs": 78,
+     "as": 69
+    },
+    {
+     "home": "ESR",
+     "away": "CA",
+     "hs": 72,
+     "as": 61
+    },
+    {
+     "home": "ESR",
+     "away": "ESS",
+     "hs": 67,
+     "as": 68
+    },
+    {
+     "home": "ESR",
+     "away": "JSK",
+     "hs": 89,
+     "as": 55
+    },
+    {
+     "home": "ESR",
+     "away": "SN",
+     "hs": 71,
+     "as": 59
+    },
+    {
+     "home": "ESR",
+     "away": "USM",
+     "hs": 75,
+     "as": 54
+    },
+    {
+     "home": "ESS",
+     "away": "CA",
+     "hs": 84,
+     "as": 64
+    },
+    {
+     "home": "ESS",
+     "away": "ESR",
+     "hs": 55,
+     "as": 72
+    },
+    {
+     "home": "ESS",
+     "away": "JSK",
+     "hs": 83,
+     "as": 81
+    },
+    {
+     "home": "ESS",
+     "away": "SN",
+     "hs": 88,
+     "as": 66
+    },
+    {
+     "home": "ESS",
+     "away": "USM",
+     "hs": 61,
+     "as": 57
+    },
+    {
+     "home": "JSK",
+     "away": "CA",
+     "hs": 49,
+     "as": 52
+    },
+    {
+     "home": "JSK",
+     "away": "ESR",
+     "hs": 55,
+     "as": 69
+    },
+    {
+     "home": "JSK",
+     "away": "ESS",
+     "hs": 65,
+     "as": 88
+    },
+    {
+     "home": "JSK",
+     "away": "SN",
+     "hs": 76,
+     "as": 49
+    },
+    {
+     "home": "JSK",
+     "away": "USM",
+     "hs": 55,
+     "as": 54
+    },
+    {
+     "home": "SN",
+     "away": "CA",
+     "hs": 67,
+     "as": 59
+    },
+    {
+     "home": "SN",
+     "away": "ESR",
+     "hs": 61,
+     "as": 72
+    },
+    {
+     "home": "SN",
+     "away": "ESS",
+     "hs": 65,
+     "as": 78
+    },
+    {
+     "home": "SN",
+     "away": "JSK",
+     "hs": 65,
+     "as": 59
+    },
+    {
+     "home": "SN",
+     "away": "USM",
+     "hs": 71,
+     "as": 68
+    },
+    {
+     "home": "USM",
+     "away": "CA",
+     "hs": 63,
+     "as": 57
+    },
+    {
+     "home": "USM",
+     "away": "ESR",
+     "hs": 63,
+     "as": 77
+    },
+    {
+     "home": "USM",
+     "away": "ESS",
+     "hs": 66,
+     "as": 53
+    },
+    {
+     "home": "USM",
+     "away": "JSK",
+     "hs": 85,
+     "as": 63
+    },
+    {
+     "home": "USM",
+     "away": "SN",
+     "hs": 67,
+     "as": 51
+    }
+   ]
+  },
+  {
+   "name": "Phase 2 · Play-out",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 14,
+     "w": 10,
+     "l": 4,
+     "pf": 887,
+     "pa": 843,
+     "pts": 24
+    },
+    {
+     "rank": 2,
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "j": 14,
+     "w": 8,
+     "l": 6,
+     "pf": 1061,
+     "pa": 1008,
+     "pts": 23
+    },
+    {
+     "rank": 3,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 14,
+     "w": 8,
+     "l": 6,
+     "pf": 1019,
+     "pa": 977,
+     "pts": 23
+    },
+    {
+     "rank": 4,
+     "code": "JSM",
+     "name": "JS Menazah",
+     "j": 14,
+     "w": 8,
+     "l": 6,
+     "pf": 963,
+     "pa": 985,
+     "pts": 22
+    },
+    {
+     "rank": 5,
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "j": 14,
+     "w": 6,
+     "l": 8,
+     "pf": 1001,
+     "pa": 1004,
+     "pts": 21
+    },
+    {
+     "rank": 6,
+     "code": "USA",
+     "name": "US Ansar",
+     "j": 14,
+     "w": 7,
+     "l": 7,
+     "pf": 923,
+     "pa": 904,
+     "pts": 21
+    },
+    {
+     "rank": 7,
+     "code": "CSC",
+     "name": "Club sportif des cheminots",
+     "j": 14,
+     "w": 6,
+     "l": 8,
+     "pf": 941,
+     "pa": 890,
+     "pts": 20
+    },
+    {
+     "rank": 8,
+     "code": "SG",
+     "name": "Stade Gabèsien",
+     "j": 14,
+     "w": 2,
+     "l": 12,
+     "pf": 739,
+     "pa": 933,
+     "pts": 13
+    }
+   ]
+  },
+  {
+   "name": "Phase 2 · Play-out",
+   "kind": "games",
+   "games": [
+    {
+     "home": "ASH",
+     "away": "CSC",
+     "hs": 64,
+     "as": 68
+    },
+    {
+     "home": "ASH",
+     "away": "DSG",
+     "hs": 73,
+     "as": 72
+    },
+    {
+     "home": "ASH",
+     "away": "ESG",
+     "hs": 92,
+     "as": 88
+    },
+    {
+     "home": "ASH",
+     "away": "EZS",
+     "hs": 75,
+     "as": 64
+    },
+    {
+     "home": "ASH",
+     "away": "JSM",
+     "hs": 58,
+     "as": 65
+    },
+    {
+     "home": "ASH",
+     "away": "SG",
+     "hs": 78,
+     "as": 64
+    },
+    {
+     "home": "ASH",
+     "away": "USA",
+     "hs": 72,
+     "as": 64
+    },
+    {
+     "home": "CSC",
+     "away": "ASH",
+     "hs": 80,
+     "as": 72
+    },
+    {
+     "home": "CSC",
+     "away": "DSG",
+     "hs": 58,
+     "as": 61
+    },
+    {
+     "home": "CSC",
+     "away": "ESG",
+     "hs": 61,
+     "as": 66
+    },
+    {
+     "home": "CSC",
+     "away": "EZS",
+     "hs": 43,
+     "as": 46
+    },
+    {
+     "home": "CSC",
+     "away": "JSM",
+     "hs": 82,
+     "as": 67
+    },
+    {
+     "home": "CSC",
+     "away": "SG",
+     "hs": 85,
+     "as": 55
+    },
+    {
+     "home": "CSC",
+     "away": "USA",
+     "hs": 68,
+     "as": 74
+    },
+    {
+     "home": "DSG",
+     "away": "ASH",
+     "hs": 72,
+     "as": 69
+    },
+    {
+     "home": "DSG",
+     "away": "CSC",
+     "hs": 82,
+     "as": 79
+    },
+    {
+     "home": "DSG",
+     "away": "ESG",
+     "hs": 105,
+     "as": 86
+    },
+    {
+     "home": "DSG",
+     "away": "EZS",
+     "hs": 64,
+     "as": 73
+    },
+    {
+     "home": "DSG",
+     "away": "JSM",
+     "hs": 82,
+     "as": 71
+    },
+    {
+     "home": "DSG",
+     "away": "SG",
+     "hs": 76,
+     "as": 82
+    },
+    {
+     "home": "DSG",
+     "away": "USA",
+     "hs": 65,
+     "as": 70
+    },
+    {
+     "home": "ESG",
+     "away": "ASH",
+     "hs": 76,
+     "as": 72
+    },
+    {
+     "home": "ESG",
+     "away": "CSC",
+     "hs": 61,
+     "as": 67
+    },
+    {
+     "home": "ESG",
+     "away": "DSG",
+     "hs": 87,
+     "as": 73
+    },
+    {
+     "home": "ESG",
+     "away": "EZS",
+     "hs": 75,
+     "as": 64
+    },
+    {
+     "home": "ESG",
+     "away": "JSM",
+     "hs": 86,
+     "as": 75
+    },
+    {
+     "home": "ESG",
+     "away": "SG",
+     "hs": 89,
+     "as": 81
+    },
+    {
+     "home": "ESG",
+     "away": "USA",
+     "hs": 79,
+     "as": 65
+    },
+    {
+     "home": "EZS",
+     "away": "ASH",
+     "hs": 68,
+     "as": 60
+    },
+    {
+     "home": "EZS",
+     "away": "CSC",
+     "hs": 63,
+     "as": 60
+    },
+    {
+     "home": "EZS",
+     "away": "DSG",
+     "hs": 68,
+     "as": 67
+    },
+    {
+     "home": "EZS",
+     "away": "ESG",
+     "hs": 79,
+     "as": 70
+    },
+    {
+     "home": "EZS",
+     "away": "JSM",
+     "hs": 62,
+     "as": 73
+    },
+    {
+     "home": "EZS",
+     "away": "SG",
+     "hs": 20,
+     "as": 0
+    },
+    {
+     "home": "EZS",
+     "away": "USA",
+     "hs": 83,
+     "as": 68
+    },
+    {
+     "home": "JSM",
+     "away": "ASH",
+     "hs": 74,
+     "as": 69
+    },
+    {
+     "home": "JSM",
+     "away": "CSC",
+     "hs": 62,
+     "as": 60
+    },
+    {
+     "home": "JSM",
+     "away": "DSG",
+     "hs": 69,
+     "as": 77
+    },
+    {
+     "home": "JSM",
+     "away": "ESG",
+     "hs": 61,
+     "as": 66
+    },
+    {
+     "home": "JSM",
+     "away": "EZS",
+     "hs": 55,
+     "as": 54
+    },
+    {
+     "home": "JSM",
+     "away": "SG",
+     "hs": 65,
+     "as": 62
+    },
+    {
+     "home": "JSM",
+     "away": "USA",
+     "hs": 61,
+     "as": 59
+    },
+    {
+     "home": "SG",
+     "away": "ASH",
+     "hs": 82,
+     "as": 83
+    },
+    {
+     "home": "SG",
+     "away": "CSC",
+     "hs": 48,
+     "as": 70
+    },
+    {
+     "home": "SG",
+     "away": "DSG",
+     "hs": 53,
+     "as": 94
+    },
+    {
+     "home": "SG",
+     "away": "ESG",
+     "hs": 0,
+     "as": 20
+    },
+    {
+     "home": "SG",
+     "away": "EZS",
+     "hs": 63,
+     "as": 78
+    },
+    {
+     "home": "SG",
+     "away": "JSM",
+     "hs": 86,
+     "as": 81
+    },
+    {
+     "home": "SG",
+     "away": "USA",
+     "hs": 63,
+     "as": 74
+    },
+    {
+     "home": "USA",
+     "away": "ASH",
+     "hs": 67,
+     "as": 64
+    },
+    {
+     "home": "USA",
+     "away": "CSC",
+     "hs": 69,
+     "as": 60
+    },
+    {
+     "home": "USA",
+     "away": "DSG",
+     "hs": 70,
+     "as": 71
+    },
+    {
+     "home": "USA",
+     "away": "ESG",
+     "hs": 82,
+     "as": 70
+    },
+    {
+     "home": "USA",
+     "away": "EZS",
+     "hs": 60,
+     "as": 64
+    },
+    {
+     "home": "USA",
+     "away": "JSM",
+     "hs": 81,
+     "as": 84
+    },
+    {
+     "home": "USA",
+     "away": "SG",
+     "hs": 20,
+     "as": 0
+    }
+   ]
+  },
+  {
+   "name": "Phase 3 (super play-off)",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "b": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "games": [
+      [
+       85,
+       60
+      ],
+      [
+       59,
+       57
+      ]
+     ],
+     "wins": [
+      2,
+      0
+     ]
+    },
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "b": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "games": [
+      [
+       79,
+       78
+      ],
+      [
+       68,
+       61
+      ]
+     ],
+     "wins": [
+      2,
+      0
+     ]
+    },
+    {
+     "round": "Final",
+     "a": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "b": {
+      "code": "ESS",
+      "name": "ES Sahel"
+     },
+     "games": [
+      [
+       79,
+       61
+      ],
+      [
+       83,
+       72
+      ]
+     ],
+     "wins": [
+      2,
+      0
+     ]
+    },
+    {
+     "round": "Third place",
+     "a": {
+      "code": "CA",
+      "name": "Club Africain"
+     },
+     "b": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "games": [],
+     "wins": [
+      0,
+      1
+     ],
+     "note": "Forfeit"
+    }
+   ]
+  }
+ ]
+}

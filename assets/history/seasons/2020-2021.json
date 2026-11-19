@@ -1,0 +1,719 @@
+{
+ "season": "2020-2021",
+ "champion": "US Monastir",
+ "relegated": "ES Sahel",
+ "teams": "12",
+ "phases": [
+  {
+   "name": "Première phase · Groupe A",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 10,
+     "w": 9,
+     "l": 1,
+     "pf": 389,
+     "pa": 289
+    },
+    {
+     "rank": 2,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 10,
+     "w": 8,
+     "l": 2,
+     "pf": 302,
+     "pa": 248
+    },
+    {
+     "rank": 3,
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "j": 7,
+     "w": 4,
+     "l": 3,
+     "pf": 294,
+     "pa": 276
+    },
+    {
+     "rank": 4,
+     "code": "USA",
+     "name": "US Ansar",
+     "j": 9,
+     "w": 4,
+     "l": 5,
+     "pf": 314,
+     "pa": 348
+    },
+    {
+     "rank": 5,
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "j": 9,
+     "w": 2,
+     "l": 7,
+     "pf": 336,
+     "pa": 389
+    },
+    {
+     "rank": 6,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 10,
+     "w": 1,
+     "l": 9,
+     "pf": 304,
+     "pa": 391
+    }
+   ]
+  },
+  {
+   "name": "Première phase · Groupe A",
+   "kind": "games",
+   "games": [
+    {
+     "home": "USM",
+     "away": "CA",
+     "hs": 85,
+     "as": 68
+    },
+    {
+     "home": "USM",
+     "away": "USA",
+     "hs": 90,
+     "as": 67
+    },
+    {
+     "home": "USM",
+     "away": "ASH",
+     "hs": 100,
+     "as": 68
+    },
+    {
+     "home": "USM",
+     "away": "EOG",
+     "hs": 74,
+     "as": 48
+    },
+    {
+     "home": "CA",
+     "away": "USM",
+     "hs": 64,
+     "as": 55
+    },
+    {
+     "home": "CA",
+     "away": "USA",
+     "hs": 81,
+     "as": 61
+    },
+    {
+     "home": "CA",
+     "away": "JSK",
+     "hs": 65,
+     "as": 77
+    },
+    {
+     "home": "CA",
+     "away": "ASH",
+     "hs": 78,
+     "as": 63
+    },
+    {
+     "home": "CA",
+     "away": "EOG",
+     "hs": 76,
+     "as": 45
+    },
+    {
+     "home": "USA",
+     "away": "USM",
+     "hs": 41,
+     "as": 72
+    },
+    {
+     "home": "USA",
+     "away": "CA",
+     "hs": 69,
+     "as": 71
+    },
+    {
+     "home": "USA",
+     "away": "JSK",
+     "hs": 61,
+     "as": 67
+    },
+    {
+     "home": "USA",
+     "away": "EOG",
+     "hs": 79,
+     "as": 58
+    },
+    {
+     "home": "JSK",
+     "away": "USM",
+     "hs": 70,
+     "as": 74
+    },
+    {
+     "home": "JSK",
+     "away": "CA",
+     "hs": 70,
+     "as": 83
+    },
+    {
+     "home": "JSK",
+     "away": "USA",
+     "hs": 73,
+     "as": 81
+    },
+    {
+     "home": "JSK",
+     "away": "ASH",
+     "hs": 81,
+     "as": 61
+    },
+    {
+     "home": "ASH",
+     "away": "USM",
+     "hs": 62,
+     "as": 84
+    },
+    {
+     "home": "ASH",
+     "away": "CA",
+     "hs": 57,
+     "as": 77
+    },
+    {
+     "home": "ASH",
+     "away": "EOG",
+     "hs": 91,
+     "as": 72
+    },
+    {
+     "home": "ESG",
+     "away": "USM",
+     "hs": 58,
+     "as": 92
+    },
+    {
+     "home": "ESG",
+     "away": "CA",
+     "hs": 67,
+     "as": 70
+    },
+    {
+     "home": "ESG",
+     "away": "USA",
+     "hs": 59,
+     "as": 74
+    },
+    {
+     "home": "ESG",
+     "away": "JSK",
+     "hs": 60,
+     "as": 76
+    },
+    {
+     "home": "ESG",
+     "away": "ASH",
+     "hs": 55,
+     "as": 75
+    }
+   ]
+  },
+  {
+   "name": "Première phase · Groupe B",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 10,
+     "w": 8,
+     "l": 2,
+     "pf": 697,
+     "pa": 614
+    },
+    {
+     "rank": 2,
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "j": 10,
+     "w": 7,
+     "l": 3,
+     "pf": 718,
+     "pa": 688
+    },
+    {
+     "rank": 3,
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "j": 10,
+     "w": 6,
+     "l": 4,
+     "pf": 667,
+     "pa": 637
+    },
+    {
+     "rank": 4,
+     "code": "JSM",
+     "name": "JS Menazah",
+     "j": 10,
+     "w": 6,
+     "l": 4,
+     "pf": 660,
+     "pa": 660
+    },
+    {
+     "rank": 5,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 10,
+     "w": 3,
+     "l": 7,
+     "pf": 686,
+     "pa": 709
+    },
+    {
+     "rank": 6,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 10,
+     "w": 0,
+     "l": 10,
+     "pf": 598,
+     "pa": 718
+    }
+   ]
+  },
+  {
+   "name": "Première phase · Groupe B",
+   "kind": "games",
+   "games": [
+    {
+     "home": "EZS",
+     "away": "SN",
+     "hs": 81,
+     "as": 68
+    },
+    {
+     "home": "EZS",
+     "away": "JSM",
+     "hs": 63,
+     "as": 61
+    },
+    {
+     "home": "EZS",
+     "away": "DSG",
+     "hs": 63,
+     "as": 47
+    },
+    {
+     "home": "EZS",
+     "away": "ESR",
+     "hs": 69,
+     "as": 61
+    },
+    {
+     "home": "EZS",
+     "away": "ESS",
+     "hs": 83,
+     "as": 61
+    },
+    {
+     "home": "SN",
+     "away": "EZS",
+     "hs": 71,
+     "as": 70
+    },
+    {
+     "home": "SN",
+     "away": "JSM",
+     "hs": 72,
+     "as": 60
+    },
+    {
+     "home": "SN",
+     "away": "DSG",
+     "hs": 53,
+     "as": 52
+    },
+    {
+     "home": "SN",
+     "away": "ESR",
+     "hs": 78,
+     "as": 67
+    },
+    {
+     "home": "SN",
+     "away": "ESS",
+     "hs": 78,
+     "as": 61
+    },
+    {
+     "home": "JSM",
+     "away": "EZS",
+     "hs": 51,
+     "as": 63
+    },
+    {
+     "home": "JSM",
+     "away": "SN",
+     "hs": 69,
+     "as": 62
+    },
+    {
+     "home": "JSM",
+     "away": "DSG",
+     "hs": 64,
+     "as": 61
+    },
+    {
+     "home": "JSM",
+     "away": "ESR",
+     "hs": 68,
+     "as": 60
+    },
+    {
+     "home": "JSM",
+     "away": "ESS",
+     "hs": 79,
+     "as": 66
+    },
+    {
+     "home": "DSG",
+     "away": "EZS",
+     "hs": 84,
+     "as": 70
+    },
+    {
+     "home": "DSG",
+     "away": "SN",
+     "hs": 92,
+     "as": 75
+    },
+    {
+     "home": "DSG",
+     "away": "JSM",
+     "hs": 81,
+     "as": 65
+    },
+    {
+     "home": "DSG",
+     "away": "ESR",
+     "hs": 65,
+     "as": 61
+    },
+    {
+     "home": "DSG",
+     "away": "ESS",
+     "hs": 57,
+     "as": 48
+    },
+    {
+     "home": "ESR",
+     "away": "EZS",
+     "hs": 59,
+     "as": 71
+    },
+    {
+     "home": "ESR",
+     "away": "SN",
+     "hs": 77,
+     "as": 81
+    },
+    {
+     "home": "ESR",
+     "away": "JSM",
+     "hs": 66,
+     "as": 72
+    },
+    {
+     "home": "ESR",
+     "away": "DSG",
+     "hs": 86,
+     "as": 73
+    },
+    {
+     "home": "ESR",
+     "away": "ESS",
+     "hs": 74,
+     "as": 69
+    },
+    {
+     "home": "ESS",
+     "away": "EZS",
+     "hs": 53,
+     "as": 64
+    },
+    {
+     "home": "ESS",
+     "away": "SN",
+     "hs": 59,
+     "as": 80
+    },
+    {
+     "home": "ESS",
+     "away": "JSM",
+     "hs": 66,
+     "as": 77
+    },
+    {
+     "home": "ESS",
+     "away": "DSG",
+     "hs": 52,
+     "as": 55
+    },
+    {
+     "home": "ESS",
+     "away": "ESR",
+     "hs": 63,
+     "as": 77
+    }
+   ]
+  },
+  {
+   "name": "Deuxième phase · Play-off · Classement",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "USM",
+     "name": "US Monastir",
+     "j": 10,
+     "w": 9,
+     "l": 1,
+     "pts": 20
+    },
+    {
+     "rank": 2,
+     "code": "EZS",
+     "name": "Ezzahra Sports",
+     "j": 10,
+     "w": 9,
+     "l": 1,
+     "pts": 19
+    },
+    {
+     "rank": 3,
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pts": 15
+    },
+    {
+     "rank": 4,
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "j": 10,
+     "w": 3,
+     "l": 7,
+     "pts": 13
+    },
+    {
+     "rank": 5,
+     "code": "ESR",
+     "name": "ES Radès",
+     "j": 10,
+     "w": 2,
+     "l": 8,
+     "pts": 12
+    },
+    {
+     "rank": 6,
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "j": 10,
+     "w": 2,
+     "l": 8,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Deuxième phase · Play-off · Play-out",
+   "kind": "table",
+   "rows": [
+    {
+     "rank": 1,
+     "code": "CA",
+     "name": "Club Africain",
+     "j": 10,
+     "w": 8,
+     "l": 2,
+     "pts": 18
+    },
+    {
+     "rank": 2,
+     "code": "USA",
+     "name": "US Ansar",
+     "j": 10,
+     "w": 7,
+     "l": 3,
+     "pts": 17
+    },
+    {
+     "rank": 3,
+     "code": "JSM",
+     "name": "JS Menazah",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pts": 15
+    },
+    {
+     "rank": 4,
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "j": 10,
+     "w": 5,
+     "l": 5,
+     "pts": 15
+    },
+    {
+     "rank": 5,
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "j": 10,
+     "w": 3,
+     "l": 7,
+     "pts": 13
+    },
+    {
+     "rank": 6,
+     "code": "ESS",
+     "name": "ES Sahel",
+     "j": 10,
+     "w": 2,
+     "l": 8,
+     "pts": 12
+    }
+   ]
+  },
+  {
+   "name": "Troisième phase (super play-off)",
+   "kind": "series",
+   "series": [
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "SN",
+      "name": "Stade Nabeulien"
+     },
+     "games": [
+      [
+       77,
+       58
+      ],
+      [
+       79,
+       68
+      ]
+     ],
+     "wins": [
+      2,
+      0
+     ]
+    },
+    {
+     "round": "Semi-finals",
+     "a": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "b": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "games": [
+      [
+       81,
+       84
+      ],
+      [
+       78,
+       62
+      ],
+      [
+       65,
+       60
+      ]
+     ],
+     "wins": [
+      2,
+      1
+     ]
+    },
+    {
+     "round": "Final",
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "EZS",
+      "name": "Ezzahra Sports"
+     },
+     "games": [
+      [
+       86,
+       79
+      ],
+      [
+       77,
+       75
+      ]
+     ],
+     "wins": [
+      2,
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Barrage",
+   "kind": "games",
+   "games": [
+    {
+     "home": {
+      "code": "JSM",
+      "name": "JS Menazah"
+     },
+     "away": {
+      "code": "ESG",
+      "name": "ES Goulettoise"
+     },
+     "hs": 65,
+     "as": 64,
+     "date": "2021-06-12"
+    },
+    {
+     "home": {
+      "code": "JSM",
+      "name": "JS Menazah"
+     },
+     "away": {
+      "code": "BCM",
+      "name": "BC Mahdia"
+     },
+     "hs": 85,
+     "as": 76,
+     "date": "2021-06-16"
+    }
+   ]
+  }
+ ]
+}

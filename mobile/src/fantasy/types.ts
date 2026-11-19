@@ -1,0 +1,9 @@
+export type Pos = 'G' | 'F' | 'C';
+export type FPlayer = { id: string; name: string; team: string; number?: number; pos: Pos; price: number; avg: number; form: number; gp: number; total: number; photo?: string | null; owned: number; next?: { code: string; home: boolean } | null; last?: number | null; pts?: number; reb?: number; ast?: number; min?: number };
+export type Chip = 'triple_captain' | 'bench_boost' | 'wildcard' | 'all_star';
+export type Pick = { squad: string[]; starters: string[]; captain: string; vice?: string | null; chip?: Chip | null };
+export type Row = { id: string; base: number; mult: number; points: number; played: boolean; starter: boolean; line?: Record<string, number> | null; opp?: string | null };
+export type Hist = { md: number; points?: number; raw?: number; hit: number; transfers: number; chip?: Chip | null; captain?: string | null; rows?: Row[]; subs?: { out: string; in: string }[]; best?: number; grade?: string | null; rank?: number; of?: number; avg?: number; upcoming?: boolean; free?: number };
+export type Me = { entry: null | { name?: string; team_name?: string; total: number; rank?: number; of: number; history: Hist[]; current?: Pick | null; free_transfers: number; chips_used: Record<string, number>; chips_left: Chip[]; leagues: { code: string; name: string; members: number }[] }; open_md: number | null };
+export type Config = { budget: number; squad: Record<Pos, number>; starters: number; max_per_club: number; transfer_cost: number; chips: Chip[]; scoring: Record<string, number>; open_md: number | null; test: boolean; matchdays: { md: number; date: string; deadline: string; deadline_ts: number; locked: boolean; done: boolean }[] };
+export type RankRow = { rank: number; name: string; team: string; total: number; md: Record<string, number>; me_key: string };

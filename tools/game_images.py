@@ -69,7 +69,11 @@ def cutout(photo, keep="center"):
     im = Image.open(photo).convert("RGB")
     lab = vision_mask(photo)
     ids = [i for i in np.unique(lab) if i]
-    if keep == "center":
+    if isinstance(keep, tuple):                          # the person at that point of the photo (fractions of the width and height)
+        h, w = lab.shape
+        at = lab[min(h - 1, int(keep[1] * h)), min(w - 1, int(keep[0] * w))]
+        ids = [at] if at else ids
+    elif keep == "center":
         h, w = lab.shape
         mid = lab[h // 3: 2 * h // 3, int(w * 0.40): int(w * 0.60)]
         ids = [max(ids, key=lambda i: int((mid == i).sum()))]

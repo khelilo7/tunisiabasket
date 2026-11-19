@@ -446,6 +446,9 @@
   .rkz .mv { display:block; margin:0; font-size:10px; line-height:1; } .mv.eq { color:var(--mut); font-weight:400; } .movebar { margin:10px 2px 0; font-size:13px; font-weight:600; color:var(--acc); }
   .ftable td.l { white-space:normal; } .zone.z-cup { background:var(--pill); color:var(--mut); } tr.zone-cup td:first-child { box-shadow:inset 4px 0 0 var(--line); } .zlegend i.z-cup { background:var(--line); }
   .promo { margin-top:16px; background:var(--mvp-grad); border-color:var(--mvp-line); } .promo .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:8px; } .pstep { list-style:none; margin:0 0 8px; padding:0; display:grid; gap:8px; } .pstep li { display:flex; gap:10px; align-items:flex-start; } .pstep .pn { flex:none; width:26px; height:26px; border-radius:50%; background:var(--acc); color:#1a1205; display:grid; place-items:center; font-weight:800; font-size:13px; } .ftable tr.fz-up td:first-child { box-shadow:inset 4px 0 0 var(--good); } .ftable tr.fz-down td:first-child { box-shadow:inset 4px 0 0 var(--bad); } .ftable tr.prov { opacity:.85; } .ftable tr.fz-up.prov td:first-child { box-shadow:inset 4px 0 0 rgba(62,207,142,.5); }
+  .hrow { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; margin:8px 0 4px; } .hrow > :last-child { text-align:right; justify-self:end; } .hsc { font-variant-numeric:tabular-nums; } .hw .tn span { font-weight:800; }
+  .hgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:4px 16px; } .hg { display:grid; grid-template-columns:1fr auto 1fr; gap:8px; align-items:center; padding:5px 0; border-bottom:1px solid var(--line); } .hg > :nth-child(3) { text-align:right; justify-self:end; } .hg .hd { grid-column:1 / -1; margin-top:-4px; } .hmore summary { cursor:pointer; font-weight:700; }
+  .recbox { margin-top:10px; border-color:var(--mvp-line); background:var(--mvp-grad); } .recbox .crown { font-size:12px; color:var(--acc); font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:6px; } .recline { margin:3px 0; } .rectable td { padding:5px 6px; }
   .tie .ts.prov { font-style:italic; opacity:.8; } .fmt ol { margin:0 0 8px 18px; padding:0; } .fmt li { margin:4px 0; } .mv { font-size:11px; font-weight:800; margin-left:8px; } .mv.up { color:var(--good); } .mv.dn { color:var(--bad); } .ftable td.rkz { font-weight:800; }
   .race { padding:12px; } .race svg { width:100%; height:auto; } .race .rt { fill:var(--mut); font-size:11px; } .race .rl { cursor:pointer; transition:opacity .2s; } .race .rl.dim { opacity:.15; } .rleg { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; } .rleg .rchip { padding:3px 10px; font-size:12px; display:inline-flex; gap:6px; align-items:center; } .rleg .rchip i { width:9px; height:9px; border-radius:50%; display:inline-block; }
   .compstrip { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0 0; } .compstrip a { background:var(--card); border:1px solid var(--line); border-radius:99px; padding:6px 14px; font-size:13px; font-weight:700; } .compstrip a:hover { border-color:var(--acc); color:var(--acc); }
@@ -460,6 +463,31 @@
   }
   @media (max-width:640px) { .stg2 .bracketwrap, .nat1po .bracketwrap { overflow:visible; margin:0; } .stg2 .bracket, .nat1po .bracket { flex-direction:column; min-width:0; gap:14px; } .stg2 .bcol, .nat1po .bcol { width:100%; } .stg2 .bcol .tie::before, .nat1po .bcol .tie::before, .stg2 .bcol .tie::after, .nat1po .bcol .tie::after, .stg2 .bcol .pair::after, .nat1po .bcol .pair::after, .stg2 .bcol .pair::before, .nat1po .bcol .pair::before { display:none; } .stg2 .bties, .nat1po .bties, .stg2 .pair, .nat1po .pair { gap:10px; } }
   @media (max-width:899px) { .bracketwrap { display:none; } .cuplist { display:block; } .fpanel .bracketwrap { display:block; } .fpanel .bracket { gap:26px; } }
+
+  /* ---------------------------------------------------------------- 2026 look (shared with the mobile app): night navy, glass cards, condensed display type, pill navigation */
+  @font-face { font-family:"Barlow Condensed"; font-weight:800; font-display:swap; src:url(/fonts/BarlowCondensed-ExtraBold.ttf) format("truetype"); }
+  @font-face { font-family:"Barlow Condensed"; font-weight:600; font-display:swap; src:url(/fonts/BarlowCondensed-SemiBold.ttf) format("truetype"); }
+  :root, :root[data-theme=dark] { --bg:#0B1020; --card:#151D35; --line:rgba(255,255,255,.09); --hover:rgba(255,255,255,.05); --pill:rgba(255,255,255,.08); --track:rgba(255,255,255,.1);
+    --hdr:rgba(11,16,32,.82); --mvp-grad:linear-gradient(135deg,#3B1522 0%,#1C1E3F 55%,#151D35 100%); --mvp-line:rgba(238,75,82,.45); --mvp-in:#1A1730;
+    --glass:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015)); --shadow:0 10px 30px rgba(0,0,0,.28); }
+  :root[data-theme=light] { --glass:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.7)); --shadow:0 8px 24px rgba(20,30,60,.08); }
+  body { background:var(--bg); background-image:radial-gradient(1100px 520px at 10% -120px, rgba(91,76,255,.20), transparent 70%), radial-gradient(800px 420px at 95% -60px, rgba(238,75,82,.16), transparent 70%); background-repeat:no-repeat; background-attachment:fixed; }
+  :root[data-theme=light] body { background-image:radial-gradient(1100px 520px at 10% -120px, rgba(91,76,255,.08), transparent 70%), radial-gradient(800px 420px at 95% -60px, rgba(238,75,82,.07), transparent 70%); }
+  header { backdrop-filter:saturate(1.4) blur(14px); -webkit-backdrop-filter:saturate(1.4) blur(14px); border-bottom:1px solid var(--line); box-shadow:0 1px 0 rgba(255,138,31,.35); }
+  nav a { border-radius:999px; padding:7px 14px; font-weight:600; transition:background .15s,color .15s; }
+  nav a.on { background:var(--acc); color:#1A1205; } nav a:hover:not(.on) { background:var(--pill); color:var(--txt); }
+  h1 { font-family:"Barlow Condensed",system-ui,sans-serif; font-weight:800; font-size:clamp(30px,4.4vw,40px); letter-spacing:.01em; text-transform:uppercase; line-height:1.05; }
+  h2 { font-family:"Barlow Condensed",system-ui,sans-serif; font-weight:800; font-size:21px; letter-spacing:.04em; color:var(--txt); }
+  .card { background:var(--card); background-image:var(--glass); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); }
+  .card[data-go], a.card { transition:transform .15s, border-color .15s; } .card[data-go]:hover, a.card:hover { transform:translateY(-2px); border-color:rgba(255,138,31,.45); }
+  select, input, button { border-radius:12px; }
+  .seg { border-radius:999px; background:var(--pill); border-color:var(--line); } .seg a.on, .seg button.on { box-shadow:0 4px 14px rgba(255,138,31,.3); }
+  .match b, .stat b, .scoreboard b, .ring, .rate, .hero .nm, .mvp .nm, .card.winner .nm, .cstats .pill { font-family:"Barlow Condensed",system-ui,sans-serif; letter-spacing:.01em; }
+  .match b { font-size:24px; } .stat b { font-size:30px; font-weight:800; } .scoreboard b { font-weight:800; }
+  .pill { border-radius:999px; padding:3px 9px; } .pill.mvp { background:linear-gradient(135deg,#EE4B52,#FF8A1F); color:#fff; }
+  .hero, .mvp { border-radius:24px; } .rchip { border-radius:999px; }
+  table tbody tr:hover { background:var(--hover); } tr { border-bottom:1px solid var(--line); }
+  .banner { border-radius:14px; }
 </style>
 </head>
 <body>
@@ -483,7 +511,7 @@
 <div id="scrim" hidden></div>
 <main id="app"><!--SSR--></main>
 <template id="socbig">{{SOCIALBIG}}</template>
-<footer><span>{{LEGAL}}</span><span class="fright"><a href="{{ABOUT}}">{{ABOUTLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
+<footer><span>{{LEGAL}}</span><span class="fright"><a href="{{ABOUT}}">{{ABOUTLABEL}}</a><a href="{{PRIVACY}}">{{PRIVACYLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
 
 <script>
 // Instant navigation. GET /api/* answers are kept for a minute and shared by simultaneous requests (a page asking for what another page just asked costs nothing); any POST clears them so a vote
@@ -509,6 +537,71 @@ const LANG = document.documentElement.lang === 'en' ? 'en' : 'fr';
 // ---------------------------------------------------------------- languages
 // English text is the key; French is looked up here. Sentences with numbers use SENT below.
 const FR = {
+  'among every box score on the site, since 2016-17': 'parmi toutes les feuilles de match du site, depuis 2016-17',
+  'League record': 'Record du championnat',
+  'Equals the record': 'Égale le record',
+  'New record': 'Nouveau record',
+  'previous': 'précédent',
+  'All records': 'Tous les records',
+  'Champions and seasons': 'Champions et saisons',
+  'Records': 'Records',
+  'last': 'dernier',
+  'games': 'matchs',
+  'Nothing yet': 'Rien pour l’instant',
+  'Records are counted over every box score the site holds': 'Les records sont calculés sur toutes les feuilles de match du site',
+  'Team scores and margins also use the results without a box score, back to 2014-15. A game that sets or equals a record says so on its page.': 'Les scores et écarts d’équipe utilisent aussi les résultats sans feuille de match, depuis 2014-15. Un match qui bat ou égale un record l’indique sur sa page.',
+  'One game, one player': 'Un match, un joueur',
+  'One game, one team': 'Un match, une équipe',
+  'One season': 'Une saison',
+  'All time': 'De tous les temps',
+  'Free throws made': 'Lancers francs réussis',
+  'Efficiency (PIR)': 'Évaluation (PIR)',
+  'Points scored by a team': 'Points marqués par une équipe',
+  'Biggest win': 'Plus large victoire',
+  'Highest-scoring game': 'Match le plus prolifique',
+  'Three-pointers made by a team': 'Paniers à 3 points d’une équipe',
+  'Assists by a team': 'Passes décisives d’une équipe',
+  'Rebounds by a team': 'Rebonds d’une équipe',
+  'Points per game': 'Points par match',
+  'Rebounds per game': 'Rebonds par match',
+  'Assists per game': 'Passes par match',
+  'Efficiency per game': 'Évaluation par match',
+  'Most titles': 'Plus de titres',
+  'Most titles in a row': 'Plus de titres consécutifs',
+  'Unbeaten through a phase': 'Invaincu sur une phase',
+  'Aggregate': 'Cumul',
+  'A past season: the official tables, series and results come from the history; the box scores are in Games and Players.': 'Saison passée : les classements, séries et résultats officiels viennent de l’historique ; les feuilles de match sont dans Matchs et Joueurs.',
+  'Seasons in detail': 'Saisons en détail',
+  'Champions': 'Champions',
+  'Runner-up': 'Finaliste',
+  'final': 'finale',
+  'Third': '3e',
+  'Relegated': 'Relégué',
+  'Source': 'Source',
+  'How the season was played': 'La formule de la saison',
+  'GP': 'J',
+  'First phase': 'Première phase',
+  'Second phase': 'Deuxième phase',
+  'Group A': 'Poule A',
+  'Group B': 'Poule B',
+  'Barrage': 'Barrage',
+  'Super 6': 'Super 6',
+  'Relegation round': 'Tour de relégation',
+  'Third place': '3e place',
+  'Forfeit': 'Forfait',
+  'Pour le bonus': 'Pour le bonus',
+  'Pour le play-off': 'Pour le play-off',
+  'regular season': 'saison régulière',
+  'play-off': 'play-off',
+  'play-out': 'play-out',
+  'super play-off': 'super play-off',
+  'cup': 'coupe',
+  'box scores on the site': 'feuilles de match sur le site',
+  'The champions of Tunisia since 1955-56 and, for the recent seasons, how they were played: the format changed almost every year.': 'Les champions de Tunisie depuis 1955-56 et, pour les saisons récentes, la façon dont elles se sont jouées : la formule a changé presque chaque année.',
+  'Sources: Wikipedia, the FTBB (through the Internet Archive). Older seasons list the champion only.': 'Sources : Wikipédia, la FTBB (via Internet Archive). Pour les saisons anciennes, seul le champion est connu.',
+  'No box score of this season is on the site yet.': 'Aucune feuille de match de cette saison n’est encore sur le site.',
+  'Only the champion is known for this season.': 'Seul le champion de cette saison est connu.',
+  'Tables and scores come from Wikipedia and the FTBB archives; a game with no number simply was not published. Box scores are read from the PDFs the FTBB published.': 'Les classements et les scores viennent de Wikipédia et des archives de la FTBB ; un match sans score n’a simplement pas été publié. Les feuilles de match sont lues dans les PDF publiés par la FTBB.',
   'Home': 'Accueil', 'Players': 'Joueurs', 'Games': 'Matchs', 'Standings': 'Classement', 'Planning': 'Calendrier', 'Regular season': 'Saison régulière',
   'Current competition phase': 'Phase actuelle du championnat', 'Switch between dark and light mode': 'Passer du mode sombre au mode clair', 'Language': 'Langue',
   'Check Google Drive for new box scores now': 'Chercher de nouvelles feuilles de match sur Google Drive', 'Sync': 'Synchroniser', 'Syncing…': 'Synchronisation…',
@@ -674,6 +767,7 @@ const W = LANG === 'fr' ? 'V' : 'W', Ls = LANG === 'fr' ? 'D' : 'L';
 // sentences that contain numbers or names
 const SENT = {
   en: {
+    minGames: n => `at least ${n} games with a box score`,
     mvpRace: (n, teams) => `MVP race · players of the top ${n} teams (${teams})`,
     closesAt: (d, left) => `Voting closes ${d} (Tunisia time) · ${left} left`, closedAt: d => `Voting closed ${d}`,
     ballotIntro: n => `Choose your Phase 1 MVP among the best ${n} of the stats race, one per club. The MVP is decided by the fans’ votes alone. One vote per person, and it is final.`,
@@ -698,6 +792,7 @@ const SENT = {
     metaGame: (a, sa, sb, b, md) => `${a} ${sa}–${sb} ${b} – box score, ${md} | Tunisia Basket`
   },
   fr: {
+    minGames: n => `au moins ${n} matchs avec feuille de match`,
     mvpRace: (n, teams) => `Course au MVP · joueurs des ${n} premières équipes (${teams})`,
     closesAt: (d, left) => `Fin du vote : ${d} (heure de Tunis) · ${left} restant`, closedAt: d => `Vote clos le ${d}`,
     ballotIntro: n => `Choisissez votre MVP de la phase 1 parmi les ${n} meilleurs de la course aux statistiques, un seul par club. Le MVP est décidé par le seul vote des fans. Une seule voix par personne, et elle est définitive.`,
@@ -726,8 +821,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', cup: 'cup', finals: 'playoff-playout', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', cup: 'coupe', finals: 'playoff-playout', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', cup: 'cup', finals: 'playoff-playout', history: 'history', privacy: 'privacy', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', cup: 'coupe', finals: 'playoff-playout', history: 'historique', privacy: 'confidentialite', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -815,7 +910,7 @@ function prefetchFor(pathname) {
   const r = parsePath(pathname); if (!r) return;
   const g = u => fetch(u).catch(() => {});
   ({ home: () => g('/api/home'), standings: () => api('overview').catch(() => {}), games: () => api('games').catch(() => {}), planning: () => g('/api/planning'), players: () => api('players').catch(() => {}),
-     nat1: () => g('/api/nat1'), cup: () => g('/api/cup'), finals: () => { g('/api/finals'); g('/api/rank-history'); }, mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
+     nat1: () => g('/api/nat1'), cup: () => g('/api/cup'), finals: () => { g('/api/finals'); g('/api/rank-history'); }, history: () => g('/api/history' + (r.arg ? '/' + encodeURIComponent(r.arg) : '')), mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
      team: () => api('teams/' + encodeURIComponent(r.arg)).catch(() => {}), player: () => api('players/' + ((r.arg || '').match(/^([a-z0-9]+-\d+)/) || [, r.arg])[1]).catch(() => {}), game: () => g('/api/games/' + encodeURIComponent(r.arg)) }[r.page] || (() => {}))();
 }
 let routeSeq = 0;       // only the latest navigation may draw: a slower earlier one (e.g. started before /api/competitions answered) must not overwrite it
@@ -823,14 +918,14 @@ async function route(keepScroll) {
   const mine = ++routeSeq;
   busy(true);
   const r = parsePath(location.pathname) || { lang: LANG, page: 'home' };
-  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', cup: 'standings', finals: 'standings', mvp: 'players' }[r.page] || r.page)));
+  document.querySelectorAll('nav a, .popnav a').forEach(a => a.classList.toggle('on', a.dataset.p === ({ team: 'standings', planning: 'standings', games: 'standings', game: 'standings', nat1: 'standings', cup: 'standings', finals: 'standings', history: 'standings', mvp: 'players' }[r.page] || r.page)));
   $('#morebtn').classList.toggle('on', ['predict', 'news'].includes(r.page));      // on a phone the MVP vote and the news sit behind "More"
   closePop();
   const app = $('#app');
   app.classList.toggle('wide', ['games'].includes(r.page));     // these pages have a side panel next to the table
   courtData = null; pageMeta = null; clearInterval(nbTimer); clearInterval(liveTimer);
   try {
-    const html = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1, cup, finals }[r.page] || home)(r.arg);
+    const html = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1, cup, finals, history: historyPage, privacy }[r.page] || home)(r.arg);
     if (mine !== routeSeq) return;
     app.innerHTML = html;
     foldify(r.page);
@@ -846,6 +941,8 @@ async function route(keepScroll) {
 
 // ---------------------------------------------------------------- pages
 const META = {
+  history: { en: ['History of the Tunisian basketball league – champions, formats, standings and box scores since 1956 – Tunisia Basket', 'Every Tunisian champion since 1955-56, and for the recent seasons the format (play-off, play-out, super play-off), the tables, the series and the box scores.'],
+             fr: ['Historique du championnat de Tunisie de basket – champions, formules, classements et feuilles de match depuis 1956 – Tunisia Basket', 'Tous les champions de Tunisie depuis 1955-56 et, pour les saisons récentes, la formule (play-off, play-out, super play-off), les classements, les séries et les feuilles de match.'] },
   cup: { en: ['Tunisia Basketball Cup – bracket, results and draw – Tunisia Basket', 'The Tunisian basketball Cup: Pro A and National One clubs meet in single-game ties. The bracket, the results, the upsets.'],
          fr: ['Coupe de Tunisie de basket – tableau, résultats et tirage – Tunisia Basket', 'La Coupe de Tunisie de basket : les clubs de Pro A et de Nationale 1 se rencontrent en match sec. Le tableau, les résultats, les surprises.'] },
   finals: { en: ['Pro A play-off and play-out – tables, series and results – Tunisia Basket', 'After the regular season the six best Pro A clubs play the play-off and the six others the play-out.'],
@@ -996,7 +1093,7 @@ document.addEventListener('click', e => {
   if (m) { const on = m.closest('.nrow').classList.toggle('open'); m.textContent = on ? _('Show less') : _('Read more'); }
   if (c) { const k = c.dataset.nchip; document.querySelectorAll('[data-nchip]').forEach(x => x.classList.toggle('on', x === c)); document.querySelectorAll('.nrow[data-l]').forEach(r => { r.hidden = !!k && r.dataset.l !== k; }); }
 });
-const compStrip = () => `<div class="compstrip">${COMP.finals ? `<a href="${url('finals')}">🔥 ${_('Play-off')} · ${_('Play-out')}</a>` : ''}${COMP.cup ? `<a href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}<a href="${url('nat1')}">${_('National One')}</a></div>`;
+const compStrip = () => `<div class="compstrip">${COMP.finals ? `<a href="${url('finals')}">🔥 ${_('Play-off')} · ${_('Play-out')}</a>` : ''}${COMP.cup ? `<a href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}<a href="${url('nat1')}">${_('National One')}</a><a href="${url('history')}">🕘 ${_('History')}</a></div>`;
 async function home() {
   const [h, plan, pj] = await Promise.all([fetch('/api/home', { cache: 'no-cache' }).then(r => r.json()), fetch('/api/planning', { cache: 'no-cache' }).then(r => r.json()).catch(() => null), fetch(`/api/predict?vid=${voterId()}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null)]);
   predRound = pj && pj.round; pageMeta = META.home[LANG];
@@ -1507,7 +1604,7 @@ async function game(id) {
    <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('OR')}</th><th>${H('DR')}</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('PF')}</th><th>${H('FD')}</th><th>${H('FG')}</th><th>${H('2P')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
    ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${esc(p.number)}</td><td class="l">${p.starter ? '<b>' : ''}${plink(p, esc(title(p.name)))}${p.starter ? '</b>' : ''}${g.mvp && g.mvp.player_id === p.id ? ' <span class="pill mvp">MVP</span>' : ''}</td><td class="mut">${esc(posName(p.pos))}</td>
      <td>${Math.round(p.min)}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.oreb}</td><td>${p.dreb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pf}</td><td>${p.fd}</td>
-     <td>${frac(p.fgm, p.fga)}</td><td>${frac(p.p2m, p.p2a)}</td><td>${frac(p.p3m, p.p3a)}</td><td>${frac(p.ftm, p.fta)}</td><td>${signed(p.pm)}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
+     <td>${frac(p.fgm, p.fga)}</td><td>${frac(p.p2m, p.p2a)}</td><td>${frac(p.p3m, p.p3a)}</td><td>${frac(p.ftm, p.fta)}</td><td>${p.pm == null ? '–' : signed(p.pm)}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
    <tr class="tot"><td></td><td class="l">${_('Team')}</td><td></td><td>${Math.round(sum('min'))}</td><td>${sum('pts')}</td><td>${sum('reb')}</td><td>${sum('oreb')}</td><td>${sum('dreb')}</td><td>${sum('ast')}</td><td>${sum('stl')}</td><td>${sum('blk')}</td><td>${sum('tov')}</td><td>${sum('pf')}</td><td>${sum('fd')}</td>
      <td>${frac(sum('fgm'), sum('fga'))}</td><td>${frac(sum('p2m'), sum('p2a'))}</td><td>${frac(sum('p3m'), sum('p3a'))}</td><td>${frac(sum('ftm'), sum('fta'))}</td><td></td><td>${sum('pir')}</td><td></td></tr>
    ${l.dnp.map(p => `<tr class="mut"><td>${esc(p.number)}</td><td class="l">${esc(title(p.name))}</td><td colspan="19">${_('Did not play')}</td></tr>`).join('')}
@@ -1519,6 +1616,7 @@ async function game(id) {
   <div class="card" style="margin-top:10px"><div class="mut" style="font-size:12px">${esc([g.date_approx ? '' : fmtDate(g.date), md, g.competition || ''].filter(Boolean).join(' · '))}</div>
    <div class="match scoreboard" style="font-size:20px"><a class="tn ${a.won ? 'win' : 'lose'}" href="${teamUrl(a.code)}">${logo(a.code, 44)}${esc(a.name)}</a><b style="font-size:30px">${a.points} – ${b.points}</b><a class="tn ${b.won ? 'win' : 'lose'}" href="${teamUrl(b.code)}">${esc(b.name)}${logo(b.code, 44)}</a></div>
    ${g.score_note ? `<div class="banner" style="margin-top:8px">${esc(f('officialNote', g.score_note))}</div>` : ''}${g.source === 'video' ? `<div class="banner" style="margin-top:8px"><b>${_('Compiled from the broadcast video')}.</b> ${_('Stats compiled by Tunisia Basket from the TV broadcast, not from the official table sheet: minutes and +/- are estimates, and a few missed shots, turnovers and team rebounds could not be given to a player.')}</div>` : ''}${g.mvp ? `<div style="margin-top:8px"><span class="pill mvp">${_('GAME MVP')}</span> <a href="${playerUrl(g.mvp.player_id, g.mvp.name)}"><b>${esc(title(g.mvp.name))}</b></a> (${esc(g.mvp.team)}) · ${g.mvp.pts} ${_('pts')}, ${g.mvp.reb} ${_('reb')}, ${g.mvp.ast} ${_('ast')} · PIR ${g.mvp.pir}</div>` : ''}</div>
+  ${recordsBanner(g.records)}
   ${teamLines(a, b)}
   <h2>${_('Starting five')}</h2>
   <div class="card"><div class="row" style="margin-bottom:10px">${metricPicker()}<span class="sp"></span><span class="mut small">${_('Click a player for the season page')}</span></div><div id="court"></div>
@@ -1539,7 +1637,7 @@ function standTable(d, compact) {
 
 let COMP = { cup: true, finals: false, started: false, nat1_playoff: false };
 const previewMode = () => new URLSearchParams(location.search).get('preview') === '1';      // the admin looks at a page that is not announced yet          // which competitions exist (from /api/competitions): the Cup always shows (an empty bracket says "draw soon"), the finals once they are set up
-const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a>${COMP.cup ? `<a role="tab" aria-selected="${on === 'cup'}" class="${on === 'cup' ? 'on' : ''}" href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}</div>`;
+const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a>${COMP.cup ? `<a role="tab" aria-selected="${on === 'cup'}" class="${on === 'cup' ? 'on' : ''}" href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}<a role="tab" aria-selected="${on === 'history'}" class="${on === 'history' ? 'on' : ''}" href="${url('history')}">🕘 ${_('History')}</a></div>`;
 const finTab = ['finals', '🔥 ' + _('Play-off') + ' · ' + _('Play-out')];
 // Once the play-off / play-out have started they take the place of the championship (regular-season) standings; the regular season stays under their "Regular season" tab
 const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[...(COMP.started ? [finTab] : [['standings', '🏆 ' + _('Standings')]]), ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.finals && !COMP.started ? [finTab] : [])].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
@@ -1550,6 +1648,11 @@ async function standings() {
   if (COMP.started) return finals();
   const d = await api('overview' + (new URLSearchParams(location.search).get('move') === '1' ? '?move=1' : ''));      // ?move=1 shows the last round's rises and falls whatever the date (to look at them)
   pageMeta = META.standings[LANG];
+  if (d.seasons && d.season !== d.seasons[0]) {          // a past season: the official tables and series of the history, not a table rebuilt from the box scores we happen to have
+    const h = await fetch('/api/history/' + encodeURIComponent(d.season)).then(r => r.ok ? r.json() : null).catch(() => null);
+    if (h && h.sections.length) return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${seasonLbl(d.season)}</span></h1>
+      <div class="note">${_('A past season: the official tables, series and results come from the history; the box scores are in Games and Players.')} <a href="${url('history', d.season)}">🕘 ${_('History')} ${seasonLbl(d.season)}</a></div>${hSections(h.sections)}`;
+  }
   return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${esc(f('standingsSub', d.season))}</span></h1>${standTable(d, false)}
   ${d.movement ? `<div class="movebar">⚡ ${esc(f('moveNote', d.movement.matchday, fmtDay(d.movement.until)))}</div>` : ''}
   <div class="zlegend"><span><i class="z-po"></i>${_('Playoff')} · ${_('top 6')}</span><span><i class="z-pl"></i>${_('Playout')} · ${_('the other 6')}</span><span class="mut small"><b class="mvpdot">★</b> ${_('MVP pool')}</span></div>
@@ -1575,7 +1678,7 @@ async function nat1(arg) {
   if (!d.standings.length) return `${head}<div class="empty">${_('The National One results are coming soon.')}</div>`;
   const filter = `<div class="toolbar"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
   const game = (g, isPlayed) => { const has = g.home_score != null, hw = has && g.home_score > g.away_score;
-    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span><span class="n1c">${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}${g.date ? `<small>${esc(fmtDate(g.date))}</small>` : ''}</span><span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
+    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span><span class="n1c">${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}${g.date ? `<small>${esc(hDate(g.date))}</small>` : ''}</span><span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
   const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
   if (tab === 'playoff') {
     const po = d.playoff, fm = d.format;
@@ -1632,6 +1735,88 @@ async function cup() {
   <div class="bracketwrap"><div class="bracket">${cols.join('')}</div></div>
   <div class="cuplist"><div class="rchips">${chips}</div><div class="grid g2">${d.rounds[cupRound].ties.map(cupTie).join('')}</div></div>
   <div class="note">${_('⚡ Upset: a club of a lower division beats a club of a higher one.')}</div>`;
+}
+
+
+// ---------------------------------------------------------------- History: the past seasons
+const seasonLbl = x => String(x).replace('-', '/');
+const hName = x => x === 'Final' ? _('Championship final') : _(x);      // 'Final' alone is already "Terminé" (a game that is over) in the dictionary
+const hDate = d => new Date(d + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+const hTeam = (code, name) => `<span class="tn">${code ? logo(code, 20) : ''}<span>${esc(name || code || '?')}</span></span>`;
+function hTable(rows) {
+  const pf = rows.some(r => r.pf != null), pts = rows.some(r => r.pts != null);
+  return `<div class="card scroll"><table class="ftable"><thead><tr><th>#</th><th class="l">${_('Team')}</th><th>${_('GP')}</th><th>${W}</th><th>${Ls}</th>${pf ? `<th>${_('Diff')}</th>` : ''}${pts ? `<th>${_('Pts')}</th>` : ''}</tr></thead><tbody>${rows.map(r =>
+    `<tr style="cursor:default"><td class="rkz">${r.rank}</td><td class="l">${hTeam(r.code, r.name)}</td><td>${r.j}</td><td>${r.w}</td><td>${r.l}</td>${pf ? `<td>${r.pf != null ? signed(r.pf - r.pa) : ''}</td>` : ''}${pts ? `<td><b>${r.pts ?? ''}</b></td>` : ''}</tr>`).join('')}</tbody></table></div>`;
+}
+function hSeries(list) {
+  return `<div class="grid g2">${list.map(s => {
+    const wa = s.wins ? s.wins[0] : s.aggregate ? +(s.aggregate[0] > s.aggregate[1]) : s.games.filter(g => g[0] > g[1]).length, wb = s.wins ? s.wins[1] : s.aggregate ? +(s.aggregate[1] > s.aggregate[0]) : s.games.filter(g => g[1] > g[0]).length;
+    const box = (s.box || []), games = s.games.map((g, i) => box[i] ? `<a href="${gameUrl(box[i])}">${g[0]}–${g[1]}</a>` : `${g[0]}–${g[1]}`).join(' · ');
+    const agg = s.aggregate ? `${_('Aggregate')} ${s.aggregate[0]}–${s.aggregate[1]}` : '';
+    return `<div class="card hser"><div class="mut small">${esc(hName(s.round || ''))}${s.dates ? ` · ${esc(s.dates)}` : ''}${s.note ? ` · ${esc(_(s.note))}` : ''}</div>
+      <div class="hrow"><span class="${wa > wb ? 'hw' : ''}">${hTeam(s.a.code, s.a.name)}</span><b class="hsc">${wa}–${wb}</b><span class="${wb > wa ? 'hw' : ''}">${hTeam(s.b.code, s.b.name)}</span></div>
+      <div class="mut small">${games || agg}</div></div>`;
+  }).join('')}</div>`;
+}
+function hGames(games) {
+  const one = g => {
+    const h = g.home && g.home.code !== undefined ? g.home : { code: g.home, name: g.home }, a = g.away && g.away.code !== undefined ? g.away : { code: g.away, name: g.away };
+    const sc = `${g.hs}–${g.as}`;
+    return `<div class="hg"><span class="${g.hs > g.as ? 'hw' : ''}">${hTeam(h.code, h.name)}</span><b class="hsc">${g.box ? `<a href="${gameUrl(g.box)}">${sc}</a>` : sc}</b><span class="${g.as > g.hs ? 'hw' : ''}">${hTeam(a.code, a.name)}</span>${g.date ? `<span class="mut small hd">${esc(fmtDate(g.date))}</span>` : (g.date_text ? `<span class="mut small hd">${esc(g.date_text)}</span>` : '')}</div>`;
+  };
+  const html = `<div class="hgrid">${games.map(one).join('')}</div>`;
+  return games.length > 8 ? `<details class="card hmore"><summary>${_('Results')} (${games.length})</summary>${html}</details>` : `<div class="card">${html}</div>`;
+}
+const hSections = list => list.map(s => `<h2>${esc(s.name.split(' · ').map(hName).join(' · '))}</h2>${s.table ? hTable(s.table) : ''}${s.series.length ? hSeries(s.series) : ''}${s.games.length ? hGames(s.games) : ''}`).join('');
+// League records (records.py): single-game bests, season averages, titles; a game that sets or equals one says so on its own page
+const recordsBanner = list => (list && list.length) ? `<div class="card recbox"><div class="crown">🏅 ${_('League record')} <span class="mut small" style="text-transform:none;letter-spacing:0;font-weight:400">· ${_('among every box score on the site, since 2016-17')}</span></div>${list.map(r => `<div class="recline">${r.equal ? '🟰 ' + _('Equals the record') : '🆕 ' + _('New record')} · <b>${esc(_(r.label))}</b> : ${r.value} — ${esc(title(r.who))} (${esc(r.team)})
+  <span class="mut small"> · ${_('previous')} ${r.previous}${r.previous_who ? ' · ' + esc(title(r.previous_who)) + (r.previous_date ? ', ' + esc(hDate(r.previous_date)) : '') : ''}</span></div>`).join('')}<div class="mut small" style="margin-top:6px"><a href="${url('history', 'records')}">${_('All records')} →</a></div></div>` : '';
+const histNav = on => `<div class="seg" role="tablist">${[['seasons', url('history'), '🏆 ' + _('Champions and seasons')], ['records', url('history', 'records'), '🏅 ' + _('Records')]].map(([k, h, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${h}">${l}</a>`).join('')}</div>`;
+function recList(r, kind) {
+  const who = x => kind === 'league' ? hTeam(x.code || x.team, x.club || x.team) : x.player ? `<a href="${playerUrl(x.pid, x.player)}">${esc(title(x.player))}</a> <span class="mut">${esc(x.team)}</span>` : hTeam(x.team, x.team);
+  const when = x => kind === 'league' ? (x.from ? `${seasonLbl(x.from)} → ${seasonLbl(x.to)}` : x.last ? `${_('last')} ${seasonLbl(x.last)}` : `${seasonLbl(x.season)}${x.phase ? ' · ' + esc(x.phase.split(' · ').map(hName).join(' · ')) : ''}`)
+    : x.opp ? `${_('vs')} ${esc(x.opp)} ${x.score ? `<b>${esc(x.score)}</b>` : ''} · ${x.date ? esc(hDate(x.date)) : seasonLbl(x.season)}` : `${seasonLbl(x.season)}${x.gp ? ` · ${x.gp} ${_('games')}` : ''}`;
+  const rows = r.top.map((x, i) => `<tr${x.game_id ? ` data-go="${gameUrl(x.game_id)}" style="cursor:pointer"` : ' style="cursor:default"'}><td class="rkz">${i + 1}</td><td><b>${x.value}</b></td><td class="l">${who(x)}</td><td class="l mut small">${when(x)}</td></tr>`).join('');
+  return `<div class="card"><b>${esc(_(r.label))}</b>${r.top.length ? `<div class="scroll"><table class="ftable rectable"><tbody>${rows}</tbody></table></div>` : `<div class="mut small">${_('Nothing yet')}</div>`}</div>`;
+}
+async function recordsPage() {
+  const d = await fetch('/api/records', { cache: 'no-cache' }).then(r => r.json());
+  pageMeta = LANG === 'fr' ? ['Records du championnat de Tunisie de basket – Tunisia Basket', 'Plus de points, rebonds, passes en un match, plus gros scores, plus larges victoires, meilleures moyennes, titres et séries de titres.']
+    : ['Tunisian basketball league records – Tunisia Basket', 'Most points, rebounds and assists in a game, highest scores, biggest wins, best season averages, titles and title streaks.'];
+  const cov = Object.entries(d.coverage.box_scores).map(([k, v]) => `${seasonLbl(k)} (${v})`).join(', ');
+  const grid = (list, kind) => `<div class="grid g2">${list.map(r => recList(r, kind)).join('')}</div>`;
+  return `${leagueNav('history')}${histNav('records')}<h1>🏅 ${_('Records')}</h1>
+    <div class="note">${_('Records are counted over every box score the site holds')}: ${esc(cov)}. ${_('Team scores and margins also use the results without a box score, back to 2014-15. A game that sets or equals a record says so on its page.')}</div>
+    <h2>${_('One game, one player')}</h2>${grid(d.player, 'player')}
+    <h2>${_('One game, one team')}</h2>${grid(d.team, 'team')}
+    <h2>${_('One season')} <span class="mut" style="font-size:13px">${esc(f('minGames', 5))}</span></h2>${grid(d.season, 'season')}
+    <h2>${_('All time')}</h2>${grid(d.league, 'league')}`;
+}
+async function historyPage(arg) {
+  if (arg === 'records') return recordsPage();
+  const d = await fetch('/api/history' + (arg ? '/' + encodeURIComponent(arg) : ''), { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)));
+  pageMeta = META.history[LANG];
+  const top = `${leagueNav('history')}${arg ? '' : histNav('seasons')}<h1>🕘 ${_('History')}${arg ? ` <span class="mut" style="font-size:15px">${seasonLbl(arg)}</span>` : ''}</h1>`;
+  if (!arg) {
+    const have = new Set(d.seasons.map(x => x.season));
+    const chips = d.seasons.map(x => `<a class="rchip" href="${url('history', x.season)}">${seasonLbl(x.season)}${x.boxes ? ` <span class="mut">· ${x.boxes} 📋</span>` : ''}</a>`).join('');
+    const rows = [...d.champions].reverse().map(c => `<tr style="cursor:default"><td class="l">${have.has(c.season) ? `<a href="${url('history', c.season)}">${seasonLbl(c.season)}</a>` : seasonLbl(c.season)}</td><td class="l">${hTeam(c.champion_code, c.champion)}</td><td class="l">${c.final ? esc(c.final.runner_up) : ''}</td><td>${c.final ? esc(c.final.score) : ''}</td></tr>`).join('');
+    return `${top}<p class="mut">${_('The champions of Tunisia since 1955-56 and, for the recent seasons, how they were played: the format changed almost every year.')}</p>
+      <h2>${_('Seasons in detail')}</h2><div class="rchips" style="flex-wrap:wrap">${chips}</div><p class="mut small">📋 ${_('box scores on the site')}</p>
+      <h2>${_('Champions')}</h2><div class="card scroll"><table class="ftable"><thead><tr><th class="l">${_('Season')}</th><th class="l">${_('Champion')}</th><th class="l">${_('Runner-up')}</th><th>${hName('Final')}</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="note">${_('Sources: Wikipedia, the FTBB (through the Internet Archive). Older seasons list the champion only.')}</div>`;
+  }
+  pageMeta = LANG === 'fr' ? [`Pro A tunisienne ${seasonLbl(arg)} : champion, formule, classements et feuilles de match – Tunisia Basket`, `La saison ${seasonLbl(arg)} du basket tunisien : champion ${d.champion || '-'}, la formule, les classements, les séries et les résultats.`]
+    : [`Tunisian Pro A ${seasonLbl(arg)}: champion, format, standings and box scores – Tunisia Basket`, `The ${seasonLbl(arg)} Tunisian basketball season: champion ${d.champion || '-'}, how it was played, tables, series and results.`];
+  const fm = d.format, chips = d.seasons.map(x => `<a class="rchip${x === arg ? ' on' : ''}" href="${url('history', x)}">${seasonLbl(x)}</a>`).join('');
+  const hero = `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Champion')} ${seasonLbl(d.season)}</div><div class="nm">${d.champion_code ? logo(d.champion_code, 56) : ''}<span>${esc(d.champion || '?')}</span></div>
+    ${d.runner_up ? `<div class="mut">${_('Runner-up')}: ${esc(d.runner_up)}${d.final_score ? ` · ${_('final')} ${esc(d.final_score)}` : ''}</div>` : ''}${d.third ? `<div class="mut">${_('Third')}: ${esc(d.third)}</div>` : ''}${d.relegated ? `<div class="mut">${_('Relegated')}: ${esc(d.relegated)}</div>` : ''}</div></div>`;
+  const fmt = fm ? `<div class="card fmt"><b>${_('How the season was played')}</b><p style="margin:6px 0 0">${esc(fm[LANG] || fm.en)}</p><div class="mut small" style="margin-top:6px">${_('Source')}: ${esc(fm.source)}</div></div>` : '';
+  const secs = hSections(d.sections);
+  const boxes = d.boxes.length ? `<h2>📋 ${_('Box scores')} <span class="mut" style="font-size:14px">${d.boxes.length}</span></h2><div class="card scroll"><table><thead><tr><th class="l">${_('Date')}</th><th class="l">${_('Game')}</th><th>${_('Score')}</th></tr></thead><tbody>${d.boxes.map(b =>
+    `<tr data-go="${gameUrl(b.id)}" style="cursor:pointer"><td class="l">${esc(b.matchday || hDate(b.date))}</td><td class="l">${hTeam(b.a, b.a)} <span class="mut">${_('vs')}</span> ${hTeam(b.b, b.b)}${b.phase && b.phase !== 'regular season' ? ` <span class="pill">${esc(_(b.phase))}</span>` : ''}</td><td><b>${b.as}–${b.bs}</b></td></tr>`).join('')}</tbody></table></div>` : `<div class="note">${_('No box score of this season is on the site yet.')}</div>`;
+  return `${top}<div class="rchips" style="flex-wrap:wrap">${chips}</div>${hero}${fmt}${secs || `<div class="empty">${_('Only the champion is known for this season.')}</div>`}${boxes}
+    <div class="note">${_('Tables and scores come from Wikipedia and the FTBB archives; a game with no number simply was not published. Box scores are read from the PDFs the FTBB published.')}</div>`;
 }
 
 // ---------------------------------------------------------------- Play-off and play-out, with the season behind them
@@ -1710,6 +1895,15 @@ const ABOUT = {
        'Votre engagement fait vivre le projet, et nous y sommes très sensibles. Votez, pronostiquez, partagez une page avec un ami, suivez-nous sur les réseaux, et dites-nous quand il manque quelque chose ou qu’une info est fausse : envoyez-nous une feuille de match ou une correction, nous l’ajouterons.',
        'Tunisia Basket est un projet indépendant. Il n’est pas affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs ; les noms et logos des clubs appartiennent à leurs propriétaires.']
 };
+// Privacy policy (privacy.py): one text for the site, its crawler version and the app; the stores link to this page
+async function privacy() {
+  const v = await fetch('/api/privacy?lang=' + LANG).then(r => r.json());
+  pageMeta = [`${v.title} – Tunisia Basket`, v.intro];
+  return `<h1>${esc(v.title)}</h1><div class="mut small" style="margin:-6px 0 14px">${esc(LANG === 'fr' ? 'Mise à jour le ' : 'Updated ')}${esc(fmtDay(v.updated))}</div>
+  <div class="card abtext"><p>${esc(v.intro)}</p></div>
+  ${v.sections.map(s => `<h2>${esc(s.h)}</h2><div class="card abtext">${s.p.map(p => `<p>${esc(p)}</p>`).join('')}</div>`).join('')}
+  <div class="note"><a href="${esc(v.contact)}" target="_blank" rel="noopener">Facebook · Tunisia Basket ↗</a></div>`;
+}
 async function about() {
   pageMeta = META.about[LANG];
   const t = document.querySelector('#socbig'), btns = t ? t.innerHTML.trim() : '';

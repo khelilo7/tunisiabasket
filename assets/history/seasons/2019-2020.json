@@ -1,0 +1,215 @@
+{
+ "season": "2019-2020",
+ "league": "Championnat Pro A 2019–20",
+ "source": {
+  "wikipedia": "Championnat Pro A 2019–20"
+ },
+ "champion": "US Monastir",
+ "runner_up": "ES Radès",
+ "teams": "12",
+ "dates": "28 September 2019 – 8 August 2020",
+ "phases": [
+  {
+   "name": "First stage · Group A",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 9,
+     "l": 0
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 6,
+     "l": 3
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 6,
+     "l": 3
+    },
+    {
+     "code": "ESG",
+     "name": "ES Goulettoise",
+     "w": 4,
+     "l": 5
+    },
+    {
+     "code": "SN",
+     "name": "Stade Nabeulien",
+     "w": 2,
+     "l": 7
+    },
+    {
+     "code": "SG",
+     "name": "Stade Gabèsien",
+     "w": 0,
+     "l": 9
+    }
+   ]
+  },
+  {
+   "name": "First stage · Group B",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 9,
+     "l": 1
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 7,
+     "l": 3
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 7,
+     "l": 3
+    },
+    {
+     "code": "ASH",
+     "name": "AS Hammamet",
+     "w": 4,
+     "l": 6
+    },
+    {
+     "code": null,
+     "name": "JS Manazeh",
+     "w": 3,
+     "l": 7
+    },
+    {
+     "code": "CAB",
+     "name": "CA Bizertin",
+     "w": 0,
+     "l": 10
+    }
+   ]
+  },
+  {
+   "name": "Super 6",
+   "kind": "table",
+   "rows": [
+    {
+     "code": "USM",
+     "name": "US Monastir",
+     "w": 9,
+     "l": 1
+    },
+    {
+     "code": "ESR",
+     "name": "ES Radès",
+     "w": 6,
+     "l": 4
+    },
+    {
+     "code": "DSG",
+     "name": "DS Grombalia",
+     "w": 6,
+     "l": 4
+    },
+    {
+     "code": "JSK",
+     "name": "JS Kairouan",
+     "w": 4,
+     "l": 6
+    },
+    {
+     "code": "CA",
+     "name": "Club Africain",
+     "w": 4,
+     "l": 6
+    },
+    {
+     "code": "ESS",
+     "name": "ES Sahel",
+     "w": 1,
+     "l": 9
+    }
+   ]
+  },
+  {
+   "name": "Playoffs · Semifinals",
+   "kind": "series",
+   "series": [
+    {
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "JSK",
+      "name": "JS Kairouan"
+     },
+     "games": [
+      [
+       72,
+       64
+      ],
+      [
+       71,
+       65
+      ]
+     ]
+    },
+    {
+     "a": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "b": {
+      "code": "DSG",
+      "name": "DS Grombalia"
+     },
+     "games": [
+      [
+       82,
+       80
+      ],
+      [
+       68,
+       88
+      ],
+      [
+       75,
+       71
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Playoffs · Finals",
+   "kind": "series",
+   "series": [
+    {
+     "a": {
+      "code": "USM",
+      "name": "US Monastir"
+     },
+     "b": {
+      "code": "ESR",
+      "name": "ES Radès"
+     },
+     "games": [
+      [
+       89,
+       69
+      ],
+      [
+       82,
+       77
+      ]
+     ]
+    }
+   ]
+  }
+ ]
+}

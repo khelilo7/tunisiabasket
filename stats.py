@@ -20,6 +20,7 @@ import game_fixes  # noqa: E402
 
 game_fixes.apply()   # corrections that ship with this release (once each; see game_fixes.py)
 GAMES_DIR = config.DATA_DIR / "games"
+HISTORY_GAMES_DIR = config.ASSETS_DIR / "history" / "games"     # box scores of past seasons (tools/import_history.py): read-only, shipped with the code
 OFFICIAL_FILE = config.DATA_DIR / "official.json"  # federation results + team names (source of truth)
 FIXTURES_FILE = config.DATA_DIR / "fixtures.json"  # optional: the official calendar for later matchdays
 BIOS_FILE = config.DATA_DIR / "players_info.json"  # optional corrections to assets/players_info.json
@@ -101,9 +102,14 @@ def game_dates():
 def load_games():
     raw = []
     fixed = game_dates()
-    for f in sorted(GAMES_DIR.glob("*.json")):
+    seen = set()
+    history_files = [] if os.environ.get("NO_HISTORY_GAMES") else sorted(HISTORY_GAMES_DIR.glob("*.json"))      # tests that count games switch the past seasons off
+    for f in [*sorted(GAMES_DIR.glob("*.json")), *history_files]:
         g = json.loads(f.read_text())
         g["id"] = g.get("id") or f.stem
+        if g["id"] in seen:
+            continue
+        seen.add(g["id"])
         if g["id"] in fixed:
             g["date"], g["date_approx"] = fixed[g["id"]], False
         raw.append(g)
@@ -121,7 +127,11 @@ def load_games():
             games.remove(prev)
         by_key[key] = g
         games.append(g)
-    _canonicalise(games)
+    by_season = defaultdict(list)                          # a jersey number is only a player's identity within one season (CA #1 of 2018 is not CA #1 of 2026): each season names its own players
+    for g in games:
+        by_season[season_of(g["date"])].append(g)
+    for group in by_season.values():
+        _canonicalise(group)
     games.sort(key=lambda g: (g["date"], g["id"]))
     return games
 
@@ -461,7 +471,7 @@ def _cached(fn):
     def wrapper(*a, **k):
         if os.environ.get("NO_STATS_CACHE"):
             return fn(*a, **k)
-        key, fp = (fn.__name__, a, tuple(sorted(k.items()))), _fingerprint()
+        key, fp = (fn.__module__, fn.__name__, a, tuple(sorted(k.items()))), _fingerprint()      # module too: records.py has cached functions of its own
         hit = _CACHE.get(key)
         if hit and hit[0] == fp and time.monotonic() - hit[1] < CACHE_SECONDS:
             return hit[2]

@@ -10,6 +10,7 @@ import re
 
 import pdfplumber
 
+from french_parser import parse_french_pdf
 from ocr_parser import IMAGE_EXT, parse_scanned_pdf
 from text_parser import parse_text_pdf
 from validate import validate
@@ -70,6 +71,8 @@ def extract(pdf_path, filename="", matchday="", page=0):
     source = "text" if _has_text_layer(pdf_path, page) else "ocr"
     if source == "text" and is_video_sheet(pdf_path, page):   # compiled from a broadcast video (video_sheet.py)
         game = parse_video_sheet(pdf_path, page)
+    elif source == "text" and (game := parse_french_pdf(pdf_path, page)):   # the French scorer software of 2017-19 (french_parser.py)
+        pass
     else:
         game = parse_text_pdf(pdf_path, page) if source == "text" else parse_scanned_pdf(pdf_path, page=page)
         if game is None:  # looked like text but wasn't parseable
