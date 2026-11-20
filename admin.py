@@ -23,6 +23,7 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 import auth
 import config
 import stats
+import monitor
 import mvp
 import predict
 import cup
@@ -422,6 +423,12 @@ def social_save():
 @bp.get("/admin/api/traffic")
 def traffic_view():
     return jsonify(traffic.summary(request.args.get("days", 30)))
+
+
+@bp.get("/admin/api/monitor")
+def monitor_view():
+    """The Server tab: machine and app health, website, app users, push sign-ups, votes (monitor.py)."""
+    return jsonify(monitor.view(request.args.get("range", "24h"), request.args.get("days", 30)))
 
 
 @bp.get("/admin/api/mvp")

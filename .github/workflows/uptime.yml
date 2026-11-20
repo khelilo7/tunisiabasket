@@ -1,0 +1,35 @@
+name: Uptime
+
+# Every 15 minutes, from outside the server: does the public site answer? If not (after 3 tries over ~2 minutes) the run fails and GitHub
+# emails you (Settings > Notifications > Actions: "Send notifications for failed workflows only"). The admin's Server tab cannot tell you
+# that the site is down, since it lives inside the site: this does.
+# Note: GitHub pauses scheduled workflows after 60 days without any commit; it emails before, and a click on "Enable workflow" restarts it.
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:   # run it by hand from the Actions tab
+
+permissions: {}
+
+concurrency:
+  group: uptime
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: The public site answers
+        env:
+          # not the 'production' environment's variable: that one is locked behind the deploy approval. Another domain: a repository variable UPTIME_DOMAIN
+          DOMAIN: ${{ vars.UPTIME_DOMAIN || 'tunisiabasket.com' }}
+        run: |
+          for attempt in 1 2 3; do
+            code="$(curl -sS -o /dev/null -w '%{http_code}' -m 15 "https://$DOMAIN/api/overview" || true)"
+            if [ "$code" = 200 ]; then echo "Site is up (attempt $attempt)."; exit 0; fi
+            echo "Attempt $attempt: HTTP ${code:-no answer}"
+            sleep 45
+          done
+          echo "::error::https://$DOMAIN does not answer. Check the admin's Server tab (if it loads), Cloudflare, and on the server: systemctl status proastats caddy; journalctl -u proastats -n 100"
+          exit 1

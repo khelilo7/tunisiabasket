@@ -53,7 +53,10 @@ The version code goes up by itself at every build (`autoIncrement`). To change t
    feature graphic `store/feature-graphic-1024x500.png`; at least 2 phone screenshots (take them in the app: power + volume down), 7" and 10" tablet screenshots if you want the tablet badge.
 3. **Privacy policy URL** (required): a page on the site, e.g. `https://tunisiabasket.com/confidentialite` (English: `/en/privacy`); it is in place (`privacy.py`).
 4. **App content** forms: ads = No; target audience = 13+ (or 18+ to keep it simple); content rating questionnaire (sports, no violence → "Everyone");
-   **Data safety**: no data collected or shared (true while Fantasy is hidden — revisit when it launches); news app = No; government app = No.
+   **Data safety**: data is **collected, not shared**, encrypted in transit (HTTPS), not linked to a person. Declare *Device or other IDs* (the app's random id, sent
+   with votes, predictions and the once-a-day "app opened" count, stored only as a hash; and the push token if notifications are on) and *App activity → App interactions*
+   (votes, predictions, app opened). Purposes: App functionality, Analytics. Users cannot ask for deletion because nothing identifies them (say so). Fantasy adds a nickname when it launches.
+   News app = No; government app = No.
 5. Category: **Sports**. Contact email: the brand's.
 
 ## 6. First release: internal testing, then production

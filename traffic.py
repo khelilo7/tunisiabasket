@@ -5,6 +5,9 @@ device type, language, and two codes. The visitor code is a hash of IP + browser
 lets us count distinct visitors per day but cannot be turned back into an address, and the same person gets a different
 code tomorrow. The second code is a hash of a random id the browser keeps (never derived from the address): it is what tells a
 returning visitor from a new one, and it is one device/browser, not one human. IP addresses are never written to disk. Crawlers are ignored, and so is the admin.
+
+The mobile app is counted separately (app_open): once it is opened on a day it sends its random id, the platform and its version; only a keyed hash
+of the id is stored with the day, the platform and the version, so we can count active users per day/week/month and installs. Same key, same 400 days.
 """
 import datetime
 import hashlib
@@ -51,7 +54,11 @@ def _db():
         con.execute("CREATE TABLE IF NOT EXISTS follows(rid TEXT PRIMARY KEY, team TEXT, ts INTEGER, day TEXT, visitor TEXT)")
         con.execute("CREATE INDEX IF NOT EXISTS hits_day ON hits(day)")
         con.execute("CREATE INDEX IF NOT EXISTS hits_rid ON hits(rid)")
+        # mobile app: one row per install per day it was opened (app_open()); uid is a keyed hash of the app's random id, nothing else about the phone
+        con.execute("CREATE TABLE IF NOT EXISTS app_days(day TEXT, uid TEXT, platform TEXT, version TEXT, ts INTEGER, PRIMARY KEY(day, uid))")
+        con.execute("CREATE INDEX IF NOT EXISTS app_days_uid ON app_days(uid)")
         con.execute("DELETE FROM hits WHERE ts < ?", (time.time() - KEEP_DAYS * 86400,))
+        con.execute("DELETE FROM app_days WHERE ts < ?", (time.time() - KEEP_DAYS * 86400,))
         con.commit()
         try:
             os.chmod(DB_FILE, 0o600)
@@ -145,6 +152,86 @@ def follow(request, team: str, rid: str):
         finally:
             con.close()
     return True
+
+
+APP_ID = re.compile(r"^[a-f0-9]{16,64}$")          # the app's random id (32 hex), the same one it uses for votes
+APP_VERSION = re.compile(r"^\d{1,3}(?:\.\d{1,4}){0,3}$")
+PLATFORMS = ("android", "ios")
+MAX_APP_IDS_PER_NETWORK_DAY = 300                   # new ids per address per day (mobile operators put many phones behind one address); above = a script
+_app_nets = {"day": "", "n": {}}                     # in memory only: per-network counts for today, never written to disk
+
+
+def app_open(request, vid: str, platform: str, version: str = "") -> bool:
+    """The mobile app says "I was opened today" (at most a few times a day). Returns True if it was counted.
+    Stored: the Tunisian day, a keyed hash of the app's random id (cannot be turned back, and differs from every hash the votes use), the platform
+    and the app version. No address, no browser string. Crawlers and the admin are ignored; one row per install per day."""
+    ua = request.headers.get("User-Agent", "")
+    if not APP_ID.match(vid or "") or platform not in PLATFORMS or BOT.search(ua) or auth.is_admin():
+        return False
+    version = version if APP_VERSION.match(version or "") else ""
+    day = _day()
+    uid = hmac.new(_key(), f"app|{vid}".encode(), hashlib.sha256).hexdigest()[:16]
+    net = hashlib.sha256(auth.visitor_ip().encode()).hexdigest()[:16]
+    with _lock:
+        if _app_nets["day"] != day:
+            _app_nets.update(day=day, n={})
+        con = _db()
+        try:
+            if con.execute("SELECT 1 FROM app_days WHERE day=? AND uid=?", (day, uid)).fetchone():
+                con.execute("UPDATE app_days SET version=?, ts=? WHERE day=? AND uid=?", (version, int(time.time()), day, uid))
+                con.commit()
+                return True
+            if _app_nets["n"].get(net, 0) >= MAX_APP_IDS_PER_NETWORK_DAY:
+                return False
+            _app_nets["n"][net] = _app_nets["n"].get(net, 0) + 1
+            con.execute("INSERT INTO app_days(day, uid, platform, version, ts) VALUES (?,?,?,?,?)", (day, uid, platform, version, int(time.time())))
+            con.commit()
+        finally:
+            con.close()
+    return True
+
+
+def app_summary(days: int = 30) -> dict:
+    """Users of the mobile app: active per day (DAU), in the last 7 days (WAU) and 30 days (MAU), installs seen, new installs per day,
+    platform and version. One install = one random id: reinstalling the app or clearing its data makes it a new one."""
+    days = max(1, min(int(days), 365))
+    since = _day(days - 1)
+    with _lock:
+        con = _db()
+        try:
+            dau = dict(con.execute("SELECT day, COUNT(*) FROM app_days WHERE day>=? GROUP BY day", (since,)))
+            new = dict(con.execute("SELECT fd, COUNT(*) FROM (SELECT MIN(day) fd FROM app_days GROUP BY uid) WHERE fd>=? GROUP BY fd", (since,)))
+            active = lambda n: con.execute("SELECT COUNT(DISTINCT uid) FROM app_days WHERE day>=?", (_day(n - 1),)).fetchone()[0]  # noqa: E731
+            m30 = _day(29)
+            latest = "SELECT uid, platform, version FROM app_days a WHERE day>=? AND ts=(SELECT MAX(ts) FROM app_days b WHERE b.uid=a.uid AND b.day>=?)"
+            return {
+                "days": days, "tz": "Tunisia time (UTC+1)",
+                "today": dau.get(_day(), 0), "wau": active(7), "mau": active(30), "period": active(days),
+                "installs": con.execute("SELECT COUNT(DISTINCT uid) FROM app_days").fetchone()[0],
+                "series": [{"day": _day(i), "active": dau.get(_day(i), 0), "new": new.get(_day(i), 0)} for i in range(days - 1, -1, -1)],
+                "platforms": _rows(con, f"SELECT platform, COUNT(DISTINCT uid) FROM ({latest}) GROUP BY platform ORDER BY 2 DESC", m30, m30),
+                "versions": _rows(con, f"SELECT version, COUNT(DISTINCT uid) FROM ({latest}) GROUP BY version ORDER BY 2 DESC LIMIT 10", m30, m30),
+            }
+        finally:
+            con.close()
+
+
+def web_summary(days: int = 30) -> dict:
+    """The website in short (the Traffic tab has the details): page views and visitors per day."""
+    days = max(1, min(int(days), 365))
+    since = _day(days - 1)
+    with _lock:
+        con = _db()
+        try:
+            per_day = {d: (v, u) for d, v, u in con.execute("SELECT day, COUNT(*), COUNT(DISTINCT visitor) FROM hits WHERE day>=? GROUP BY day", (since,))}
+            tot = con.execute("SELECT COUNT(*), COUNT(DISTINCT day||visitor), COUNT(DISTINCT CASE WHEN rid!='' THEN rid END) FROM hits WHERE day>=?", (since,)).fetchone()
+            online = con.execute("SELECT COUNT(DISTINCT visitor) FROM hits WHERE ts>?", (time.time() - 300,)).fetchone()[0]
+        finally:
+            con.close()
+    today = per_day.get(_day(), (0, 0))
+    return {"days": days, "views": tot[0], "visitors": tot[1], "people": tot[2], "online": online,
+            "today": {"views": today[0], "visitors": today[1]},
+            "series": [{"day": _day(i), "views": per_day.get(_day(i), (0, 0))[0], "visitors": per_day.get(_day(i), (0, 0))[1]} for i in range(days - 1, -1, -1)]}
 
 
 def _rows(con, sql, *args):

@@ -35,10 +35,13 @@ TEXT = {
             ]),
             ("Application mobile", [
                 "L’application lit les mêmes données publiques que le site. Elle ne demande ni localisation, ni appareil photo, ni contacts, "
-                "ne contient pas de publicité et n’utilise aucun outil de suivi.",
+                "ne contient pas de publicité et n’utilise aucun outil de suivi ou de mesure d’audience tiers.",
                 "Notifications (si vous les activez) : l’application demande l’autorisation du téléphone, puis nous envoie une adresse de notification anonyme "
                 "(un « jeton » fourni par Expo, Google ou Apple), votre choix (votre club, tout, ou rien ; résultats, actualités, votes) et votre langue. "
                 "Choisir « Aucune » efface ce jeton chez nous. Les notifications passent par le service Expo puis par Google (Android) ou Apple (iPhone).",
+                "Statistiques d’utilisation : quand l’application est ouverte, au plus quelques fois par jour, elle envoie son code aléatoire (celui des votes), "
+                "le système (Android ou iPhone) et sa version. Nous gardons seulement une empreinte chiffrée de ce code, le jour, le système et la version, "
+                "pour compter combien de personnes utilisent l’application chaque jour et chaque mois. Aucune adresse IP n’est enregistrée ; ces données sont effacées au bout de 400 jours.",
                 "Les vidéos de l’action de la semaine sont lues avec le lecteur de YouTube ou de Facebook, qui appliquent leurs propres règles.",
             ]),
             ("Hébergeurs et liens externes", [
@@ -83,10 +86,13 @@ TEXT = {
             ]),
             ("Mobile app", [
                 "The app reads the same public data as the website. It asks for no location, camera or contacts, "
-                "shows no ads and uses no tracking tools.",
+                "shows no ads and uses no third-party tracking or analytics tools.",
                 "Notifications (if you turn them on): the app asks the phone's permission, then sends us an anonymous notification address "
                 "(a “token” from Expo, Google or Apple), your choice (your club, everything, or nothing; results, news, votes) and your language. "
                 "Choosing “None” deletes the token on our side. Notifications go through the Expo service, then Google (Android) or Apple (iPhone).",
+                "Usage statistics: when the app is opened, at most a few times a day, it sends its random code (the one used for votes), "
+                "the system (Android or iPhone) and its version. We keep only an encrypted fingerprint of that code, the day, the system and the version, "
+                "to count how many people use the app each day and each month. No IP address is stored; this data is deleted after 400 days.",
                 "The play-of-the-week videos play in YouTube's or Facebook's player, which follow their own rules.",
             ]),
             ("Hosting and external links", [

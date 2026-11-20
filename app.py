@@ -7,6 +7,7 @@ import time
 from functools import partial
 
 from flask import Flask, Response, abort, jsonify, make_response, redirect, request, send_from_directory
+from flask import g as request_state
 
 import auth
 import config
@@ -14,6 +15,7 @@ import content
 import cup
 import fantasy
 import finals
+import health
 import history
 import records
 import lineups
@@ -558,11 +560,31 @@ def hit():
     return "", 204
 
 
-CORS_POST = ("/api/fantasy/", "/api/predict/pick", "/api/round/vote", "/api/mvp/vote", "/api/plays/vote", "/api/push")
+@app.post("/api/app/open")
+def app_open():
+    """The mobile app was opened (sent at most a few times a day). Anonymous: see traffic.app_open()."""
+    body = request.get_json(silent=True, force=True) or {}
+    try:
+        traffic.app_open(request, str(body.get("vid", ""))[:80], str(body.get("platform", ""))[:10], str(body.get("version", ""))[:20])
+    except Exception:           # statistics must never break the app
+        pass
+    return "", 204
+
+
+CORS_POST = ("/api/fantasy/", "/api/predict/pick", "/api/round/vote", "/api/mvp/vote", "/api/plays/vote", "/api/push", "/api/app/open")
+
+
+@app.before_request
+def _clock():
+    request_state.t0 = time.perf_counter()
 
 
 @app.after_request
 def _headers(resp):
+    try:
+        health.count(resp.status_code, time.perf_counter() - request_state.t0)      # requests, errors and response times for the Server tab
+    except Exception:
+        pass
     # The mobile app (mobile/) reads the public API; in its web preview that is another origin. Public data only: no credentials are ever allowed,
     # and the only cross-origin POSTs accepted are the app's anonymous ones (fantasy, fan votes, predictions, notification choice), keyed by the device's id.
     if request.path.startswith("/api/") and not request.path.startswith("/api/admin"):
@@ -596,6 +618,7 @@ def start_background():
         _started = True
         threading.Thread(target=_loop, daemon=True).start()
     notify.start()                     # push notifications of the app: new results, news, votes (PUSH=0 turns it off)
+    health.start()                     # one machine/app health sample a minute for the admin's Server tab (HEALTH=0 turns it off)
 
 
 if os.environ.get("APP_ENV") == "production":  # under gunicorn there is no __main__

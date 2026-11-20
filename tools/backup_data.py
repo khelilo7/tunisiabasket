@@ -26,6 +26,7 @@ SMALL_FILES = ("votes.db", "traffic.db", "traffic.key", "mvp.json", "roster.json
 SKIP = {"admin.log.tmp"}
 WATCHED = ("votes.db", "mvp.json", "roster.json", "players_info.json", "positions.json", "player_photos.json", "calendar.json")   # what a small backup must never miss
 FULL_DAYS, SMALL_DAYS = 7, 2
+ROLLING = {"health.db"}   # databases that forget old rows by themselves (server samples): checked for integrity, not for "no fewer rows than live"
 
 
 def fingerprint(src: Path) -> str:
@@ -131,7 +132,8 @@ def main():
     fp = fingerprint(src)                                               # taken before the copy: a change during it is caught next time
     stamp = time.strftime("%Y%m%d-%H%M") if a.small else time.strftime("%Y%m%d-%H%M%S")
     target = out / (f"small-{stamp}.tgz" if a.small else f"data-{stamp}.tgz")
-    before = live_counts(src)
+    # row counts the backup must reach: only databases that go into this archive, and not the rolling ones (a sample can delete an old row mid-backup)
+    before = {k: v for k, v in live_counts(src).items() if k not in ROLLING and (not a.small or k in SMALL_FILES)}
     with tempfile.TemporaryDirectory() as tmp:
         snap = Path(tmp) / "data"
         snap.mkdir()
