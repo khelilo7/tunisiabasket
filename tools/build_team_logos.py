@@ -17,6 +17,7 @@ SIZE = 256          # badge diameter
 INNER = 172         # longest side of every logo (same for all, and the corners of a tall or wide logo stay inside the circle)
 TOLERANCE = {"SN": 38}          # colour distance still counted as background (default 28)
 CROP = {"SN": (440, 30, 760, 570)}  # SN comes with a copyright line and lots of grey: keep only the emblem
+INNER_FOR = {"USM": 214}        # a tall logo (a star above and below the round emblem): bigger, so the emblem matches the others
 
 
 def flood_border(candidate):
@@ -49,8 +50,8 @@ def subject(path, code):
     return out.crop(box)
 
 
-def badge(logo):
-    k = INNER / max(logo.size)
+def badge(logo, inner=INNER):
+    k = inner / max(logo.size)
     logo = logo.resize((max(1, round(logo.width * k)), max(1, round(logo.height * k))), Image.LANCZOS)
     big = SIZE * 4   # draw the disc at 4x and shrink: smooth edge
     disc = Image.new("L", (big, big), 0)
@@ -71,7 +72,7 @@ def main():
         sys.exit(f"no logos in {SRC}")
     for f in files:
         code = f.stem.upper()
-        badge(subject(f, code)).save(OUT / f"{code}.png", optimize=True)
+        badge(subject(f, code), INNER_FOR.get(code, INNER)).save(OUT / f"{code}.png", optimize=True)
         print("built", OUT / f"{code}.png")
 
 

@@ -43,7 +43,7 @@
     return out.slice(0, max);
   }
   async function logo(ctx, code, x, y, size) {
-    const img = await loadImg(`/img/teams/${code}.png`);
+    const img = await loadImg(`/img/teams/${code}.png?v=2`);
     ctx.save(); ctx.beginPath(); ctx.arc(x + size / 2, y + size / 2, size / 2, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.clip();
     if (img) { const p = size * 0.1; ctx.drawImage(img, x + p, y + p, size - 2 * p, size - 2 * p); }
     else { txt(ctx, code, x + size / 2, y + size / 2 + 8, { size: size * 0.3, weight: 800, color: '#222', align: 'center' }); }

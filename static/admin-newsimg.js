@@ -33,7 +33,7 @@
     const r = d / 2;
     ctx.beginPath(); ctx.arc(cx, cy, r + 10, 0, 7); ctx.fillStyle = col; ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, r, 0, 7); ctx.fillStyle = '#ffffff'; ctx.fill(); ctx.clip();
-    const ph = item.player && item.photo ? await loadImg(item.photo) : null, tl = item.team ? await loadImg(`/img/teams/${item.team}.png`) : null;
+    const ph = item.player && item.photo ? await loadImg(item.photo) : null, tl = item.team ? await loadImg(`/img/teams/${item.team}.png?v=2`) : null;
     if (ph) { const s = Math.min(ph.width, ph.height); ctx.drawImage(ph, (ph.width - s) / 2, (ph.height - s) * 0.12, s, s, cx - r, cy - r, d, d); }
     else if (tl) { const p = d * 0.16; ctx.drawImage(tl, cx - r + p, cy - r + p, d - 2 * p, d - 2 * p); }
     else { ctx.fillStyle = '#1b2646'; ctx.fillRect(cx - r, cy - r, d, d); txt(ctx, ICON[item.label] || '📰', cx, cy + d * 0.14, { size: d * 0.46, align: 'center' }); }
