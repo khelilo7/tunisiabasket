@@ -163,9 +163,16 @@ def _send(msgs):
         except Exception as e:           # a failed batch is not retried: a late "final score" is worse than none
             log.warning("push batch failed: %s", e)
             continue
+        errors = {}
         for m, t in zip(batch, res):
-            if t.get("status") == "error" and (t.get("details") or {}).get("error") == "DeviceNotRegistered":
+            if t.get("status") != "error":
+                continue
+            why = (t.get("details") or {}).get("error") or "unknown"
+            errors[why] = errors.get(why, 0) + 1
+            if why == "DeviceNotRegistered":
                 gone.add(m["to"])
+        if errors:                       # e.g. InvalidCredentials: the FCM V1 key is missing on expo.dev (see mobile/RELEASE-ANDROID.md, step 2b)
+            log.warning("push: %d of %d not accepted by Expo: %s", sum(errors.values()), len(batch), errors)
     if gone:
         with _lock:
             subs = _read(FILE, {})

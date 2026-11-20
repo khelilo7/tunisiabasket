@@ -25,14 +25,16 @@ export default function Votes() {
   const [tab, setTab] = useState<Tab>(start === 'round' || start === 'mvp' ? start : 'predict');
   const { lang } = useApp();
   const fr = lang === 'fr';
+  const mvpOn = useMvpVoteOpen();             // the phase MVP shows only while its fans' vote is open (for now: at the end of the season)
+  const shown = tab === 'mvp' && !mvpOn ? 'predict' : tab;
   return (
     <Screen header={<Header title={fr ? 'Pronos & votes' : 'Predictions & votes'} />}>
-      <Segmented<Tab> value={tab} onChange={setTab} items={[
+      <Segmented<Tab> value={shown} onChange={setTab} items={[
         { key: 'predict', label: fr ? 'Pronostics' : 'Predictions' },
-        { key: 'round', label: fr ? 'Joueur J.' : 'Player' },
-        { key: 'mvp', label: 'MVP' },
+        { key: 'round', label: fr ? 'Joueur de la sem.' : 'Player of the week' },
+        ...(mvpOn ? [{ key: 'mvp' as const, label: 'MVP' }] : []),
       ]} />
-      {tab === 'predict' ? <Predictions /> : tab === 'round' ? <PlayerOfRound /> : <PhaseMvp />}
+      {shown === 'predict' ? <Predictions /> : shown === 'round' ? <PlayerOfRound /> : <PhaseMvp />}
       <Pressable onPress={() => { tap(); router.push('/plays'); }} style={{ marginTop: 22 }}>
         <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ width: 40, height: 40, borderRadius: R.sm, backgroundColor: 'rgba(238,75,82,0.16)', alignItems: 'center', justifyContent: 'center' }}><Ionicons name="play-circle" size={24} color={C.red} /></View>
@@ -117,10 +119,11 @@ function PlayerOfRound() {
     <View style={{ marginTop: 16 }}>
       {data.round ? (
         <>
-          <Txt v="h2">{fr ? `Joueur de la J${data.round}` : `Player of round ${data.round}`}</Txt>
+          <Txt v="h2">{fr ? 'Joueur de la semaine' : 'Player of the week'}</Txt>
+          <Txt v="label" style={{ marginTop: 2 }}>{fr ? `Journée ${data.round}` : `Round ${data.round}`}</Txt>
           <Txt v="small" style={{ marginBottom: 10 }}>{data.open ? `${fr ? 'Le meilleur joueur de chaque match' : 'The best player of each game'}${data.deadline_ts ? ' · ' + closesIn(data.deadline_ts, fr) : ''}`
             : `${fr ? 'Vote terminé' : 'Voting over'} · ${data.total_votes || 0} ${fr ? 'votes' : 'votes'}`}</Txt>
-          {data.winner ? <WinnerCard c={data.winner} label={fr ? `Joueur de la J${data.round}` : `Player of round ${data.round}`} /> : null}
+          {data.winner ? <WinnerCard c={data.winner} label={fr ? `Joueur de la semaine · J${data.round}` : `Player of the week · R${data.round}`} /> : null}
           <View style={{ gap: 10 }}>
             {(data.candidates || []).map(c => (
               <CandRow key={c.id} c={c} fr={fr} mine={data.my_vote === c.id} reveal={reveal} lead={reveal && c.votes === top && top > 0}
@@ -152,13 +155,20 @@ function PlayerOfRound() {
 }
 
 // ---------------------------------------------------------------- phase MVP
+export function useMvpVoteOpen() {
+  const open = (p?: Mvp) => !!p && p.voting_open && p.ballot.length > 0 && !p.winner;
+  const p1 = useApi<Mvp>('/api/mvp?phase=1').data;
+  const p2 = useApi<Mvp>('/api/mvp?phase=2').data;
+  return open(p1) || open(p2);
+}
+
 function PhaseMvp() {
   const { lang, vid } = useApp();
   const fr = lang === 'fr';
   const p1 = useApi<Mvp>(vid ? `/api/mvp?phase=1&vid=${vid}` : null);
   const p2 = useApi<Mvp>(vid ? `/api/mvp?phase=2&vid=${vid}` : null);
   if (!p1.data || !p2.data) return (p1.error || p2.error) ? <ErrorView onRetry={() => { p1.refresh(); p2.refresh(); }} /> : <Loading />;
-  const phases = [p2.data, p1.data].filter(p => p.candidates.length);           // the newest phase first
+  const phases = [p2.data, p1.data].filter(p => p.voting_open && p.ballot.length && !p.winner);      // only a vote that is open
   if (!phases.length) return <View style={{ marginTop: 16 }}><Empty text={fr ? 'La course au MVP commence après les premières journées.' : 'The MVP race starts after the first rounds.'} /></View>;
   return <View style={{ marginTop: 16, gap: 22 }}>{phases.map(p => <MvpPhase key={p.phase} p={p} refresh={p.phase === 1 ? p1.refresh : p2.refresh} />)}</View>;
 }

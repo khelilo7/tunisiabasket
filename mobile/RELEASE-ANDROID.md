@@ -24,7 +24,11 @@ Expo Go cannot receive notifications; an installed build can, once Google's push
 1. console.firebase.google.com → *Add project* (e.g. "Tunisia Basket", Analytics off) → *Add app* → Android, package `com.tunisiabasket.app` →
    download **google-services.json** into `mobile/` and add to `app.json`, under `"android"`: `"googleServicesFile": "./google-services.json"`.
 2. Firebase → ⚙ *Project settings* → *Service accounts* → *Generate new private key* (a JSON file; keep it private, never commit it).
-3. `npx eas-cli@latest credentials` → Android → production → *Google Service Account Key for Push Notifications (FCM V1)* → upload that JSON.
+3. Give that JSON **file** to Expo, in the **FCM V1** slot — not "Push Notifications (Legacy) / FCM (Legacy) API Key", which Google switched off in 2024:
+   expo.dev → project *tunisia-basket* → *Credentials* → Android → `com.tunisiabasket.app` → **FCM V1 service account key** → *Add a service account key* → upload the file.
+   (Or `npx eas-cli@latest credentials -p android` → *Google Service Account* → *Manage your Google Service Account Key for Push Notifications (FCM V1)* →
+   *Set up…* → *Upload a new service account key* → type the **path** of the file, e.g. `~/Downloads/tunisia-basket-firebase-adminsdk-xxxxx.json`, not its content.)
+   No new build is needed after this: the key is used by Expo's servers, not by the app.
 4. Build again (step 3). In the app: More → Notifications → "My club" (or pick a club: the picker offers it). The server sends a notification when a result,
    a news item or a vote is published (it checks every minute; the first run after a deployment only records what already exists).
 
