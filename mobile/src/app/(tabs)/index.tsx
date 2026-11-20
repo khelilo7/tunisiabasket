@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { FanZone, SocialLinks } from '@/components/fans';
 import { FixtureCard, GameCard } from '@/components/games';
 import { News, NewsCard } from '@/components/news';
 import { Avatar, Card, Grid, HeroCard, Loading, Row, Section, Screen, tap, TeamLogo, Txt, useLayout } from '@/components/ui';
@@ -18,7 +19,7 @@ type Plan = { banner?: { mode: string; matchday: number; date: string; games: Ma
 type Overview = { season: string; leaders: Leader[] };
 
 export default function HomeScreen() {
-  const { t, lang, fav } = useApp();
+  const { t, lang, fav, askFav } = useApp();
   const home = useApi<Home>('/api/home');
   const plan = useApi<Plan>('/api/planning');
   const ov = useApi<Overview>('/api/overview');
@@ -45,7 +46,12 @@ export default function HomeScreen() {
             style={{ padding: 2, borderRadius: 22, borderWidth: 1.5, borderColor: 'rgba(255,138,31,0.55)' }}>
             <TeamLogo code={fav} size={36} />
           </Pressable>
-        ) : null}
+        ) : (
+          <Pressable onPress={() => { tap(); askFav(); }} hitSlop={8} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 99, borderWidth: 1, borderColor: C.line }}>
+            <Ionicons name="star-outline" size={13} color={C.sub} />
+            <Txt v="small" c={C.sub} style={{ fontWeight: '600' }}>{t('favorite')}</Txt>
+          </Pressable>
+        )}
       </Row>
 
       {/* the two places the tab bar does not lead to */}
@@ -87,6 +93,9 @@ export default function HomeScreen() {
           </ScrollView>
         </Section>
       ) : null}
+
+      {/* predictions, votes, play of the week */}
+      <FanZone />
 
       {/* MVP */}
       {mvp ? (
@@ -167,6 +176,8 @@ export default function HomeScreen() {
           </Card>
         </Section>
       ) : null}
+
+      <SocialLinks />
     </Screen>
   );
 }

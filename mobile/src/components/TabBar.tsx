@@ -4,16 +4,17 @@ import { router, usePathname } from 'expo-router';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { FANTASY_ON } from '@/lib/api';
+import { FANTASY_ON, useApi } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { Key } from '@/lib/i18n';
 import { C, R } from '@/theme';
 import { tap, Txt } from './ui';
 
-type Tab = { href: '/' | '/scores' | '/standings' | '/players' | '/fantasy' | '/more'; label: Key; icon: [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap] };
+type Tab = { href: '/' | '/live' | '/scores' | '/standings' | '/players' | '/fantasy' | '/more'; label: Key; icon: [keyof typeof Ionicons.glyphMap, keyof typeof Ionicons.glyphMap] };
 
 const TABS: Tab[] = [
   { href: '/', label: 'home', icon: ['home', 'home-outline'] },
+  { href: '/live', label: 'live', icon: ['radio', 'radio-outline'] },
   { href: '/scores', label: 'scores', icon: ['basketball', 'basketball-outline'] },
   { href: '/standings', label: 'standings', icon: ['podium', 'podium-outline'] },
   { href: '/players', label: 'players', icon: ['people', 'people-outline'] },
@@ -30,6 +31,7 @@ export function TabBar() {
   const path = usePathname();
   const { t } = useApp();
   const Glass = Platform.OS === 'web' ? View : BlurView;
+  const live = (useApi<{ games: unknown[] }>('/api/live', { every: 30000 }).data?.games.length || 0) > 0;     // a red dot on Live while a game is on
   const active = (h: string) => (h === '/' ? path === '/' : path === h || path.startsWith(h + '/'));
   return (
     <View pointerEvents="box-none" style={[s.wrap, { bottom: Math.max(ins.bottom, 8) + 4 }]}>
@@ -39,7 +41,10 @@ export function TabBar() {
           return (
             <Pressable key={tb.href} accessibilityRole="tab" accessibilityState={{ selected: on }} accessibilityLabel={t(tb.label)} hitSlop={4}
               onPress={() => { if (!on) { tap(); router.navigate(tb.href); } }} style={[s.item, on && s.itemOn]}>
-              <Ionicons name={on ? tb.icon[0] : tb.icon[1]} size={19} color={on ? '#1A1205' : C.sub} />
+              <View>
+                <Ionicons name={on ? tb.icon[0] : tb.icon[1]} size={19} color={on ? '#1A1205' : tb.href === '/live' && live ? C.bad : C.sub} />
+                {tb.href === '/live' && live && !on ? <View style={s.dot} /> : null}
+              </View>
               {on ? <Txt v="small" c="#1A1205" style={{ fontWeight: '800', fontSize: 12.5 }} numberOfLines={1}>{t(tb.label)}</Txt> : null}
             </Pressable>
           );
@@ -56,4 +61,5 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 12 },
   item: { flexDirection: 'row', alignItems: 'center', gap: 5, height: 42, minWidth: 44, paddingHorizontal: 11, borderRadius: R.pill, justifyContent: 'center' },
   itemOn: { backgroundColor: C.orange, paddingHorizontal: 14 },
+  dot: { position: 'absolute', right: -3, top: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: C.bad, borderWidth: 1.5, borderColor: C.card },
 });

@@ -2,7 +2,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { Card, ErrorView, Loading, Row, Screen, Segmented, TeamLogo, Txt } from '@/components/ui';
+import { Card, ErrorView, Loading, Row, Screen, Section, Segmented, TeamLogo, Txt } from '@/components/ui';
+import { GameRow, N1 } from '@/components/nat1';
 import { useApi } from '@/lib/api';
 import { useApp } from '@/lib/app-state';
 import { Standing } from '@/lib/types';
@@ -12,10 +13,11 @@ type League = 'proa' | 'nat1';
 type Nat1Row = { code: string; name: string; rank: number; w: number; l: number; pts: number; diff: number };
 
 export default function Standings() {
-  const { t, fav } = useApp();
+  const { t, fav, lang } = useApp();
   const [lg, setLg] = useState<League>('proa');
   const ov = useApi<{ season: string; standings: (Standing & { box?: number })[] }>('/api/overview');
-  const n1 = useApi<{ standings: Nat1Row[]; format?: { playoff: number } }>(lg === 'nat1' ? '/api/nat1' : null);
+  const n1 = useApi<N1 & { standings: Nat1Row[]; format?: { playoff: number } }>(lg === 'nat1' ? '/api/nat1' : null);
+  const last = lg === 'nat1' ? (n1.data?.matchdays || []).filter(m => m.games.some(g => g.home_score != null)).slice(-1)[0] : undefined;
   const rows: (Standing | Nat1Row)[] = (lg === 'proa' ? ov.data?.standings : n1.data?.standings) || [];
   const cut = lg === 'proa' ? 6 : n1.data?.format?.playoff ?? 8;
   const src = lg === 'proa' ? ov : n1;
@@ -41,7 +43,7 @@ export default function Standings() {
           {rows.map((r, i) => {
             const zone = r.rank <= cut ? C.orange : C.blue;
             return (
-              <Pressable key={r.code} disabled={lg !== 'proa'} onPress={() => router.push(`/team/${r.code}`)}>
+              <Pressable key={r.code} onPress={() => router.push(lg === 'proa' ? `/team/${r.code}` : `/nat1/${r.code}`)}>
                 <Row style={{ paddingHorizontal: 14, paddingVertical: 12, borderTopWidth: 1, borderColor: i === cut ? 'rgba(255,138,31,0.5)' : C.line, backgroundColor: r.code === fav ? 'rgba(255,138,31,0.08)' : undefined }}>
                   <View style={{ position: 'absolute', left: 0, top: 10, bottom: 10, width: 3, borderRadius: 2, backgroundColor: zone }} />
                   <Txt v="num" c={r.rank <= 4 ? C.orange : C.sub} style={{ width: 28, fontSize: 18 }}>{r.rank}</Txt>
@@ -66,6 +68,12 @@ export default function Standings() {
         </Row>
       ) : null}
       <Txt v="small" style={{ marginTop: 10 }}>{t('w')} 2 pts · {t('l')} 1 pt · FTBB art. 182–184</Txt>
+      {last ? (
+        <Section title={`${t('matchday')} ${last.matchday}`}>
+          <Card padded={false}>{last.games.map((g, i) => <GameRow key={g.home + g.away} g={g} md={last.matchday} first={!i} />)}</Card>
+          <Txt v="small" style={{ marginTop: 8 }}>{t('nat1')} · {lang === 'fr' ? 'touche un club pour tous ses matchs' : 'tap a club for all its games'}</Txt>
+        </Section>
+      ) : null}
     </Screen>
   );
 }

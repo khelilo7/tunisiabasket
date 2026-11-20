@@ -24,7 +24,7 @@ TEXT = {
                 "Ces statistiques sont effacées au bout de 400 jours.",
             ]),
             ("Votes et pronostics", [
-                "Quand vous votez (MVP, joueur de la journée) ou faites un pronostic, nous enregistrons votre choix avec un code aléatoire propre à votre appareil, "
+                "Quand vous votez (MVP, joueur de la journée, action de la semaine) ou faites un pronostic, nous enregistrons votre choix avec un code aléatoire propre à votre appareil, "
                 "et une empreinte chiffrée de votre réseau pour éviter les votes en double. Ni l’un ni l’autre ne permet de savoir qui vous êtes.",
             ]),
             ("Ce qui reste sur votre appareil", [
@@ -34,8 +34,12 @@ TEXT = {
                 "Si vous choisissez un club favori, nous comptons combien de lecteurs suivent chaque club, sans rien enregistrer d’autre sur vous.",
             ]),
             ("Application mobile", [
-                "L’application lit les mêmes données publiques que le site. Elle ne demande aucune autorisation particulière (ni localisation, ni appareil photo, ni contacts), "
+                "L’application lit les mêmes données publiques que le site. Elle ne demande ni localisation, ni appareil photo, ni contacts, "
                 "ne contient pas de publicité et n’utilise aucun outil de suivi.",
+                "Notifications (si vous les activez) : l’application demande l’autorisation du téléphone, puis nous envoie une adresse de notification anonyme "
+                "(un « jeton » fourni par Expo, Google ou Apple), votre choix (votre club, tout, ou rien ; résultats, actualités, votes) et votre langue. "
+                "Choisir « Aucune » efface ce jeton chez nous. Les notifications passent par le service Expo puis par Google (Android) ou Apple (iPhone).",
+                "Les vidéos de l’action de la semaine sont lues avec le lecteur de YouTube ou de Facebook, qui appliquent leurs propres règles.",
             ]),
             ("Hébergeurs et liens externes", [
                 "Le site passe par des prestataires techniques (hébergement, Cloudflare) qui traitent l’adresse IP le temps de vous envoyer les pages, selon leurs propres règles. "
@@ -68,7 +72,7 @@ TEXT = {
                 "These statistics are deleted after 400 days.",
             ]),
             ("Votes and predictions", [
-                "When you vote (MVP, player of the round) or make a prediction, we record your choice with a random code of your device, "
+                "When you vote (MVP, player of the round, play of the week) or make a prediction, we record your choice with a random code of your device, "
                 "and an encrypted fingerprint of your network to prevent double votes. Neither tells us who you are.",
             ]),
             ("What stays on your device", [
@@ -78,8 +82,12 @@ TEXT = {
                 "If you pick a favourite club, we count how many readers follow each club, without recording anything else about you.",
             ]),
             ("Mobile app", [
-                "The app reads the same public data as the website. It asks for no special permission (no location, camera or contacts), "
+                "The app reads the same public data as the website. It asks for no location, camera or contacts, "
                 "shows no ads and uses no tracking tools.",
+                "Notifications (if you turn them on): the app asks the phone's permission, then sends us an anonymous notification address "
+                "(a “token” from Expo, Google or Apple), your choice (your club, everything, or nothing; results, news, votes) and your language. "
+                "Choosing “None” deletes the token on our side. Notifications go through the Expo service, then Google (Android) or Apple (iPhone).",
+                "The play-of-the-week videos play in YouTube's or Facebook's player, which follow their own rules.",
             ]),
             ("Hosting and external links", [
                 "The website goes through technical providers (hosting, Cloudflare) that process the IP address while delivering the pages, under their own rules. "

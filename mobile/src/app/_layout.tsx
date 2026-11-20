@@ -5,6 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { PushSync } from '@/components/PushSync';
 import { AppStateProvider } from '@/lib/app-state';
 import { C } from '@/theme';
 
@@ -21,6 +22,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AppStateProvider>
         <StatusBar style="light" />
+        <PushSync />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: 'slide_from_right' }} />
       </AppStateProvider>
     </SafeAreaProvider>

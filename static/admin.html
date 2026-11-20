@@ -84,12 +84,13 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="nat1">🏀 Nationale 1</button><button data-tab="cup">🏆 Cup</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
+  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="nat1">🏀 Nationale 1</button><button data-tab="cup">🏆 Cup</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-analytics" hidden><div id="analyticsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-plays" hidden><div id="playsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="roundbox"></div><div id="mvpbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-cup" hidden><div class="row" style="margin:12px 0"><b>Cup</b></div><div id="cupbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-finals" hidden><div class="row" style="margin:12px 0"><b>Play-off · Play-out</b></div><div id="finbox"><div class="mut">Loading…</div></div></div>
@@ -429,12 +430,13 @@ async function loadMvp() {
 }
 document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['data', 'traffic', 'mvp', 'roster', 'images', 'games', 'sources', 'news', 'nat1', 'cup', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
+  ['data', 'traffic', 'mvp', 'plays', 'roster', 'images', 'games', 'sources', 'news', 'nat1', 'cup', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'cup' && window.loadCup) window.loadCup();
   if (b.dataset.tab === 'finals' && window.loadFinals) window.loadFinals();
   if (b.dataset.tab === 'nat1' && window.loadNat1) window.loadNat1();
   if (b.dataset.tab === 'sources' && window.loadSources) window.loadSources();
   if (b.dataset.tab === 'traffic') loadTraffic();
+  if (b.dataset.tab === 'plays' && window.loadPlays) window.loadPlays();
   if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
@@ -464,6 +466,7 @@ boot();
 <script src="/admin-spotlight.js"></script>
 <script src="/admin-content.js"></script>
 <script src="/admin-rounds.js"></script>
+<script src="/admin-plays.js"></script>
 <script src="/admin-nat1.js"></script>
 <script src="/admin-sources.js"></script>
 <script src="/admin-comp.js"></script>

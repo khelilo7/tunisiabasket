@@ -7,11 +7,12 @@ import { useApp } from '@/lib/app-state';
 import { C } from '@/theme';
 
 export default function TabsLayout() {
-  const { ready, favAsked } = useApp();
+  const { ready, favPrompt } = useApp();
   return (
     <>
     <Tabs tabBar={() => <TabBar />} screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: C.bg } }}>
       <Tabs.Screen name="index" />
+      <Tabs.Screen name="live" />
       <Tabs.Screen name="scores" />
       <Tabs.Screen name="standings" />
       <Tabs.Screen name="players" />
@@ -19,7 +20,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="fantasy" options={{ href: FANTASY_ON ? undefined : null }} />
       <Tabs.Screen name="more" />
     </Tabs>
-    {ready && !favAsked ? <ClubPicker /> : null}
+    {ready && favPrompt ? <ClubPicker /> : null}
     </>
   );
 }
