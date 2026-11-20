@@ -52,10 +52,28 @@
             "./assets/fonts/BarlowCondensed-SemiBold.ttf"
           ]
         }
+      ],
+      "expo-video",
+      [
+        "expo-notifications",
+        {
+          "color": "#FF8A1F"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": false
-    }
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "cd9c0c1c-6089-4cf8-b4e6-7dfc75acfb72"
+      }
+    },
+    "owner": "tunisiabasket"
   }
 }

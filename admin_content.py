@@ -5,6 +5,7 @@ from flask import jsonify, request
 import absences
 import auth
 import content
+import plays
 import rounds
 import stats
 from admin import _add_result, _check_results, _file_lock, _official, _write_official, bp
@@ -126,3 +127,19 @@ def rounds_act():
     if ok:
         auth.audit("round", f"J{md} {b.get('op')} {b.get('winner') or ''}".strip())
     return (jsonify(ok=True, message=msg) if ok else (jsonify(error=msg), 422))
+
+
+@bp.get("/admin/api/plays")
+def plays_admin_view():
+    """Play of the week: every week (newest first) with its clips, state and votes."""
+    return jsonify(plays.admin_view())
+
+
+@bp.post("/admin/api/plays")
+def plays_admin_act():
+    """Body {op: create | add | remove | open | close | crown | delete, week, title, url, player, team, clip, deadline, winner}."""
+    b = request.get_json(silent=True) or {}
+    ok, msg, wid = plays.act(b)
+    if ok:
+        auth.audit("plays", f"{b.get('op')} {wid or ''} {b.get('title') or b.get('clip') or b.get('winner') or ''}".strip())
+    return (jsonify(ok=True, message=msg, week=wid) if ok else (jsonify(error=msg), 422))

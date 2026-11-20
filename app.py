@@ -19,6 +19,8 @@ import records
 import lineups
 import mvp
 import nat1
+import notify
+import plays
 import predict
 import rounds
 import seo
@@ -230,6 +232,28 @@ def predict_pick():
     r = jsonify(ok=ok, reason=why)
     r.status_code = 200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400)
     return r
+
+
+@app.get("/api/plays")
+def plays_view():
+    """Play of the week: the latest week's clips (vote shares once you voted or the vote ended) and the earlier winners. ?vid= adds the caller's own vote."""
+    r = jsonify(plays.view(str(request.args.get("vid", ""))[:80]))
+    r.headers["Cache-Control"] = "no-store"
+    return r
+
+
+@app.post("/api/plays/vote")
+def plays_vote():
+    body = request.get_json(silent=True, force=True) or {}
+    ok, why = plays.cast(request, str(body.get("week", ""))[:40], str(body.get("clip", ""))[:40], str(body.get("vid", ""))[:80])
+    return jsonify(ok=ok, reason=why), (200 if ok else {"closed": 403, "network": 429, "already": 409}.get(why, 400))
+
+
+@app.post("/api/push")
+def push_register():
+    """The app's notification choice: {token, level: all | team | none, team, lang, results, news, votes} (notify.py)."""
+    ok, why = notify.register(request.get_json(silent=True, force=True) or {})
+    return jsonify(ok=ok, reason=why), (200 if ok else 400)
 
 
 @app.get("/photo/<pid>.jpg")
@@ -534,13 +558,16 @@ def hit():
     return "", 204
 
 
+CORS_POST = ("/api/fantasy/", "/api/predict/pick", "/api/round/vote", "/api/mvp/vote", "/api/plays/vote", "/api/push")
+
+
 @app.after_request
 def _headers(resp):
     # The mobile app (mobile/) reads the public API; in its web preview that is another origin. Public data only: no credentials are ever allowed,
-    # and the only cross-origin POSTs accepted are the fantasy game's (anonymous, keyed by the device's id).
+    # and the only cross-origin POSTs accepted are the app's anonymous ones (fantasy, fan votes, predictions, notification choice), keyed by the device's id.
     if request.path.startswith("/api/") and not request.path.startswith("/api/admin"):
         resp.headers["Access-Control-Allow-Origin"] = "*"
-        resp.headers["Access-Control-Allow-Methods"] = "GET, POST" if request.path.startswith("/api/fantasy/") else "GET"
+        resp.headers["Access-Control-Allow-Methods"] = "GET, POST" if request.path.startswith(CORS_POST) else "GET"
         resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
     return auth.add_security_headers(resp)
 
@@ -568,6 +595,7 @@ def start_background():
     if not _started and os.environ.get("AUTO_SYNC", "1") == "1":
         _started = True
         threading.Thread(target=_loop, daemon=True).start()
+    notify.start()                     # push notifications of the app: new results, news, votes (PUSH=0 turns it off)
 
 
 if os.environ.get("APP_ENV") == "production":  # under gunicorn there is no __main__

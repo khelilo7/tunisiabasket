@@ -19,6 +19,15 @@ npx eas-cli@latest init        # creates the project on expo.dev and writes its 
 ```
 The app's identity is already set in `app.json`: name *Tunisia Basket*, Android package `com.tunisiabasket.app` (it can never change after the first upload: change it now if you want another).
 
+## 2b. Notifications on Android (once, free — before the build that should send them)
+Expo Go cannot receive notifications; an installed build can, once Google's push service (Firebase) knows the app:
+1. console.firebase.google.com → *Add project* (e.g. "Tunisia Basket", Analytics off) → *Add app* → Android, package `com.tunisiabasket.app` →
+   download **google-services.json** into `mobile/` and add to `app.json`, under `"android"`: `"googleServicesFile": "./google-services.json"`.
+2. Firebase → ⚙ *Project settings* → *Service accounts* → *Generate new private key* (a JSON file; keep it private, never commit it).
+3. `npx eas-cli@latest credentials` → Android → production → *Google Service Account Key for Push Notifications (FCM V1)* → upload that JSON.
+4. Build again (step 3). In the app: More → Notifications → "My club" (or pick a club: the picker offers it). The server sends a notification when a result,
+   a news item or a vote is published (it checks every minute; the first run after a deployment only records what already exists).
+
 ## 3. A test build to install on phones (APK)
 ```bash
 npx eas-cli@latest build -p android --profile preview
