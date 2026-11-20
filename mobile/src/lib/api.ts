@@ -13,12 +13,15 @@ export const teamLogo = (code?: string | null) => (code ? `${API}/img/teams/${co
 
 const memory = new Map<string, { at: number; data: unknown }>();
 const KEY = (p: string) => 'api:' + p;
+// Every screen showing the same address gets a fresh answer at once: a vote on one screen updates the fan zone of the home screen still open behind it.
+const listeners = new Map<string, Set<(d: unknown) => void>>();
 
 export async function getJSON<T>(path: string): Promise<T> {
   const r = await fetch(API + path, { headers: { Accept: 'application/json' } });
   if (!r.ok) throw new Error(String(r.status));
   const data = (await r.json()) as T;
   memory.set(path, { at: Date.now(), data });
+  listeners.get(path)?.forEach(f => f(data));
   AsyncStorage.setItem(KEY(path), JSON.stringify(data)).catch(() => {});
   return data;
 }
@@ -59,9 +62,12 @@ export function useApi<T>(path: string | null, { every }: { every?: number } = {
         if (s && alive.current && !memory.get(path)) setState(st => (st.path === path && st.data ? st : { path, data: JSON.parse(s), error: null }));
       }).catch(() => {});
     }
+    const onFresh = (d: unknown) => { if (alive.current) setState({ path, data: d as T, error: null }); };
+    if (!listeners.has(path)) listeners.set(path, new Set());
+    listeners.get(path)!.add(onFresh);
     load();
     const id = every ? setInterval(() => load(), every) : undefined;
-    return () => { alive.current = false; if (id) clearInterval(id); };
+    return () => { alive.current = false; listeners.get(path)?.delete(onFresh); if (id) clearInterval(id); };
   }, [path, load, every]);
 
   return { data, error, loading: !data && !error, refreshing, refresh: () => load(true) };
