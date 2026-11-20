@@ -25,6 +25,11 @@ t.execute("CREATE TABLE hits(ts INTEGER, day TEXT, visitor TEXT)")
 t.executemany("INSERT INTO hits VALUES (1, '2026-11-01', ?)", [(f"h{i}",) for i in range(40)])
 t.commit()
 t.close()
+h = sqlite3.connect(data / "health.db")                  # server samples (health.py): in the full backup only, and it deletes its own old rows
+h.execute("CREATE TABLE minutes(ts INTEGER PRIMARY KEY, cpu NUMERIC)")
+h.executemany("INSERT INTO minutes VALUES (?, 1.5)", [(i * 60,) for i in range(30)])
+h.commit()
+h.close()
 fails = []
 
 
@@ -55,6 +60,7 @@ check(r.returncode == 0 and len(small) == 1, "small backup runs")
 with tarfile.open(small[0]) as tf:
     sn = tf.getnames()
 check("data/votes.db" in sn and "data/traffic.db" in sn and "data/mvp.json" in sn and "data/games/g1.json" not in sn, f"small backup holds votes, visits and settings only: {sn}")
+check("data/health.db" not in sn and "data/health.db" in names, "server samples go in the full backup, not in the small one (which must still verify)")
 
 # nothing changed -> the next small backup is skipped; a new vote -> it runs again
 r = run("--small")

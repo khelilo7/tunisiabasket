@@ -48,7 +48,9 @@ In App Store Connect → your app → the version (1.0):
 2. **Promotional text, description, keywords** (100 characters: `basket,basketball,tunisie,pro a,ftbb,scores,statistiques,classement,nba,sport`), support URL, marketing URL `https://tunisiabasket.com`.
 3. **App icon**: taken from the build (no upload).
 4. *App Information*: category **Sports**; content rights: say the app shows third-party content (club names and logos) — see the note below; age rating questionnaire: all "None" → 4+.
-5. **App Privacy**: privacy policy URL; *Data collection*: **No, we do not collect data** (true for the store build: no account, no tracking, Fantasy hidden).
+5. **App Privacy**: privacy policy URL; *Data collection*: **Yes**: *Identifiers → Device ID* (the app's random id, for votes, predictions and the once-a-day
+   "app opened" count; stored only as a hash) and *Usage Data → Product Interaction* (votes, app opened). For each: purposes App Functionality and Analytics,
+   **not linked** to the user's identity, **not used for tracking**. No account, no ads; Fantasy (hidden) adds a nickname when it launches.
 6. *Pricing and Availability*: Free; countries: all, or start with Tunisia and France.
 
 ## 6. Send for review

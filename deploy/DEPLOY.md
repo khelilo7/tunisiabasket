@@ -79,6 +79,24 @@ What is saved: the whole data folder `/opt/proastats/shared/data`, including `vo
 - **Off the machine:** copy the folder to your own computer now and then, for example `rsync -av ubuntu@SERVER_IP:/var/backups/proastats/ ~/proastats-backups/` (run it with sudo rights on the server side or from a user that can read the folder), or switch on OVH's backup option. A backup that lives only on the server is lost with the server.
 - **On your own computer:** `python manage.py backup` writes a verified backup into `./backups` (git-ignored); `python manage.py backup --small` for votes and visits only.
 
+## Monitoring (admin → 🖥️ Server tab)
+One page for the machine, the site, the app and the fans, behind the admin login (never public). Nothing to install on the server: it ships with a normal deploy.
+- **Machine and app** (`health.py`): a thread inside the app takes a sample every minute: CPU (machine and app), memory and swap, disk of the data folder,
+  load, machine uptime, the app's memory/threads/open files, requests per minute, 4xx/5xx errors, median and p95 response time. Kept in `data/health.db`:
+  per minute for 14 days, per hour for 400 days (~5 MB a year). Charts for the last hour, 24 h, 7 d, 30 d, 1 year; a gap = the app was not running.
+- **Warnings** at the top: memory or disk ≥ 85 % (amber) / ≥ 95 % (red), swap ≥ 50 %, 5-min load ≥ 1.5× / 3× the CPUs, the app using ≥ 40 % of the memory,
+  server errors ≥ 1 % of requests (and at least 5) in 24 h, 10+ minutes without a sample in 24 h, or no sample for 3 minutes (sampler stopped).
+- **People**: website visitors (from the Traffic tab's data) and **app users**: the app says once a day that it was opened (`POST /api/app/open`: its random id, stored
+  only as a keyed hash, the platform and the version; no address). DAU, 7-day and 30-day users (MAU), installs seen, Android/iPhone, versions. Only app builds
+  that include `UsagePing` are counted. Phones registered for notifications (and how many opened the app in 7 days), votes and predictions per day.
+- **When the site is down** the tab is down too. The GitHub workflow **Uptime** (`.github/workflows/uptime.yml`) calls `https://tunisiabasket.com/api/overview`
+  every 15 minutes from outside and fails after 3 tries; GitHub then emails you. Check once: GitHub → your avatar → Settings → Notifications → Actions →
+  "Send notifications for failed workflows only" is on. Another domain: add a repository variable `UPTIME_DOMAIN` (Settings → Secrets and variables → Actions → Variables).
+  GitHub pauses scheduled workflows after 60 days without a commit (it warns by email; Actions → Uptime → Enable workflow).
+- `HEALTH=0` in `/etc/proastats.env` turns the sampler off.
+- **Later, if you want phone alerts and Grafana dashboards**: Grafana Cloud's free tier with Grafana Alloy on the server (~100–200 MB of memory, nothing opened
+  inbound). Not set up; this tab covers the same numbers without a new account.
+
 ## If something goes wrong
 | Symptom | Likely cause / fix |
 |---|---|

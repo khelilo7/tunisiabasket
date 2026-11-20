@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { PushSync } from '@/components/PushSync';
+import { UsagePing } from '@/components/UsagePing';
 import { AppStateProvider } from '@/lib/app-state';
 import { C } from '@/theme';
 
@@ -23,6 +24,7 @@ export default function RootLayout() {
       <AppStateProvider>
         <StatusBar style="light" />
         <PushSync />
+        <UsagePing />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: 'slide_from_right' }} />
       </AppStateProvider>
     </SafeAreaProvider>
