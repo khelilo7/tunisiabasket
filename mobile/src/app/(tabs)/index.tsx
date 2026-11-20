@@ -13,24 +13,28 @@ import { dayLabel, one, seasonLbl, titleCase } from '@/lib/format';
 import { GameSummary, Leader, Matchday, Standing } from '@/lib/types';
 import { C, F, GRAD } from '@/theme';
 
-type Home = { recent: GameSummary[]; standings: Standing[]; phase_mvp?: { phase: number; winner?: Mvp; leader?: Mvp; vote_leader?: Mvp; voting_open?: boolean; current?: Mvp } };
-type Mvp = { id: string; name: string; team: string; photo?: string; pts: number; reb: number; ast: number; pir: number; gp?: number };
+type Home = { recent: GameSummary[]; standings: Standing[] };
+type Winner = { id: string; name: string; team: string; photo?: string | null; pts?: number; reb?: number; ast?: number; vote_share: number; game?: { opp: string; score: string } };
+type Round = { round: number | null; winner?: Winner | null; history: { round: number; winner: Winner; game?: { opp: string; score: string } }[] };
 type Plan = { banner?: { mode: string; matchday: number; date: string; games: Matchday['games'] }; matchdays: Matchday[]; teams: Record<string, string> };
 type Overview = { season: string; leaders: Leader[] };
 
 export default function HomeScreen() {
-  const { t, lang, fav, askFav } = useApp();
+  const { t, lang, fav, askFav, vid } = useApp();
   const home = useApi<Home>('/api/home');
   const plan = useApi<Plan>('/api/planning');
   const ov = useApi<Overview>('/api/overview');
   const news = useApi<{ items: News[] }>('/api/news?limit=3');
+  const rv = useApi<Round>(vid ? `/api/round?vid=${vid}` : null);
   const { tablet } = useLayout();
   const photos = usePhotos();
-  const refresh = () => { home.refresh(); plan.refresh(); ov.refresh(); news.refresh(); };
+  const refresh = () => { home.refresh(); plan.refresh(); ov.refresh(); news.refresh(); rv.refresh(); };
 
   const next = plan.data?.matchdays.find(m => m.games.some(g => !g.played));
   const favRow = fav ? home.data?.standings.find(s => s.code === fav) : undefined;
-  const mvp = home.data?.phase_mvp?.winner || home.data?.phase_mvp?.current || home.data?.phase_mvp?.leader;
+  // the phase MVP is not shown here for now (it comes back at the end of the season); the player of the week is
+  const potw = rv.data?.round && rv.data.winner ? { round: rv.data.round, w: rv.data.winner }
+    : rv.data?.history[0] ? { round: rv.data.history[0].round, w: { ...rv.data.history[0].winner, game: rv.data.history[0].winner.game || rv.data.history[0].game } } : null;
 
   return (
     <Screen onRefresh={refresh} refreshing={home.refreshing}>
@@ -97,22 +101,27 @@ export default function HomeScreen() {
       {/* predictions, votes, play of the week */}
       <FanZone />
 
-      {/* MVP */}
-      {mvp ? (
+      {/* player of the week: the winner of the latest decided fan vote, kept until the next one is decided; nothing before the first */}
+      {potw ? (
         <View style={{ marginTop: 24 }}>
-          <HeroCard colors={GRAD.hero} onPress={() => router.push(`/player/${mvp.id}`)}>
+          <HeroCard colors={GRAD.hero} onPress={() => router.push(`/player/${potw.w.id}`)}>
             <Row style={{ gap: 14 }}>
               <View style={{ flex: 1 }}>
-                <Txt style={{ fontFamily: F.display, fontSize: 30, lineHeight: 30, color: '#fff' }}>{home.data?.phase_mvp?.winner ? 'MVP' : t('mvpRace').toUpperCase()}</Txt>
-                <Txt style={{ fontFamily: F.display, fontSize: 18, color: 'rgba(255,255,255,0.85)' }}>PHASE {home.data?.phase_mvp?.phase}</Txt>
-                <Txt v="h3" c="#fff" style={{ marginTop: 10, fontSize: 18 }}>{titleCase(mvp.name)}</Txt>
-                <Row style={{ gap: 16, marginTop: 8 }}>
-                  {([['pts', mvp.pts], ['reb', mvp.reb], ['ast', mvp.ast], ['pir', mvp.pir]] as const).map(([k, v]) => (
-                    <View key={k}><Txt v="label" c="rgba(255,255,255,0.75)">{t(k)}</Txt><Txt style={{ fontFamily: F.display, fontSize: 30, color: '#fff' }}>{one(v)}</Txt></View>
-                  ))}
-                </Row>
+                <Txt style={{ fontFamily: F.display, fontSize: 28, lineHeight: 28, color: '#fff' }}>{lang === 'fr' ? 'JOUEUR DE LA SEMAINE' : 'PLAYER OF THE WEEK'}</Txt>
+                <Txt style={{ fontFamily: F.display, fontSize: 18, color: 'rgba(255,255,255,0.85)' }}>
+                  {lang === 'fr' ? `JOURNÉE ${potw.round}` : `ROUND ${potw.round}`}{potw.w.game ? ` · VS ${potw.w.game.opp} ${potw.w.game.score}` : ''}
+                </Txt>
+                <Txt v="h3" c="#fff" style={{ marginTop: 10, fontSize: 18 }}>{titleCase(potw.w.name)}</Txt>
+                {potw.w.pts != null ? (
+                  <Row style={{ gap: 16, marginTop: 8 }}>
+                    {([['pts', potw.w.pts], ['reb', potw.w.reb], ['ast', potw.w.ast]] as const).map(([k, v]) => (
+                      <View key={k}><Txt v="label" c="rgba(255,255,255,0.75)">{t(k)}</Txt><Txt style={{ fontFamily: F.display, fontSize: 30, color: '#fff' }}>{v ?? '–'}</Txt></View>
+                    ))}
+                  </Row>
+                ) : null}
+                <Txt v="small" c="rgba(255,255,255,0.85)" style={{ marginTop: 6 }}>{Math.round(potw.w.vote_share)}% {lang === 'fr' ? 'des votes des fans' : 'of the fans’ votes'}</Txt>
               </View>
-              <Avatar photo={mvp.photo} name={mvp.name} size={tablet ? 140 : 108} team={mvp.team} />
+              <Avatar photo={potw.w.photo} name={potw.w.name} size={tablet ? 140 : 108} team={potw.w.team} />
             </Row>
           </HeroCard>
         </View>

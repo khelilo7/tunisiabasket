@@ -10,7 +10,7 @@ import { Section, tap, Txt, useLayout } from './ui';
 
 // The fans' corner of the home screen: predictions, the player-of-the-round / MVP vote, the play of the week. A red dot marks what is open now.
 type Predict = { round: null | { matchday: number; open: boolean; picked: number; of: number } };
-type Round = { round: number | null; open?: boolean; my_vote?: string | null };
+type Round = { round: number | null; open?: boolean; my_vote?: string | null; history: { round: number; winner: { name: string } }[] };
 type Plays = { week: null | { title: string; open: boolean; my_vote: string | null; clips: { thumb: string | null }[]; winner: { thumb: string | null } | null } };
 
 export function FanZone() {
@@ -25,9 +25,10 @@ export function FanZone() {
     { k: 'predict', icon: 'analytics' as const, color: C.blue, title: fr ? 'Pronostics' : 'Predictions',
       sub: p ? (p.open ? `J${p.matchday} · ${p.picked}/${p.of}` : `J${p.matchday} · ${fr ? 'fermés' : 'closed'}`) : (fr ? 'Bientôt' : 'Soon'),
       live: !!p?.open && p.picked < p.of, go: () => router.push('/votes?tab=predict') },
-    { k: 'round', icon: 'star' as const, color: C.amber, title: fr ? 'Joueur de la J.' : 'Player of round',
-      sub: r?.round ? (r.open ? (r.my_vote ? (fr ? 'A voté ✓' : 'Voted ✓') : (fr ? `J${r.round} · vote ouvert` : `R${r.round} · voting open`)) : `J${r.round}`) : 'MVP',
-      live: !!r?.open && !r.my_vote, go: () => router.push(r?.round ? '/votes?tab=round' : '/votes?tab=mvp') },
+    { k: 'round', icon: 'star' as const, color: C.amber, title: fr ? 'Joueur de la sem.' : 'Player of the week',
+      sub: r?.round ? (r.open ? (r.my_vote ? (fr ? 'A voté ✓' : 'Voted ✓') : (fr ? `J${r.round} · vote ouvert` : `R${r.round} · voting open`)) : `J${r.round}`)
+        : r?.history[0] ? `J${r.history[0].round} · ${r.history[0].winner.name}` : (fr ? 'Bientôt' : 'Soon'),
+      live: !!r?.open && !r.my_vote, go: () => router.push('/votes?tab=round') },
     { k: 'plays', icon: 'play-circle' as const, color: C.red, title: fr ? 'Action de la sem.' : 'Play of the week', thumb,
       sub: w ? (w.open ? (w.my_vote ? (fr ? 'A voté ✓' : 'Voted ✓') : (fr ? 'Vote ouvert' : 'Voting open')) : w.title) : (fr ? 'Bientôt' : 'Soon'),
       live: !!w?.open && !w.my_vote, go: () => router.push('/plays') },

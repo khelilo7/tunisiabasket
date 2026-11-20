@@ -235,7 +235,8 @@ def view(vid: str = "") -> dict:
         st = data[str(m)]
         w = _winner(st, _ranked(m, st, d))
         if w:
-            out["history"].append({"round": m, "winner": {k: w[k] for k in ("id", "name", "team", "number", "photo", "votes", "vote_share")}, "game": w["game"]})
+            out["history"].append({"round": m, "winner": {k: w[k] for k in ("id", "name", "team", "number", "photo", "votes", "vote_share", "pts", "reb", "ast", "pir")},
+                                   "game": w["game"]})
     out["history"] = out["history"][:8]
     if cur is None:
         return out

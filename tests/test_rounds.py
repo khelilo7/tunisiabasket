@@ -110,6 +110,7 @@ data["10"]["open"] = False
 rounds._write(data)
 old = view()
 check(old["round"] is None and [h["round"] for h in old["history"]] == [11], "a round that ended long ago leaves the home page; its winner stays in the history")
+check(old["history"] and all(k in old["history"][0]["winner"] for k in ("pts", "reb", "ast", "photo")), "a past winner keeps the stats of his game (the app's player-of-the-week card)")
 check(c.get("/api/home").get_json()["round_vote"] is None, "no round card once it is old")
 
 # 7. votes are final in the database itself
