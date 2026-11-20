@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "44076734754",
+    "project_id": "tunisia-basket",
+    "storage_bucket": "tunisia-basket.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:44076734754:android:19062845a5c8e8d18fad7b",
+        "android_client_info": {
+          "package_name": "com.tunisiabasket.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAaZBEpdq0B59qiKaBaUuHpuOH9GfoPBwo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
