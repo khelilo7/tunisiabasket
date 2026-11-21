@@ -66,6 +66,12 @@ check(post({"op": "restore", "id": top}).status_code == 200 and top in players()
 
 # --- rename
 check(post({"op": "rename", "id": "ca-77", "name": "karim bensalah"}).status_code == 200 and players()["ca-77"]["name"] == "Karim Bensalah", "rename")
+rows = lambda pid: [p for g in stats.build_all_games() for t in g["teams"] for p in t["players"] if p.get("pid") == pid]
+rp = next(p["pid"] for g in stats.build_all_games() for t in g["teams"] for p in t["players"] if p.get("pid") and p["pid"] != "ca-24" and not p.get("dnp") and not p.get("unnamed"))
+was = players()[rp]["name"]
+post({"op": "rename", "id": rp, "name": "Test Renamed Player"})
+check(rows(rp) and {p["name"] for p in rows(rp)} == {"Test Renamed Player"}, f"the rename shows in the game boxes too, not only on the profile: {rp} {[p['name'] for p in rows(rp)]}")
+post({"op": "rename", "id": rp, "name": was})
 
 # --- transfer, no games yet for the new team: shown in the new team at once
 g24 = players()["ca-24"]
