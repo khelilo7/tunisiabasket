@@ -384,6 +384,23 @@ def livescore_push():
     return jsonify(game=g)
 
 
+@app.post("/api/livescore/stop")
+def livescore_stop():
+    """The reader stopped following a game: it leaves the Live pages at once (same token as /api/livescore)."""
+    ip = auth.client_ip()
+    if auth._locked_out(ip):
+        return jsonify(error="too many failed attempts, wait a few minutes"), 429
+    tok = (request.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
+    if not livescore.verify(tok):
+        with auth._lock:
+            auth._fails.setdefault(ip, []).append(time.time())
+        return jsonify(error="bad token"), 401
+    g, err = livescore.stop(request.get_json(silent=True) or {})
+    if err:
+        return jsonify(error=err), 404 if err == "no such game" else 400
+    return jsonify(game=g)
+
+
 @app.get("/api/matchup")
 def matchup():
     """Head-to-head preview of two teams from the games played so far (used by the next-games banner)."""

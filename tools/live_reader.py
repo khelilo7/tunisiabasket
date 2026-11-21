@@ -23,6 +23,7 @@ import io
 import json
 import os
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -270,8 +271,8 @@ class Game:
         return b
 
 
-def post(server, token, body):
-    req = urllib.request.Request(server.rstrip("/") + "/api/livescore", data=json.dumps(body).encode(), method="POST",
+def post(server, token, body, path="/api/livescore"):
+    req = urllib.request.Request(server.rstrip("/") + path, data=json.dumps(body).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + token, "User-Agent": "tunisiabasket-live-reader"})
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
@@ -289,6 +290,25 @@ def known_teams(server):
             return list(json.loads(r.read())["teams"])
     except (OSError, ValueError, KeyError):
         return []
+
+
+def live_now(server):
+    """The games read from a broadcast that the Live page shows now: "id<TAB>HOME 70 - 66 AWAY  FINAL" (or the quarter)."""
+    try:
+        req = urllib.request.Request(server.rstrip("/") + "/api/live", headers={"User-Agent": "tunisiabasket-live-reader", "Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            games = json.loads(r.read())["games"]
+    except (OSError, ValueError, KeyError):
+        return []
+    out = []
+    for g in games:
+        if g.get("source") != "scoreboard":
+            continue
+        h, w = g["home"], g["away"]
+        q = (g.get("clock") or {}).get("q") or 0
+        state = "FINAL" if g.get("final") else f"Q{q}" if 1 <= q <= 4 else f"OT{q - 4}" if q > 4 else ""
+        out.append(f"{g['id']}\t{h} {g['teams'][h]['score']} - {g['teams'][w]['score']} {w}  {state}")
+    return out
 
 
 def snap(code, codes):
@@ -324,16 +344,27 @@ def main():
     ap.add_argument("--teams", help="LEFT-RIGHT codes as the scoreboard shows them, if its team names cannot be read (e.g. ESS-DSG)")
     ap.add_argument("--matchday", type=int, help="the matchday, if the calendar cannot tell (e.g. a test on an old game)")
     ap.add_argument("--dry", action="store_true", help="read and print, send nothing")
+    ap.add_argument("--live", action="store_true", help="list the games read from a broadcast that are on the Live page now (id, then the score), and stop")
+    ap.add_argument("--remove", nargs="+", metavar="ID", help="take these games (ids from --live) off the Live page now, and stop")
     a = ap.parse_args()
+    if a.live:
+        for g in live_now(a.server):
+            print(g, flush=True)
+        return
     if not a.token and not a.dry:
         sys.exit("--token (or LIVESCORE_TOKEN) is required: python manage.py new-livescore-token on the server")
+    if a.remove:
+        for gid in a.remove:
+            status, res = post(a.server, a.token, {"id": gid}, "/api/livescore/stop")
+            print(f"{gid}: {'taken off the Live page' if status == 200 else 'not removed'} -> {status} {res.get('error', '')}", flush=True)
+        return
     if a.winlist:
         global WINLIST, WINLIST_SRC
         WINLIST, WINLIST_SRC = os.path.abspath(a.winlist), ""
     codes = known_teams(a.server)
     if not codes:
         print(f"could not get the list of teams from {a.server}: team names will only be read as they are", flush=True)
-    games = {}                                  # board key -> Game
+    games = {}                                  # (left, right) teams -> Game
     t0 = time.time()
     if a.file and a.show:
         subprocess.Popen(["ffplay", "-v", "error", "-ss", str(a.start), "-x", "960", "-y", "540", "-window_title", "Diwan Sport (test)", a.file],
@@ -345,87 +376,104 @@ def main():
     naming = {}                                 # board -> the team names read so far, before it is followed
     placed = {}                                 # board position -> the teams of the game shown there
     warned = {}
-    while True:
-        tick = time.time()
-        vt = a.start + (tick - t0) * a.speed
-        try:
-            if a.file:
-                rgb = grab_file(a.file, vt)
-                if rgb is None:
-                    print("end of the video", flush=True)
-                    break
-                sources = [("file", rgb)]
-            elif a.screen:
-                sources = [("screen", grab_screen(a.display))]
-            else:
-                sources = []
-                for wid, app, on in windows(a.title):
-                    if not on:
-                        if tick - warned.get(("min", wid), 0) > 60:
-                            print(f"a '{a.title}' window of {app} is minimised or on another desktop: it cannot be read (behind other windows is fine)", flush=True)
-                            warned[("min", wid)] = tick
-                        continue
-                    rgb = grab_window(wid)
-                    if rgb is not None:
-                        sources.append((f"w{wid}", rgb))
-        except RuntimeError as e:
-            sys.exit(str(e))
-        if first:
-            what = f"{len(sources)} '{a.title}' window(s)" if not (a.file or a.screen) else f"{sources[0][1].shape[1]}x{sources[0][1].shape[0]} px"
-            print(f"capture works ({what}); looking for the Diwan scoreboard...", flush=True)
-            first = False
-        found = False
-        for src, rgb in sources:
-            if src.startswith("w"):                                           # a window not redrawn for 20 s: Firefox stops drawing a window that is fully covered
-                fp = hash(rgb[::16, ::16].tobytes())
-                old = seen.get(src)
-                seen[src] = (fp, old[1]) if old and old[0] == fp else (fp, tick)
-                if tick - seen[src][1] > 20 and tick - warned.get(src, 0) > 60:
-                    print("a game window has not changed for 20 s: is the game paused, or the window completely covered? Leave a corner of it visible.", flush=True)
-                    warned[src] = tick
-            boards = find_boards(rgb)
-            found = found or bool(boards)
-            for board in boards:
-                key = (src, round(board[0] / 40), round(board[1] / 40))
-                g = games.get(placed.get(key))
-                if g is None:
-                    if a.teams:
-                        teams = tuple(a.teams.upper().split("-"))
-                    else:                                                     # the team names must be read the same three times in a row: one misread would follow the wrong game
-                        r = read_board(rgb, board, ("t_left", "t_right"))
-                        teams = (snap(r["t_left"], codes), snap(r["t_right"], codes))
-                        votes = naming.setdefault(key, [])
-                        votes.append(teams)
-                        if len(votes) < 3 or len(set(votes[-3:])) > 1:
-                            if len(votes) >= 10 and tick - warned.get(("names", key), 0) > 60:
-                                print(f"a scoreboard ({src}): team names not read reliably ({votes[-3:]}), use --teams", flush=True)
-                                warned[("names", key)] = tick
+    # stopping the reader (the app's Stop, its Terminal window closed, Ctrl-C) takes its games off the Live pages at once
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    signal.signal(signal.SIGHUP, lambda *_: sys.exit(0))
+    try:
+        while True:
+            tick = time.time()
+            vt = a.start + (tick - t0) * a.speed
+            try:
+                if a.file:
+                    rgb = grab_file(a.file, vt)
+                    if rgb is None:
+                        print("end of the video", flush=True)
+                        break
+                    sources = [("file", rgb)]
+                elif a.screen:
+                    sources = [("screen", grab_screen(a.display))]
+                else:
+                    sources = []
+                    for wid, app, on in windows(a.title):
+                        if not on:
+                            if tick - warned.get(("min", wid), 0) > 60:
+                                print(f"a '{a.title}' window of {app} is minimised or on another desktop: it cannot be read (behind other windows is fine)", flush=True)
+                                warned[("min", wid)] = tick
                             continue
-                    if not all(teams):
-                        print(f"a scoreboard ({src}): team names not readable, use --teams", flush=True)
+                        rgb = grab_window(wid)
+                        if rgb is not None:
+                            sources.append((f"w{wid}", rgb))
+            except RuntimeError as e:
+                sys.exit(str(e))
+            if first:
+                what = f"{len(sources)} '{a.title}' window(s)" if not (a.file or a.screen) else f"{sources[0][1].shape[1]}x{sources[0][1].shape[0]} px"
+                print(f"capture works ({what}); looking for the Diwan scoreboard...", flush=True)
+                first = False
+            found = False
+            for src, rgb in sources:
+                if src.startswith("w"):                                           # a window not redrawn for 20 s: Firefox stops drawing a window that is fully covered
+                    fp = hash(rgb[::16, ::16].tobytes())
+                    old = seen.get(src)
+                    seen[src] = (fp, old[1]) if old and old[0] == fp else (fp, tick)
+                    if tick - seen[src][1] > 20 and tick - warned.get(src, 0) > 60:
+                        print("a game window has not changed for 20 s: is the game paused, or the window completely covered? Leave a corner of it visible.", flush=True)
+                        warned[src] = tick
+                boards = find_boards(rgb)
+                found = found or bool(boards)
+                for board in boards:
+                    key = (src, round(board[0] / 40), round(board[1] / 40))
+                    g = games.get(placed.get(key))
+                    if g is None:
+                        if a.teams:
+                            teams = tuple(a.teams.upper().split("-"))
+                        else:                                                     # the team names must be read the same three times in a row: one misread would follow the wrong game
+                            r = read_board(rgb, board, ("t_left", "t_right"))
+                            teams = (snap(r["t_left"], codes), snap(r["t_right"], codes))
+                            votes = naming.setdefault(key, [])
+                            votes.append(teams)
+                            if len(votes) < 3 or len(set(votes[-3:])) > 1:
+                                if len(votes) >= 10 and tick - warned.get(("names", key), 0) > 60:
+                                    print(f"a scoreboard ({src}): team names not read reliably ({votes[-3:]}), use --teams", flush=True)
+                                    warned[("names", key)] = tick
+                                continue
+                        if not all(teams):
+                            print(f"a scoreboard ({src}): team names not readable, use --teams", flush=True)
+                            continue
+                        placed[key] = teams                                       # a game is the two teams: if its scoreboard moves (the window is resized), it is the same game
+                        if teams in games:
+                            g = games[teams]
+                        else:
+                            g = games[teams] = Game(teams)
+                            print(f"following {teams[0]} - {teams[1]}", flush=True)
+                    p = parse(read_board(rgb, board))
+                    if not p:
                         continue
-                    placed[key] = teams                                       # a game is the two teams: if its scoreboard moves (the window is resized), it is the same game
-                    if teams in games:
-                        g = games[teams]
-                    else:
-                        g = games[teams] = Game(teams)
-                        print(f"following {teams[0]} - {teams[1]}", flush=True)
-                p = parse(read_board(rgb, board))
-                if not p:
-                    continue
-                body = g.update(*p)
+                    body = g.update(*p)
+                    if body:
+                        send(a, g, body, vt)
+            if found:
+                last_found = tick
+            elif tick - last_found > 15 and tick - last_hint > 30:               # nothing found for a while: say so, and why it may be
+                print("no scoreboard found: is a game playing in a window titled 'Diwan Sport' (one window per game, not tabs), big enough (half the screen)? Replays and ads hide it too.", flush=True)
+                last_hint = tick
+            for g in games.values():
+                body = g.gone()
                 if body:
                     send(a, g, body, vt)
-        if found:
-            last_found = tick
-        elif tick - last_found > 15 and tick - last_hint > 30:               # nothing found for a while: say so, and why it may be
-            print("no scoreboard found: is a game playing in a window titled 'Diwan Sport' (one window per game, not tabs), big enough (half the screen)? Replays and ads hide it too.", flush=True)
-            last_hint = tick
-        for g in games.values():
-            body = g.gone()
-            if body:
-                send(a, g, body, vt)
-        time.sleep(max(0.0, a.every - (time.time() - tick)))
+            time.sleep(max(0.0, a.every - (time.time() - tick)))
+    except KeyboardInterrupt:
+        pass
+    finally:
+        signal.signal(signal.SIGTERM, signal.SIG_IGN)
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        if not a.dry:
+            for g in games.values():
+                if g.sent:
+                    status, res = post(a.server, a.token, {"teams": list(g.teams), **({"matchday": a.matchday} if a.matchday else {})}, "/api/livescore/stop")
+                    try:                                                      # the window may already be gone (closed Terminal): printing can fail
+                        print(f"stopped: {g.teams[0]} - {g.teams[1]} taken off the Live page -> {status} {res.get('error', '')}", flush=True)
+                    except OSError:
+                        pass
 
 
 if __name__ == "__main__":

@@ -90,11 +90,41 @@ check(send({"teams": [B, A], "score": [70, 64], "q": 4, "matchday": 30}).get_jso
 check(send({"teams": [B, A], "score": [70, 66], "q": 4, "matchday": 30}).get_json()["game"]["final"] is False, "a new basket after a final called too early opens the game again")
 send({"teams": [B, A], "score": [70, 66], "q": 4, "matchday": 30, "final": True})
 
-# 5. the calendar picks the matchday when the reader does not give one
+# 5. the calendar picks the matchday when the reader does not give one (and no game between the two teams is on Live)
 if fx:
+    livescore.CURRENT, keep = 0, livescore.CURRENT
     r = send({"teams": [fx[2], fx[1]], "score": [0, 0], "q": 1})
+    livescore.CURRENT = keep
     gg = r.get_json()["game"]
     check(gg["matchday"] == fx[0] and gg["home"] == fx[1], f"matchday and home side from the calendar: {gg} vs {fx}")
+
+# 5b. the reader stopped: the game leaves the Live page at once, and comes back if it is read again
+stop = lambda body, **kw: c.post("/api/livescore/stop", json=body, environ_overrides=ip("192.0.2.10"), **kw)
+C3, D3 = teams[6], teams[7]
+send({"teams": [C3, D3], "score": [20, 18], "q": 2, "matchday": 33})
+live_ids = lambda: [x["id"] for x in c.get("/api/live").get_json()["games"]]
+sid = livescore.game_id(33, *livescore._which(C3, D3, 33, stats.load_official())[1:])
+check(sid in live_ids(), "the game is live")
+check(stop({"teams": [C3, D3], "matchday": 33}).status_code == 401, "stop needs the token")
+check(stop({"teams": [C3, D3], "matchday": 33}, headers=H).status_code == 200 and sid not in live_ids(), "stopped: off the Live page at once")
+check(stop({"teams": [teams[8], teams[9]], "matchday": 33}, headers=H).status_code == 404, "stopping a game that was never read: 404")
+send({"teams": [C3, D3], "score": [20, 18], "q": 2, "matchday": 33})
+check(sid not in live_ids(), "the same picture read again after a stop: still off Live")
+send({"teams": [C3, D3], "score": [22, 18], "q": 2, "matchday": 33})
+check(sid in live_ids(), "read again after a stop, a basket later: live again")
+r = send({"teams": [D3, C3], "score": [18, 24], "q": 2})
+check(r.status_code == 200 and r.get_json()["game"]["id"] == sid, f"a reading without a matchday joins the game already live (once its final is in the calendar, a second game opened): {r.get_json()}")
+check(stop({"id": sid}, headers=H).status_code == 200 and sid not in live_ids(), "removed by id (Remove a game in the app)")
+send({"teams": [C3, D3], "score": [24, 18], "q": 2, "clock": "05:00", "matchday": 33})
+send({"teams": [C3, D3], "score": [24, 18], "q": 2, "clock": "04:51", "matchday": 33})
+check(sid in live_ids(), "a removed game whose clock runs again is live again (the reader was restarted during a timeout)")
+send({"teams": [C3, D3], "score": [80, 70], "q": 4, "clock": "00:00", "matchday": 33, "fix": True})
+send({"teams": [C3, D3], "score": [80, 70], "q": 4, "clock": "00:00", "matchday": 33, "final": True})
+stop({"id": sid}, headers=H)
+for clock in ("00:00", "00:02", "00:00"):                                     # the window still shows the end, the clock misread now and then
+    send({"teams": [C3, D3], "score": [80, 70], "q": 4, "clock": clock, "matchday": 33})
+check(sid not in live_ids(), "an ended game removed while its window still shows the final score stays off Live")
+check(stop({"id": "../etc/passwd"}, headers=H).status_code == 404 and stop({"id": "sb-nothing"}, headers=H).status_code == 404, "a bad or unknown id: 404")
 
 # 6. a stale game leaves the Live page; a final stays a while
 now = livescore._load(g["id"])["updated"]

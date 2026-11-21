@@ -291,6 +291,11 @@ graphic on the screen every 2 s (score, quarter, clock) and sends only those num
   the game opens again.
 - **What fans see:** the game on the **Live** page of the site and the app (score, quarter, clock, the score changes, biggest lead, longest run, head to head), marked
   "Score read automatically from the broadcast"; it leaves the page 15 minutes after the last reading, or 45 minutes after the final. An analyst counting the same game wins.
+- **Taking a game off Live:** stopping the reader (the app's Stop, closing its Terminal window, Ctrl-C) takes its games off at once (`POST /api/livescore/stop`). To take
+  off one ended game and keep reading the others: the app's **Remove a game…** (also offered when the reader is stopped and a game is still on Live), or
+  `~/TunisiaBasketLive/games.sh list` then `games.sh remove <id>` (`live_reader.py --live` / `--remove ID`). A removed game comes back only when the game moves on (a basket,
+  a new quarter, the clock running), not for a window still showing the final score. Readings without a matchday join the game already on Live between the two clubs (its
+  final puts the result in the calendar, which no longer offers that fixture).
   **Pushes:** the end of each quarter to the phones that follow one of the two clubs, the final score to every phone with results on (same key as the official result, so it
   is sent once). The official result and the box score still come from the admin.
 - **Test on a recording:** `.venv/bin/python tools/live_reader.py --file "Diwan Sport(1).mp4" --start 3700 --show --matchday 14 --server http://localhost:5055 --token ...`
