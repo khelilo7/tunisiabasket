@@ -31,7 +31,6 @@ import urllib.request
 
 import numpy as np
 from PIL import Image
-from scipy import ndimage
 
 # where each field is, relative to the left score box, in pixels of the 1080p broadcast (that box is 66 x 61 px there)
 BOX_W, BOX_H = 66, 61
@@ -43,6 +42,7 @@ WL = {"home": "0123456789", "away": "0123456789", "q": "Q1234OT", "clock": "0123
 # ---------------------------------------------------------------- finding the scoreboard(s)
 def find_boards(rgb):
     """[(x, y, scale)] of every scoreboard: the top-left corner of its left score box and the size of that box relative to 66 px."""
+    from scipy import ndimage                                                 # only the Mac reader needs scipy (tools/install_live_reader.sh installs it), not the server
     a = rgb.astype(np.int16)
     navy = (a[..., 2] > 80) & (a[..., 2] - a[..., 0] > 60) & (a[..., 0] < 70) & (a[..., 1] < 110)
     navy = ndimage.binary_fill_holes(navy)                                    # the white digits inside a box
