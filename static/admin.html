@@ -46,6 +46,11 @@
   .chips { display:flex; gap:6px; flex-wrap:wrap; } .chip { padding:3px 9px; border-radius:8px; font-size:12px; background:var(--field); border:1px solid var(--line); color:var(--mut); }
   .chip.full { background:var(--pillok); color:var(--good); border-color:var(--ok-line); } .chip.part { background:var(--pillwarn); color:var(--warn); }
   .saved { opacity:.55; }
+  .imggroup { margin:0 0 10px; } .imggroup-h, .subtabs-h { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--mut); margin:0 0 6px; }
+  .n1row { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; padding:9px 6px; border-top:1px solid var(--line); } .n1row.n1just { background:rgba(62,207,142,.10); border-radius:8px; }
+  .n1teams { flex:1 1 240px; min-width:0; } .n1score { white-space:nowrap; } .n1score .pill { font-size:14px; white-space:nowrap; } .n1acts { margin-left:auto; white-space:nowrap; }
+  .n1score-in { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px; max-width:420px; } .n1score-in label { display:flex; flex-direction:column; gap:4px; font-weight:700; } .n1score-in input { width:100%; font-size:20px; text-align:center; }
+  .subtabs { margin:12px 0 4px; flex-wrap:wrap; } .subtabs button { padding:6px 14px; font-size:13px; }
   .tabs { display:flex; gap:6px; margin-bottom:6px; } .tabs button { border-radius:99px; padding:7px 16px; } .tabs button.on { background:var(--acc); color:#000; border-color:var(--acc); font-weight:700; }
   .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:12px; }
   .kpi { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 14px; } .kpi b { display:block; font-size:28px; line-height:1.1; } .kpi span { color:var(--mut); font-size:12px; text-transform:uppercase; letter-spacing:.06em; }
@@ -85,18 +90,20 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="monitor">🖥️ Server</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="nat1">🏀 Nationale 1</button><button data-tab="cup">🏆 Cup</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
+  <div class="tabs" id="maintabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="monitor">🖥️ Server</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games &amp; scores</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
-  <div id="tab-games" hidden><div id="gamesbox"><div class="mut">Loading…</div></div></div>
+  <div id="tab-games" hidden>
+    <div class="tabs subtabs" id="gamesub"><button data-sub="proa" class="on">🏀 Pro A</button><button data-sub="nat1">🥈 National One</button><button data-sub="cup">🏆 Cup</button></div>
+    <div id="games-proa"><div id="gamesbox"><div class="mut">Loading…</div></div></div>
+    <div id="games-nat1" hidden><div id="nat1box"><div class="mut">Loading…</div></div></div>
+    <div id="games-cup" hidden><div id="cupbox"><div class="mut">Loading…</div></div></div></div>
   <div id="tab-analytics" hidden><div id="analyticsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-plays" hidden><div id="playsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-mvp" hidden><div id="roundbox"></div><div id="mvpbox"><div class="mut">Loading…</div></div></div>
-  <div id="tab-cup" hidden><div class="row" style="margin:12px 0"><b>Cup</b></div><div id="cupbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-finals" hidden><div class="row" style="margin:12px 0"><b>Play-off · Play-out</b></div><div id="finbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-sources" hidden><div class="row" style="margin:12px 0"><b>Sources of a game</b></div><div id="srcbox"><div class="mut">Loading…</div></div></div>
-  <div id="tab-nat1" hidden><div class="row" style="margin:12px 0"><b>Nationale 1</b></div><div id="nat1box"><div class="mut">Loading…</div></div></div>
   <div id="tab-monitor" hidden><div id="monitorbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-traffic" hidden>
     <div class="row" style="margin:12px 0"><b>Traffic</b><span class="sp"></span><label class="mut small">Period</label>
@@ -430,12 +437,23 @@ async function loadMvp() {
     card.querySelector('[data-msg]').textContent = r.ok ? 'Saved.' : (r.body.error || 'Could not save.');
   });
 }
-document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
-  document.querySelectorAll('.tabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['data', 'traffic', 'monitor', 'mvp', 'plays', 'roster', 'images', 'games', 'sources', 'news', 'nat1', 'cup', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
-  if (b.dataset.tab === 'cup' && window.loadCup) window.loadCup();
+// The Games & scores tab has one subsection per competition: the Pro A (admin-content.js), the National One (admin-nat1.js) and the Cup (admin-comp.js).
+let gamesSub = 'proa';
+function showGamesSub(sub) {
+  gamesSub = sub;
+  document.querySelectorAll('#gamesub button').forEach(x => x.classList.toggle('on', x.dataset.sub === sub));
+  ['proa', 'nat1', 'cup'].forEach(t => { $('#games-' + t).hidden = t !== sub; });
+  if (sub === 'proa') loadGames();
+  if (sub === 'nat1' && window.loadNat1) window.loadNat1();
+  if (sub === 'cup' && window.loadCup) window.loadCup();
+}
+document.querySelectorAll('#gamesub button').forEach(b => b.onclick = () => showGamesSub(b.dataset.sub));
+function showTab(tab) { const b = document.querySelector(`#maintabs button[data-tab="${tab}"]`); if (b) b.click(); }
+window.showTab = showTab;
+document.querySelectorAll('#maintabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('#maintabs button').forEach(x => x.classList.toggle('on', x === b));
+  ['data', 'traffic', 'monitor', 'mvp', 'plays', 'roster', 'images', 'games', 'sources', 'news', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'finals' && window.loadFinals) window.loadFinals();
-  if (b.dataset.tab === 'nat1' && window.loadNat1) window.loadNat1();
   if (b.dataset.tab === 'sources' && window.loadSources) window.loadSources();
   if (b.dataset.tab === 'traffic') loadTraffic();
   if (b.dataset.tab === 'monitor' && window.loadMonitor) window.loadMonitor();
@@ -443,7 +461,7 @@ document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
   if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
   if (b.dataset.tab === 'images') loadImages();
-  if (b.dataset.tab === 'games') loadGames();
+  if (b.dataset.tab === 'games') showGamesSub(gamesSub);
   if (b.dataset.tab === 'news') loadNews();
   if (b.dataset.tab === 'analytics' && window.loadAnalytics) loadAnalytics();
 });

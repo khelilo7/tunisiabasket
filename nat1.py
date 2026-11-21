@@ -8,8 +8,10 @@ one by one or a pasted list) and they live in `data/nat1.json`, kept across depl
      "playoff": {"games": {"qf1": [{"home": "EZS", "home_score": 80, "away_score": 70, "date": "2027-04-25"}]}},
      "official": {"published": "2026-11-15", "source": "FTBB", "rows": [{"code": "EZS", "j": 4, "w": 4, "l": 0, "diff": 97, "pts": 8}]}}
 
-`fixtures` is the calendar (a game with no result yet is shown as "to come", or "score missing" once its day has passed). `official` is the federation's own table: when it is there it IS the table
-(we may not have every score, so we cannot recompute it); otherwise the table is computed from the results.
+`fixtures` is the calendar (a game with no result yet is shown as "to come", or "score missing" once its day has passed). `official` is the federation's own table at one date: when it is there it is
+the BASE of the table (we may not have every score, and the FTBB's numbers win over ours), and every result typed after it moves the table on from it. To know which results the FTBB table already
+counts, it keeps `basis`, the results we had when it was pasted: table = FTBB rows + (the results now) - (the basis). So a new result adds a game, a corrected score corrects it and a removed
+result takes it away, exactly like the computed table. Without an FTBB table the table is computed from the results.
 
 Players come later, "as we go": a player is a name on a team, so the day somebody sends a sheet for a Nationale 1 game it can be added without changing this file's shape.
 Same table rules as the Pro A: 2 points for a win, 1 for a loss; a better goal difference breaks a tie in points.
@@ -38,9 +40,39 @@ def load():
         d = {}
     return {"season": str(d.get("season") or ""), "teams": {k: v for k, v in (d.get("teams") or {}).items() if isinstance(v, str)},
             "results": [r for r in d.get("results") or [] if isinstance(r, dict)], "fixtures": [r for r in d.get("fixtures") or [] if isinstance(r, dict)],
-            "official": d.get("official") if isinstance(d.get("official"), dict) and d["official"].get("rows") else None,
+            "official": _official(d),
             "playoff_on": bool(d.get("playoff_on")),
             "playoff": {k: [g for g in v if isinstance(g, dict)] for k, v in ((d.get("playoff") or {}).get("games") or {}).items() if isinstance(v, list)}}
+
+
+def _key(r):
+    return (r["matchday"], frozenset((r["home"], r["away"])))
+
+
+def _official(d):
+    """The FTBB table as stored, with its `basis` (the results it already counts). A table pasted before the basis existed (data of 2026-11) counts the results played on or before its date."""
+    off = d.get("official")
+    if not isinstance(off, dict) or not off.get("rows"):
+        return None
+    off = dict(off)
+    if not isinstance(off.get("basis"), list):
+        pub = str(off.get("published") or "")
+        off["basis"] = [_slim(r) for r in d.get("results") or [] if isinstance(r, dict) and (not pub or not r.get("date") or r["date"] <= pub)]
+    off["basis"] = [r for r in off["basis"] if isinstance(r, dict)]
+    return off
+
+
+def _slim(r):
+    return {k: r[k] for k in ("matchday", "home", "away", "home_score", "away_score")}
+
+
+def since_official(d):
+    """The results that are not counted by the FTBB table as it was pasted: new games and corrected scores (a removed game is not listed, it is just taken away)."""
+    off = d.get("official")
+    if not off:
+        return []
+    basis = {_key(r): r for r in off["basis"]}
+    return [r for r in d["results"] if _slim(r) != basis.get(_key(r))]
 
 
 def _write(d):
@@ -57,27 +89,61 @@ def season_default():
     return f"{y}-{y + 1}"
 
 
-def standings(d=None):
-    d = d or load()
-    if d.get("official"):
-        rows = []
-        for i, r in enumerate(d["official"]["rows"], 1):
-            rows.append({"code": r["code"], "name": d["teams"].get(r["code"], r["code"]), "rank": i, "j": r["j"], "w": r["w"], "l": r["l"], "pf": None, "pa": None, "diff": r["diff"], "pts": r["pts"]})
-        return rows
-    t = {c: {"code": c, "name": n, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for c, n in d["teams"].items()}
-    for r in d["results"]:
+def _tally(teams, results, sign=1, into=None):
+    """Add (sign 1) or take away (sign -1) the games of `results` to the rows of `teams`."""
+    t = into if into is not None else {c: {"code": c, "name": n, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for c, n in teams.items()}
+    for r in results:
         for c, f, a in ((r["home"], r["home_score"], r["away_score"]), (r["away"], r["away_score"], r["home_score"])):
             if c in t:
                 x = t[c]
-                x["j"] += 1
-                x["w" if f > a else "l"] += 1
-                x["pf"] += f
-                x["pa"] += a
-    out = list(t.values())
+                x["j"] += sign
+                x["w" if f > a else "l"] += sign
+                x["pf"] += sign * f
+                x["pa"] += sign * a
+    return t
+
+
+def standings(d=None):
+    d = d or load()
+    games = [r for r in d["results"] if r["home"] in d["teams"] and r["away"] in d["teams"]]
+    off = d.get("official")
+    if off:
+        rows = []
+        for i, r in enumerate(off["rows"], 1):
+            rows.append({"code": r["code"], "name": d["teams"].get(r["code"], r["code"]), "rank": i, "j": r["j"], "w": r["w"], "l": r["l"], "pf": None, "pa": None, "diff": r["diff"], "pts": r["pts"]})
+        listed = {r["code"] for r in rows}
+        rows += [{"code": c, "name": n, "rank": len(rows) + i, "j": 0, "w": 0, "l": 0, "pf": None, "pa": None, "diff": 0, "pts": 0}           # a club the FTBB table does not list (added later)
+                 for i, (c, n) in enumerate(((c, n) for c, n in d["teams"].items() if c not in listed), 1)]
+        if not since_official(d) and len(games) == len(off["basis"]):
+            return rows                                                 # nothing typed since the FTBB table: it is the table, in the FTBB's own order
+        delta = _tally(d["teams"], d["results"])
+        _tally(d["teams"], off["basis"], -1, delta)                     # what changed since the FTBB table: the results now minus the ones it counts
+        now = _tally(d["teams"], d["results"])                          # (points scored, for the last tie-break of the law)
+        by = {r["code"]: r for r in rows}
+        order = {r["code"]: i for i, r in enumerate(rows)}
+        out = []
+        for c, x in by.items():
+            dx = delta.get(c) or {"j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0}
+            x = {**x, "j": x["j"] + dx["j"], "w": x["w"] + dx["w"], "l": x["l"] + dx["l"], "diff": x["diff"] + dx["pf"] - dx["pa"]}
+            x["pts"] = 2 * x["w"] + x["l"]
+            out.append(x)
+        pf = {c: (now.get(c) or {}).get("pf", 0) for c in by}
+        law = [{**x, "pf": pf[x["code"]], "pa": pf[x["code"]] - x["diff"]} for x in out]          # the law reads pf - pa as the difference: keep the FTBB's difference
+        ranked = ranking.rank(law, games, fallback=lambda c: order.get(c, 99))
+        keep = {x["code"]: x for x in out}
+        moved = {c for c, x in delta.items() if any(x[k] for k in ("j", "w", "l", "pf", "pa"))}
+        out = []
+        for pts in sorted({x["pts"] for x in ranked}, reverse=True):     # clubs level on points: the law decides, unless none of them has played since the FTBB table (then its order stays)
+            group = [keep[x["code"]] for x in ranked if x["pts"] == pts]
+            out += group if moved & {x["code"] for x in group} else sorted(group, key=lambda x: order.get(x["code"], 99))
+        for i, x in enumerate(out, 1):
+            x["rank"] = i
+        return out
+    out = list(_tally(d["teams"], d["results"]).values())
     for x in out:
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = 2 * x["w"] + x["l"]
-    out = ranking.rank(out, [r for r in d["results"] if r["home"] in t and r["away"] in t])       # the FTBB's law (ranking.py), like the Pro A table
+    out = ranking.rank(out, games)       # the FTBB's law (ranking.py), like the Pro A table
     for i, x in enumerate(out, 1):
         x["rank"] = i
     return out
@@ -183,7 +249,7 @@ def view():
                      "missing": sum(g["home_score"] is None for g in gs) if played else 0, "games": sorted(gs, key=lambda g: g["home"])})
     off = d["official"]
     return {"season": d["season"] or season_default(), "teams": names, "standings": standings(d), "matchdays": days, "games": len(d["results"]), "format": FORMAT, "playoff": playoff(d), "playoff_on": d["playoff_on"],
-            "official": {"published": off.get("published"), "source": off.get("source") or "FTBB"} if off else None}
+            "official": {"published": off.get("published"), "source": off.get("source") or "FTBB", "since": len(since_official(d))} if off else None}
 
 
 def _int(v, lo, hi):
@@ -266,6 +332,12 @@ def put_results(rows):
         for i, raw in enumerate(rows, 1):
             try:
                 r = clean_result(raw, d["teams"])
+                cal = [f for f in d["fixtures"] if f["matchday"] == r["matchday"]]
+                fx = next((f for f in cal if {f["home"], f["away"]} == {r["home"], r["away"]}), None)
+                if cal and not fx:                                      # the matchday has its calendar: the game must be one of it (home and away may be swapped: a venue change)
+                    raise ValueError(f"{r['home']} – {r['away']} is not a game of J{r['matchday']} in the calendar")
+                if fx and fx.get("date") and "date" not in r:
+                    r["date"] = fx["date"]                              # the day of the calendar, unless another one is typed
                 x = _clash(d, r)
                 if x:
                     raise ValueError(f"{x['home']} - {x['away']} is already J{r['matchday']}: a team plays once per matchday")
@@ -388,6 +460,6 @@ def set_official(published, rows, source="FTBB"):
             out.append(row)
         if published and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", published):
             raise ValueError("the date is YYYY-MM-DD")
-        d["official"] = {"published": published, "source": source, "rows": out}
+        d["official"] = {"published": published, "source": source, "rows": out, "basis": [_slim(r) for r in d["results"]]}     # it counts every result we have now
         _write(d)
         return len(out)

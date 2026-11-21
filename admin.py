@@ -293,7 +293,9 @@ def nat1_admin_edit():
             msg = "Team removed."
         elif op == "result":
             added, replaced = nat1.put_results([b])
-            msg = "Result saved." if added else "Result replaced."
+            r = nat1.clean_result(b, nat1.load()["teams"])
+            msg = (f"Result {'saved' if added else 'updated'}: J{r['matchday']} {r['home']} {r['home_score']} – {r['away_score']} {r['away']}. "
+                   "The National One table, its pages and the app show it now.")
         elif op == "paste":
             added, replaced = nat1.put_results(nat1.parse_lines(b.get("text")))
             msg = f"{added} result(s) added, {replaced} replaced."
@@ -305,7 +307,7 @@ def nat1_admin_edit():
             msg = f"The federation's table ({n} teams) is shown." if n else "The federation's table is removed: the table is computed from the results."
         elif op == "remove_result":
             gone = nat1.remove_result(int(b.get("matchday") or 0), str(b.get("home") or "").upper(), str(b.get("away") or "").upper())
-            msg = "Result removed." if gone else "That result does not exist."
+            msg = "Result removed: the table no longer counts it." if gone else "That result does not exist."
         elif op == "season":
             nat1.set_season(b.get("season"))
             msg = "Season saved."
