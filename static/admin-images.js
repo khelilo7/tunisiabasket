@@ -252,6 +252,11 @@
     if (again) { again = false; draw(); }
   }
 
+  const IMG_GROUPS = [['proa', '🏀 Pro A'], ['nat1', '🥈 National One']];        // each image type says its group (`group` of an extra; Pro A when it says none)
+  function pick(m) {                                                                  // show the image type m (a button of #imgmodes)
+    if (!$('#imgmodes') || !(m in extra || ['players', 'teams', 'race', 'leaders'].includes(m))) return;
+    mode = m; $('#imgmodes').querySelectorAll('button').forEach(x => x.classList.toggle('on', x.dataset.m === m)); controls(); draw();
+  }
   async function open() {
     const box = $('#imgbox');
     if (!D) {
@@ -261,17 +266,19 @@
         D = { season: pl.season, players: pl.players.filter(p => p.gp > 0), teams: ts.teams, mvp: mv, leaders: ov.leaders };
       } catch (e) { box.innerHTML = '<div class="problems">Could not load the data for the images.</div>'; return; }
       sel = { pa: D.players[0].id, pb: D.players[1].id, ta: D.teams[0].code, tb: D.teams[1].code, rn: 8, lk: 'pts', ln: 10 };
-      box.innerHTML = `<div class="row" style="margin:12px 0"><div class="tabs" id="imgmodes" style="margin:0;flex-wrap:wrap"><button data-m="players" class="on">Player vs player</button><button data-m="teams">Team vs team</button><button data-m="race">MVP race</button><button data-m="leaders">Leaders</button>${Object.entries(extra).map(([k, x]) => `<button data-m="${k}">${x.label}</button>`).join('')}</div>
-          <span class="sp"></span><label class="small mut">Image language</label><select id="imglang"><option value="fr">Français</option><option value="en">English</option></select></div>
+      const btn = ([k, x]) => `<button data-m="${k}">${x.label}</button>`, ext = g => Object.entries(extra).filter(([, x]) => (x.group || 'proa') === g);
+      box.innerHTML = `<div class="row" style="margin:12px 0"><span class="sp"></span><label class="small mut">Image language</label><select id="imglang"><option value="fr">Français</option><option value="en">English</option></select></div>
+        <div id="imgmodes">${IMG_GROUPS.map(([g, title]) => `<div class="imggroup" data-g="${g}"><div class="imggroup-h">${title}</div><div class="tabs" style="margin:0;flex-wrap:wrap">${g === 'proa' ? '<button data-m="players" class="on">Player vs player</button><button data-m="teams">Team vs team</button><button data-m="race">MVP race</button><button data-m="leaders">Leaders</button>' : ''}${ext(g).map(btn).join('')}</div></div>`).join('')}</div>
         <div class="row" id="imgctl" style="margin-bottom:12px"></div>
         <div class="row" style="margin-bottom:10px"><button class="primary" id="imgdl" disabled>⬇ Download PNG</button><span class="mut small">1080 px wide, ready to post. Drawn from today’s data.</span><span id="imgerr" class="small" style="color:var(--bad)"></span></div>
         <canvas id="imgcanvas" width="1080" height="1350" style="width:100%;max-width:560px;height:auto;border-radius:14px;border:1px solid var(--line);display:block"></canvas>`;
-      $('#imgmodes').querySelectorAll('button').forEach(b => b.onclick = () => { mode = b.dataset.m; $('#imgmodes').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); controls(); draw(); });
+      $('#imgmodes').querySelectorAll('button').forEach(b => b.onclick = () => pick(b.dataset.m));
       $('#imglang').onchange = e => { lang = e.target.value; draw(); };
       controls();
     }
     draw();
   }
   window.loadImages = open;
-  window.ImgKit = { W, C, txt, rr, lines, logo, frame, f1, pct, nm, download, extra, loadImg, lang: () => lang, data: () => D, redraw: draw };
+  window.ImgKit = { W, C, txt, rr, lines, logo, frame, f1, pct, nm, download, extra, loadImg, lang: () => lang, data: () => D, redraw: draw,
+    show: async m => { await open(); pick(m); } };                                    // open the Images tab on one image type (the National One result form uses it)
 })();

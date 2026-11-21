@@ -82,6 +82,40 @@ check(r.status_code == 200 and r.get_json()["official"]["published"] == "2026-11
 v = c.get("/api/nat1").get_json()
 check([t["code"] for t in v["standings"]] == ["CSK", "ESM", "ASM", "EOS"] and v["standings"][0]["diff"] == 97 and v["standings"][0]["pf"] is None, "the federation's table IS the table (order and numbers as given, no invented points for / against)")
 check(post({"op": "official", "text": "CSK, 4, 4, 0, 97, 9"}).status_code == 422 and post({"op": "official", "text": "CSK, 4, 3, 0, 97, 6"}).status_code == 422, "a table whose points or games do not add up is refused")
+# a result typed after the federation's table moves the table on from it (the FTBB numbers stay the base): added, corrected, removed
+order = lambda: [t["code"] for t in c.get("/api/nat1").get_json()["standings"]]
+row = lambda code: next(t for t in c.get("/api/nat1").get_json()["standings"] if t["code"] == code)
+check(c.get("/api/nat1").get_json()["official"]["since"] == 0, "nothing typed since the FTBB table")
+r = post({"op": "result", "matchday": 5, "home": "ESM", "away": "CSK", "home_score": 70, "away_score": 60})
+check(r.status_code == 200 and "table" in r.get_json()["message"], f"a result of the calendar is saved: {r.get_json()}")
+v = c.get("/api/nat1").get_json()
+st = {t["code"]: t for t in v["standings"]}
+check((st["ESM"]["j"], st["ESM"]["w"], st["ESM"]["pts"], st["ESM"]["diff"]) == (5, 4, 9, 20) and (st["CSK"]["j"], st["CSK"]["l"], st["CSK"]["pts"], st["CSK"]["diff"]) == (5, 1, 9, 87),
+      f"the new game is added to the FTBB rows: {st['ESM']} {st['CSK']}")
+check([t["code"] for t in v["standings"]][:2] == ["ESM", "CSK"] and [t["rank"] for t in v["standings"]] == [1, 2, 3, 4], f"level on 9 points: ESM won the game between them, so ESM leads: {order()}")
+check(v["official"]["since"] == 1 and st["ESM"]["pf"] is None, "the page says one result was typed since the FTBB table; still no invented points for / against")
+check(next(g for m in v["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ESM")["home_score"] == 70, "the game shows its score on the results page")
+check(nat1.load()["results"][-1].get("date") == "2999-01-01" or any(x.get("date") == "2999-01-01" for x in nat1.load()["results"] if x["matchday"] == 5), "the result takes the calendar's day")
+page = c.get("/nationale-1").get_data(as_text=True)
+check(page.index("ES Marsa") < page.index("CS Korba"), "the page for crawlers carries the new order too")
+r = post({"op": "result", "matchday": 5, "home": "EOS", "away": "CSK", "home_score": 70, "away_score": 60})
+check(r.status_code == 422 and "not a game of J5" in r.get_json()["error"], f"a game that is not in that matchday's calendar is refused: {r.get_json()}")
+check(post({"op": "result", "matchday": 5, "home": "EOS", "away": "ASM", "home_score": 75, "away_score": 70}).status_code == 200, "home and away swapped (a venue change) is accepted")
+check(post({"op": "result", "matchday": 5, "home": "ESM", "away": "CSK", "home_score": 60, "away_score": 70}).status_code == 200, "a result is edited")
+check((row("CSK")["w"], row("CSK")["pts"], row("ESM")["pts"], row("EOS")["pts"], row("ASM")["j"]) == (5, 10, 8, 6, 5) and order()[0] == "CSK" and c.get("/api/nat1").get_json()["official"]["since"] == 2,
+      f"an edited score replaces the old one in the table: {c.get('/api/nat1').get_json()['standings']}")
+for h, a in (("ESM", "CSK"), ("EOS", "ASM")):
+    check(post({"op": "remove_result", "matchday": 5, "home": h, "away": a}).status_code == 200, "a result is removed")
+check(order() == ["CSK", "ESM", "ASM", "EOS"] and row("CSK")["diff"] == 97 and c.get("/api/nat1").get_json()["official"]["since"] == 0, f"both removed: the FTBB table again, in its order: {order()}")
+post({"op": "result", "matchday": 1, "home": "ESM", "away": "EOS", "home_score": 85, "away_score": 71})
+check(row("ESM")["diff"] == 15 and row("EOS")["diff"] == -62 and row("ESM")["j"] == 4, "a corrected score of a game the FTBB table counts corrects the difference, not the games played")
+post({"op": "result", "matchday": 1, "home": "ESM", "away": "EOS", "home_score": 80, "away_score": 71})
+check(row("ESM")["diff"] == 10 and c.get("/api/nat1").get_json()["official"]["since"] == 0, "set back: the FTBB numbers again")
+# the same checks as a Pro A result
+for body, why in (({"op": "result", "matchday": 5, "home": "ESM", "away": "CSK", "home_score": 251, "away_score": 60}, "a score above 250"),
+                  ({"op": "result", "matchday": 5, "home": "ESM", "away": "CSK", "home_score": "", "away_score": 60}, "a missing score"),
+                  ({"op": "result", "matchday": 5, "home": "ESM", "away": "CSK", "home_score": 60, "away_score": 60}, "a tie")):
+    check(post(body).status_code == 422, f"refused: {why}")
 check(post({"op": "official", "text": ""}).status_code == 200 and c.get("/api/nat1").get_json()["official"] is None, "an empty table removes it: the table is computed again")
 # every club of the league has its badge (tools/build_team_logos.py), so the page never falls back to initials for the clubs we know
 import tools.build_nat1_seed as _seed  # noqa: E402
@@ -111,6 +145,21 @@ check(c.get("/nationale-1/playoff").status_code == 200 and c.get("/en/national-o
 check(c.get("/api/competitions").get_json()["nat1_playoff"] is False, "the National One play-off tab is hidden until the admin announces it")
 check(post({"op": "playoff_announce", "on": True}).status_code == 200 and c.get("/api/competitions").get_json()["nat1_playoff"] is True, "announced: the tab shows")
 check(post({"op": "playoff_clear"}).status_code == 200 and not any(x["games"] for rd in c.get("/api/nat1").get_json()["playoff"]["rounds"] for x in rd["series"]), "the play-off games can be removed")
+# the admin: National One and the Cup are subsections of Games & scores; the image generator has a National One group with the final score of one game
+adm = (Path(__file__).resolve().parent.parent / "static" / "admin.html").read_text()
+img = (Path(__file__).resolve().parent.parent / "static" / "admin-nat1img.js").read_text()
+check('id="gamesub"' in adm and 'data-sub="nat1"' in adm and 'data-sub="cup"' in adm and 'id="nat1box"' in adm and 'id="cupbox"' in adm and 'data-tab="nat1"' not in adm and 'data-tab="cup"' not in adm,
+      "admin: National One and Cup live under Games & scores, not as tabs of their own")
+check("K.extra.n1_game = { group: 'nat1'" in img and all(f"K.extra.{k} = {{ group: 'nat1'" in img for k in ("n1_results", "n1_table")) and "nat1:changed" in img, "admin images: a National One group with a final-score image, redrawn after a save")
+# a FTBB table stored before it kept its basis (data of November 2026): it counts the results played on or before its date, the later ones move the table
+import json  # noqa: E402
+nat1.FILE.write_text(json.dumps({"season": "2026-2027", "teams": {"AAA": "Club A", "BBB": "Club B", "CCC": "Club C"},
+                                 "results": [{"matchday": 1, "home": "AAA", "away": "BBB", "home_score": 70, "away_score": 60, "date": "2026-11-14"}],
+                                 "official": {"published": "2026-11-15", "source": "FTBB", "rows": [{"code": "AAA", "j": 1, "w": 1, "l": 0, "diff": 10, "pts": 2}, {"code": "BBB", "j": 1, "w": 0, "l": 1, "diff": -10, "pts": 1}]}}))
+check(order() == ["AAA", "BBB", "CCC"] and row("CCC")["j"] == 0, f"old FTBB table: the result before its date is not counted twice: {c.get('/api/nat1').get_json()['standings']}")
+post({"op": "result", "matchday": 2, "home": "CCC", "away": "AAA", "home_score": 90, "away_score": 50, "date": "2026-11-21"})
+check(order() == ["AAA", "CCC", "BBB"] and (row("AAA")["j"], row("AAA")["diff"], row("CCC")["pts"]) == (2, -30, 2) and "basis" in json.loads(nat1.FILE.read_text())["official"],
+      f"old FTBB table: the later result moves the table, and the basis is now stored: {c.get('/api/nat1').get_json()['standings']}")
 print("nationale 1, about, menu:", "FAILED" if fails else "ok")
 for m in fails:
     print(" -", m)
