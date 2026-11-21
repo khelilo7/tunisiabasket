@@ -19,6 +19,7 @@ import health
 import history
 import records
 import lineups
+import livescore
 import mvp
 import nat1
 import notify
@@ -359,9 +360,28 @@ def team_stats_public():
 @app.get("/api/live")
 def live():
     """Games the admin has made public while an analyst counts them (analytics.live_games): the Live page and the menu's live dot poll this."""
-    resp = jsonify(games=analytics.live_games(), now=int(time.time()))
+    games = analytics.live_games()
+    games += livescore.live_games(skip={frozenset((g["home"], g["away"])) for g in games})   # scores read from the broadcast, unless an analyst already shows the game
+    resp = jsonify(games=games, now=int(time.time()))
     resp.headers["Cache-Control"] = "no-store"
     return resp
+
+
+@app.post("/api/livescore")
+def livescore_push():
+    """One reading of the broadcast's scoreboard from tools/live_reader.py (Authorization: Bearer <live-score token>). See livescore.py."""
+    ip = auth.client_ip()
+    if auth._locked_out(ip):
+        return jsonify(error="too many failed attempts, wait a few minutes"), 429
+    tok = (request.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
+    if not livescore.verify(tok):
+        with auth._lock:
+            auth._fails.setdefault(ip, []).append(time.time())
+        return jsonify(error="bad token"), 401
+    g, err = livescore.push(request.get_json(silent=True) or {})
+    if err:
+        return jsonify(error=err), 400
+    return jsonify(game=g)
 
 
 @app.get("/api/matchup")

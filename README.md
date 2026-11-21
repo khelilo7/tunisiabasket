@@ -275,6 +275,27 @@ Undo, a list of the last actions with "remove", the score on top, and a CSV of t
 - **What approval publishes:** two one-team sheets in `data/partial_games.json` (see "One-team sheets"): minutes and +/- stay unknown (never 0; fouls drawn too unless the analyst counted them with the **FD** button), the game never enters standings, team totals, the MVP race or the fan vote, and a real box score of the same game replaces it. It is ignored until the official result of that matchday exists. `tests/test_analytics.py` checks all of this.
 
 
+## Live scores read from the Diwan Sport broadcast (`livescore.py`, `tools/live_reader.py`)
+Diwan Sport agreed that the site may read the score of its broadcasts. A Mac plays the game(s) in a browser signed in to Diwan Sport, and **the reader** reads the scoreboard
+graphic on the screen every 2 s (score, quarter, clock) and sends only those numbers to the site. Nothing is recorded: each capture is read in memory and dropped.
+- **On the server, once:** `sudo proastats-admin new-livescore-token` (or `python manage.py new-livescore-token`): shown once, only its hash is stored (`data/livescore_token.json`;
+  `LIVESCORE_TOKEN` in the environment also works). It only lets the reader send readings to `POST /api/livescore` (5 wrong tokens from one address: locked out 10 minutes).
+- **On the Mac, once:** `brew install tesseract`, the repository with its `.venv`, and the **Screen Recording** permission for the app that runs the reader (System Settings >
+  Privacy & Security > Screen & System Audio Recording; quit and reopen that app after switching it on).
+- **Match day:** open each game on diwansport.com, big enough to read (half a screen per game is plenty; two or three games side by side work), keep the scoreboard visible
+  (no window on top of it), then run `.venv/bin/python tools/live_reader.py --token XXXX-XXXX-XXXX-XXXX` and leave it running. It finds every scoreboard on the screen by its
+  colours, reads the team codes on it (or `--teams ESS-DSG`), and prints each score it sends. The calendar gives the matchday and which club is at home (`--matchday N` if it cannot).
+- **Filters:** the reader sends a score only when two captures agree; a score never goes down, except a correction seen for 10 s; a jump of more than 6 points is a misread unless
+  the scoreboard was away a while (started mid-game, replays, a dropped stream: then three captures must agree). The server refuses again a lower score or a jump of more than 8,
+  except after a gap. The final is sent at 00:00 in the 4th quarter or an overtime, or when the broadcast cuts away in its last 5 seconds with the scores not level; if play goes on
+  the game opens again.
+- **What fans see:** the game on the **Live** page of the site and the app (score, quarter, clock, the score changes, biggest lead, longest run, head to head), marked
+  "Score read automatically from the broadcast"; it leaves the page 15 minutes after the last reading, or 45 minutes after the final. An analyst counting the same game wins.
+  **Pushes:** the end of each quarter to the phones that follow one of the two clubs, the final score to every phone with results on (same key as the official result, so it
+  is sent once). The official result and the box score still come from the admin.
+- **Test on a recording:** `.venv/bin/python tools/live_reader.py --file "Diwan Sport(1).mp4" --start 3700 --show --matchday 14 --server http://localhost:5055 --token ...`
+  plays the video in a window and reads it in real time, with no screen permission needed. Tests: `tests/test_livescore.py`.
+
 ## Announcing the play-off, sources of a game, analytics, honours (November 2026)
 
 - **Nothing changes until the admin announces.** `finals.json` has an `announced` flag (Admin → 🔥 Play-off/out → *Announce: the play-off and the play-out start*) and `nat1.json` a `playoff_on` flag (Admin → Nationale 1 → Play-off card). Until then the public site is unchanged however much is prepared: no Play-off tab, the championship standings stay, `/playoff-playout` and `/nationale-1/playoff` only say they start at the end of the regular season (the admin looks at them with `?preview=1`). From the announcement the 🔥 page takes the place of the championship standings (the regular season stays under its tab). `/api/competitions` carries `finals`, `started`, `nat1_playoff`. The Cup is not gated (an empty bracket says "draw soon").

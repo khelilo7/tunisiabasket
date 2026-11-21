@@ -1,4 +1,4 @@
-"""Admin management.   python manage.py new-token   |   new-analytics-token   |   status   |   log   |   backup   (full, verified backup of the data folder into ./backups)"""
+"""Admin management.   python manage.py new-token   |   new-analytics-token   |   new-livescore-token   |   status   |   log   |   backup   (full, verified backup of the data folder into ./backups)"""
 import sys
 
 import auth
@@ -17,10 +17,19 @@ elif cmd == "new-analytics-token":
     print("New analytics token (shown once, only its hash is stored; every analyst is logged out):\n")
     print("    " + t + "\n")
     print("Analysts sign in at /analytics with it. It never opens /admin. Run this command again to replace it.")
+elif cmd == "new-livescore-token":
+    import livescore
+    t = auth.new_token()
+    livescore.set_token(t)
+    print("New live-score token (shown once, only its hash is stored):\n")
+    print("    " + t + "\n")
+    print("Give it to tools/live_reader.py (--token or LIVESCORE_TOKEN). It only lets the reader send scoreboard readings. Run this command again to replace it.")
 elif cmd == "status":
     import analytics
     print("admin token configured:", auth.token_configured())
     print("analytics token configured:", analytics.token_configured())
+    import livescore
+    print("live-score token configured:", livescore.token_configured())
 elif cmd == "log":
     print(auth.LOG_FILE.read_text() if auth.LOG_FILE.exists() else "(no admin activity yet)")
 elif cmd == "backup":
