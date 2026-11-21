@@ -15,7 +15,7 @@ games = [game(row(77, "NAIM DHIFALLAH"), row(5, "ALI BEN SALAH")),
          game(row(77, "NAIM DHIFALLAH"), row(5, "ALI BEN SALAH")),
          game(row(7, "NAIM DHIFALLAH", dnp=True), row(5, "ALI BEN SALAH"))]     # the sheet prints his number as 7 and says he did not play
 stats._canonicalise(games)
-pids = {p["pid"] for g in games for t in g["teams"] for p in t["players"] if "NAIM" in p["name"].upper()}
+pids = {p["pid"] for g in games for t in g["teams"] for p in t["players"] if "DHIFALLAH" in p["name"].upper()}
 print("identity:", "ok" if pids == {"esr-77"} else f"FAILED {pids}")
 
 # an unnamed row (the federation prints XX) must not outvote a real name, create a profile, or win the game MVP

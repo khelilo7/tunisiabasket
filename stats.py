@@ -219,13 +219,14 @@ def _canonicalise(games):
             for p in t["players"]:
                 r = p.pop("_rule", None)
                 if r:
-                    p["name"] = r.get("name") or renames.get(r["id"]) or (by_pid[r["id"]].most_common(1)[0][0] if by_pid.get(r["id"]) else None) or added.get(r["id"]) or p["name"].title()
+                    p["name"] = renames.get(r["id"]) or r.get("name") or (by_pid[r["id"]].most_common(1)[0][0] if by_pid.get(r["id"]) else None) or added.get(r["id"]) or p["name"].title()
     alias = _pid_alias()
-    if alias:
-        for g in games:
-            for t in g["teams"]:
-                for p in t["players"]:
-                    p["pid"] = alias.get(p["pid"], p["pid"])
+    for g in games:
+        for t in g["teams"]:
+            for p in t["players"]:
+                p["pid"] = alias.get(p["pid"], p["pid"])
+                if p["pid"] in renames:                                   # the admin's rename shows in every box score, not only on the profile
+                    p["name"] = renames[p["pid"]]
 
 
 def _pid_alias():
