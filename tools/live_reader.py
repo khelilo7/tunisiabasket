@@ -292,6 +292,25 @@ def known_teams(server):
         return []
 
 
+def live_now(server):
+    """The games read from a broadcast that the Live page shows now: "id<TAB>HOME 70 - 66 AWAY  FINAL" (or the quarter)."""
+    try:
+        req = urllib.request.Request(server.rstrip("/") + "/api/live", headers={"User-Agent": "tunisiabasket-live-reader", "Cache-Control": "no-cache"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            games = json.loads(r.read())["games"]
+    except (OSError, ValueError, KeyError):
+        return []
+    out = []
+    for g in games:
+        if g.get("source") != "scoreboard":
+            continue
+        h, w = g["home"], g["away"]
+        q = (g.get("clock") or {}).get("q") or 0
+        state = "FINAL" if g.get("final") else f"Q{q}" if 1 <= q <= 4 else f"OT{q - 4}" if q > 4 else ""
+        out.append(f"{g['id']}\t{h} {g['teams'][h]['score']} - {g['teams'][w]['score']} {w}  {state}")
+    return out
+
+
 def snap(code, codes):
     code = (code or "").upper()
     if not codes or code in codes:
@@ -325,9 +344,20 @@ def main():
     ap.add_argument("--teams", help="LEFT-RIGHT codes as the scoreboard shows them, if its team names cannot be read (e.g. ESS-DSG)")
     ap.add_argument("--matchday", type=int, help="the matchday, if the calendar cannot tell (e.g. a test on an old game)")
     ap.add_argument("--dry", action="store_true", help="read and print, send nothing")
+    ap.add_argument("--live", action="store_true", help="list the games read from a broadcast that are on the Live page now (id, then the score), and stop")
+    ap.add_argument("--remove", nargs="+", metavar="ID", help="take these games (ids from --live) off the Live page now, and stop")
     a = ap.parse_args()
+    if a.live:
+        for g in live_now(a.server):
+            print(g, flush=True)
+        return
     if not a.token and not a.dry:
         sys.exit("--token (or LIVESCORE_TOKEN) is required: python manage.py new-livescore-token on the server")
+    if a.remove:
+        for gid in a.remove:
+            status, res = post(a.server, a.token, {"id": gid}, "/api/livescore/stop")
+            print(f"{gid}: {'taken off the Live page' if status == 200 else 'not removed'} -> {status} {res.get('error', '')}", flush=True)
+        return
     if a.winlist:
         global WINLIST, WINLIST_SRC
         WINLIST, WINLIST_SRC = os.path.abspath(a.winlist), ""

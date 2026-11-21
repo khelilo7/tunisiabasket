@@ -3,7 +3,8 @@
 #
 #   ~/TunisiaBasketLive/                       the reader (live_reader.py, winlist), its own Python, its settings (config) and its log (reader.log)
 #   /Applications/Tunisia Basket Live.app      double-click: starts reading every browser window titled "Diwan Sport" (one window per game);
-#                                              double-click again while it runs: what it follows, Stop, or the log
+#                                              double-click again while it runs: what it follows, Stop (its games leave the Live page), or Remove a game
+#                                              (an ended game taken off the Live page now). Stopped, it offers Remove a game when one is still on Live.
 #
 # The token comes from the server: sudo proastats-admin new-livescore-token. Without one, the installer asks for it.
 # Needs Homebrew's tesseract (brew install tesseract) and Apple's command line tools (xcode-select --install) for swiftc.
@@ -48,22 +49,69 @@ caffeinate -di ./venv/bin/python -u live_reader.py --server "$SERVER" --winlist 
 RUN
 chmod 755 "$DEST/run.sh"
 
+cat > "$DEST/games.sh" <<'GAMES'
+#!/bin/bash
+# The games read from a broadcast that are on the Live page now (games.sh list), or take some off it (games.sh remove ID...). Used by the app's "Remove a game".
+cd "$(dirname "$0")"
+SERVER="$(sed -n 's/^SERVER=//p' config)"; export LIVESCORE_TOKEN="$(sed -n 's/^TOKEN=//p' config)"
+case "${1:-}" in
+  list) exec ./venv/bin/python live_reader.py --server "$SERVER" --live ;;
+  remove) shift; exec ./venv/bin/python live_reader.py --server "$SERVER" --remove "$@" ;;
+  *) echo "games.sh list | games.sh remove ID..."; exit 2 ;;
+esac
+GAMES
+chmod 755 "$DEST/games.sh"
+
 echo "==> The app"
 TMP="$(mktemp -d)"
 cat > "$TMP/app.applescript" <<'OSA'
+on removeGames(base)
+	set gameLines to paragraphs of (do shell script quoted form of (base & "games.sh") & " list 2>/dev/null || true")
+	set ids to {}
+	set labels to {}
+	set AppleScript's text item delimiters to tab
+	repeat with l in gameLines
+		if (count of text items of l) is 2 then
+			set end of ids to text item 1 of l
+			set end of labels to text item 2 of l
+		end if
+	end repeat
+	set AppleScript's text item delimiters to ""
+	if (count of labels) is 0 then
+		display dialog "No game read from a broadcast is on the Live page now." buttons {"OK"} default button "OK" with title "Tunisia Basket Live"
+		return
+	end if
+	set picked to choose from list labels with title "Tunisia Basket Live" with prompt "Take off the Live page (it comes back if the reader reads it again):" OK button name "Remove" with multiple selections allowed
+	if picked is false then return
+	set args to ""
+	repeat with i from 1 to count of labels
+		if picked contains (item i of labels) then set args to args & " " & quoted form of (item i of ids)
+	end repeat
+	set res to do shell script quoted form of (base & "games.sh") & " remove" & args & " 2>&1 || true"
+	display dialog res buttons {"OK"} default button "OK" with title "Tunisia Basket Live"
+end removeGames
+
 on run
 	set base to (POSIX path of (path to home folder)) & "TunisiaBasketLive/"
 	set isRunning to do shell script "pgrep -f '[l]ive_reader.py --server' >/dev/null && echo yes || echo no"
 	if isRunning is "yes" then
 		set statusLines to do shell script "grep -E 'following|->|refused|minimised|has not changed|no scoreboard' " & quoted form of (base & "reader.log") & " | tail -4 || true"
-		set r to button returned of (display dialog "The live score reader is running." & return & return & statusLines buttons {"Stop", "Open the log", "Keep running"} default button "Keep running" with title "Tunisia Basket Live")
+		set r to button returned of (display dialog "The live score reader is running." & return & return & statusLines buttons {"Stop", "Remove a game…", "Keep running"} default button "Keep running" with title "Tunisia Basket Live")
 		if r is "Stop" then
 			do shell script "pkill -f '[l]ive_reader.py --server' || true"
-			display notification "Stopped: nothing is sent any more." with title "Tunisia Basket Live"
-		else if r is "Open the log" then
-			do shell script "open -e " & quoted form of (base & "reader.log")
+			display notification "Stopped: its games are off the Live page." with title "Tunisia Basket Live"
+		else if r is "Remove a game…" then
+			removeGames(base)
 		end if
 	else
+		set onLive to do shell script quoted form of (base & "games.sh") & " list 2>/dev/null || true"
+		if onLive is not "" then
+			set r to button returned of (display dialog "Games read from a broadcast still on the Live page:" & return & return & onLive buttons {"Remove a game…", "Start reading"} default button "Start reading" with title "Tunisia Basket Live")
+			if r is "Remove a game…" then
+				removeGames(base)
+				return
+			end if
+		end if
 		tell application "Terminal"
 			do script quoted form of (base & "run.sh")
 		end tell
