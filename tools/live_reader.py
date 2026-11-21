@@ -13,7 +13,7 @@ Nothing is recorded: each capture is read in memory and dropped; only the number
 
 How it reads: the scoreboard's two score boxes and its quarter box are dark-blue boxes on one line, found by colour wherever the video is on the screen (several games at once
 are fine); every other field is placed from them. Each field is read with tesseract. A new score is sent only once two captures in a row agree, it never goes down (a lower score
-seen for 10 s in a row is sent as a correction), and a jump of more than 6 points is ignored as a misread, unless the scoreboard was away for a while (started mid-game,
+of 1 to 3 points seen for 30 s in a row is sent as a correction), and a jump of more than 6 points is ignored as a misread, unless the scoreboard was away for a while (started mid-game,
 replays, a dropped stream): then three captures must agree. The final is sent when the clock shows 00:00 in the 4th quarter or
 an overtime with the scores not level, three captures in a row.
 """
@@ -75,6 +75,12 @@ def field_img(rgb, board, name):
     box = (int(x + fx0 * s), int(y + fy0 * s), int(x + fx1 * s), int(y + fy1 * s))
     g = np.asarray(Image.fromarray(rgb).crop(box).convert("L")).astype(np.int16)
     ink = g < 110 if name.startswith("t_") or name == "clock" else g > 150  # team codes and clock: dark on white; scores and quarter: white on dark blue
+    if name in ("home", "away", "q"):                                         # marks touching the crop's edge are slivers of the box's border or of the bar
+        from scipy import ndimage                                             # around it (some players squash the scoreboard), never a digit: erase them
+        lab, _ = ndimage.label(ink)
+        edge = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}
+        if edge:
+            ink = ink & ~np.isin(lab, list(edge))
     im = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8))
     k = 100 / max(1, im.height)
     im = im.resize((max(1, int(im.width * k)), 100), Image.LANCZOS)
@@ -213,10 +219,11 @@ class Game:
         out = None
         if self.sent is None or (h, a) != cur[:2] or q != cur[2]:              # the very first reading is sent even at 0-0: the site then knows the game started on time
             big = h - cur[0] > 6 or a - cur[1] > 6 or q - cur[2] > 1
-            if h < cur[0] or a < cur[1]:
-                self.low_n = self.low_n + 1 if self.low == (h, a, q) else 1
+            if h < cur[0] or a < cur[1]:                                      # a lower score: a correction by the table (1 to 3 points, seen for 30 s), or a misread
+                small = cur[0] - h <= 3 and cur[1] - a <= 3 and h >= cur[0] - 3 and a >= cur[1] - 3
+                self.low_n = self.low_n + 1 if self.low == (h, a, q) and small else (1 if small else 0)
                 self.low = (h, a, q)
-                if self.low_n >= 5:
+                if self.low_n >= 15:
                     out = self._body(h, a, max(q, cur[2]), fix=True)
             elif q >= cur[2] and (not big or gap or self.cand == (h, a, q)):
                 self.cand_n = self.cand_n + 1 if self.cand == (h, a, q) else 1
@@ -277,7 +284,8 @@ def post(server, token, body):
 
 def known_teams(server):
     try:
-        with urllib.request.urlopen(server.rstrip("/") + "/api/schedule", timeout=10) as r:
+        req = urllib.request.Request(server.rstrip("/") + "/api/schedule", headers={"User-Agent": "tunisiabasket-live-reader"})   # Cloudflare refuses Python's default one
+        with urllib.request.urlopen(req, timeout=10) as r:
             return list(json.loads(r.read())["teams"])
     except (OSError, ValueError, KeyError):
         return []
@@ -323,6 +331,8 @@ def main():
         global WINLIST, WINLIST_SRC
         WINLIST, WINLIST_SRC = os.path.abspath(a.winlist), ""
     codes = known_teams(a.server)
+    if not codes:
+        print(f"could not get the list of teams from {a.server}: team names will only be read as they are", flush=True)
     games = {}                                  # board key -> Game
     t0 = time.time()
     if a.file and a.show:
