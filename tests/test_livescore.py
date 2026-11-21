@@ -96,6 +96,19 @@ if fx:
     gg = r.get_json()["game"]
     check(gg["matchday"] == fx[0] and gg["home"] == fx[1], f"matchday and home side from the calendar: {gg} vs {fx}")
 
+# 5b. the reader stopped: the game leaves the Live page at once, and comes back if it is read again
+stop = lambda body, **kw: c.post("/api/livescore/stop", json=body, environ_overrides=ip("192.0.2.10"), **kw)
+C3, D3 = teams[6], teams[7]
+send({"teams": [C3, D3], "score": [20, 18], "q": 2, "matchday": 33})
+live_ids = lambda: [x["id"] for x in c.get("/api/live").get_json()["games"]]
+sid = livescore.game_id(33, *livescore._which(C3, D3, 33, stats.load_official())[1:])
+check(sid in live_ids(), "the game is live")
+check(stop({"teams": [C3, D3], "matchday": 33}).status_code == 401, "stop needs the token")
+check(stop({"teams": [C3, D3], "matchday": 33}, headers=H).status_code == 200 and sid not in live_ids(), "stopped: off the Live page at once")
+check(stop({"teams": [teams[8], teams[9]], "matchday": 33}, headers=H).status_code == 404, "stopping a game that was never read: 404")
+send({"teams": [C3, D3], "score": [22, 18], "q": 2, "matchday": 33})
+check(sid in live_ids(), "read again after a stop: live again")
+
 # 6. a stale game leaves the Live page; a final stays a while
 now = livescore._load(g["id"])["updated"]
 check(any(x["id"] == g["id"] for x in livescore.live_games(now=now + livescore.FINAL_KEEP - 60)), "a final stays on the Live page for a while")

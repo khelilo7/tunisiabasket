@@ -8,7 +8,8 @@ token (data/livescore_token.json, a salted scrypt hash, or LIVESCORE_TOKEN in th
   * The server is the second filter after the reader: a score never goes down unless the reader says it is a correction (the table fixed it), a jump of more than 8 points
     at once is refused (except for the first reading and after 45 s without any), and a game marked final only opens again if the score or the quarter moves on (the final was called too early).
   * live_games() gives these games in the same shape as analytics.live_games() (no players, no box score: "source": "scoreboard"), so the website's and the app's Live pages
-    show them; a game is live while the reader keeps sending (STALE seconds), and stays FINAL_KEEP seconds after its final buzzer.
+    show them; a game is live while the reader keeps sending (STALE seconds), and stays FINAL_KEEP seconds after its final buzzer. When the reader stops (the app's
+    Stop, its window closed, Ctrl-C) it calls stop() for each game it followed (POST /api/livescore/stop): the game leaves the Live pages at once.
   * events() gives notify.py what to announce: the end of each quarter (only to the phones that follow one of the two clubs), and the final score under the same key as the
     official result, so a phone gets the final once.
 """
@@ -103,6 +104,38 @@ def _clock_secs(v):
 
 
 # ---------------------------------------------------------------- a reading from the scoreboard
+def _which(left, right, md, official):
+    """(matchday, home, away) of the game between left and right: the matchday the reader gives, or the calendar's next game between them."""
+    if md:
+        md = int(md)
+        f = next(((g["home"], g["away"]) for m in stats.planning(official)["matchdays"] if m["matchday"] == md for g in m["games"] if {g["home"], g["away"]} == {left, right}), None)
+        home, away = f or (left, right)
+        return md, home, away
+    f = fixture(left, right, official)
+    return f if f else (None, left, right)
+
+
+def stop(body: dict, now=None):
+    """The reader stopped following a game (Stop in the app, its window closed, Ctrl-C): {"teams": [left, right], "matchday": optional}. The game leaves the Live
+    pages at once; it comes back if the reader sends it again. Returns (game summary, None) or (None, error)."""
+    now = int(now or time.time())
+    official = stats.load_official()
+    try:
+        left, right = [str(x).upper().strip() for x in body["teams"]]
+    except (KeyError, TypeError, ValueError):
+        return None, "teams are required"
+    if left not in official["teams"] or right not in official["teams"] or left == right:
+        return None, f"unknown teams {left}-{right}"
+    md, home, away = _which(left, right, body.get("matchday"), official)
+    with _lock:
+        g = _load(game_id(md, home, away))
+        if not g:
+            return None, "no such game"
+        g["stopped"] = now
+        _save(g)
+    return summary(g), None
+
+
 def push(body: dict, now=None):
     """One reading: {"teams": [left code, right code], "score": [left, right], "q": 1-4 / 5+ for overtime, "clock": "MM:SS" or "SS.t", "matchday": optional,
     "final": bool, "fix": bool (a correction: the score may go down)}. Returns (game summary, None) or (None, error)."""
@@ -119,20 +152,14 @@ def push(body: dict, now=None):
         return None, f"unknown teams {left}-{right}"
     if not (0 <= sl < 250 and 0 <= sr < 250 and 1 <= q <= 9):
         return None, "score or quarter out of range"
-    md = body.get("matchday")
-    if md:
-        md = int(md)
-        f = next(((g["home"], g["away"]) for m in stats.planning(official)["matchdays"] if m["matchday"] == md for g in m["games"] if {g["home"], g["away"]} == {left, right}), None)
-        home, away = f or (left, right)
-    else:
-        f = fixture(left, right, official)
-        md, home, away = f if f else (None, left, right)
+    md, home, away = _which(left, right, body.get("matchday"), official)
     score = {left: sl, right: sr}
     gid = game_id(md, home, away)
     t = _clock_secs(body.get("clock"))
     with _lock:
         g = _load(gid) or {"id": gid, "home": home, "away": away, "matchday": md, "q": 1, "clock": None, "score": {home: 0, away: 0},
                            "quarters": {home: [0, 0, 0, 0], away: [0, 0, 0, 0]}, "timeline": [], "final": False, "started": now, "updated": now, "ended": []}
+        g.pop("stopped", None)                                                    # stopped, then read again: live again
         old = g["score"]
         if g["final"] and not body.get("fix"):
             if score[home] > old[home] or score[away] > old[away] or q > g["q"]:
@@ -193,6 +220,8 @@ def _all():
 
 
 def _showing(g, now):
+    if g.get("stopped"):                                                          # the reader stopped following it
+        return False
     if g["final"]:
         return now - g.get("final_at", g["updated"]) < FINAL_KEEP
     return now - g["updated"] < STALE
