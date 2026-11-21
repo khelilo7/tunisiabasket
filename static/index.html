@@ -473,9 +473,14 @@
   :root[data-theme=light] { --glass:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.7)); --shadow:0 8px 24px rgba(20,30,60,.08); }
   body { background:var(--bg); background-image:radial-gradient(1100px 520px at 10% -120px, rgba(91,76,255,.20), transparent 70%), radial-gradient(800px 420px at 95% -60px, rgba(238,75,82,.16), transparent 70%); background-repeat:no-repeat; background-attachment:fixed; }
   :root[data-theme=light] body { background-image:radial-gradient(1100px 520px at 10% -120px, rgba(91,76,255,.08), transparent 70%), radial-gradient(800px 420px at 95% -60px, rgba(238,75,82,.07), transparent 70%); }
-  header { backdrop-filter:saturate(1.4) blur(14px); -webkit-backdrop-filter:saturate(1.4) blur(14px); border-bottom:1px solid var(--line); box-shadow:0 1px 0 rgba(255,138,31,.35); }
-  nav a { border-radius:999px; padding:7px 14px; font-weight:600; transition:background .15s,color .15s; }
-  nav a.on { background:var(--acc); color:#1A1205; } nav a:hover:not(.on) { background:var(--pill); color:var(--txt); }
+  header { border-bottom:1px solid var(--line); box-shadow:0 1px 0 rgba(255,138,31,.35); }
+  /* computer only: on a phone a blur on the header would trap the fixed bottom menu inside it (a backdrop filter makes the header the menu's frame), so the menu
+     went to the top of the screen; and the phone menu keeps its own buttons */
+  @media (min-width:761px) {
+    header { backdrop-filter:saturate(1.4) blur(14px); -webkit-backdrop-filter:saturate(1.4) blur(14px); }
+    nav a { border-radius:999px; padding:7px 14px; font-weight:600; transition:background .15s,color .15s; }
+    nav a.on { background:var(--acc); color:#1A1205; } nav a:hover:not(.on) { background:var(--pill); color:var(--txt); }
+  }
   h1 { font-family:"Barlow Condensed",system-ui,sans-serif; font-weight:800; font-size:clamp(30px,4.4vw,40px); letter-spacing:.01em; text-transform:uppercase; line-height:1.05; }
   h2 { font-family:"Barlow Condensed",system-ui,sans-serif; font-weight:800; font-size:21px; letter-spacing:.04em; color:var(--txt); }
   .card { background:var(--card); background-image:var(--glass); border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); }
@@ -672,7 +677,7 @@ const FR = {
   'No matches played yet.': 'Aucun match joué pour le moment.', 'No box score yet': 'Pas encore de feuille de match', 'Match stats ›': 'Statistiques du match ›',
   'Next matches · calendar': 'Prochains matchs · calendrier', 'No upcoming matches.': 'Aucun match à venir.', 'No player stats yet.': 'Pas encore de statistiques.',
   'This game is not live any more.': 'Ce match n’est plus en direct.', 'Its box score will be on the site once it is approved.': 'Sa feuille de match sera sur le site une fois validée.', 'All live games': 'Tous les matchs en direct', 'Tap a game to follow it.': 'Touchez un match pour le suivre.',
-  'Live': 'Direct', 'LIVE': 'DIRECT', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Field goals': 'Tirs', 'technical foul': 'faute technique', 'injured': 'blessé', 'ejected': 'exclu', 'team offensive rebound': 'rebond offensif d’équipe', 'team defensive rebound': 'rebond défensif d’équipe', 'team turnover': 'balle perdue d’équipe', 'timeout': 'temps mort', 'technical foul on the coach': 'faute technique sur l’entraîneur', 'technical foul on the bench': 'faute technique sur le banc', 'Technical fouls': 'Fautes techniques', 'Timeouts used': 'Temps morts pris', 'Play by play': 'Fil du match', 'Head to head': 'Face à face', 'Free-throw %': 'Réussite aux lancers', 'Form': 'Forme', 'Top scorer': 'Meilleur marqueur', 'Season so far': 'Saison jusqu’ici', 'Previous meetings': 'Confrontations précédentes', 'No meeting yet this season': 'Pas encore de confrontation cette saison', 'Loading…': 'Chargement…', 'No head-to-head data yet.': 'Pas encore de données de face à face.', 'Last 5': '5 derniers', 'Game flow': 'Déroulement du match', 'Biggest lead': 'Plus grand écart', 'Longest run': 'Plus longue série', 'Lead changes': 'Changements de leader', 'Ties': 'Égalités', 'Possession': 'Possession', 'Loose ball': 'Balle libre', 'Three-pointers': 'Tirs à 3 points', 'Free throws': 'Lancers francs', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
+  'Live': 'Direct', 'LIVE': 'DIRECT', 'FINAL': 'FINAL', 'Score timeline': 'Évolution du score', 'score corrected': 'score corrigé', 'Score read automatically from the broadcast: the official result and the box score come later.': 'Score lu automatiquement sur la diffusion : le résultat officiel et la feuille de match arrivent plus tard.', 'updates every few seconds': 'se met à jour toutes les quelques secondes', 'On court': 'Sur le terrain', 'Last plays': 'Dernières actions', 'Field goals': 'Tirs', 'technical foul': 'faute technique', 'injured': 'blessé', 'ejected': 'exclu', 'team offensive rebound': 'rebond offensif d’équipe', 'team defensive rebound': 'rebond défensif d’équipe', 'team turnover': 'balle perdue d’équipe', 'timeout': 'temps mort', 'technical foul on the coach': 'faute technique sur l’entraîneur', 'technical foul on the bench': 'faute technique sur le banc', 'Technical fouls': 'Fautes techniques', 'Timeouts used': 'Temps morts pris', 'Play by play': 'Fil du match', 'Head to head': 'Face à face', 'Free-throw %': 'Réussite aux lancers', 'Form': 'Forme', 'Top scorer': 'Meilleur marqueur', 'Season so far': 'Saison jusqu’ici', 'Previous meetings': 'Confrontations précédentes', 'No meeting yet this season': 'Pas encore de confrontation cette saison', 'Loading…': 'Chargement…', 'No head-to-head data yet.': 'Pas encore de données de face à face.', 'Last 5': '5 derniers', 'Game flow': 'Déroulement du match', 'Biggest lead': 'Plus grand écart', 'Longest run': 'Plus longue série', 'Lead changes': 'Changements de leader', 'Ties': 'Égalités', 'Possession': 'Possession', 'Loose ball': 'Balle libre', 'Three-pointers': 'Tirs à 3 points', 'Free throws': 'Lancers francs', 'Nothing counted yet.': 'Rien de compté pour l’instant.',
   'No game is live right now.': 'Aucun match en direct pour le moment.', 'When a game is followed live, its score, box score and last plays appear here and update by themselves.': 'Quand un match est suivi en direct, son score, sa feuille de match et ses dernières actions apparaissent ici et se mettent à jour tout seuls.',
   'See the calendar': 'Voir le calendrier', 'Make your picks': 'Faire vos pronostics', 'Counted by hand by an analyst while the game is played: figures can be corrected until the box score is out.': 'Compté à la main par un analyste pendant le match : les chiffres peuvent être corrigés jusqu’à la sortie de la feuille de match.',
   'free throw made': 'lancer franc réussi', '2-pointer made': 'tir à 2 pts réussi', '3-pointer made': 'tir à 3 pts réussi', 'free throw missed': 'lancer franc raté', '2-pointer missed': 'tir à 2 pts raté', '3-pointer missed': 'tir à 3 pts raté',
@@ -2038,7 +2043,7 @@ const qLabel = q => q > 4 ? 'OT' + (q - 4) : 'Q' + q, clockTxt = t => `${Math.fl
 // the list: one small tile per live game (logos, score, clock), side by side; a click opens the game
 function liveTile(g) {
   const [a, b] = [g.home, g.away].map(c => g.teams[c]);
-  return `<a class="livetile" href="${url('live', g.id)}"><div class="row"><span class="onair"><i></i>${_('LIVE')}</span><span class="sp"></span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span></div>
+  return `<a class="livetile" href="${url('live', g.id)}"><div class="row">${g.final ? `<span class="onair" style="background:var(--card2);color:var(--txt)">${_('FINAL')}</span>` : `<span class="onair"><i></i>${_('LIVE')}</span>`}<span class="sp"></span><span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock && !g.final ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span></div>
     <div class="lt"><div class="tm">${logo(a.code, 44)}<span>${g.ball && g.ball.team === a.code ? '<span class="hasball">🏀</span>' : ''}${esc(a.code)}</span></div><div class="sc"><b>${a.score}</b><span>–</span><b>${b.score}</b></div><div class="tm">${logo(b.code, 44)}<span>${g.ball && g.ball.team === b.code ? '<span class="hasball">🏀</span>' : ''}${esc(b.code)}</span></div></div>
     <div class="mut small" style="text-align:center">${esc(a.name)} – ${esc(b.name)}</div></a>`;
 }
@@ -2106,7 +2111,25 @@ function liveH2HTab(g, a, b) {
       <div class="h2hform small"><span>${top(g.home)}</span><span class="mut small">${_('Top scorer')}</span><span class="r">${top(g.away)}</span></div></div></div>`;
 }
 // the game itself: score, the fives, the box score, and the last plays folded (closed until the visitor opens them)
+// a game read from the broadcast's scoreboard (livescore.py): score, quarter, clock and the score changes, no players
+function liveFlowTab(g, a, b) {
+  const fl = g.flow || { lead: {}, run: {}, changes: 0, ties: 0 }, row = (k, key) => [k, fl[key][a.code] || 0, fl[key][b.code] || 0, fl[key][a.code] || 0, fl[key][b.code] || 0, 1];
+  return `<div class="tspanel">${lvHead(a, b)}<div class="tsbox"><div class="tsgrp">${_('Game flow')}</div>${[row('Biggest lead', 'lead'), row('Longest run', 'run')].map(liveRow).join('')}<div class="tsnote">${_('Lead changes')} <b>${fl.changes}</b> · ${_('Ties')} <b>${fl.ties}</b></div></div></div>`;
+}
+function liveScoreCard(g, now) {
+  const [a, b] = [g.home, g.away].map(c => g.teams[c]), ago = Math.max(0, now - g.updated);
+  const tab = ['plays', 'flow', 'h2h'].includes(liveTab) ? liveTab : 'plays';
+  const tabs = `<div class="seg ltabs" role="tablist">${[['plays', _('Score timeline')], ['flow', _('Game flow')], ['h2h', _('Head to head')]].map(([k, l]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-ltab="${esc(k)}">${esc(l)}</button>`).join('')}</div>`;
+  const body = tab === 'plays' ? livePlaysTab(g) : tab === 'flow' ? liveFlowTab(g, a, b) : liveH2HTab(g, a, b);
+  const state = g.final ? `<span class="onair" style="background:var(--card2);color:var(--txt)">${_('FINAL')}</span>` : `<span class="onair"><i></i>${_('LIVE')}</span>`;
+  return `<div class="card livecard"><div class="row">${state}<span class="mut small">${g.matchday ? 'J' + g.matchday + ' · ' : ''}${g.clock && !g.final ? qLabel(g.clock.q) + ' ' + clockTxt(g.clock.t) : ''}</span><span class="sp"></span><span class="mut small">${esc(f('liveAgo', ago))}</span></div>
+    <div class="liveboard"><div class="tm">${logo(a.code, 40)}<span>${esc(a.name)}</span></div><div><span class="big">${a.score}</span><span class="sep"> – </span><span class="big">${b.score}</span></div><div class="tm">${logo(b.code, 40)}<span>${esc(b.name)}</span></div></div>
+    ${liveQuarters(g, a, b)}
+    ${tabs}${body}
+    <div class="note">${_('Score read automatically from the broadcast: the official result and the box score come later.')}</div></div>`;
+}
 function liveCard(g, now) {
+  if (g.source === 'scoreboard') return liveScoreCard(g, now);
   const [a, b] = [g.home, g.away].map(c => g.teams[c]), ago = Math.max(0, now - g.updated), uc = g.used_court;
   const five = t => t.players.filter(p => p.on).map(p => `<span class="ch"><span class="nn">${esc(p.number)}</span>${esc(title(p.name).split(' ').slice(-1)[0])}</span>`).join('');
   const table = t => `<h3 style="margin:16px 0 6px;font-size:15px"><span class="tn">${logo(t.code, 22)}<span>${esc(t.name)}</span></span></h3>${uc ? `<div class="fivebar"><span class="mut small">${_('On court')}</span>${five(t)}</div>` : ''}
@@ -2135,13 +2158,35 @@ function liveWire() {
   const d = $('#livebox details.playsfold'); if (d) d.ontoggle = () => { livePlaysOpen = d.open; };
   document.querySelectorAll('#livebox [data-ltab]').forEach(b => b.onclick = () => { liveTab = b.dataset.ltab; if (!liveLast) return; $('#livebox').innerHTML = liveBody(liveLast.games, liveLast.now, liveLast.id); liveWire(); stickyCols(); });
 }
+// A refresh changes only what changed (a score, the clock...): the page is patched node by node instead of being rebuilt, so nothing flashes, the logos are not
+// loaded again and the open tab, the scroll and a focused field stay as they are.
+function morph(a, b) {
+  if (a.nodeType !== b.nodeType || a.nodeName !== b.nodeName) { a.replaceWith(b); return; }
+  if (a.nodeType === 3 || a.nodeType === 8) { if (a.nodeValue !== b.nodeValue) a.nodeValue = b.nodeValue; return; }
+  if (a.nodeType !== 1) return;
+  for (const { name, value } of [...b.attributes]) if (a.getAttribute(name) !== value) a.setAttribute(name, value);
+  for (const { name } of [...a.attributes]) if (!b.hasAttribute(name)) a.removeAttribute(name);
+  const ac = [...a.childNodes], bc = [...b.childNodes];
+  bc.forEach((n, i) => i < ac.length ? morph(ac[i], n) : a.appendChild(n));
+  ac.slice(bc.length).forEach(n => n.remove());
+}
+let liveGen = 0;
 async function live(id) {
   pageMeta = META.live[LANG];
+  const gen = ++liveGen;                       // only the latest Live page refreshes: a timer left by the list page must never draw the list over a game's page
   const get = () => fetch('/api/live', { cache: 'no-store' }).then(r => r.json());
   const d = await get();
-  liveTimer = setInterval(async () => {
+  clearInterval(liveTimer);
+  const timer = liveTimer = setInterval(async () => {
+    if (gen !== liveGen) return clearInterval(timer);
     if (document.hidden) return;
-    try { const x = await get(), box = $('#livebox'); if (!box) return clearInterval(liveTimer); box.innerHTML = liveBody(x.games, x.now, id); liveWire(); stickyCols(); liveAir(x); } catch (e) { /* the next poll will do */ }
+    try {
+      const x = await get(), box = $('#livebox');
+      if (!box || gen !== liveGen) return clearInterval(timer);
+      const next = box.cloneNode(false);
+      next.innerHTML = liveBody(x.games, x.now, id);
+      morph(box, next); liveWire(); stickyCols(); liveAir(x);
+    } catch (e) { /* the next poll will do */ }
   }, 5000);
   setTimeout(liveWire, 0);
   return `${id ? `<a class="mut" href="${url('live')}">← ${_('All live games')}</a>` : ''}<h1>${_('Live')} <span class="mut" style="font-size:15px">${_('updates every few seconds')}</span></h1><div id="livebox">${liveBody(d.games, d.now, id)}</div>`;

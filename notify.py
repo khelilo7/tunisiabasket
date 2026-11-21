@@ -18,6 +18,7 @@ import urllib.request
 
 import config
 import content
+import livescore
 import mvp
 import plays
 import predict
@@ -82,6 +83,8 @@ def register(b: dict):
 def _audience(topic: str, teams=()):
     """The tokens that want this: the topic switched on, and level all, or level team with their club among `teams` (votes go to every level)."""
     out = []
+    if topic == "quarter":                 # the end of a quarter of a game read live from the broadcast: only the phones that follow one of the two clubs, with results on
+        return [(tok, s.get("lang") or "fr") for tok, s in _read(FILE, {}).items() if s.get("results", True) and s.get("level") == "team" and s.get("team") in teams]
     for tok, s in _read(FILE, {}).items():
         if not s.get(topic, True):
             continue
@@ -104,6 +107,8 @@ def _events():
         ev[f"result:{season}|{r['matchday']}|{h}-{a}"] = ("results", (h, a), {
             "fr": (title, f"Pro A · J{r['matchday']} · Victoire de {names.get(win, win)}"),
             "en": (title, f"Pro A · Round {r['matchday']} · {names.get(win, win)} win")}, "/scores")
+    for k, v in livescore.events(season).items():     # quarters ended and final scores read from the broadcast; a final has the official result's key, so it is sent once
+        ev.setdefault(k, v)
     for n in content.load_news():
         teams = tuple(x for x in (n.get("team"), (n.get("match") or {}).get("home"), (n.get("match") or {}).get("away")) if x)
         fr, en = n.get("title") or "", n.get("title_en") or n.get("title") or ""
