@@ -143,6 +143,8 @@ def push(body: dict, now=None):
                 _save(g)
                 return summary(g), None
         dh, da = score[home] - old[home], score[away] - old[away]
+        if body.get("fix") and (dh < -5 or da < -5):                             # a table correction is a few points: a bigger drop is a misread
+            return None, f"a correction of more than 5 points is refused ({old[home]}-{old[away]} -> {score[home]}-{score[away]})"
         if not body.get("fix") and (dh < 0 or da < 0):
             return None, f"the score cannot go down ({old[home]}-{old[away]} -> {score[home]}-{score[away]}) unless it is a correction"
         gap = not g["timeline"] or now - g["updated"] > 45                         # the first reading, or nothing read for a while: any score is possible

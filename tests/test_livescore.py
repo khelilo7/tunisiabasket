@@ -55,6 +55,12 @@ check(r.status_code == 200 and r.get_json()["game"]["score"][A] == 3, "a correct
 send({"teams": [B, A], "score": [3, 3], "q": 1, "matchday": 30})
 check(livescore._load(g["id"])["q"] == 2, "a misread quarter never goes back")
 
+C2, D2 = teams[3], teams[4]                                                  # corrections, on a game of their own
+for sc, fix in (([0, 0], False), ([10, 6], False), ([16, 12], False)):
+    send({"teams": [C2, D2], "score": sc, "q": 1, "matchday": 32, **({"fix": True} if fix else {})})
+check(send({"teams": [C2, D2], "score": [13, 12], "q": 1, "matchday": 32, "fix": True}).status_code == 200, "a 3-point correction is accepted")
+check(send({"teams": [C2, D2], "score": [13, 4], "q": 1, "matchday": 32, "fix": True}).status_code == 400, "a correction of 8 points is a misread: refused")
+
 # 3. /api/live: the Live pages' shape
 live = c.get("/api/live").get_json()["games"]
 lg = next((x for x in live if x["id"] == g["id"]), None)
@@ -104,6 +110,10 @@ sent = [o["score"] for o in out if o]
 check(sent == [[0, 2], [3, 2]], f"sent only after two captures agree, a +7 misread ignored, a single lower reading ignored: {sent}")
 G = live_reader.Game(("ESS", "DSG"))
 check([G.update(0, 0, 1, "10:00"), G.update(0, 0, 1, "10:00")][1]["score"] == [0, 0], "before tip-off, 0-0 is sent once")
+G = live_reader.Game(("ESS", "DSG"))
+G.update(80, 71, 4, "06:30"); G.update(80, 71, 4, "06:28"); G.update(80, 71, 4, "06:26")
+check(all(G.update(82, 4, 4, "06:12") is None or G.sent[1] == 71 for _ in range(30)), "a misread score far below (74 read as 4) is never sent as a correction")
+check([G.update(80, 70, 4, "06:00") for _ in range(15)][-1]["fix"] is True, "a 1-point drop seen for 30 s is a correction")
 check(live_reader.parse({"home": "", "away": "9", "q": "Q1", "clock": "02:21"}) == (None, 9, 1, "02:21"), "an empty score box is read as unknown")
 G = live_reader.Game(("ESS", "DSG"))
 sent = [o["score"] for o in (G.update(*x) for x in [(None, 2, 1, "09:00"), (None, 2, 1, "08:58"), (5, 7, 1, "05:00"), (5, 7, 1, "04:58"), (None, 7, 1, "04:40"), (None, 7, 1, "04:38")]) if o]
