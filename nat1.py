@@ -129,14 +129,8 @@ def standings(d=None):
             out.append(x)
         final = _over(out)
         pf = {c: (now.get(c) or {}).get("pf", 0) for c in by}
-        if not final:
-            # the season is not over: the points, then the points scored (only when we hold every game of the clubs concerned: the FTBB table gives no points scored), else the FTBB's order
-            known = {c: (now.get(c) or {}).get("j") == by[c]["j"] + (delta.get(c) or {}).get("j", 0) for c in by}
-            out2 = []
-            for pts in sorted({x["pts"] for x in out}, reverse=True):
-                group = [x for x in out if x["pts"] == pts]
-                by_pf = len(group) > 1 and all(known[x["code"]] for x in group)
-                out2 += sorted(group, key=lambda x: ((-pf[x["code"]]) if by_pf else 0, order.get(x["code"], 99)))
+        if not final:                                                   # the season is not over: the points, then the point difference (the FTBB's own numbers count), then the FTBB's order
+            out2 = sorted(out, key=lambda x: (-x["pts"], -x["diff"], order.get(x["code"], 99)))
             for i, x in enumerate(out2, 1):
                 x["rank"], x["final"] = i, False
             return out2
@@ -156,7 +150,7 @@ def standings(d=None):
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = 2 * x["w"] + x["l"]
     final = ranking.complete(len(d["teams"]), games)
-    out = ranking.rank(out, games, final=final)       # until the last round: points, then points scored; at the last round the FTBB's law (ranking.py), like the Pro A table
+    out = ranking.rank(out, games, final=final)       # until the last round: points, then point difference; at the last round the FTBB's law (ranking.py), like the Pro A table
     for i, x in enumerate(out, 1):
         x["rank"], x["final"] = i, final
     return out

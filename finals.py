@@ -59,7 +59,7 @@ def _write(d):
 
 # ---------------------------------------------------------------- the regular season: history
 def _table(results, teams=None):
-    """{club: rank} after these results: the same order as the standings page (points, then points scored; the FTBB's law once every game is played)."""
+    """{club: rank} after these results: the same order as the standings page (points, then point difference; the FTBB's law once every game is played)."""
     codes = dict(teams or {})
     codes.update({c: c for r in results for c in (r["home"], r["away"]) if c not in codes})
     return {r["code"]: r["rank"] for r in stats.official_standings({"teams": codes, "results": results}) if r["j"]}
@@ -162,7 +162,7 @@ def _league(d, g, teams):
         x["pts"] = x["carry"] + 2 * x["w"] + x["l"]
     played = sum(1 for rr in rounds.values() for x in rr if x["played"])
     done = bool(expected) and played >= expected
-    # until every game is played: the points, then the points scored; at the last round the order of the FTBB's law (ranking.py: art. 184) with the games of this group.
+    # until every game is played: the points, then the point difference; at the last round the order of the FTBB's law (ranking.py: art. 184) with the games of this group.
     # What neither leaves open is decided by the rank at the end of the regular season
     out = ranking.rank(out, [r for rr in rounds.values() for r in rr if r["played"]], fallback=lambda c: rows[c]["start_rank"] or 99, final=done)
     for i, x in enumerate(out, 1):
