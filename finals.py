@@ -58,16 +58,11 @@ def _write(d):
 
 
 # ---------------------------------------------------------------- the regular season: history
-def _table(results):
-    t = {}
-    for r in results:
-        for c, f, a in ((r["home"], r["home_score"], r["away_score"]), (r["away"], r["away_score"], r["home_score"])):
-            x = t.setdefault(c, {"w": 0, "l": 0, "pf": 0, "pa": 0})
-            x["w" if f > a else "l"] += 1
-            x["pf"] += f
-            x["pa"] += a
-    rows = sorted(t.items(), key=lambda kv: (-(2 * kv[1]["w"] + kv[1]["l"]), -(kv[1]["pf"] - kv[1]["pa"]), -kv[1]["pf"], kv[0]))
-    return {c: i for i, (c, _) in enumerate(rows, 1)}
+def _table(results, teams=None):
+    """{club: rank} after these results: the same order as the standings page (points, then points scored; the FTBB's law once every game is played)."""
+    codes = dict(teams or {})
+    codes.update({c: c for r in results for c in (r["home"], r["away"]) if c not in codes})
+    return {r["code"]: r["rank"] for r in stats.official_standings({"teams": codes, "results": results}) if r["j"]}
 
 
 def rank_history():
@@ -76,7 +71,7 @@ def rank_history():
     mds = sorted({r["matchday"] for r in o["results"]})
     teams = {c: {"name": n, "ranks": []} for c, n in o["teams"].items()}
     for md in mds:
-        ranks = _table([r for r in o["results"] if r["matchday"] <= md])
+        ranks = _table([r for r in o["results"] if r["matchday"] <= md], o["teams"])
         for c, t in teams.items():
             t["ranks"].append(ranks.get(c))
     return {"matchdays": mds, "teams": teams}
@@ -108,7 +103,7 @@ def movement(today=None, force=False):
     until = datetime.date.fromisoformat(date) + datetime.timedelta(days=MOVE_DAYS)
     if not force and today > until:
         return None
-    now, before = _table([r for r in o["results"] if r["matchday"] <= m]), _table([r for r in o["results"] if r["matchday"] <= m - 1])
+    now, before = _table([r for r in o["results"] if r["matchday"] <= m], o["teams"]), _table([r for r in o["results"] if r["matchday"] <= m - 1], o["teams"])
     return {"matchday": m, "date": date, "until": until.isoformat(), "moves": {c: before[c] - now[c] for c in now if c in before}}
 
 
@@ -165,10 +160,11 @@ def _league(d, g, teams):
     for x in out:
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = x["carry"] + 2 * x["w"] + x["l"]
-    # the order of the FTBB's law (ranking.py: art. 184) with the games of this group; what the law leaves open is decided by the rank at the end of the regular season
-    out = ranking.rank(out, [r for rr in rounds.values() for r in rr if r["played"]], fallback=lambda c: rows[c]["start_rank"] or 99)
     played = sum(1 for rr in rounds.values() for x in rr if x["played"])
     done = bool(expected) and played >= expected
+    # until every game is played: the points, then the points scored; at the last round the order of the FTBB's law (ranking.py: art. 184) with the games of this group.
+    # What neither leaves open is decided by the rank at the end of the regular season
+    out = ranking.rank(out, [r for rr in rounds.values() for r in rr if r["played"]], fallback=lambda c: rows[c]["start_rank"] or 99, final=done)
     for i, x in enumerate(out, 1):
         x["rank"] = i
         x["move"] = (x["start_rank"] - x["rank"] - (0 if g == "playoff" else ZONE)) if x["start_rank"] else 0     # places gained since the regular season (inside the group)
