@@ -2,22 +2,57 @@
 // the fans' predictions) plus a ready-to-paste post text that asks a question, to get people talking. Plugs into admin-images.js (ImgKit).
 (function () {
   const K = window.ImgKit; if (!K) return;
-  const { W, C, txt, rr, logo, frame, f1, nm, download } = K;
+  const { W, C, txt, rr, lines, logo, frame, f1, nm, download } = K;
   const T = {
     fr: { day: 'Journée', results: 'Les résultats', table: 'Le classement', top: 'Les meilleurs de la journée', mvps: 'Les MVP de la journée', sheet: 'Feuille de match', next: 'La prochaine journée', fans: 'Le pronostic des fans',
       afterMd: n => `APRÈS LA JOURNÉE ${n}`, vsPrev: 'Évolution par rapport à la journée précédente', wl: 'V-D', diff: 'Diff', pts: 'Pts', gp: 'Matchs', PD: 'PD', INT: 'INT', CTR: 'CTR',
       metric: { pir: 'Évaluation (PIR)', pts: 'Points', reb: 'Rebonds', ast: 'Passes décisives', stl: 'Interceptions', blk: 'Contres', p3m: '3 points réussis', pm: '+/-' },
       unit: { pir: 'PIR', pts: 'PTS', reb: 'REB', ast: 'PD', stl: 'INT', blk: 'CTR', p3m: '3PT', pm: '+/-' }, none: 'Rien à afficher pour cette journée.', nobox: 'Pas de feuille de match pour cette rencontre.',
-      predict: 'Qui va gagner ? Pronostiquez sur tunisiabasket.com', vote: 'Votez avant le début de la journée sur tunisiabasket.com', nopicks: 'Pas encore de pronostics pour la prochaine journée.', voted: 'des fans', sheetFor: 'Les joueurs', best: 'Meilleur' },
+      predict: 'Qui va gagner ? Pronostiquez sur tunisiabasket.com', vote: 'Votez avant le début de la journée sur tunisiabasket.com', nopicks: 'Pas encore de pronostics pour la prochaine journée.', voted: 'des fans', sheetFor: 'Les joueurs', best: 'Meilleur',
+      tbc: 'Horaire à confirmer' },
     en: { day: 'Matchday', results: 'The results', table: 'The standings', top: 'Best players of the matchday', mvps: 'MVPs of the matchday', sheet: 'Game sheet', next: 'The next matchday', fans: 'What the fans predict',
       afterMd: n => `AFTER MATCHDAY ${n}`, vsPrev: 'Change since the previous matchday', wl: 'W-L', diff: 'Diff', pts: 'Pts', gp: 'Games', PD: 'AST', INT: 'STL', CTR: 'BLK',
       metric: { pir: 'Rating (PIR)', pts: 'Points', reb: 'Rebounds', ast: 'Assists', stl: 'Steals', blk: 'Blocks', p3m: 'Three-pointers made', pm: '+/-' },
       unit: { pir: 'PIR', pts: 'PTS', reb: 'REB', ast: 'AST', stl: 'STL', blk: 'BLK', p3m: '3P', pm: '+/-' }, none: 'Nothing to show for this matchday.', nobox: 'No box score for this game.',
-      predict: 'Who wins? Predict on tunisiabasket.com', vote: 'Pick before the matchday starts on tunisiabasket.com', nopicks: 'No predictions yet for the next matchday.', voted: 'of fans', sheetFor: 'Players', best: 'Best' }
+      predict: 'Who wins? Predict on tunisiabasket.com', vote: 'Pick before the matchday starts on tunisiabasket.com', nopicks: 'No predictions yet for the next matchday.', voted: 'of fans', sheetFor: 'Players', best: 'Best',
+      tbc: 'Time TBC' }
   };
   let M = null; const st = { metric: 'pir', n: 8, game: 0, sn: 6 };
   const lang = () => K.lang(), t = () => T[lang()];
   const day = iso => iso ? new Date(iso + 'T12:00').toLocaleDateString(lang() === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) : '';
+  const parts = iso => { const p = {}; new Intl.DateTimeFormat(lang() === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).formatToParts(new Date(iso + 'T12:00')).forEach(x => { p[x.type] = x.value; }); if (lang() === 'fr' && p.day === '1') p.day = '1er'; return p; };
+  const dayHead = iso => { const p = parts(iso), s = `${p.weekday} ${p.day} ${p.month}`; return s.charAt(0).toUpperCase() + s.slice(1); };   // "Mardi 24 novembre" / "Tuesday 24 November"
+  // The games of a matchday grouped by day: earliest day first, then by kick-off time (no time yet = last), then the calendar's order.
+  function byDay(nx, games) {
+    const hm = t => t ? String(t).replace(/^(\d):/, '0$1:') : '99:99';
+    const gs = games.map((g, i) => ({ g, i, d: g.date || nx.date || '', t: hm(g.time) })).sort((a, b) => a.d.localeCompare(b.d) || a.t.localeCompare(b.t) || a.i - b.i);
+    const out = [];
+    for (const x of gs) { const last = out[out.length - 1]; if (last && last.date === x.d) last.games.push(x.g); else out.push({ date: x.d, games: [x.g] }); }
+    return out;
+  }
+  // "mercredi 25 novembre", or the span of a matchday over several days: "mardi 24 – mercredi 25 novembre" ("dimanche 30 novembre – lundi 1 décembre").
+  function span(groups, fallback) {
+    const ds = groups.map(x => x.date).filter(Boolean);
+    if (ds.length < 2) return day(ds[0] || fallback);
+    const a = parts(ds[0]), b = parts(ds[ds.length - 1]), wd = p => `${p.weekday} ${p.day}`;
+    return a.month === b.month ? `${wd(a)} – ${wd(b)} ${b.month}` : `${wd(a)} ${a.month} – ${wd(b)} ${b.month}`;
+  }
+  // A day heading in front of that day's games: an orange tick, the day, a thin rule to the right edge. h = its band height.
+  function drawDayHead(ctx, y, iso, h) {
+    const s = dayHead(iso), base = y + h - 18;
+    ctx.fillStyle = C.acc; rr(ctx, 44, base - 24, 6, 30, 3); ctx.fill();
+    txt(ctx, s, 62, base, { size: 27, weight: 800, color: C.txt });
+    const x = 62 + ctx.measureText(s).width + 20; ctx.fillStyle = C.line; ctx.fillRect(x, base - 9, W - 40 - x, 2);
+  }
+  // A team name in a game card, centred on cy: one line, or two slightly smaller lines when it is long (rather than one tiny line).
+  function teamName(ctx, s, x, cy, size, maxW, align) {
+    lines(ctx, s, 1e9, size, 800);
+    if (ctx.measureText(s).width <= maxW * 1.12) return txt(ctx, s, x, cy + size * 0.36, { size, weight: 800, maxW, align });
+    const s2 = size - 4, all = lines(ctx, s, maxW, s2, 800, 9);
+    if (all.length < 2) return txt(ctx, s, x, cy + size * 0.36, { size, weight: 800, maxW, align });
+    const lh = s2 * 1.12, b1 = cy - lh / 2 + s2 * 0.36;
+    txt(ctx, all[0], x, b1, { size: s2, weight: 800, maxW, align }); txt(ctx, all.slice(1).join(' '), x, b1 + lh, { size: s2, weight: 800, maxW, align });
+  }
   const signed = v => (v > 0 ? '+' : '') + v;
   const mv = (p, k) => k === 'pm' ? signed(p.pm) : String(p[k]);
   const line = p => `${p.pts} PTS · ${p.reb} REB · ${p.ast} ${t().PD}`;
@@ -157,44 +192,62 @@
 
   // ---------------------------------------------------------------- next matchday, and what the fans predict (percentages only)
   async function drawNext() {
-    await ensure(); const T_ = t(), nx = M.next; if (!nx) return empty(T_.none, 'x.png');
-    const RH = 120, top = 300, H = top + nx.games.length * RH + 150 + 110;
-    const ctx = await frame(H, `${T_.day.toUpperCase()} ${nx.matchday}`, T_.next, day(nx.date));
-    for (let i = 0; i < nx.games.length; i++) {
-      const g = nx.games[i], y = top + i * RH;
-      ctx.fillStyle = C.card; rr(ctx, 40, y, W - 80, RH - 14, 22); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-      await logo(ctx, g.home, 66, y + 14, 78); await logo(ctx, g.away, W - 66 - 78, y + 14, 78);
-      txt(ctx, g.home_name, 162, y + 62, { size: 29, weight: 800, maxW: 290 });
-      txt(ctx, g.away_name, W - 162, y + 62, { size: 29, weight: 800, maxW: 290, align: 'right' });
-      txt(ctx, 'VS', W / 2, y + (g.time ? 52 : 66), { size: 34, weight: 900, color: C.acc, align: 'center' });
-      if (g.time) txt(ctx, `${g.date && g.date !== nx.date ? day(g.date).split(' ').slice(0, 2).join(' ') + ' · ' : ''}${g.time}`, W / 2, y + 88, { size: 26, weight: 800, color: C.mut, align: 'center', maxW: 300 });
+    await ensure(); const T_ = t(), nx = M.next; if (!nx || !nx.games.length) return empty(T_.none, 'x.png');
+    // Games in time order; a matchday over several days gets a heading per day. Rows shrink so it stays within a 1080×1350 post when it can.
+    const groups = byDay(nx, nx.games), multi = groups.length > 1, n = nx.games.length;
+    const top = 300, foot = 260, GAP = 14, fit = dh => Math.floor((1350 - top - foot - groups.length * dh) / n);
+    const DH = !multi ? 0 : fit(58) >= 92 ? 58 : 50, RH = Math.max(80, Math.min(120, fit(DH)));
+    const H = top + groups.length * DH + n * RH + foot;
+    const ctx = await frame(H, `${T_.day.toUpperCase()} ${nx.matchday}`, T_.next, span(groups, nx.date));
+    let y = top;
+    for (const grp of groups) {
+      if (multi) { drawDayHead(ctx, y, grp.date, DH); y += DH; }
+      for (const g of grp.games) {
+        const ch = RH - GAP, cy = y + ch / 2, L = Math.min(78, ch - 18), nx0 = 66 + L + 18, big = ch >= 90;
+        ctx.fillStyle = C.card; rr(ctx, 40, y, W - 80, ch, big ? 22 : 18); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
+        await logo(ctx, g.home, 66, cy - L / 2, L); await logo(ctx, g.away, W - 66 - L, cy - L / 2, L);
+        const ns = big ? 29 : 26, nameW = W / 2 - 108 - nx0;
+        teamName(ctx, g.home_name, nx0, cy, ns, nameW, 'left'); teamName(ctx, g.away_name, W - nx0, cy, ns, nameW, 'right');
+        // VS over the kick-off time (or "time to be confirmed"), the pair centred in the card
+        const vs = big ? 34 : 28, ts = g.time ? (big ? 26 : 23) : (big ? 19 : 17), gap = big ? 14 : 10, hgt = 0.72 * (vs + ts) + gap, vy = cy - hgt / 2 + 0.72 * vs;
+        txt(ctx, 'VS', W / 2, vy, { size: vs, weight: 900, color: C.acc, align: 'center' });
+        txt(ctx, g.time || T_.tbc, W / 2, vy + gap + 0.72 * ts, { size: ts, weight: g.time ? 800 : 700, color: C.mut, align: 'center', maxW: 196 });
+        y += RH;
+      }
     }
-    const by = top + nx.games.length * RH + 6;
+    const by = y + 6;
     ctx.fillStyle = C.acc; rr(ctx, 40, by, W - 80, 86, 43); ctx.fill();
     txt(ctx, '🔮 ' + T_.predict, W / 2, by + 56, { size: 29, weight: 900, color: '#10131c', align: 'center', maxW: W - 140 });
-    const prog = nx.games.map(g => `${g.home_name} – ${g.away_name}${g.time ? ' · ' + g.time : ''}`).join('\n');
-    caption(lang() === 'fr' ? `📅 La journée ${nx.matchday} de la Pro A, ${day(nx.date)} !\n${prog}\n🔮 Qui va gagner ? Faites vos pronostics avant le début de la journée et découvrez l'avis des autres fans : tunisiabasket.com\nQuel match attendez-vous le plus ? 👇\n${tags}`
-      : `📅 Pro A matchday ${nx.matchday}, ${day(nx.date)}!\n${prog}\n🔮 Who wins? Make your predictions before the matchday starts and see what other fans think: tunisiabasket.com\nWhich game are you waiting for? 👇\n${tags}`);
+    const fr = lang() === 'fr', gl = g => `${g.home_name} – ${g.away_name}${g.time ? ' · ' + g.time : ''}`;
+    const prog = multi ? groups.map(grp => `🗓️ ${dayHead(grp.date)}\n` + grp.games.map(gl).join('\n')).join('\n\n') : groups[0].games.map(gl).join('\n');
+    const when = span(groups, nx.date);
+    caption(fr ? `📅 La journée ${nx.matchday} de la Pro A, ${when} !\n\n${prog}\n\n🔮 Qui va gagner ? Faites vos pronostics avant le début de la journée et découvrez l'avis des autres fans : tunisiabasket.com\nQuel match attendez-vous le plus ? 👇\n${tags}`
+      : `📅 Pro A matchday ${nx.matchday}, ${when}!\n\n${prog}\n\n🔮 Who wins? Make your predictions before the matchday starts and see what other fans think: tunisiabasket.com\nWhich game are you waiting for? 👇\n${tags}`);
     download(`tunisia-basket-j${nx.matchday}-programme.png`);
   }
   async function drawFans() {
     await ensure(); const T_ = t(), nx = M.next;
     const gs = nx ? nx.games.filter(g => g.home_picks + g.away_picks > 0) : [];
     if (!gs.length) return empty(T_.nopicks, 'x.png');
-    const RH = 130, top = 300, H = top + gs.length * RH + 150 + 40;
-    const ctx = await frame(H, `${T_.day.toUpperCase()} ${nx.matchday}`, T_.fans, day(nx.date));
-    for (let i = 0; i < gs.length; i++) {
-      const g = gs[i], y = top + i * RH, tot = g.home_picks + g.away_picks, hp = Math.round(100 * g.home_picks / tot), ap = 100 - hp;
+    // same order and day headings as the next-matchday image
+    const groups = byDay(nx, gs), multi = groups.length > 1, DH = multi ? 58 : 0;
+    const top = 300, RH = Math.max(120, Math.min(130, Math.floor((1350 - top - 190 - groups.length * DH) / gs.length))), H = top + groups.length * DH + gs.length * RH + 150 + 40;
+    const ctx = await frame(H, `${T_.day.toUpperCase()} ${nx.matchday}`, T_.fans, span(byDay(nx, nx.games), nx.date));
+    let y = top;
+    for (const grp of groups) for (const [k, g] of grp.games.entries()) {
+      if (multi && !k) { drawDayHead(ctx, y, grp.date, DH); y += DH; }
+      const tot = g.home_picks + g.away_picks, hp = Math.round(100 * g.home_picks / tot), ap = 100 - hp;
       ctx.fillStyle = C.card; rr(ctx, 40, y, W - 80, RH - 14, 22); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
       await logo(ctx, g.home, 62, y + 12, 52); await logo(ctx, g.away, W - 62 - 52, y + 12, 52);
       txt(ctx, g.home_name, 128, y + 48, { size: 25, weight: 800, maxW: 300 });
       txt(ctx, g.away_name, W - 128, y + 48, { size: 25, weight: 800, maxW: 300, align: 'right' });
       if (g.time) txt(ctx, g.time, W / 2, y + 48, { size: 24, weight: 800, color: C.mut, align: 'center' });
-      const bx = 62, bw = W - 124, by = y + 72, bh = 30, hwid = hp ? Math.max(24, bw * hp / 100) : 0;
+      const bx = 62, bw = W - 124, by = y + RH - 58, bh = 30, hwid = hp ? Math.max(24, bw * hp / 100) : 0;
       ctx.fillStyle = C.blue; rr(ctx, bx, by, bw, bh, 15); ctx.fill(); if (hwid) { ctx.fillStyle = C.acc; rr(ctx, bx, by, hwid, bh, 15); ctx.fill(); }
       txt(ctx, hp + '%', bx + 16, by + 23, { size: 22, weight: 900, color: '#10131c' }); txt(ctx, ap + '%', bx + bw - 16, by + 23, { size: 22, weight: 900, color: '#fff', align: 'right' });
+      y += RH;
     }
-    txt(ctx, T_.vote, W / 2, top + gs.length * RH + 36, { size: 24, weight: 800, color: C.acc, align: 'center', maxW: W - 100 });
+    txt(ctx, T_.vote, W / 2, y + 36, { size: 24, weight: 800, color: C.acc, align: 'center', maxW: W - 100 });
     const top1 = gs.slice().sort((a, b) => Math.abs(a.home_picks - a.away_picks) / (a.home_picks + a.away_picks) - Math.abs(b.home_picks - b.away_picks) / (b.home_picks + b.away_picks))[0];
     caption(lang() === 'fr' ? `🔮 Le pronostic des fans pour la journée ${nx.matchday} !\n${top1 ? `Match le plus serré : ${top1.home_name} – ${top1.away_name}. ` : ''}Et vous, qui gagne ? Votez avant le début de la journée : tunisiabasket.com 👇\n${tags}`
       : `🔮 What fans predict for matchday ${nx.matchday}!\n${top1 ? `Closest call: ${top1.home_name} – ${top1.away_name}. ` : ''}And you, who wins? Pick before the matchday starts: tunisiabasket.com 👇\n${tags}`);
