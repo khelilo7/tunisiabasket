@@ -10,7 +10,7 @@ import { Standing } from '@/lib/types';
 import { C } from '@/theme';
 
 type League = 'proa' | 'nat1';
-type Nat1Row = { code: string; name: string; rank: number; w: number; l: number; pts: number; diff: number };
+type Nat1Row = { code: string; name: string; rank: number; w: number; l: number; pts: number; diff: number; final?: boolean };
 
 export default function Standings() {
   const { t, fav, lang } = useApp();
@@ -67,7 +67,7 @@ export default function Standings() {
           <Row style={{ gap: 6 }}><View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: C.blue }} /><Txt v="small">{lg === 'proa' ? `${t('playout')} · ${t('others')}` : ''}</Txt></Row>
         </Row>
       ) : null}
-      <Txt v="small" style={{ marginTop: 10 }}>{t('w')} 2 pts · {t('l')} 1 pt · FTBB art. 182–184</Txt>
+      <Txt v="small" style={{ marginTop: 10 }}>{t('w')} 2 pts · {t('l')} 1 pt · FTBB art. 182–184{rows.some((r) => r.final === false) ? ` · ${t('rankProvisional')}` : ''}</Txt>
       {last ? (
         <Section title={`${t('matchday')} ${last.matchday}`}>
           <Card padded={false}>{last.games.map((g, i) => <GameRow key={g.home + g.away} g={g} md={last.matchday} first={!i} />)}</Card>
