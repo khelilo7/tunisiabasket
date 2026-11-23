@@ -15,7 +15,7 @@ The law gives nothing after step 2 for two teams that are still level, or after 
 then the club code (so that the table never changes order between two reloads).
 
 WHEN the law applies: only once the phase is over (every game of the double round-robin has its result). While a phase is still being played the table is ordered by the points of art. 182 and,
-for teams level on them, by the points scored in all the games (the most first), then by `fallback` and the club code: no head-to-head, no point difference. The law then takes the place of that
+for teams level on them, by the point difference of all the games (the best first), then the points scored, then `fallback` and the club code: no head-to-head. The law then takes the place of that
 provisional order at the last round. This holds for the Pro A regular season, the play-off, the play-out and the National One. Source: https://www.ftbb.org.tn/wp-content/uploads/2025/11/Reglements-Generaux-de-la-FTBB_2024-2.pdf
 """
 LAW_URL = "https://www.ftbb.org.tn/wp-content/uploads/2025/11/Reglements-Generaux-de-la-FTBB_2024-2.pdf"
@@ -28,9 +28,10 @@ def complete(teams, results):
 
 
 def provisional(rows, fallback=None):
-    """The table order while the phase is not over: points, then the points scored in all the games (the most first), then fallback(code) and the club code. No tie-break law."""
+    """The table order while the phase is not over: points, then the point difference of all the games (the best first), then the points scored, then fallback(code) and the club code. No tie-break law."""
     fb = (lambda c: fallback(c) if fallback else 0)
-    return sorted(rows, key=lambda r: (-r["pts"], -(r.get("pf") or 0), fb(r["code"]), r["code"]))
+    diff = lambda r: r["diff"] if r.get("diff") is not None else (r.get("pf") or 0) - (r.get("pa") or 0)
+    return sorted(rows, key=lambda r: (-r["pts"], -diff(r), -(r.get("pf") or 0), fb(r["code"]), r["code"]))
 
 
 def rank(rows, results, fallback=None, final=True):

@@ -504,7 +504,7 @@ def load_official():
 
 def official_standings(official=None):
     """League table computed from ALL official results (including games without a box score). Until the last round of the season (every game of the double round-robin has its
-    result) the order is the points, then the points scored; once the season is over it is the order the FTBB's law gives (ranking.py: points, then the games between the teams
+    result) the order is the points, then the point difference; once the season is over it is the order the FTBB's law gives (ranking.py: points, then the games between the teams
     level on points, then the point difference...). Every row says which one it is: "final"."""
     o = official or load_official()
     t = {c: {"code": c, "name": n, "j": 0, "w": 0, "l": 0, "pf": 0, "pa": 0} for c, n in o["teams"].items()}
