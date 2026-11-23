@@ -28,7 +28,7 @@ for md, games in per.items():
 table = stats.official_standings()
 exp = {"CA": (10, 21), "JSK": (10, 21), "USM": (9, 20), "ESS": (8, 19), "DSG": (6, 17), "CSS": (6, 17),
        "ESG": (6, 17), "SN": (4, 15), "JSM": (3, 14), "ESR": (2, 13), "USA": (1, 12), "CSHS": (1, 12)}
-check([r["code"] for r in table][:4] == ["CA", "JSK", "USM", "ESS"], "top 4 must be CA, JSK, USM, ESS (CA and JSK are level on 21 points; the season is not over, so the points scored decide, not the game between them)")
+check([r["code"] for r in table][:4] == ["CA", "JSK", "USM", "ESS"], "top 4 must be CA, JSK, USM, ESS (CA and JSK are level on 21 points; the season is not over, so the point difference decides, not the game between them)")
 check(not any(r["final"] for r in table), "the season is not over: the table says it is provisional")
 for r in table:
     check((r["w"], r["pts"]) == exp[r["code"]], f"standing of {r['code']}: {(r['w'], r['pts'])} != {exp[r['code']]}")
