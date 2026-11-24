@@ -368,7 +368,7 @@ def meta(lang, page, arg=None):
         up = "".join(f'<li>J{u["matchday"]} {"vs" if u["home"] else "@"} {esc(u["opp_name"])}</li>' for u in v["upcoming"])
         out.update(title=t["t_title"].format(name=v["name"], code=v["code"]), description=desc, arg=v["code"],
                    jsonld=[_org_jsonld(lang), {"@context": "https://schema.org", "@type": "SportsTeam", "name": v["name"], "sport": "Basketball",
-                                               "logo": f"{b}/img/teams/{v['code']}.png?v=2", "url": b + path(lang, "team", v["code"]),
+                                               "logo": f"{b}/img/teams/{v['code']}.png?v=3", "url": b + path(lang, "team", v["code"]),
                                                "memberOf": {"@type": "SportsOrganization", "name": "Pro A", "sport": "Basketball"}}],
                    ssr=f'<h1>{esc(v["name"])} ({v["code"]})</h1><p>{esc(desc)}</p><h2>{t["results"]}</h2><ul>{res}</ul><h2>{t["upcoming"]}</h2><ul>{up}</ul>'
                        f'<h2>{t["roster"]}</h2>{_players_table(lang, v["players"], 30)}')

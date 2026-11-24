@@ -1,5 +1,5 @@
 {
-  "_doc": "Player profiles, keyed by player id (team code + jersey number, lower-case). height in cm (a [min, max] pair when sources disagree), weight in kg, birth as YYYY-MM-DD. 'approx' lists the fields that are estimates. 'src' says where a value not supplied by the club staff comes from (FIBA player profiles). Anything unknown is left out. To correct or add a profile without a deploy, put the same structure in data/players_info.json (it wins over this file).",
+  "_doc": "Player profiles, keyed by player id (team code + jersey number, lower-case). height in cm (a [min, max] pair when sources disagree), weight in kg, birth as YYYY-MM-DD. 'approx' lists the fields that are estimates. 'src' says where a value not supplied by the club staff comes from (FIBA player profiles). wingspan in cm. When only the age is known (no birth date yet): \"age\" in years on the day \"age_as_of\" (YYYY-MM-DD), the site adds the years that have passed since. Anything unknown is left out. To correct or add a profile without a deploy, put the same structure in data/players_info.json (it wins over this file).",
   "ca-24":   {"height": 189, "weight": 84, "birth": "1993-04-20"},
   "esr-8":   {"height": 185, "weight": 84, "birth": "1986-10-19", "approx": ["height", "weight"]},
   "jsk-7":   {"height": [193, 196], "birth": "1999-06-16", "approx": ["height"]},
@@ -30,5 +30,6 @@
   "esr-13":  {"height": 196, "birth": "2002-05-10", "src": "FIBA"},
   "esg-4":   {"height": 185, "birth": "1996-07-21", "src": "FIBA"},
   "ess-7":   {"height": 191, "birth": "1994-10-21", "src": "FIBA"},
-  "esr-12":  {"height": 198, "birth": "1998-05-03", "src": "FIBA"}
+  "esr-12":  {"height": 198, "birth": "1998-05-03", "src": "FIBA"},
+  "esg-30":  {"height": 202, "weight": 96, "wingspan": 208, "age": 20, "age_as_of": "2026-11-25"}
 }

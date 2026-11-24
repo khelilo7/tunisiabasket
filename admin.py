@@ -281,7 +281,7 @@ def nat1_admin_view():
 
 @bp.post("/admin/api/nat1")
 def nat1_admin_edit():
-    """Body {"op": "team" | "remove_team" | "result" | "paste" | "fixtures" | "official" | "remove_result" | "season" | "playoff_games" | "playoff_clear", ...}: the teams and results of Nationale 1 (nat1.py)."""
+    """Body {"op": "team" | "remove_team" | "result" | "paste" | "fixtures" | "time" | "official" | "remove_result" | "season" | "playoff_games" | "playoff_clear", ...}: the teams and results of Nationale 1 (nat1.py)."""
     b = request.get_json(silent=True) or {}
     op, msg = b.get("op"), "Saved."
     try:
@@ -301,6 +301,9 @@ def nat1_admin_edit():
             msg = f"{added} result(s) added, {replaced} replaced."
         elif op == "fixtures":
             msg = f"{nat1.put_fixtures(nat1.parse_fixtures(b.get('text')))} game(s) saved in the calendar."
+        elif op == "time":
+            t = nat1.set_time(b.get("matchday"), b.get("home"), b.get("away"), b.get("time"), b.get("date"))
+            msg = f"Kick-off time saved: {t}." if t else "Kick-off time removed."
         elif op == "official":
             published, rows = nat1.parse_official(b.get("text"))
             n = nat1.set_official(published, rows)

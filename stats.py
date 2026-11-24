@@ -1107,7 +1107,7 @@ def attach_bios(players):
     for p in players:
         p["photo"] = photos.get(p["id"])
         b = bios.get(p["id"])
-        p["bio"] = {k: b[k] for k in ("height", "weight", "birth", "approx") if k in b} if b else None
+        p["bio"] = {k: b[k] for k in ("height", "weight", "wingspan", "birth", "age", "age_as_of", "approx") if k in b} if b else None
 
 
 def _z(values):

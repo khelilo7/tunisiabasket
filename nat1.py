@@ -26,6 +26,18 @@ import ranking
 
 FILE = config.DATA_DIR / "nat1.json"
 CODE = re.compile(r"^[A-Z0-9]{2,8}$")
+TIME = re.compile(r"^([01]?\d|2[0-3])\s*[:hH]\s*([0-5]\d)$")          # 18:30, 18h30, 8:00
+
+
+def clean_time(v):
+    """"HH:MM" from what is typed (18:30, 18h30, 8:00), "" when nothing is typed, ValueError when it is not an hour."""
+    v = str(v or "").strip()
+    if not v:
+        return ""
+    m = TIME.match(v)
+    if not m:
+        raise ValueError("the time is HH:MM, for example 18:30")
+    return f"{int(m.group(1)):02d}:{m.group(2)}"
 _lock = threading.Lock()
 # How a club comes up to the Pro A (FTBB, "Formule du championnat de Tunisie Nationale 1 seniors garçons", season 2025-2026; the regulation of 2026-2027 is not published yet, so `confirmed` stays False and
 # the page says so): 22 matchdays, then the first `playoff` clubs play quarter-finals and semi-finals, each a best-of-three (the first game and a possible decider at the better ranked club); the
@@ -246,20 +258,23 @@ def view():
     names = d["teams"]
     games = {}
     for f in d["fixtures"]:
-        games[(f["matchday"], frozenset((f["home"], f["away"])))] = {"home": f["home"], "away": f["away"], "home_score": None, "away_score": None, "date": f.get("date"), "projected": bool(f.get("projected"))}
+        games[(f["matchday"], frozenset((f["home"], f["away"])))] = {"home": f["home"], "away": f["away"], "home_score": None, "away_score": None, "date": f.get("date"), "time": f.get("time"), "projected": bool(f.get("projected"))}
     for r in d["results"]:
         k = (r["matchday"], frozenset((r["home"], r["away"])))
-        g = games.get(k) or {"date": None, "projected": False}
-        games[k] = {**g, "home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"], "date": r.get("date") or g.get("date"), "projected": False}
+        g = games.get(k) or {"date": None, "time": None, "projected": False}
+        games[k] = {**g, "home": r["home"], "away": r["away"], "home_score": r["home_score"], "away_score": r["away_score"], "date": r.get("date") or g.get("date"), "time": r.get("time") or g.get("time"), "projected": False}
     by = {}
     for (md, _), g in games.items():
         by.setdefault(md, []).append({**g, "home_name": names.get(g["home"], g["home"]), "away_name": names.get(g["away"], g["away"])})
     today, days = _today(), []
     for md, gs in sorted(by.items()):
-        date = min((g["date"] for g in gs if g["date"]), default=None)
+        dates = [g["date"] for g in gs if g["date"]]
+        date, last = min(dates, default=None), max(dates, default=None)
         played = any(g["home_score"] is not None for g in gs) or bool(date and date <= today)
-        days.append({"matchday": md, "date": date, "played": played, "projected": all(g["projected"] for g in gs),
-                     "missing": sum(g["home_score"] is None for g in gs) if played else 0, "games": sorted(gs, key=lambda g: g["home"])})
+        for g in gs:                                                # the games of a matchday are not always played on the same day: each one is late (its score missing) on its own day
+            g["missing"] = g["home_score"] is None and bool(g["date"] or date) and (g["date"] or date) <= today
+        days.append({"matchday": md, "date": date, "date_end": last, "played": played, "projected": all(g["projected"] for g in gs),
+                     "missing": sum(g["missing"] for g in gs), "games": sorted(gs, key=lambda g: g["home"])})
     off = d["official"]
     return {"season": d["season"] or season_default(), "teams": names, "standings": standings(d), "matchdays": days, "games": len(d["results"]), "format": FORMAT, "playoff": playoff(d), "playoff_on": d["playoff_on"],
             "official": {"published": off.get("published"), "source": off.get("source") or "FTBB", "since": len(since_official(d))} if off else None}
@@ -293,6 +308,9 @@ def clean_result(r, teams):
         raise ValueError("a basketball game has a winner: the scores are equal")
     if date:
         out["date"] = date
+    time = clean_time(r.get("time"))
+    if time:
+        out["time"] = time
     return out
 
 
@@ -351,6 +369,8 @@ def put_results(rows):
                     raise ValueError(f"{r['home']} – {r['away']} is not a game of J{r['matchday']} in the calendar")
                 if fx and fx.get("date") and "date" not in r:
                     r["date"] = fx["date"]                              # the day of the calendar, unless another one is typed
+                if fx and fx.get("time") and "time" not in r:
+                    r["time"] = fx["time"]                              # and its hour
                 x = _clash(d, r)
                 if x:
                     raise ValueError(f"{x['home']} - {x['away']} is already J{r['matchday']}: a team plays once per matchday")
@@ -370,7 +390,7 @@ def put_results(rows):
 
 
 def parse_lines(text):
-    """A pasted list, one result per line: `matchday, HOME, AWAY, home score, away score[, date]` (commas, semicolons or tabs). Blank lines and lines starting with # are skipped."""
+    """A pasted list, one result per line: `matchday, HOME, AWAY, home score, away score[, date[, time]]` (commas, semicolons or tabs). Blank lines and lines starting with # are skipped."""
     rows = []
     for line in str(text or "").splitlines():
         line = line.strip()
@@ -379,7 +399,7 @@ def parse_lines(text):
         p = [x.strip() for x in re.split(r"[;,\t]", line)]
         if len(p) < 5:
             raise ValueError(f"“{line}”: write matchday, home, away, home score, away score")
-        rows.append({"matchday": p[0].lstrip("Jj"), "home": p[1], "away": p[2], "home_score": p[3], "away_score": p[4], "date": p[5] if len(p) > 5 else ""})
+        rows.append({"matchday": p[0].lstrip("Jj"), "home": p[1], "away": p[2], "home_score": p[3], "away_score": p[4], "date": p[5] if len(p) > 5 else "", "time": p[6] if len(p) > 6 else ""})
     return rows
 
 
@@ -392,8 +412,32 @@ def remove_result(matchday, home, away):
     return n - len(d["results"])
 
 
+def set_time(matchday, home, away, time, date=None):
+    """Set (or clear, with "") the hour of one game, and its day when `date` is given, in the calendar and in its result if it has one: the hour of a game is known
+    well before its score. Raises ValueError when the game is neither in the calendar nor a result."""
+    time = clean_time(time)
+    date = str(date or "").strip()
+    if date and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date):
+        raise ValueError("the date is YYYY-MM-DD")
+    pair = {str(home).upper(), str(away).upper()}
+    with _lock:
+        d = load()
+        hit = [x for x in (*d["fixtures"], *d["results"]) if x["matchday"] == int(matchday) and {x["home"], x["away"]} == pair]
+        if not hit:
+            raise ValueError("that game is not in the calendar")
+        for x in hit:
+            if time:
+                x["time"] = time
+            else:
+                x.pop("time", None)
+            if date:
+                x["date"] = date
+        _write(d)
+    return time
+
+
 def parse_fixtures(text):
-    """A pasted calendar, one game per line: `matchday, HOME, AWAY, date[, projected]` (projected = the pairing is assumed, not published)."""
+    """A pasted calendar, one game per line: `matchday, HOME, AWAY, date[, time][, projected]` (time = 18:30 or 18h30; projected = the pairing is assumed, not published)."""
     rows = []
     for line in str(text or "").splitlines():
         line = line.strip()
@@ -402,7 +446,9 @@ def parse_fixtures(text):
         p = [x.strip() for x in re.split(r"[;,\t]", line)]
         if len(p) < 3:
             raise ValueError(f"“{line}”: write matchday, home, away, date")
-        rows.append({"matchday": p[0].lstrip("Jj"), "home": p[1], "away": p[2], "date": p[3] if len(p) > 3 else "", "projected": len(p) > 4 and p[4].lower() in ("1", "true", "yes", "projected")})
+        rest = p[4:]
+        rows.append({"matchday": p[0].lstrip("Jj"), "home": p[1], "away": p[2], "date": p[3] if len(p) > 3 else "", "time": next((x for x in rest if TIME.match(x)), ""),
+                     "projected": any(x.lower() in ("1", "true", "yes", "projected") for x in rest)})
     return rows
 
 
@@ -424,6 +470,9 @@ def put_fixtures(rows):
                 f = {"matchday": _int(raw.get("matchday"), 1, 60), "home": home, "away": away, "projected": bool(raw.get("projected"))}
                 if date:
                     f["date"] = date
+                time = clean_time(raw.get("time"))
+                if time:
+                    f["time"] = time
             except ValueError as e:
                 raise ValueError(f"line {i}: {e}") from None
             d["fixtures"] = [x for x in d["fixtures"] if not (x["matchday"] == f["matchday"] and {x["home"], x["away"]} == {home, away})]

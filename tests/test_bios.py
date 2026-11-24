@@ -28,7 +28,8 @@ for pid, b in raw.items():
         continue
     n += 1
     check(pid in players, f"{pid}: no such player in the data")
-    check(set(b) <= {"height", "weight", "birth", "approx", "src"}, f"{pid}: unknown fields {set(b) - {'height', 'weight', 'birth', 'approx'}}")
+    FIELDS = {"height", "weight", "wingspan", "birth", "age", "age_as_of", "approx", "src"}
+    check(set(b) <= FIELDS, f"{pid}: unknown fields {set(b) - FIELDS}")
     h = b.get("height")
     for v in (h if isinstance(h, list) else [h] if h else []):
         check(isinstance(v, int) and 150 <= v <= 240, f"{pid}: implausible height {v}")
@@ -42,12 +43,23 @@ for pid, b in raw.items():
             check(1965 <= d.year <= 2010, f"{pid}: implausible birth year")
         except ValueError:
             check(False, f"{pid}: birth must be YYYY-MM-DD")
+    if "wingspan" in b:
+        check(isinstance(b["wingspan"], int) and 150 <= b["wingspan"] <= 250, f"{pid}: implausible wingspan")
+    if "age" in b:
+        check(isinstance(b["age"], int) and 14 <= b["age"] <= 50 and "birth" not in b, f"{pid}: an age is only for a player with no birth date")
+        try:
+            datetime.date.fromisoformat(b.get("age_as_of", ""))
+        except ValueError:
+            check(False, f"{pid}: age_as_of must be YYYY-MM-DD")
     check(set(b.get("approx", [])) <= {"height", "weight", "birth"}, f"{pid}: bad approx list")
 
 # the API shows them
 if "ca-24" in players:
     b = players["ca-24"]["bio"]
     check(b and b["height"] == 189 and b["birth"] == "1993-04-20", "ca-24 profile not attached")
+if "esg-30" in players:
+    b = players["esg-30"]["bio"]
+    check(b and b["height"] == 202 and b["weight"] == 96 and b["wingspan"] == 208 and b["age"] == 20, "esg-30 profile (height, weight, wingspan, age) not attached")
 check(all("bio" in p for p in players.values()), "every player must carry a bio key (None when unknown)")
 
 # category leaders (home page): 8 categories, top 10 each, sorted best first, only players with enough games

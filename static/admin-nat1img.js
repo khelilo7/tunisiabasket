@@ -32,11 +32,11 @@
     if (md == null || !days.some(m => m.matchday === md)) md = days[days.length - 1].matchday;
     sync('n1_results');
     const m = days.find(x => x.matchday === md), rs = m.games, RH = 130, top = 300, H = top + rs.length * RH + 150, T_ = t();
-    const ctx = await frame(H, `${T_.league} · ${T_.day(m.matchday)}`, T_.results, day(m.date), T_.league);
+    const ctx = await frame(H, `${T_.league} · ${T_.day(m.matchday)}`, T_.results, [...new Set(rs.map(g => g.date || m.date).filter(Boolean))].sort().map(day).join(' · '), T_.league);   // games of one matchday are not always played on the same day
     for (let i = 0; i < rs.length; i++) {
       const r = rs[i], y = top + i * RH, done = r.home_score != null, hw = done && r.home_score > r.away_score, aw = done && r.away_score > r.home_score;
       ctx.fillStyle = C.card; rr(ctx, 40, y, W - 80, RH - 14, 22); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();
-      await logo(ctx, r.home, 66, y + 14, 88); await logo(ctx, r.away, W - 66 - 88, y + 14, 88);
+      await logo(ctx, r.home, 62, y + 8, 100, 0); await logo(ctx, r.away, W - 62 - 100, y + 8, 100, 0);
       txt(ctx, r.home_name, 170, y + 66, { size: 28, weight: hw ? 900 : 700, color: aw ? C.mut : C.txt, maxW: 250 });
       txt(ctx, r.away_name, W - 170, y + 66, { size: 28, weight: aw ? 900 : 700, color: hw ? C.mut : C.txt, maxW: 250, align: 'right' });
       if (done) {
@@ -64,7 +64,7 @@
     for (let i = 0; i < 2; i++) {
       const x = side[i], cx = CX[i];
       if (x.won) { const gl = ctx.createRadialGradient(cx, 510, 20, cx, 510, 230); gl.addColorStop(0, 'rgba(255,138,31,.30)'); gl.addColorStop(1, 'rgba(255,138,31,0)'); ctx.fillStyle = gl; ctx.fillRect(cx - 240, 280, 480, 460); }
-      await logo(ctx, x.code, cx - 125, 385, 250);
+      await logo(ctx, x.code, cx - 140, 370, 280, 0);
       txt(ctx, x.name, cx, 700, { size: 36, weight: x.won ? 900 : 700, color: x.won ? C.txt : C.mut, align: 'center', maxW: 420 });
       txt(ctx, String(x.s), cx, 860, { size: 156, weight: 900, color: x.won ? C.acc : C.mut, align: 'center' });
       if (x.won) { ctx.fillStyle = C.acc; rr(ctx, cx - 90, 892, 180, 46, 23); ctx.fill(); txt(ctx, T_.win, cx, 925, { size: 22, weight: 900, color: '#16130a', align: 'center', space: '3px' }); }
@@ -95,7 +95,7 @@
       ctx.fillStyle = i < cut ? C.good : 'rgba(255,255,255,.12)'; ctx.fillRect(40, y + 6, 6, RH - 12);          // the first eight play the play-off
       ctx.beginPath(); ctx.arc(94, y + RH / 2, 20, 0, 7); ctx.fillStyle = i === 0 ? C.gold : i < 3 ? '#c9d2e6' : C.line; ctx.fill();
       txt(ctx, String(r.rank), 94, y + RH / 2 + 8, { size: 22, weight: 900, color: i < 3 ? '#16130a' : C.txt, align: 'center' });
-      await logo(ctx, r.code, 140, y + 11, 52);
+      await logo(ctx, r.code, 134, y + 4, 66, 0);
       txt(ctx, r.name, 212, y + RH / 2 + 10, { size: 29, weight: i < 3 ? 900 : 700, maxW: 440 });
       txt(ctx, `${r.w}–${r.l}`, 700, y + RH / 2 + 10, { size: 28, weight: 700, align: 'right' });
       txt(ctx, signed(r.diff), 830, y + RH / 2 + 10, { size: 26, weight: 700, color: r.diff >= 0 ? C.good : '#ff5d6c', align: 'right' });

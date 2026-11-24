@@ -31,7 +31,7 @@
     return `<div class="card n1form" style="border-color:var(--acc);margin:6px 0 10px" data-form="${esc(gkey(m.matchday, g))}">
       <b>${g.home_score != null ? 'Edit the result' : 'Enter the result'} · J${m.matchday}</b>
       <div class="n1score-in">${[['hs', g.home_name, g.home_score], ['as', g.away_name, g.away_score]].map(([k, n, v]) => `<label><span>${esc(n)}</span><input data-f="${k}" class="num" type="number" inputmode="numeric" min="0" max="250" value="${v ?? ''}" aria-label="${esc(n)} score"></label>`).join('')}</div>
-      <div class="row" style="margin-top:8px"><label class="small mut">Date</label><input data-f="date" type="date" value="${esc(g.date || m.date || '')}"><span class="mut small">the calendar's day unless the game moved</span></div>
+      <div class="row" style="margin-top:8px"><label class="small mut">Date</label><input data-f="date" type="date" value="${esc(g.date || m.date || '')}"><label class="small mut">Time</label><input data-f="time" type="time" value="${esc(g.time || '')}"><span class="mut small">the calendar's day and time unless the game moved</span></div>
       <div class="row" style="margin-top:10px"><button class="primary" data-act="save">Save the result</button><button data-act="cancel">Cancel</button><span class="small" data-f="err" style="color:var(--bad)"></span></div></div>`;
   }
 
@@ -45,7 +45,8 @@
         <span class="mut small">${m.games.filter(g => g.home_score != null).length}/${m.games.length} scores</span></div>
       <div class="n1games" style="margin-top:8px">
       ${m.games.map(g => { const k = gkey(m.matchday, g), done = g.home_score != null, hw = done && g.home_score > g.away_score; return `<div class="n1row${last === k ? ' n1just' : ''}" data-g="${esc(k)}">
-        <div class="n1teams"><span style="${hw ? 'font-weight:800' : ''}">${esc(g.home_name)}</span> <span class="mut">–</span> <span style="${done && !hw ? 'font-weight:800' : ''}">${esc(g.away_name)}</span>${g.projected ? ' <span class="pill" title="pairing assumed, not published">projected</span>' : ''}<div class="mut small">${esc(fmt(g.date))}</div></div>
+        <div class="n1teams"><span style="${hw ? 'font-weight:800' : ''}">${esc(g.home_name)}</span> <span class="mut">–</span> <span style="${done && !hw ? 'font-weight:800' : ''}">${esc(g.away_name)}</span>${g.projected ? ' <span class="pill" title="pairing assumed, not published">projected</span>' : ''}<div class="mut small">${esc(fmt(g.date))}${g.time ? ' · ' + esc(g.time) : ''}</div>
+          <div class="small" style="margin-top:4px"><input type="time" data-f="kt" value="${esc(g.time || '')}" aria-label="Kick-off time" title="Kick-off time (hh:mm), known well before the score" style="width:108px"> <button data-act="time" title="Save the kick-off time of this game (empty = remove it)">🕐 Save time</button></div></div>
         <div class="n1score">${done ? `<span class="pill ok">${g.home_score} – ${g.away_score}</span>` : `<span class="mut small">${g.date && g.date < today() ? 'score missing' : 'to come'}</span>`}</div>
         <div class="n1acts"><button data-act="open" class="${done ? '' : 'primary'}">${done ? '✎ Edit' : '🏁 Enter result'}</button>${done ? ` <button data-act="img" title="Make the final-score image of this game">🖼️</button> <button data-act="rm" title="Remove this result">🗑</button>` : ''}</div></div>
         ${open === k ? scoreForm(m, g) : ''}`; }).join('')}</div>
@@ -77,14 +78,14 @@
         <div class="row" style="margin-top:8px"><input id="n1code" placeholder="Code (ESM)" size="9" maxlength="8" style="text-transform:uppercase"><input id="n1name" placeholder="Name (ES Marsa)" maxlength="40" style="flex:1;min-width:200px"><button class="primary" id="n1addteam">Add / rename</button></div>
         <div style="margin-top:8px">${teams.length ? Object.entries(data.teams).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<span class="pill" style="margin:2px 6px 2px 0;font-size:13px;padding:4px 10px">${esc(n)} <b>${esc(c)}</b> <a href="#" data-rt="${esc(c)}" title="Remove this team (only if it has no result)" style="margin-left:4px">×</a></span>`).join('') : '<span class="mut small">No team yet.</span>'}</div></details>
       <details class="card" style="margin-top:10px"><summary style="cursor:pointer"><b>Calendar</b> <span class="mut small">paste the games with their dates</span></summary>
-        <p class="mut small" style="margin:6px 0">One game per line: <code>matchday, HOME, AWAY, date[, projected]</code>. Add <code>projected</code> when the pairing is assumed, not published. A game with no result yet shows as “to come”, then “score missing” once its day has passed.</p>
-        <textarea id="n1fix" rows="5" style="width:100%" placeholder="5, BS, EZS, 2026-11-21"></textarea><div class="row" style="margin-top:6px"><button id="n1fixgo">Save the calendar</button></div></details>
+        <p class="mut small" style="margin:6px 0">One game per line: <code>matchday, HOME, AWAY, date[, time][, projected]</code> (time like <code>18:30</code> or <code>18h30</code>; you can also set it later, game by game, in Results). Add <code>projected</code> when the pairing is assumed, not published. A game with no result yet shows as “to come”, then “score missing” once its day has passed.</p>
+        <textarea id="n1fix" rows="5" style="width:100%" placeholder="5, BS, EZS, 2026-11-21, 18:30"></textarea><div class="row" style="margin-top:6px"><button id="n1fixgo">Save the calendar</button></div></details>
       <details class="card" style="margin-top:10px"><summary style="cursor:pointer"><b>Several results at once, or a game not in the calendar</b></summary>
         ${teams.length < 2 ? '<div class="mut small">Add at least two teams first.</div>' : `<div class="row" style="margin-top:8px"><label class="small mut">J</label><input id="n1md" type="number" min="1" max="60" value="${md || 1}" style="width:70px">
           <select id="n1home">${opts()}</select><input id="n1hs" type="number" min="0" max="250" placeholder="pts" style="width:76px"><b>–</b><input id="n1as" type="number" min="0" max="250" placeholder="pts" style="width:76px"><select id="n1away">${opts(teams[1])}</select>
           <input id="n1date" type="date" title="Date of the game (optional)"><button id="n1addres">Save this result</button></div>
           <p class="mut small" style="margin:6px 0">Only for a matchday that has no calendar: when it has one, the game must be one of it.</p>`}
-        <p class="mut small" style="margin:10px 0 6px">A list, one per line: <code>matchday, HOME, AWAY, home score, away score[, date]</code> (the team codes). All or nothing: if a line is wrong nothing is saved and the line is named.</p>
+        <p class="mut small" style="margin:10px 0 6px">A list, one per line: <code>matchday, HOME, AWAY, home score, away score[, date[, time]]</code> (the team codes). All or nothing: if a line is wrong nothing is saved and the line is named.</p>
         <textarea id="n1paste" rows="5" style="width:100%" placeholder="3, ESM, EOS, 78, 71, 2026-10-04"></textarea><div class="row" style="margin-top:6px"><button id="n1pastego">Save the list</button></div></details>
       <details class="card" style="margin-top:10px"><summary style="cursor:pointer"><b>The federation's table</b> <span class="mut small">${data.official ? `FTBB table of ${esc(data.official.published || '?')} is the base` : 'none: the table is computed'}</span></summary>
         <p class="mut small" style="margin:6px 0">Paste it when the FTBB publishes one: it becomes the base of the table (its numbers win over ours, we may miss a score), and every result typed after it moves the table on from it. First line <code>date: 2026-11-15</code>, then one team per line in table order: <code>CODE, played, won, lost, difference, points</code>. Points must be 2 per win + 1 per loss. Send an empty box to remove it (the table is then computed from the results only).</p>
@@ -105,6 +106,7 @@
       const k = tr.dataset.g, [m, home, away] = k.split('|');
       tr.querySelector('[data-act=open]').onclick = () => { open = open === k ? null : k; paint(); const f = box.querySelector('[data-form] [data-f=hs]'); if (f) f.focus(); };
       const rm = tr.querySelector('[data-act=rm]'); if (rm) rm.onclick = () => { if (confirm(`Remove the result J${m} ${home} – ${away}? The table goes back to how it was without it.`)) run(async () => { if (await send({ op: 'remove_result', matchday: +m, home, away })) { open = null; last = null; } }); };
+      tr.querySelector('[data-act=time]').onclick = () => run(() => send({ op: 'time', matchday: +m, home, away, time: tr.querySelector('[data-f=kt]').value }));
       const im = tr.querySelector('[data-act=img]'); if (im) im.onclick = () => { if (window.N1Img) window.N1Img.game(+m, home, away); };
     });
     const f = box.querySelector('[data-form]');
@@ -112,10 +114,10 @@
       const [m, home, away] = f.dataset.form.split('|'), err = f.querySelector('[data-f=err]');
       f.querySelector('[data-act=cancel]').onclick = () => { open = null; paint(); };
       const save = () => {
-        const hs = f.querySelector('[data-f=hs]').value.trim(), as = f.querySelector('[data-f=as]').value.trim(), date = f.querySelector('[data-f=date]').value;
+        const hs = f.querySelector('[data-f=hs]').value.trim(), as = f.querySelector('[data-f=as]').value.trim(), date = f.querySelector('[data-f=date]').value, time = f.querySelector('[data-f=time]').value;
         const bad = hs === '' || as === '' ? 'Type both scores.' : !/^\d{1,3}$/.test(hs) || !/^\d{1,3}$/.test(as) || +hs > 250 || +as > 250 ? 'A score is a whole number from 0 to 250.' : +hs === +as ? 'A basketball game has a winner: the scores are equal.' : '';
         if (bad) { err.textContent = bad; return; }
-        run(async () => { if (await send({ op: 'result', matchday: +m, home, away, home_score: +hs, away_score: +as, date })) { open = null; last = f.dataset.form; } });
+        run(async () => { if (await send({ op: 'result', matchday: +m, home, away, home_score: +hs, away_score: +as, date, time })) { open = null; last = f.dataset.form; } });
       };
       f.querySelector('[data-act=save]').onclick = save;
       f.querySelectorAll('input').forEach(i => i.onkeydown = e => { if (e.key === 'Enter') save(); });
