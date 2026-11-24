@@ -438,7 +438,7 @@ def main():
     if a.scorers:
         try:
             import live_scorer
-            import mlx_whisper  # noqa: F401  (checked now: a missing package must not wait for the first basket)
+            __import__("mlx_whisper")                   # checked now: a missing package must not wait for the first basket
         except ImportError as e:
             sys.exit(f"--scorers needs mlx-whisper in this Python ({e}): pip install mlx-whisper")
         log = lambda m: print(m, flush=True)

@@ -16,7 +16,6 @@ sys.path.insert(0, str(root / "tools"))
 import app  # noqa: E402
 import commentary_match as cm  # noqa: E402
 import live_reader  # noqa: E402
-import livescore  # noqa: E402
 import stats  # noqa: E402
 
 fails = []

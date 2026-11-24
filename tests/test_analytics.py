@@ -168,7 +168,7 @@ check(row["min"] == 10.0 and row["pm"] == 3 and "come from the five" in sheet["n
 check(analyst.delete(base_url).status_code == 200, "game deleted")
 
 # 9. live: public only when the ADMIN switches a game on, only while it is being counted, and only what is meant to be public
-lv = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 15, "date": "2026-11-21"}).get_json()["id"]
+lv = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 15, "date": "2099-06-06"}).get_json()["id"]
 pub = app.app.test_client()
 analyst.post(f"/analytics/api/games/{lv}/event", json={"pid": ca[0]["id"], "stat": "p3_m", "q": 1, "t": 540})
 check(pub.get("/api/live").get_json()["games"] == [], "a game being counted is not public by default")
@@ -179,7 +179,7 @@ check(len(lg_) == 1 and lg_[0]["id"] == lv and lg_[0]["teams"]["CA"]["score"] ==
 check(lg_[0]["plays"][0]["text"] == "3-pointer made" and lg_[0]["plays"][0]["pts"] == 3 and any(p["id"] == ca[0]["id"] and p["pts"] == 3 for p in lg_[0]["teams"]["CA"]["players"]), "box score and last plays are there")
 check(not ({"events", "players", "created", "note"} & set(lg_[0])) and pub.get("/api/live").headers["Cache-Control"] == "no-store", "nothing else of the analyst's file is public, and it is never cached")
 check(any(x["id"] == lv and x["live"] for x in admin.get("/admin/api/analytics", environ_overrides=ip("198.51.100.5")).get_json()["counting"]), "the admin sees it as live")
-analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": "2026-11-21"})
+analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": "2099-06-06"})
 check(pub.get("/api/live").get_json()["games"] == [], "sent for approval: no longer live")
 check(admin.post(f"/admin/api/analytics/{lv}/live", json={"on": True}, environ_overrides=ip("198.51.100.5")).status_code == 409, "a game that is not being counted cannot be live")
 analyst.delete(f"/analytics/api/games/{lv}")
