@@ -1,7 +1,7 @@
 // The shapes the website's API answers with (only the fields the app reads).
 export type TeamScore = { code: string; name: string; points: number; won?: boolean };
 export type GameSummary = { id: string | null; date: string; date_approx?: boolean; matchday?: string; teams: TeamScore[]; mvp?: { name: string; team: string; pts: number; reb: number; ast: number; pir: number; player_id: string } | null; partial?: boolean };
-export type Standing = { code: string; name: string; rank: number; j: number; w: number; l: number; pts: number; diff: number; pf: number; pa: number };
+export type Standing = { code: string; name: string; rank: number; j: number; w: number; l: number; pts: number; diff: number; pf: number; pa: number; final?: boolean };
 export type Leader = { key: string; top: { id: string; name: string; team: string; value: number; gp: number; number: number; rating: number }[] };
 export type Player = {
   id: string; name: string; team: string; number: number; pos?: string; photo?: string | null; gp: number; min: number; pts: number; reb: number; ast: number; stl: number; blk: number; tov: number;

@@ -28,13 +28,14 @@ for md, games in per.items():
 table = stats.official_standings()
 exp = {"CA": (10, 21), "JSK": (10, 21), "USM": (9, 20), "ESS": (8, 19), "DSG": (6, 17), "CSS": (6, 17),
        "ESG": (6, 17), "SN": (4, 15), "JSM": (3, 14), "ESR": (2, 13), "USA": (1, 12), "CSHS": (1, 12)}
-check([r["code"] for r in table][:4] == ["JSK", "CA", "USM", "ESS"], "top 4 must be JSK, CA, USM, ESS (JSK and CA are level on 21 points: JSK won the game between them)")
+check([r["code"] for r in table][:4] == ["CA", "JSK", "USM", "ESS"], "top 4 must be CA, JSK, USM, ESS (CA and JSK are level on 21 points; the season is not over, so the point difference decides, not the game between them)")
+check(not any(r["final"] for r in table), "the season is not over: the table says it is provisional")
 for r in table:
     check((r["w"], r["pts"]) == exp[r["code"]], f"standing of {r['code']}: {(r['w'], r['pts'])} != {exp[r['code']]}")
 check(sum(r["diff"] for r in table) == 0, "goal differences must add up to 0")
 
 d = stats.build()
-check(d["top_teams"] == ["JSK", "CA", "USM", "ESS"], "MVP pool teams")
+check(d["top_teams"] == ["CA", "JSK", "USM", "ESS"], "MVP pool teams")
 pool = [p for p in d["players"] if p["mvp_eligible"]]
 check(bool(pool) and all(p["team"] in d["top_teams"] for p in pool), "MVP pool must only contain top-4 players")
 check(all(g["mvp"]["team"] in [t["code"] for t in g["teams"] if t["won"]] for g in d["games"] if g["mvp"]),

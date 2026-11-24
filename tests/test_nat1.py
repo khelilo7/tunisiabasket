@@ -51,7 +51,7 @@ check(r.get_json()["games"] == 4, "the same pairing in the same matchday is repl
 # 4. the table and the public page
 v = c.get("/api/nat1").get_json()
 st = {t["code"]: t for t in v["standings"]}
-check([t["code"] for t in v["standings"]][:2] == ["CSK", "ASM"], f"table order (the law: points, then the game between ASM and ESM, level on 3 points, although ESM has the better difference): {[t['code'] for t in v['standings']]}")
+check([t["code"] for t in v["standings"]][:2] == ["CSK", "ESM"] and not any(t["final"] for t in v["standings"]), f"table order while the season is on (points, then point difference: ESM and ASM are level on 3 points, ESM has the better difference): {[t['code'] for t in v['standings']]}")
 check(st["CSK"]["pts"] == 4 and st["CSK"]["w"] == 2 and st["EOS"]["pts"] == 2 and st["ESM"]["pf"] == 80 + 59 and st["ESM"]["diff"] == (80 + 59) - (71 + 61), "2 points a win, 1 a loss, points for and against")
 check([m["matchday"] for m in v["matchdays"]] == [1, 2] and v["matchdays"][0]["games"][0]["home_name"] and all(m["played"] for m in v["matchdays"]), "matchdays in order, with names, played because they have scores")
 check("<table" in c.get("/nationale-1").get_data(as_text=True) and "CS Korba" in c.get("/nationale-1").get_data(as_text=True), "the page carries the table for crawlers")
@@ -92,12 +92,12 @@ v = c.get("/api/nat1").get_json()
 st = {t["code"]: t for t in v["standings"]}
 check((st["ESM"]["j"], st["ESM"]["w"], st["ESM"]["pts"], st["ESM"]["diff"]) == (5, 4, 9, 20) and (st["CSK"]["j"], st["CSK"]["l"], st["CSK"]["pts"], st["CSK"]["diff"]) == (5, 1, 9, 87),
       f"the new game is added to the FTBB rows: {st['ESM']} {st['CSK']}")
-check([t["code"] for t in v["standings"]][:2] == ["ESM", "CSK"] and [t["rank"] for t in v["standings"]] == [1, 2, 3, 4], f"level on 9 points: ESM won the game between them, so ESM leads: {order()}")
+check([t["code"] for t in v["standings"]][:2] == ["CSK", "ESM"] and [t["rank"] for t in v["standings"]] == [1, 2, 3, 4], f"level on 9 points, season not over: no tie-break law (ESM won the game between them, it does not count yet): the point difference puts CSK first: {order()}")
 check(v["official"]["since"] == 1 and st["ESM"]["pf"] is None, "the page says one result was typed since the FTBB table; still no invented points for / against")
 check(next(g for m in v["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ESM")["home_score"] == 70, "the game shows its score on the results page")
 check(nat1.load()["results"][-1].get("date") == "2999-01-01" or any(x.get("date") == "2999-01-01" for x in nat1.load()["results"] if x["matchday"] == 5), "the result takes the calendar's day")
 page = c.get("/nationale-1").get_data(as_text=True)
-check(page.index("ES Marsa") < page.index("CS Korba"), "the page for crawlers carries the new order too")
+check(page.index("CS Korba") < page.index("ES Marsa"), "the page for crawlers carries the same order")
 r = post({"op": "result", "matchday": 5, "home": "EOS", "away": "CSK", "home_score": 70, "away_score": 60})
 check(r.status_code == 422 and "not a game of J5" in r.get_json()["error"], f"a game that is not in that matchday's calendar is refused: {r.get_json()}")
 check(post({"op": "result", "matchday": 5, "home": "EOS", "away": "ASM", "home_score": 75, "away_score": 70}).status_code == 200, "home and away swapped (a venue change) is accepted")

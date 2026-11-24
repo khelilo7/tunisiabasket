@@ -168,7 +168,7 @@ check(row["min"] == 10.0 and row["pm"] == 3 and "come from the five" in sheet["n
 check(analyst.delete(base_url).status_code == 200, "game deleted")
 
 # 9. live: public only when the ADMIN switches a game on, only while it is being counted, and only what is meant to be public
-lv = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 15, "date": "2099-06-06"}).get_json()["id"]
+lv = analyst.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 15, "date": "2099-01-15"}).get_json()["id"]
 pub = app.app.test_client()
 analyst.post(f"/analytics/api/games/{lv}/event", json={"pid": ca[0]["id"], "stat": "p3_m", "q": 1, "t": 540})
 check(pub.get("/api/live").get_json()["games"] == [], "a game being counted is not public by default")
@@ -179,7 +179,7 @@ check(len(lg_) == 1 and lg_[0]["id"] == lv and lg_[0]["teams"]["CA"]["score"] ==
 check(lg_[0]["plays"][0]["text"] == "3-pointer made" and lg_[0]["plays"][0]["pts"] == 3 and any(p["id"] == ca[0]["id"] and p["pts"] == 3 for p in lg_[0]["teams"]["CA"]["players"]), "box score and last plays are there")
 check(not ({"events", "players", "created", "note"} & set(lg_[0])) and pub.get("/api/live").headers["Cache-Control"] == "no-store", "nothing else of the analyst's file is public, and it is never cached")
 check(any(x["id"] == lv and x["live"] for x in admin.get("/admin/api/analytics", environ_overrides=ip("198.51.100.5")).get_json()["counting"]), "the admin sees it as live")
-analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": "2099-06-06"})
+analyst.post(f"/analytics/api/games/{lv}/submit", json={"matchday": 15, "date": "2099-01-15"})
 check(pub.get("/api/live").get_json()["games"] == [], "sent for approval: no longer live")
 check(admin.post(f"/admin/api/analytics/{lv}/live", json={"on": True}, environ_overrides=ip("198.51.100.5")).status_code == 409, "a game that is not being counted cannot be live")
 analyst.delete(f"/analytics/api/games/{lv}")
@@ -192,7 +192,7 @@ check(analytics.name_slug("Tester One") == analytics.name_slug("tester  one") ==
 two = app.app.test_client()
 check(two.post("/analytics/api/login", json={"token": "TEST-ANALYST-2222-3333", "name": "Tester Two"}, environ_overrides=ip("198.51.100.61")).status_code == 200, "a second analyst signs in with the same token and another name")
 check(analyst.get("/analytics/api/me").get_json()["name"] == "Tester One" and two.get("/analytics/api/me").get_json()["name"] == "Tester Two", "the page knows who is who")
-mk = lambda cl: cl.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 16, "date": "2026-11-28"}).get_json()
+mk = lambda cl: cl.post("/analytics/api/games", json={"home": "CA", "away": "ESG", "matchday": 16, "date": "2099-01-16"}).get_json()
 ga, gb = mk(analyst), mk(two)
 check(ga["id"] == "j16-ca-esg--tester-one" and gb["id"] == "j16-ca-esg--tester-two" and ga["id"] != gb["id"], f"two names, two versions of the same game: {ga['id']} {gb['id']}")
 check(mk(analyst)["id"] == ga["id"] and len(ga["events"]) == 0, "the same name opening the game again continues its own version")
@@ -229,14 +229,14 @@ pmA = analyst.get(A).get_json()["court"]["pm"]
 check(pmA.get(five[4]) == 2 and pmA.get(bench, 0) == 0, f"actions are placed by the game clock: {pmA}")
 # the admin edits every version; an analyst cannot touch a version that was sent for approval
 sub = two.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[0]["id"], "stat": "p2_m"}).get_json()
-check(two.post(f"/analytics/api/games/{gb['id']}/submit", json={"matchday": 16, "date": "2026-11-28"}).status_code == 200, "version B sent for approval")
+check(two.post(f"/analytics/api/games/{gb['id']}/submit", json={"matchday": 16, "date": "2099-01-16"}).status_code == 200, "version B sent for approval")
 check(two.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[0]["id"], "stat": "p2_m"}).status_code == 409, "an analyst cannot change a version waiting for approval")
 r = adm.post(f"/analytics/api/games/{gb['id']}/event", json={"pid": ca[1]["id"], "stat": "p3_m"}, environ_overrides=ip("198.51.100.62"))
 check(r.status_code == 200 and r.get_json()["events"][-1]["by"] == "Admin" and r.get_json()["status"] == "submitted", "the admin can add to a version waiting for approval, stamped Admin")
 r = adm.post(f"/analytics/api/games/{gb['id']}/edit", json={"n": r.get_json()["events"][-1]["n"], "stat": "ast"}, environ_overrides=ip("198.51.100.62"))
 check(r.status_code == 200 and r.get_json()["log"][-1]["by"] == "Admin", "and edit it, logged as Admin")
 # the admin tab: every version with its analyst and log; approving one takes the other off the site
-analyst.post(f"{A}/submit", json={"matchday": 16, "date": "2026-11-28", "q": 1, "t": 0})
+analyst.post(f"{A}/submit", json={"matchday": 16, "date": "2099-01-16", "q": 1, "t": 0})
 lst = {x["id"]: x for x in adm.get("/admin/api/analytics", environ_overrides=ip("198.51.100.62")).get_json()["games"]}
 check(lst[ga["id"]]["analyst"] == "Tester One" and lst[gb["id"]]["analyst"] == "Tester Two" and lst[gb["id"]]["log"] and lst[ga["id"]]["editable"], "the admin list shows each version, its analyst and its log")
 ap = lambda gid_: adm.post(f"/admin/api/analytics/{gid_}/approve", json={}, environ_overrides=ip("198.51.100.62"))

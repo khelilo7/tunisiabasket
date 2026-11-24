@@ -115,7 +115,7 @@ def standings(d=None):
         rows += [{"code": c, "name": n, "rank": len(rows) + i, "j": 0, "w": 0, "l": 0, "pf": None, "pa": None, "diff": 0, "pts": 0}           # a club the FTBB table does not list (added later)
                  for i, (c, n) in enumerate(((c, n) for c, n in d["teams"].items() if c not in listed), 1)]
         if not since_official(d) and len(games) == len(off["basis"]):
-            return rows                                                 # nothing typed since the FTBB table: it is the table, in the FTBB's own order
+            return [{**r, "final": _over(rows)} for r in rows]          # nothing typed since the FTBB table: it is the table, in the FTBB's own order
         delta = _tally(d["teams"], d["results"])
         _tally(d["teams"], off["basis"], -1, delta)                     # what changed since the FTBB table: the results now minus the ones it counts
         now = _tally(d["teams"], d["results"])                          # (points scored, for the last tie-break of the law)
@@ -127,7 +127,13 @@ def standings(d=None):
             x = {**x, "j": x["j"] + dx["j"], "w": x["w"] + dx["w"], "l": x["l"] + dx["l"], "diff": x["diff"] + dx["pf"] - dx["pa"]}
             x["pts"] = 2 * x["w"] + x["l"]
             out.append(x)
+        final = _over(out)
         pf = {c: (now.get(c) or {}).get("pf", 0) for c in by}
+        if not final:                                                   # the season is not over: the points, then the point difference (the FTBB's own numbers count), then the FTBB's order
+            out2 = sorted(out, key=lambda x: (-x["pts"], -x["diff"], order.get(x["code"], 99)))
+            for i, x in enumerate(out2, 1):
+                x["rank"], x["final"] = i, False
+            return out2
         law = [{**x, "pf": pf[x["code"]], "pa": pf[x["code"]] - x["diff"]} for x in out]          # the law reads pf - pa as the difference: keep the FTBB's difference
         ranked = ranking.rank(law, games, fallback=lambda c: order.get(c, 99))
         keep = {x["code"]: x for x in out}
@@ -137,16 +143,23 @@ def standings(d=None):
             group = [keep[x["code"]] for x in ranked if x["pts"] == pts]
             out += group if moved & {x["code"] for x in group} else sorted(group, key=lambda x: order.get(x["code"], 99))
         for i, x in enumerate(out, 1):
-            x["rank"] = i
+            x["rank"], x["final"] = i, True
         return out
     out = list(_tally(d["teams"], d["results"]).values())
     for x in out:
         x["diff"] = x["pf"] - x["pa"]
         x["pts"] = 2 * x["w"] + x["l"]
-    out = ranking.rank(out, games)       # the FTBB's law (ranking.py), like the Pro A table
+    final = ranking.complete(len(d["teams"]), games)
+    out = ranking.rank(out, games, final=final)       # until the last round: points, then point difference; at the last round the FTBB's law (ranking.py), like the Pro A table
     for i, x in enumerate(out, 1):
-        x["rank"] = i
+        x["rank"], x["final"] = i, final
     return out
+
+
+def _over(rows):
+    """The regular season is over when every club has played everybody home and away (the FTBB table's own numbers of games count)."""
+    n = len(rows)
+    return n > 1 and all(r["j"] >= 2 * (n - 1) for r in rows)
 
 
 # The play-off bracket (the ids are the keys of the games stored in data/nat1.json "playoff"): seeds are the first eight of the table, "S:league:N" is the club ranked N
