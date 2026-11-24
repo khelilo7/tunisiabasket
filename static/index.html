@@ -652,7 +652,7 @@ const FR = {
   'Team stats': 'Statistiques d’équipe', 'Key players': 'Joueurs clés', 'No previous meeting this season.': 'Pas de confrontation cette saison.', 'Best player so far': 'Meilleur joueur à ce jour',
   'Stats race': 'Course aux statistiques', 'Current MVP': 'MVP actuel', 'Most votes so far': 'Le plus de votes jusqu’ici', 'No votes yet: shown by stats until the fans vote': 'Pas encore de votes : classé aux statistiques en attendant le vote des fans',
   'MVP ranking': 'Classement MVP', 'Most votes first, then stats': 'Les plus votés d’abord, puis les statistiques', 'Best by stats': 'Meilleur aux statistiques', 'Decided by the fans': 'Décidé par les fans', 'Impact': 'Impact',
-  'Height': 'Taille', 'Weight': 'Poids', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
+  'Height': 'Taille', 'Weight': 'Poids', 'Wingspan': 'Envergure', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
   'Season averages · click a player': 'Moyennes de la saison · cliquez sur un joueur', 'Marker colour = rating:': 'Couleur du marqueur = note :',
@@ -1426,9 +1426,10 @@ async function players() {
 // Height / weight / birth date of a player (only what is known). Estimated values get a "~", disagreeing sources a range.
 function bioLine(b) {
   if (!b) return '';
-  const ap = k => (b.approx || []).includes(k) ? '~' : '', age = b.birth && Math.floor((Date.now() - new Date(b.birth + 'T12:00')) / 31557600000);
+  const ap = k => (b.approx || []).includes(k) ? '~' : '', age = b.birth ? Math.floor((Date.now() - new Date(b.birth + 'T12:00')) / 31557600000) : b.age && b.age_as_of ? b.age + Math.max(0, Math.floor((Date.now() - new Date(b.age_as_of + 'T12:00')) / 31557600000)) : b.age;   // no birth date yet: the age told on age_as_of, plus the whole years since
   const h = b.height && (Array.isArray(b.height) ? b.height.join('–') : b.height);
   const bits = [[_('Height'), h && `${ap('height')}${h} cm`], [_('Weight'), b.weight && `${ap('weight')}${b.weight} kg`],
+    [_('Wingspan'), b.wingspan && `${b.wingspan} cm`],
     [_('Born'), b.birth && new Date(b.birth + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })],
     [_('Age'), age && `${age} ${_('yrs')}`]].filter(x => x[1]);
   return bits.length ? `<div class="bio">${bits.map(([l, v]) => `<span><span class="mut">${l}</span> <b>${esc(v)}</b></span>`).join('')}</div>` : '';
