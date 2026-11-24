@@ -48,7 +48,7 @@
         <div class="n1teams"><span style="${hw ? 'font-weight:800' : ''}">${esc(g.home_name)}</span> <span class="mut">–</span> <span style="${done && !hw ? 'font-weight:800' : ''}">${esc(g.away_name)}</span>${g.projected ? ' <span class="pill" title="pairing assumed, not published">projected</span>' : ''}<div class="mut small">${esc(fmt(g.date))}${g.time ? ' · ' + esc(g.time) : ''}</div>
           <div class="small" style="margin-top:4px"><input type="time" data-f="kt" value="${esc(g.time || '')}" aria-label="Kick-off time" title="Kick-off time (hh:mm), known well before the score" style="width:108px"> <button data-act="time" title="Save the kick-off time of this game (empty = remove it)">🕐 Save time</button></div></div>
         <div class="n1score">${done ? `<span class="pill ok">${g.home_score} – ${g.away_score}</span>` : `<span class="mut small">${g.date && g.date < today() ? 'score missing' : 'to come'}</span>`}</div>
-        <div class="n1acts"><button data-act="open" class="${done ? '' : 'primary'}">${done ? '✎ Edit' : '🏁 Enter result'}</button>${done ? ` <button data-act="img" title="Make the final-score image of this game">🖼️</button> <button data-act="rm" title="Remove this result">🗑</button>` : ''}</div></div>
+        <div class="n1acts"><button data-act="open" class="${done ? '' : 'primary'}">${done ? '✎ Edit' : '🏁 Enter result'}</button>${done ? ` <button data-act="img" title="Make the final-score image of this game">🖼️</button> <button data-act="rm" title="Remove this result">🗑</button>` : ` <button data-act="rmfx" title="Remove this game from the calendar (a game typed by mistake)">🗑</button>`}</div></div>
         ${open === k ? scoreForm(m, g) : ''}`; }).join('')}</div>
       <p class="mut small" style="margin:8px 0 0">Saving a result updates the National One table, its results and calendar pages, the app and the images at once. Same checks as the Pro A: both teams of the calendar, scores 0–250, no tie, a team plays once per matchday. A game played on another day: change its date in the form.</p></div>`;
   }
@@ -107,6 +107,7 @@
       tr.querySelector('[data-act=open]').onclick = () => { open = open === k ? null : k; paint(); const f = box.querySelector('[data-form] [data-f=hs]'); if (f) f.focus(); };
       const rm = tr.querySelector('[data-act=rm]'); if (rm) rm.onclick = () => { if (confirm(`Remove the result J${m} ${home} – ${away}? The table goes back to how it was without it.`)) run(async () => { if (await send({ op: 'remove_result', matchday: +m, home, away })) { open = null; last = null; } }); };
       tr.querySelector('[data-act=time]').onclick = () => run(() => send({ op: 'time', matchday: +m, home, away, time: tr.querySelector('[data-f=kt]').value }));
+      const rx = tr.querySelector('[data-act=rmfx]'); if (rx) rx.onclick = () => { if (confirm(`Remove ${home} – ${away} (J${m}) from the calendar? It has no result.`)) run(() => send({ op: 'remove_fixture', matchday: +m, home, away })); };
       const im = tr.querySelector('[data-act=img]'); if (im) im.onclick = () => { if (window.N1Img) window.N1Img.game(+m, home, away); };
     });
     const f = box.querySelector('[data-form]');
