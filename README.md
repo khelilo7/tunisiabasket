@@ -300,6 +300,19 @@ graphic on the screen every 2 s (score, quarter, clock) and sends only those num
   is sent once). The official result and the box score still come from the admin.
 - **Test on a recording:** `.venv/bin/python tools/live_reader.py --file "Diwan Sport(1).mp4" --start 3700 --show --matchday 14 --server http://localhost:5055 --token ...`
   plays the video in a window and reads it in real time, with no screen permission needed. Tests: `tests/test_livescore.py`.
+- **Second scoreboard layout** (seen 24 November 2026, ESS–USM): a light panel with the quarter badge and the clock, a dark bar with the three-letter codes and the logos, ONE blue
+  panel holding both scores, and five dots under each club (team fouls). `find_boards_b` finds it by its colours (and refuses the bar shown at half-time: a white strip with navy
+  boxes, or a dark bar with Arabic names and no clock panel); the fields are read like the first layout, except the bold score digits, which tesseract misreads (44 as 464): they go
+  through the text reader built into macOS (`tools/macos_ocr.py`, `pyobjc-framework-Vision`; the installer adds it). The first layout is read exactly as before. Test: `tests/test_livescore.py` §8.
+- **Who scored, from the commentator** (`--scorers`; on by default when the installer runs on an Apple silicon Mac, `SCORERS=0` in `~/TunisiaBasketLive/config`
+  turns it off): after each basket the reader sends, it waits 8 s, then transcribes the commentary since the previous basket (at most 35 s: the board is updated by hand,
+  sometimes 15-30 s late) with Whisper on the Mac (`mlx-whisper`, large-v3-turbo, ~1.6 GB once; ~6-10 s per basket on an M1) and finds the scoring team's player named next
+  to a success word ("ينجح فيها شبوح", "يكمل معين"), by the consonant skeleton of his name, the same in Arabic and Latin (`tools/commentary_match.py`). The sound comes from the
+  browser showing the game (`tools/audiocap.swift`, ScreenCaptureKit, the same Screen Recording permission; kept 90 s in memory, never saved); keep the game tab's sound on,
+  and use one browser per game when several play at once (macOS gives the sound of a whole app). It goes to `POST /api/livescore/scorer` (same token): the scorer is kept on
+  that basket (`"by"` in the game file), the plays show his name and the Live page gets a **Scorers** tab (points per player, "not named yet"). Measured on ESS–DSG (J14, 60
+  baskets checked by hand): the right player 8 times out of 10 (the image models tried before: 2 out of 10). **Admin → Games & scores → 🔴 Live scorers** lists the baskets,
+  the doubtful ones first, with a menu to fix one; the reader never overwrites a fix. The official box score replaces all of it after the game. Test: `tests/test_live_scorers.py`.
 
 ## Announcing the play-off, sources of a game, analytics, honours (November 2026)
 

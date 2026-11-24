@@ -33,10 +33,19 @@ import urllib.request
 import numpy as np
 from PIL import Image
 
+try:
+    import macos_ocr                                                              # next to this file
+except ImportError:                                                           # not found (a copy without it): tesseract does everything
+    macos_ocr = type('NoOcr', (), {'available': staticmethod(lambda: False)})
+
 # where each field is, relative to the left score box, in pixels of the 1080p broadcast (that box is 66 x 61 px there)
 BOX_W, BOX_H = 66, 61
 FIELDS = {"home": (3, 2, 63, 59), "away": (73, 2, 133, 59), "q": (369, 2, 432, 59), "clock": (440, 0, 572, 61),   # boxes read just inside their edges
           "t_left": (-160, 4, -20, 56), "t_right": (150, 4, 270, 56)}
+# the second layout (24 November 2026, ESS-USM): [quarter badge][clock] [code][logo] [blue panel: both scores] [code][logo], team fouls as dots under the codes.
+# Offsets are in pixels of a panel 130 px wide (the panel's own width sets the scale), from its top-left corner.
+BOX_W_B = 130
+FIELDS_B = {"home": (3, 2, 63, 46), "away": (68, 2, 128, 46), "q": (-364, 8, -338, 42), "clock": (-308, 8, -218, 42), "t_left": (-110, 8, -52, 40), "t_right": (226, 8, 292, 40)}
 WL = {"home": "0123456789", "away": "0123456789", "q": "Q1234OT", "clock": "0123456789:.", "t_left": "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "t_right": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"}
 
 
@@ -67,15 +76,49 @@ def find_boards(rgb):
     for b in out:
         if not any(abs(b[1] - k[1]) < 10 and abs(b[0] - k[0]) < 200 * b[2] for k in keep):
             keep.append(b)
-    return keep
+    return keep + find_boards_b(rgb)
+
+
+def find_boards_b(rgb):
+    """[(x, y, scale, "B")] of every scoreboard of the second layout: one blue panel holding both scores, a light panel with the clock to its left (the first layout
+    has navy boxes and no light panel, and the bar shown at half-time, with the Arabic names, has no clock panel either)."""
+    from scipy import ndimage
+    h = rgb.shape[0]
+    top = int(h * 0.5)                                                        # the bar sits in the lower half of the window
+    a = rgb[top:].astype(np.int16)
+    blue = (a[..., 2] > 95) & (a[..., 2] - a[..., 0] > 40) & (a[..., 2] - a[..., 1] > 15)
+    blue = ndimage.binary_fill_holes(ndimage.binary_closing(blue, structure=np.ones((3, 5))))
+    lab, _n = ndimage.label(blue)
+    gray = np.asarray(Image.fromarray(rgb).convert("L")).astype(np.int16)
+    out = []
+    for i, sl in enumerate(ndimage.find_objects(lab), 1):
+        y0, y1, x0, x1 = sl[0].start + top, sl[0].stop + top, sl[1].start, sl[1].stop
+        w, bh = x1 - x0, y1 - y0
+        if not (50 <= w <= 420 and 14 <= bh <= 130 and 1.6 <= w / bh <= 6.5) or (lab[sl] == i).sum() < 0.55 * w * bh:
+            continue
+        s = w / BOX_W_B
+        y_a, y_b = int(y0 + 8 * s), int(y0 + 40 * s)
+        zone = lambda a, b: gray[y_a:y_b, max(0, int(x0 + a * w)):max(0, int(x0 + b * w))]
+        clock, code_l, code_r = zone(-2.8, -1.8), zone(-1.15, -0.35), zone(1.15, 2.4)   # the light clock panel; the dark bar around both team codes
+        if y_b > rgb.shape[0] or x0 - 2.8 * w < 0 or not clock.size or not code_l.size or not code_r.size:
+            continue
+        if (clock > 120).mean() >= 0.45 and (code_l < 95).mean() >= 0.7 and (code_r < 95).mean() >= 0.7:
+            out.append((x0, y0, s, "B"))
+    return out
 
 
 def field_img(rgb, board, name):
-    x, y, s = board
-    fx0, fy0, fx1, fy1 = FIELDS[name]
+    x, y, s = board[:3]
+    kind = board[3] if len(board) > 3 else "A"
+    fx0, fy0, fx1, fy1 = (FIELDS_B if kind == "B" else FIELDS)[name]
     box = (int(x + fx0 * s), int(y + fy0 * s), int(x + fx1 * s), int(y + fy1 * s))
     g = np.asarray(Image.fromarray(rgb).crop(box).convert("L")).astype(np.int16)
-    ink = g < 110 if name.startswith("t_") or name == "clock" else g > 150  # team codes and clock: dark on white; scores and quarter: white on dark blue
+    if kind == "B":                                                           # B: the clock is dark on a light panel; codes, scores and quarter are light on dark or blue.
+        lo, hi = np.percentile(g, [8, 97])                                    # The lights differ from one broadcast to the next: the threshold is the middle of this
+        mid = (lo + hi) / 2                                                   # field's own range (nothing at all when there is no contrast: an empty box)
+        ink = (g < mid if name == "clock" else g > mid) & (hi - lo > 35)
+    else:
+        ink = g < 110 if name.startswith("t_") or name == "clock" else g > 150  # team codes and clock: dark on white; scores and quarter: white on dark blue
     if name in ("home", "away", "q"):                                         # marks touching the crop's edge are slivers of the box's border or of the bar
         from scipy import ndimage                                             # around it (some players squash the scoreboard), never a digit: erase them
         lab, _ = ndimage.label(ink)
@@ -85,6 +128,9 @@ def field_img(rgb, board, name):
     im = Image.fromarray(np.where(ink, 0, 255).astype(np.uint8))
     k = 100 / max(1, im.height)
     im = im.resize((max(1, int(im.width * k)), 100), Image.LANCZOS)
+    if kind == "B" and name in ("home", "away"):                              # the second layout's score digits are so bold that tesseract reads 38 as nothing and 46 as 66:
+        from scipy import ndimage                                             # one step thinner and it reads them
+        im = Image.fromarray(np.where(ndimage.binary_erosion(np.asarray(im) < 128), 0, 255).astype(np.uint8))
     cv = Image.new("L", (im.width + 40, 140), 255)
     cv.paste(im, (20, 20))
     return cv
@@ -102,7 +148,15 @@ def ocr(img, wl):
 
 
 def read_board(rgb, board, fields=("home", "away", "q", "clock")):
-    return {f: ocr(field_img(rgb, board, f), WL[f]) for f in fields}
+    out = {}
+    for f in fields:
+        if len(board) > 3 and board[3] == "B" and f in ("home", "away") and macos_ocr.available():   # the bold digits of the second layout: tesseract reads 44 as 464
+            x, y, s = board[:3]
+            fx0, fy0, fx1, fy1 = FIELDS_B[f]
+            out[f] = macos_ocr.read_digits(rgb[int(y + fy0 * s):int(y + fy1 * s), int(x + fx0 * s):int(x + fx1 * s)])
+        else:
+            out[f] = ocr(field_img(rgb, board, f), WL[f])
+    return out
 
 
 def parse(r):
@@ -206,6 +260,7 @@ class Game:
         self.last_post = 0.0
         self.last_seen = time.time()
         self.clock = None
+        self.prev = None
 
     def update(self, h, a, q, c):
         """Returns the body to send, or None."""
@@ -260,6 +315,7 @@ class Game:
         return self._body(*s, final=True)
 
     def _body(self, h, a, q, fix=False, final=False):
+        self.prev = self.sent                 # the score before this one: who scored what (--scorers)
         self.sent = (h, a, q)
         self.last_post = time.time()
         self.cand, self.cand_n, self.low, self.low_n = None, 0, None, 0
@@ -274,11 +330,16 @@ class Game:
 def post(server, token, body, path="/api/livescore"):
     req = urllib.request.Request(server.rstrip("/") + path, data=json.dumps(body).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "Authorization": "Bearer " + token, "User-Agent": "tunisiabasket-live-reader"})
+    def body(raw, code):                                                      # an error page of Cloudflare or a route the site does not have yet is HTML, not JSON
+        try:
+            return json.loads(raw or b"{}")
+        except ValueError:
+            return {"error": f"HTTP {code}: not a reply of the site"}
     try:
         with urllib.request.urlopen(req, timeout=10) as r:
-            return r.status, json.loads(r.read() or b"{}")
+            return r.status, body(r.read(), r.status)
     except urllib.error.HTTPError as e:
-        return e.code, json.loads(e.read() or b"{}")
+        return e.code, body(e.read(), e.code)
     except OSError as e:
         return 0, {"error": str(e)}
 
@@ -326,6 +387,12 @@ def send(a, g, body, vt):
     status, res = (200, {}) if a.dry else post(a.server, a.token, body)
     what = "FINAL" if body.get("final") else "fix" if body.get("fix") else ""
     print(f"{stamp}  {g.teams[0]} {body['score'][0]} - {body['score'][1]} {g.teams[1]}  Q{body['q']} {body['clock'] or ''} {what}  -> {status} {res.get('error', '')}", flush=True)
+    sc = getattr(a, "_scorers", None)
+    if sc and status == 200 and not body.get("fix") and g.prev:                # a basket: the commentator will say who scored it
+        for side in (0, 1):
+            d = body["score"][side] - g.prev[side]
+            if 1 <= d <= 3:
+                sc.basket(g.teams, g.teams[side], d, body["score"], a.matchday, label=f"{g.teams[0]} {body['score'][0]}-{body['score'][1]} {g.teams[1]}")
 
 
 def main():
@@ -344,6 +411,8 @@ def main():
     ap.add_argument("--teams", help="LEFT-RIGHT codes as the scoreboard shows them, if its team names cannot be read (e.g. ESS-DSG)")
     ap.add_argument("--matchday", type=int, help="the matchday, if the calendar cannot tell (e.g. a test on an old game)")
     ap.add_argument("--dry", action="store_true", help="read and print, send nothing")
+    ap.add_argument("--scorers", action="store_true", help="also say who scored each basket, from the commentator (tools/live_scorer.py: needs mlx-whisper)")
+    ap.add_argument("--listen", nargs="+", metavar="APP", help="with --scorers: the apps whose sound to listen to (default: those showing the game windows)")
     ap.add_argument("--live", action="store_true", help="list the games read from a broadcast that are on the Live page now (id, then the score), and stop")
     ap.add_argument("--remove", nargs="+", metavar="ID", help="take these games (ids from --live) off the Live page now, and stop")
     a = ap.parse_args()
@@ -366,6 +435,24 @@ def main():
         print(f"could not get the list of teams from {a.server}: team names will only be read as they are", flush=True)
     games = {}                                  # (left, right) teams -> Game
     t0 = time.time()
+    if a.scorers:
+        try:
+            import live_scorer
+            import mlx_whisper  # noqa: F401  (checked now: a missing package must not wait for the first basket)
+        except ImportError as e:
+            sys.exit(f"--scorers needs mlx-whisper in this Python ({e}): pip install mlx-whisper")
+        log = lambda m: print(m, flush=True)
+        if a.file:
+            audio = live_scorer.FileAudio(a.file, a.start, a.speed, t0)
+        else:
+            apps = a.listen or sorted({app for _, app, _ in windows(a.title)})
+            if not apps:
+                sys.exit(f"--scorers: no '{a.title}' window open to listen to (or give --listen APP)")
+            audio = live_scorer.AppAudio(apps, log)
+            if len(apps) == 1 and len(windows(a.title)) > 1:
+                print(f"--scorers: several games in {apps[0]}: their sounds are mixed (one browser per game keeps them apart)", flush=True)
+        a._scorers = live_scorer.Scorers(a.server, a.token, audio, a.dry, log, post)
+        print(f"scorers: on (the commentator's words, ~{live_scorer.WAIT:.0f} s after each basket)", flush=True)
     if a.file and a.show:
         subprocess.Popen(["ffplay", "-v", "error", "-ss", str(a.start), "-x", "960", "-y", "540", "-window_title", "Diwan Sport (test)", a.file],
                          stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

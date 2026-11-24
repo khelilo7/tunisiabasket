@@ -401,6 +401,23 @@ def livescore_stop():
     return jsonify(game=g)
 
 
+@app.post("/api/livescore/scorer")
+def livescore_scorer():
+    """Who scored a basket, named from the commentator by the reader (--scorers): same token as /api/livescore. See livescore.scorer()."""
+    ip = auth.client_ip()
+    if auth._locked_out(ip):
+        return jsonify(error="too many failed attempts, wait a few minutes"), 429
+    tok = (request.headers.get("Authorization") or "").removeprefix("Bearer ").strip()
+    if not livescore.verify(tok):
+        with auth._lock:
+            auth._fails.setdefault(ip, []).append(time.time())
+        return jsonify(error="bad token"), 401
+    b, err = livescore.scorer(request.get_json(silent=True) or {})
+    if err:
+        return jsonify(error=err), 404 if err.startswith("no such") else 400
+    return jsonify(basket=b)
+
+
 @app.get("/api/matchup")
 def matchup():
     """Head-to-head preview of two teams from the games played so far (used by the next-games banner)."""

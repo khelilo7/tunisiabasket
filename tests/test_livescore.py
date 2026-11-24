@@ -162,6 +162,29 @@ G.last_seen -= 120
 f = G.gone()
 check(f and f["final"] and f["score"] == [67, 69], "the broadcast cut away after the last seconds of Q4: final")
 
+# 8. the second scoreboard layout (24 November 2026): a light clock panel, a dark bar with the codes, one blue panel with both scores: found by its colours, and not
+# mistaken for the bar shown at half-time (a white strip with navy score boxes, or a dark bar with no clock panel)
+import numpy as np  # noqa: E402
+
+
+def bar_picture(clock_light=True, dark_bar=True):
+    img = np.zeros((700, 1500, 3), np.uint8) + np.array([200, 160, 100], np.uint8)         # a court (light wood)
+    x0, y0, w = 760, 560, 130
+    if dark_bar:
+        img[y0 - 4:y0 + 52, x0 - 400:x0 + 540] = (30, 30, 36)
+    if clock_light:
+        img[y0 - 4:y0 + 52, x0 - 383:x0 - 213] = (200, 200, 200)
+    img[y0:y0 + 48, x0:x0 + w] = (60, 120, 170)                                           # the blue panel
+    return img
+
+
+boards = live_reader.find_boards(bar_picture())
+check(len(boards) == 1 and boards[0][3] == "B" and abs(boards[0][0] - 760) <= 3 and abs(boards[0][2] - 1.0) < 0.05, f"the second layout is found: {boards}")
+check(live_reader.find_boards(bar_picture(clock_light=False)) == [], "a bar with no clock panel (half-time) is not read")
+check(live_reader.find_boards(bar_picture(dark_bar=False)) == [], "a light strip around the panel (half-time, white strip) is not read")
+fb = live_reader.FIELDS_B
+check(set(fb) == set(live_reader.FIELDS) and fb["clock"][0] < fb["t_left"][0] < fb["home"][0] < fb["away"][0] < fb["t_right"][0], "the second layout has the same fields, left to right")
+
 if fails:
     print("FAILED:\n  " + "\n  ".join(fails))
     sys.exit(1)
