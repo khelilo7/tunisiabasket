@@ -18,6 +18,8 @@ INNER = 172         # longest side of every logo (same for all, and the corners 
 TOLERANCE = {"SN": 38}          # colour distance still counted as background (default 28)
 CROP = {"SN": (440, 30, 760, 570)}  # SN comes with a copyright line and lots of grey: keep only the emblem
 INNER_FOR = {"USM": 214}        # a tall logo (a star above and below the round emblem): bigger, so the emblem matches the others
+NAT1 = {"EZS", "CAK", "ASM", "BCM", "SSS", "JAB", "AMS", "CAB", "CSGN", "BS", "CBM"}   # the National One clubs: their logos are bigger in the badge (they were hard to see)
+INNER_NAT1 = 214                # their longest side; the logo is also kept inside the circle (see fit)
 
 
 def flood_border(candidate):
@@ -50,8 +52,16 @@ def subject(path, code):
     return out.crop(box)
 
 
-def badge(logo, inner=INNER):
+def fit(logo, inner):
+    """The scale that makes the longest side `inner`, reduced if a corner of the real artwork (not of its box) would leave the circle."""
     k = inner / max(logo.size)
+    ys, xs = np.nonzero(np.array(logo.getchannel("A")) > 128)
+    far = np.sqrt((xs - logo.width / 2) ** 2 + (ys - logo.height / 2) ** 2).max()
+    return min(k, (SIZE / 2 - 10) / far)
+
+
+def badge(logo, inner=INNER, nat1=False):
+    k = fit(logo, inner) if nat1 else inner / max(logo.size)
     logo = logo.resize((max(1, round(logo.width * k)), max(1, round(logo.height * k))), Image.LANCZOS)
     big = SIZE * 4   # draw the disc at 4x and shrink: smooth edge
     disc = Image.new("L", (big, big), 0)
@@ -72,7 +82,7 @@ def main():
         sys.exit(f"no logos in {SRC}")
     for f in files:
         code = f.stem.upper()
-        badge(subject(f, code), INNER_FOR.get(code, INNER)).save(OUT / f"{code}.png", optimize=True)
+        badge(subject(f, code), INNER_NAT1 if code in NAT1 else INNER_FOR.get(code, INNER), code in NAT1).save(OUT / f"{code}.png", optimize=True)
         print("built", OUT / f"{code}.png")
 
 

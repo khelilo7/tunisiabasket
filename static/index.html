@@ -170,6 +170,7 @@
   .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
   .tlogo { flex:none; display:inline-block; vertical-align:middle; }   /* the files are already round, same-size badges */
   td .tlogo { margin-right:4px; } .tn .tlogo { margin:0; }
+  .tlogo.n1, #app table .tlogo.n1 { width:38px; height:38px; } @media (max-width:640px) { .tlogo.n1, #app table .tlogo.n1 { width:34px; height:34px; } }   /* National One: the badges are the only picture of a club there, so they are bigger */
   #lang { padding:5px 8px; } header .adm { color:var(--mut); font-size:13px; }
   #app > h1:first-child { margin-top:0; } #app table { font-size:14px; } #app ul { padding-left:18px; }
   @media (max-width:760px) { .brand .bm { width:34px; height:34px; } .brand .wm { height:19px; } }
@@ -858,8 +859,8 @@ const fmtDate = d => new Date(d + 'T12:00').toLocaleDateString(LANG === 'fr' ? '
 const title = n => n.toLowerCase().replace(/(^|[\s'-])\w/g, c => c.toUpperCase());
 const signed = n => (n > 0 ? '+' : '') + n;
 const dash = v => (v == null ? '–' : v);          // a stat a one-team sheet does not give is unknown, never 0
-const face = (p, px) => p ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph${p.photo ? '' : ' generic'}" src="${esc(p.photo || '/img/players/generic.svg')}" alt="${p.photo ? esc(title(p.name)) : ''}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png?v=2" alt="" onerror="this.remove()"></span></span>` : '';
-const logo = (code, px = 26) => `<img class="tlogo" src="/img/teams/${esc(code)}.png?v=2" alt="" width="${px}" height="${px}" loading="lazy" onerror="this.remove()">`;
+const face = (p, px) => p ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph${p.photo ? '' : ' generic'}" src="${esc(p.photo || '/img/players/generic.svg')}" alt="${p.photo ? esc(title(p.name)) : ''}" loading="lazy"><span class="tb"><img src="/img/teams/${esc(p.team)}.png?v=3" alt="" onerror="this.remove()"></span></span>` : '';
+const logo = (code, px = 26) => `<img class="tlogo" src="/img/teams/${esc(code)}.png?v=3" alt="" width="${px}" height="${px}" loading="lazy" onerror="this.remove()">`;
 const named = (code, name, px = 24) => `<span class="tn">${logo(code, px)}<span>${esc(name)}</span></span>`;
 const plink = (p, text) => `<a href="${playerUrl(p.id, p.name)}">${text ?? esc(p.name)}</a>`;
 const teamLink = (code, name) => `<a href="${teamUrl(code)}"><b>${esc(name || code)}</b></a>`;
@@ -1086,7 +1087,7 @@ const NEWS_LABEL = { official: 'Official', injury: 'Injury', transfer: 'Transfer
 const nTitle = n => LANG === 'en' && n.title_en ? n.title_en : n.title, nBody = n => LANG === 'en' && n.body_en ? n.body_en : n.body;
 const NEWS_ICON = { official: '📢', injury: '🩹', transfer: '🔁', result: '🏀', info: '📰', interview: '🎙️' };
 const nMedia = (n, px) => n.player ? face({ photo: n.photo, name: n.player_name || '', team: n.team }, px)
-  : n.team ? `<span class="nmedia tm" style="width:${px}px;height:${px}px"><img src="/img/teams/${esc(n.team)}.png?v=2" alt="" onerror="this.remove()"></span>`
+  : n.team ? `<span class="nmedia tm" style="width:${px}px;height:${px}px"><img src="/img/teams/${esc(n.team)}.png?v=3" alt="" onerror="this.remove()"></span>`
   : `<span class="nmedia" style="width:${px}px;height:${px}px;font-size:${Math.round(px * .44)}px">${NEWS_ICON[n.label] || '📰'}</span>`;
 const nScore = n => { const m = n.match, hw = m.home_score > m.away_score; return `<div class="nscore">${logo(m.home, 22)}<span class="${hw ? 'w' : ''}">${esc(m.home)} <b>${m.home_score}</b></span><span class="mut">–</span><span class="${hw ? '' : 'w'}"><b>${m.away_score}</b> ${esc(m.away)}</span>${logo(m.away, 22)}${n.game ? `<a href="${gameUrl(n.game)}">${_('Box score')} →</a>` : ''}</div>`; };
 const newsCard = (n, lead) => {
@@ -1529,7 +1530,7 @@ function halfCourt(players) {   // one team around one basket
 function fullCourt(left, right) {   // two teams, each around its own basket; centres under the baskets, guards towards the middle
   const toL = (x, y) => [y, 500 - x], toR = (x, y) => [940 - y, x];
   const put = (t, fn) => t.players.map(p => marker(...fn(...SPOT[p.spot]), p)).join('');
-  const lg = (code, x) => `<image href="/img/teams/${esc(code)}.png?v=2" x="${x}" y="4" width="46" height="46"/>`;
+  const lg = (code, x) => `<image href="/img/teams/${esc(code)}.png?v=3" x="${x}" y="4" width="46" height="46"/>`;
   return `<svg class="court" viewBox="-8 -8 956 516" role="img" aria-label="${_('Starting five')}"><rect x="-8" y="-8" width="956" height="516" fill="var(--court-b)"/>
     <rect x="0" y="0" width="940" height="500" fill="var(--court)"/>
     <g transform="translate(0 500) rotate(-90)">${halfLines(false)}</g><g transform="translate(940 0) rotate(90)">${halfLines(false)}</g>
@@ -1676,7 +1677,7 @@ async function nat1(arg) {
   const tab = Object.entries(N1SUB[LANG]).find(([, v]) => v === arg)?.[0] || 'standings';
   const d = await fetch('/api/nat1', { cache: 'no-cache' }).then(r => r.json());
   pageMeta = META.nat1[LANG];
-  const badge = c => `<img class="tlogo" src="/img/teams/${esc(c)}.png?v=2" alt="" width="28" height="28" loading="lazy" onerror="this.outerHTML='<span class=&quot;ini&quot;>${esc(String(c).slice(0, 3))}</span>'">`, names = d.teams, official = d.official;
+  const badge = c => `<img class="tlogo n1" src="/img/teams/${esc(c)}.png?v=3" alt="" width="40" height="40" loading="lazy" onerror="this.outerHTML='<span class=&quot;ini&quot;>${esc(String(c).slice(0, 3))}</span>'">`, names = d.teams, official = d.official;
   const keep = m => ({ ...m, games: m.games.filter(g => !n1Team || g.home === n1Team || g.away === n1Team) });
   const played = d.matchdays.filter(m => m.played).map(keep).filter(m => m.games.length).reverse();
   const coming = d.matchdays.filter(m => !m.played).map(keep).filter(m => m.games.length);

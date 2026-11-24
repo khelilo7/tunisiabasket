@@ -122,7 +122,7 @@
         ctx.drawImage(cvs, (W - cw) / 2, 195);
       } else { const pw = 780, ph = 940, f = feathered(st.photo, pw, ph); ctx.drawImage(f, (W - pw) / 2, 150, pw, ph); }
     } else {
-      const bd = await loadImg(`/img/teams/${p.team}.png?v=2`); if (bd) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 560, 250, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip(); ctx.drawImage(bd, W / 2 - 215, 345, 430, 430); ctx.restore(); }
+      const bd = await loadImg(`/img/teams/${p.team}.png?v=3`); if (bd) { ctx.save(); ctx.beginPath(); ctx.arc(W / 2, 560, 250, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip(); ctx.drawImage(bd, W / 2 - 215, 345, 430, 430); ctx.restore(); }
     }
     // darker band for the text
     const sd = ctx.createLinearGradient(0, 760, 0, H); sd.addColorStop(0, 'rgba(7,11,22,0)'); sd.addColorStop(0.35, 'rgba(7,11,22,.88)'); sd.addColorStop(1, 'rgba(7,11,22,.97)'); ctx.fillStyle = sd; ctx.fillRect(0, 760, W, H - 760);
@@ -140,7 +140,7 @@
     txt(ctx, nm(p.name).toUpperCase(), W / 2, 1008, { size: 110, weight: 900, align: 'center', maxW: W - 90 });
     const inGame = p.team === g.home || p.team === g.away, opp = p.team === g.home ? g.away : g.home, ps = p.team === g.home ? g.home_score : g.away_score, os = p.team === g.home ? g.away_score : g.home_score;
     const line = inGame ? `${teamName(g, p.team).toUpperCase()}  ·  ${p.team} ${ps} – ${os} ${opp}` : teamName(g, p.team).toUpperCase();
-    if (st.badge) { const bd = await loadImg(`/img/teams/${p.team}.png?v=2`); ctx.font = `700 26px ${FONT}`; const lw = Math.min(ctx.measureText(line).width, W - 220), x0 = (W - lw - 64) / 2;
+    if (st.badge) { const bd = await loadImg(`/img/teams/${p.team}.png?v=3`); ctx.font = `700 26px ${FONT}`; const lw = Math.min(ctx.measureText(line).width, W - 220), x0 = (W - lw - 64) / 2;
       ctx.save(); ctx.beginPath(); ctx.arc(x0 + 26, 1050, 26, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.clip(); if (bd) ctx.drawImage(bd, x0 + 5, 1029, 42, 42); ctx.restore();
       txt(ctx, line, x0 + 64, 1060, { size: 26, weight: 700, color: C.mut, maxW: W - 220 }); }
     else txt(ctx, line, W / 2, 1060, { size: 26, weight: 700, color: C.mut, align: 'center', maxW: W - 120 });

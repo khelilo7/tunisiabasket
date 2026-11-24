@@ -9,7 +9,7 @@ export const API = Platform.OS === 'android' ? RAW.replace('://localhost', '://1
 export const FANTASY_ON = process.env.EXPO_PUBLIC_FANTASY === '1';
 
 export const asset = (path?: string | null) => (!path ? undefined : path.startsWith('http') ? path : API + path);
-export const teamLogo = (code?: string | null) => (code ? `${API}/img/teams/${code}.png?v=2` : undefined);
+export const teamLogo = (code?: string | null) => (code ? `${API}/img/teams/${code}.png?v=3` : undefined);
 
 const memory = new Map<string, { at: number; data: unknown }>();
 const KEY = (p: string) => 'api:' + p;
