@@ -412,6 +412,19 @@ def remove_result(matchday, home, away):
     return n - len(d["results"])
 
 
+def remove_fixture(matchday, home, away):
+    """Take one game out of the calendar (a game typed by mistake). A game that has a result is removed with its result (remove_result), never from here. Returns how many were removed."""
+    pair = {str(home).upper(), str(away).upper()}
+    with _lock:
+        d = load()
+        if any(r["matchday"] == int(matchday) and {r["home"], r["away"]} == pair for r in d["results"]):
+            raise ValueError("that game has a result: remove the result first")
+        n = len(d["fixtures"])
+        d["fixtures"] = [x for x in d["fixtures"] if not (x["matchday"] == int(matchday) and {x["home"], x["away"]} == pair)]
+        _write(d)
+    return n - len(d["fixtures"])
+
+
 def set_time(matchday, home, away, time, date=None):
     """Set (or clear, with "") the hour of one game, and its day when `date` is given, in the calendar and in its result if it has one: the hour of a game is known
     well before its score. Raises ValueError when the game is neither in the calendar nor a result."""

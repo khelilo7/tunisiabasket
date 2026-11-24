@@ -188,6 +188,11 @@ check(m40["date"] == "2020-01-04" and m40["date_end"] == "2999-01-05" and (gm["X
 post({"op": "result", "matchday": 40, "home": "XA", "away": "XB", "home_score": 70, "away_score": 60})
 gm = {g["home"]: g for g in next(m for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 40)["games"]}
 check(not gm["XA"]["missing"] and gm["XA"]["date"] == "2020-01-04" and not gm["XC"]["missing"] and gm["XC"]["date"] == "2999-01-05", "a result keeps the day of its own game, the other game is still to come")
+# a game typed in the calendar by mistake can be removed, unless it has a result
+post({"op": "fixtures", "text": "41, XA, XC, 2999-02-01"})
+check(post({"op": "remove_fixture", "matchday": 41, "home": "XC", "away": "XA"}).status_code == 200 and not [m for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 41], "a game typed by mistake is removed from the calendar (either order of the teams)")
+check(post({"op": "remove_fixture", "matchday": 40, "home": "XA", "away": "XB"}).status_code == 422, "a game with a result is not removed from the calendar")
+check(c.post("/admin/api/nat1", json={"op": "remove_fixture", "matchday": 41, "home": "XA", "away": "XC"}).status_code in (401, 403), "only the admin removes a calendar game")
 print("nationale 1, about, menu:", "FAILED" if fails else "ok")
 for m in fails:
     print(" -", m)
