@@ -32,7 +32,7 @@
     if (md == null || !days.some(m => m.matchday === md)) md = days[days.length - 1].matchday;
     sync('n1_results');
     const m = days.find(x => x.matchday === md), rs = m.games, RH = 130, top = 300, H = top + rs.length * RH + 150, T_ = t();
-    const ctx = await frame(H, `${T_.league} · ${T_.day(m.matchday)}`, T_.results, day(m.date), T_.league);
+    const ctx = await frame(H, `${T_.league} · ${T_.day(m.matchday)}`, T_.results, [...new Set(rs.map(g => g.date || m.date).filter(Boolean))].sort().map(day).join(' · '), T_.league);   // games of one matchday are not always played on the same day
     for (let i = 0; i < rs.length; i++) {
       const r = rs[i], y = top + i * RH, done = r.home_score != null, hw = done && r.home_score > r.away_score, aw = done && r.away_score > r.home_score;
       ctx.fillStyle = C.card; rr(ctx, 40, y, W - 80, RH - 14, 22); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 2; ctx.stroke();

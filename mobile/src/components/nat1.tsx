@@ -6,7 +6,7 @@ import { C } from '@/theme';
 import { Row, TeamLogo, Txt } from './ui';
 
 // National One (/api/nat1): results only, no box scores.
-export type N1Game = { home: string; away: string; home_name: string; away_name: string; home_score: number | null; away_score: number | null; date: string | null; projected?: boolean };
+export type N1Game = { home: string; away: string; home_name: string; away_name: string; home_score: number | null; away_score: number | null; date: string | null; time?: string | null; projected?: boolean };
 export type N1 = { season: string; teams: Record<string, string>; standings: { code: string; name: string; rank: number; j: number; w: number; l: number; pts: number; diff: number }[];
   matchdays: { matchday: number; date: string | null; played: boolean; games: N1Game[] }[]; official?: { published: string; source: string } | null };
 
@@ -18,7 +18,7 @@ export function GameRow({ g, md, code, first }: { g: N1Game; md: number; code?: 
   const won = played && mine ? (mine === 'home' ? g.home_score! > g.away_score! : g.away_score! > g.home_score!) : null;
   return (
     <Row style={{ paddingHorizontal: 12, paddingVertical: 11, gap: 8, borderTopWidth: first ? 0 : 1, borderColor: C.line }}>
-      <View style={{ width: 40 }}><Txt v="label" style={{ fontSize: 10 }}>J{md}</Txt>{g.date ? <Txt v="small" style={{ fontSize: 10 }}>{dayLabel(g.date, lang, { day: 'numeric', month: 'short' })}</Txt> : null}</View>
+      <View style={{ width: 40 }}><Txt v="label" style={{ fontSize: 10 }}>J{md}</Txt>{g.date ? <Txt v="small" style={{ fontSize: 10 }}>{dayLabel(g.date, lang, { day: 'numeric', month: 'short' })}</Txt> : null}{g.time ? <Txt v="small" style={{ fontSize: 10 }}>{g.time}</Txt> : null}</View>
       <TeamLogo code={g.home} size={26} />
       <Txt v="sub" c={C.txt} style={{ flex: 1, fontWeight: mine === 'home' ? '700' : '400' }} numberOfLines={1}>{g.home_name}</Txt>
       <View style={{ minWidth: 64, alignItems: 'center', borderRadius: 8, paddingVertical: 3, backgroundColor: won == null ? C.card2 : won ? 'rgba(62,207,142,0.16)' : 'rgba(255,93,108,0.16)' }}>
@@ -40,7 +40,7 @@ export function TeamGameRow({ g, md, code, first }: { g: N1Game; md: number; cod
   const won = played ? us! > them! : null;
   return (
     <Row style={{ paddingHorizontal: 12, paddingVertical: 11, gap: 10, borderTopWidth: first ? 0 : 1, borderColor: C.line }}>
-      <View style={{ width: 44 }}><Txt v="label" style={{ fontSize: 10 }}>J{md}</Txt>{g.date ? <Txt v="small" style={{ fontSize: 10 }}>{dayLabel(g.date, lang, { day: 'numeric', month: 'short' })}</Txt> : null}</View>
+      <View style={{ width: 44 }}><Txt v="label" style={{ fontSize: 10 }}>J{md}</Txt>{g.date ? <Txt v="small" style={{ fontSize: 10 }}>{dayLabel(g.date, lang, { day: 'numeric', month: 'short' })}</Txt> : null}{g.time ? <Txt v="small" style={{ fontSize: 10 }}>{g.time}</Txt> : null}</View>
       <TeamLogo code={opp} size={30} />
       <Txt v="sub" c={C.txt} style={{ flex: 1 }} numberOfLines={1}><Txt v="small">{home ? (lang === 'fr' ? 'contre ' : 'vs ') : '@ '}</Txt>{oppName}</Txt>
       {played ? (

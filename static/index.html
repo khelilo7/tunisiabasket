@@ -1680,15 +1680,18 @@ async function nat1(arg) {
   pageMeta = META.nat1[LANG];
   const badge = c => `<img class="tlogo n1" src="/img/teams/${esc(c)}.png?v=3" alt="" width="40" height="40" loading="lazy" onerror="this.outerHTML='<span class=&quot;ini&quot;>${esc(String(c).slice(0, 3))}</span>'">`, names = d.teams, official = d.official;
   const keep = m => ({ ...m, games: m.games.filter(g => !n1Team || g.home === n1Team || g.away === n1Team) });
-  const played = d.matchdays.filter(m => m.played).map(keep).filter(m => m.games.length).reverse();
-  const coming = d.matchdays.filter(m => !m.played).map(keep).filter(m => m.games.length);
+  // the games of a matchday are not always played on the same day: "played" and "to come" are decided game by game (a score, or its own day has come), so a matchday can be in both lists
+  const split = (m, past) => ({ ...m, games: m.games.filter(g => (g.home_score != null || g.missing) === past) });
+  const played = d.matchdays.map(m => keep(split(m, true))).filter(m => m.games.length).reverse();
+  const coming = d.matchdays.map(m => keep(split(m, false))).filter(m => m.games.length);
   const pf = LANG === 'fr' ? 'PM' : 'PF', pa = LANG === 'fr' ? 'PE' : 'PA', hasPF = d.standings.some(t => t.pf != null);
   const head = `${leagueNav('nat1')}${n1Nav(tab)}<h1>${_('National One')} <span class="mut" style="font-size:15px">${esc(d.season)}</span></h1>`;
   if (!d.standings.length) return `${head}<div class="empty">${_('The National One results are coming soon.')}</div>`;
   const filter = `<div class="toolbar"><select id="n1t" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${Object.entries(names).sort((a, b) => a[1].localeCompare(b[1])).map(([c, n]) => `<option value="${esc(c)}" ${c === n1Team ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
   const game = (g, isPlayed) => { const has = g.home_score != null, hw = has && g.home_score > g.away_score;
-    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span><span class="n1c">${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${isPlayed ? _('score missing') : _('to come')}</span>`}${g.date ? `<small>${esc(hDate(g.date))}</small>` : ''}</span><span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
-  const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${m.date ? `<span class="mut small">${esc(fmtDay(m.date))}</span>` : ''}${isPlayed && m.missing ? `<span class="mut small">· ${esc(f('scoresMissing', m.missing))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
+    return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${badge(g.home)}<span>${esc(g.home_name)}</span></span><span class="n1c">${has ? `<b>${g.home_score} – ${g.away_score}</b>` : `<span class="mut small n1s">${g.missing ? _('score missing') : _('to come')}</span>`}${g.date ? `<small>${esc(hDate(g.date))}${g.time ? ' · ' + esc(g.time) : ''}</small>` : ''}</span><span class="tn ${has && !hw ? 'win' : ''}"><span>${esc(g.away_name)}</span>${badge(g.away)}</span></div>`; };
+  const days = m => { const ds = [...new Set(m.games.map(g => g.date).filter(Boolean))].sort(); return ds.length ? ds.length > 1 ? `${fmtDay(ds[0])} – ${fmtDay(ds[ds.length - 1])}` : fmtDay(ds[0]) : m.date ? fmtDay(m.date) : ''; };
+  const day = (m, isPlayed) => `<div class="card"><div class="row"><b>J${m.matchday}</b>${days(m) ? `<span class="mut small">${esc(days(m))}</span>` : ''}${isPlayed && m.games.some(g => g.missing) ? `<span class="mut small">· ${esc(f('scoresMissing', m.games.filter(g => g.missing).length))}</span>` : ''}</div>${m.games.map(g => game(g, isPlayed)).join('')}</div>`;
   if (tab === 'playoff') {
     const po = d.playoff, fm = d.format;
     if (!d.playoff_on && !previewMode()) return `${head}<div class="empty">${_('The National One play-off starts at the end of the regular season. This page will come alive then.')}</div>`;

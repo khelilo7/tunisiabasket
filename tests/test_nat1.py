@@ -76,6 +76,24 @@ m5 = next(m for m in v["matchdays"] if m["matchday"] == 5)
 check(not m5["played"] and m5["games"][0]["home_score"] is None and not m5["projected"], "a future matchday is not played and its games have no score")
 check(next(g for m in v["matchdays"] if m["matchday"] == 1 for g in m["games"] if g["home"] == "ESM")["home_score"] == 80, "a calendar game with a result shows the result")
 check(post({"op": "fixtures", "text": "5, ESM, NOPE, 2999-01-01"}).status_code == 422, "a calendar line with an unknown team is refused")
+# the hour of a game: in the calendar (18:30 or 18h30, before or after "projected"), set later game by game, kept when the result comes, and refused when it is not an hour
+r = post({"op": "fixtures", "text": "5, ESM, CSK, 2999-01-01, 18h30\n5, ASM, EOS, 2999-01-01, projected, 8:00"})
+v = c.get("/api/nat1").get_json()
+m5 = next(m for m in v["matchdays"] if m["matchday"] == 5)
+tm = {g["home"]: g["time"] for g in m5["games"]}
+check(r.status_code == 200 and tm == {"ESM": "18:30", "ASM": "08:00"} and all(g["projected"] for g in m5["games"] if g["home"] == "ASM"), f"hours in the calendar: {tm}")
+check(post({"op": "fixtures", "text": "5, ESM, CSK, 2999-01-01, 25:99"}).status_code == 200 and next(g for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ESM")["time"] is None, "a column that is not an hour is not taken for one")
+check(post({"op": "time", "matchday": 5, "home": "ESM", "away": "CSK", "time": "7pm"}).status_code == 422, "an hour that is not hh:mm is refused")
+check(post({"op": "time", "matchday": 5, "home": "ESM", "away": "EOS", "time": "19:00"}).status_code == 422, "the hour of a game that is not in the calendar is refused")
+check(post({"op": "time", "matchday": 5, "home": "ESM", "away": "CSK", "time": "19h00", "date": "2999-01-02"}).status_code == 200, "an hour (and a new day) is set for a game")
+g5 = next(g for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ESM")
+check(g5["time"] == "19:00" and g5["date"] == "2999-01-02", f"the game shows its new hour and day: {g5}")
+check(post({"op": "time", "matchday": 5, "home": "ESM", "away": "CSK", "time": ""}).status_code == 200 and next(g for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ESM")["time"] is None, "an empty hour removes it")
+post({"op": "time", "matchday": 5, "home": "ASM", "away": "EOS", "time": "20:15"})
+check(post({"op": "result", "matchday": 5, "home": "ASM", "away": "EOS", "home_score": 70, "away_score": 60}).status_code == 200
+      and next(g for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 5 for g in m["games"] if g["home"] == "ASM")["time"] == "20:15", "the hour of the calendar stays when the result is typed")
+post({"op": "remove_result", "matchday": 5, "home": "ASM", "away": "EOS"})
+post({"op": "fixtures", "text": "5, ESM, CSK, 2999-01-01\n5, ASM, EOS, 2999-01-01, projected"})        # back to the calendar the tests below rely on
 off = "date: 2026-11-15\nCSK, 4, 4, 0, +97, 8\nESM, 4, 3, 1, +10, 7\nASM, 4, 1, 3, -50, 5\nEOS, 4, 0, 4, -57, 4"
 r = post({"op": "official", "text": off})
 check(r.status_code == 200 and r.get_json()["official"]["published"] == "2026-11-15", f"the federation's table is saved: {r.get_json()}")
@@ -160,6 +178,16 @@ check(order() == ["AAA", "BBB", "CCC"] and row("CCC")["j"] == 0, f"old FTBB tabl
 post({"op": "result", "matchday": 2, "home": "CCC", "away": "AAA", "home_score": 90, "away_score": 50, "date": "2026-11-21"})
 check(order() == ["AAA", "CCC", "BBB"] and (row("AAA")["j"], row("AAA")["diff"], row("CCC")["pts"]) == (2, -30, 2) and "basis" in json.loads(nat1.FILE.read_text())["official"],
       f"old FTBB table: the later result moves the table, and the basis is now stored: {c.get('/api/nat1').get_json()['standings']}")
+# the games of one matchday are not always played on the same day: each is "score missing" (or "to come") on its own day, the matchday shows both days
+post({"op": "team", "code": "XA", "name": "Team A"}); post({"op": "team", "code": "XB", "name": "Team B"}); post({"op": "team", "code": "XC", "name": "Team C"}); post({"op": "team", "code": "XD", "name": "Team D"})
+check(post({"op": "fixtures", "text": "40, XA, XB, 2020-01-04, 18:00\n40, XC, XD, 2999-01-05, 20:30"}).status_code == 200, "a matchday over two days is saved")
+m40 = next(m for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 40)
+gm = {g["home"]: g for g in m40["games"]}
+check(gm["XA"]["missing"] and not gm["XC"]["missing"] and m40["missing"] == 1, f"only the game whose day has passed is missing its score: {m40}")
+check(m40["date"] == "2020-01-04" and m40["date_end"] == "2999-01-05" and (gm["XA"]["time"], gm["XC"]["time"]) == ("18:00", "20:30"), "the matchday spans both days, each game keeps its own hour")
+post({"op": "result", "matchday": 40, "home": "XA", "away": "XB", "home_score": 70, "away_score": 60})
+gm = {g["home"]: g for g in next(m for m in c.get("/api/nat1").get_json()["matchdays"] if m["matchday"] == 40)["games"]}
+check(not gm["XA"]["missing"] and gm["XA"]["date"] == "2020-01-04" and not gm["XC"]["missing"] and gm["XC"]["date"] == "2999-01-05", "a result keeps the day of its own game, the other game is still to come")
 print("nationale 1, about, menu:", "FAILED" if fails else "ok")
 for m in fails:
     print(" -", m)
