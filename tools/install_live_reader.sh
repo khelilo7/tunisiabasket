@@ -1,7 +1,9 @@
 #!/bin/bash
 # Installs the live score reader on a Mac, once:  bash tools/install_live_reader.sh [TOKEN] [SERVER]
 #
-#   ~/TunisiaBasketLive/                       the reader (live_reader.py, winlist), its own Python, its settings (config) and its log (reader.log)
+#   ~/TunisiaBasketLive/                       the reader (live_reader.py, winlist), its own Python, its settings (config) and its log (reader.log);
+#                                              on an Apple silicon Mac also the scorers (live_scorer.py, commentary_match.py, audiocap, Whisper ~1.6 GB):
+#                                              who scored each basket, from the commentator (SCORERS=0 in config turns it off)
 #   /Applications/Tunisia Basket Live.app      double-click: starts reading every browser window titled "Diwan Sport" (one window per game);
 #                                              double-click again while it runs: what it follows, Stop (its games leave the Live page), or Remove a game
 #                                              (an ended game taken off the Live page now). Stopped, it offers Remove a game when one is still on Live.
@@ -24,14 +26,25 @@ if [ -z "$TOKEN" ] && [ -f "$DEST/config" ]; then TOKEN="$(sed -n 's/^TOKEN=//p'
 if [ -z "$TOKEN" ]; then read -r -p "Live-score token (sudo proastats-admin new-livescore-token on the server): " TOKEN; fi
 
 mkdir -p "$DEST"
-cp "$SRC/live_reader.py" "$SRC/winlist.swift" "$DEST/"
+cp "$SRC/live_reader.py" "$SRC/winlist.swift" "$SRC/live_scorer.py" "$SRC/commentary_match.py" "$SRC/audiocap.swift" "$SRC/macos_ocr.py" "$DEST/"
 echo "==> Python packages"
 [ -x "$DEST/venv/bin/python" ] || python3 -m venv "$DEST/venv"
-"$DEST/venv/bin/pip" install -q --upgrade pip numpy pillow scipy
+"$DEST/venv/bin/pip" install -q --upgrade pip numpy pillow scipy pyobjc-framework-Vision pyobjc-framework-Quartz   # the last two: the macOS text reader (bold scoreboard digits)
 echo "==> Window lister"
 swiftc -O "$DEST/winlist.swift" -o "$DEST/winlist"
+SCORERS=0
+if [ "$(uname -m)" = "arm64" ]; then
+  echo "==> Scorers: sound capture and Whisper (the model, ~1.6 GB, is downloaded once)"
+  swiftc -O "$DEST/audiocap.swift" -o "$DEST/audiocap"
+  "$DEST/venv/bin/pip" install -q mlx-whisper
+  "$DEST/venv/bin/python" -c "from huggingface_hub import snapshot_download; snapshot_download('mlx-community/whisper-large-v3-turbo')" >/dev/null
+  SCORERS=1
+else
+  echo "==> Scorers: need an Apple silicon Mac (M1 or later): off"
+fi
+[ -f "$DEST/config" ] && grep -q '^SCORERS=0' "$DEST/config" && SCORERS=0      # turned off by hand: stays off
 umask 077
-printf 'SERVER=%s\nTOKEN=%s\n' "$SERVER" "$TOKEN" > "$DEST/config"
+printf 'SERVER=%s\nTOKEN=%s\nSCORERS=%s\n' "$SERVER" "$TOKEN" "$SCORERS" > "$DEST/config"
 
 cat > "$DEST/run.sh" <<'RUN'
 #!/bin/bash
@@ -40,12 +53,13 @@ cat > "$DEST/run.sh" <<'RUN'
 cd "$(dirname "$0")"
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 SERVER="$(sed -n 's/^SERVER=//p' config)"; TOKEN="$(sed -n 's/^TOKEN=//p' config)"
+EXTRA=""; [ "$(sed -n 's/^SCORERS=//p' config)" = "1" ] && EXTRA="--scorers"   # who scored, from the commentator (keep the game tab's sound on)
 printf '\033]0;Tunisia Basket Live\007'
 echo "Tunisia Basket Live: reading every window titled \"Diwan Sport\" (one window per game, behind other windows is fine, not minimised)."
 echo "Scores go to $SERVER. Close this window to stop."
 : > reader.log
 export LIVESCORE_TOKEN="$TOKEN"                     # the token stays out of the process list (ps), unlike a --token argument
-caffeinate -di ./venv/bin/python -u live_reader.py --server "$SERVER" --winlist ./winlist 2>&1 | tee -a reader.log
+caffeinate -di ./venv/bin/python -u live_reader.py --server "$SERVER" --winlist ./winlist $EXTRA 2>&1 | tee -a reader.log
 RUN
 chmod 755 "$DEST/run.sh"
 

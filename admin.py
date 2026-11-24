@@ -510,6 +510,40 @@ def _bio_value(field, v):
     raise ValueError(f"unknown field {field}")
 
 
+@bp.get("/admin/api/livescore/scorers")
+def livescore_scorers():
+    """The games read from the broadcast these last days, every basket with the scorer the commentator named (--scorers), and the two rosters to fix one."""
+    import livescore
+    games = livescore.review()
+    codes = {c for g in games for c in (g["home"], g["away"])}
+    players = stats.build()["players"]
+    rosters = {c: sorted(({"id": p["id"], "number": p["number"], "name": p["name"]} for p in players if p["team"] == c), key=lambda p: (p["number"] is None, p["number"] or 0))
+               for c in codes}
+    return jsonify(games=games, rosters=rosters)
+
+
+@bp.post("/admin/api/livescore/scorer")
+def livescore_set_scorer():
+    """Body {"id": game, "index": basket's reading, "team": code, "player": player id, or "" for nobody}: the admin's choice, kept over the reader's."""
+    import livescore
+    b = request.get_json(silent=True) or {}
+    pid = str(b.get("player") or "")
+    player = None
+    if pid:
+        p = next((p for p in stats.build()["players"] if p["id"] == pid), None)
+        if not p:
+            return jsonify(error="Unknown player."), 404
+        player = {"id": p["id"], "number": p["number"], "name": p["name"]}
+    try:
+        index = int(b.get("index"))
+    except (TypeError, ValueError):
+        return jsonify(error="no such basket"), 400
+    res, err = livescore.set_scorer(str(b.get("id") or ""), index, str(b.get("team") or "").upper(), player)
+    if err:
+        return jsonify(error=err), 404
+    return jsonify(basket=res)
+
+
 @bp.get("/admin/api/roster")
 def roster_view():
     """Every player (hidden ones too) with bio, plus the roster changes made so far."""

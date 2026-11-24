@@ -33,7 +33,7 @@ jobs:
           command -v tesseract
 
       - name: Install Python packages
-        run: pip install -r requirements.txt pyflakes
+        run: pip install -r requirements.txt pyflakes scipy   # scipy: only the Live reader (tests/test_livescore.py finds its scoreboards), never the server
 
       - name: Lint Python
         run: python -m pyflakes ./*.py tools tests

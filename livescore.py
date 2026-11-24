@@ -10,6 +10,10 @@ token (data/livescore_token.json, a salted scrypt hash, or LIVESCORE_TOKEN in th
   * live_games() gives these games in the same shape as analytics.live_games() (no players, no box score: "source": "scoreboard"), so the website's and the app's Live pages
     show them; a game is live while the reader keeps sending (STALE seconds), and stays FINAL_KEEP seconds after its final buzzer. When the reader stops (the app's
     Stop, its window closed, Ctrl-C) it calls stop() for each game it followed (POST /api/livescore/stop): the game leaves the Live pages at once.
+  * Who scored (tools/live_reader.py --scorers, tools/live_scorer.py): a few seconds after a basket the reader names the scorer from the commentator's words and
+    POSTs it to /api/livescore/scorer (scorer()). It is kept on that basket of the timeline ("by": {team: {id, number, name, conf, sure}}): the plays show his
+    name and live_games() adds up the points of every player ("scorers"). An admin can fix or confirm one (set_scorer(), the admin's Live section):
+    the reader never overwrites an admin's choice.
   * events() gives notify.py what to announce: the end of each quarter (only to the phones that follow one of the two clubs), and the final score under the same key as the
     official result, so a phone gets the final once.
 """
@@ -231,6 +235,110 @@ def push(body: dict, now=None):
     return summary(g), None
 
 
+def _basket(g, left, right, score):
+    """Index in g's timeline of the reading where the score became score (left, right as the broadcast shows them), or None."""
+    want = {left: score[0], right: score[1]}
+    for i in range(len(g["timeline"]) - 1, -1, -1):
+        e = g["timeline"][i]
+        if not e.get("base") and not e.get("fix") and e.get(left) == want[left] and e.get(right) == want[right]:
+            return i
+    return None
+
+
+def scorer(body: dict, now=None):
+    """Who scored a basket, from the reader: {"teams": [left, right], "score": [left, right] after the basket, "team": code, "pts": 1-3,
+    "player": {"id", "number", "name"} or null (nobody named), "conf": 0.5-1, "sure": bool, "matchday": optional}. Returns (basket, None) or (None, error)."""
+    official = stats.load_official()
+    try:
+        left, right = [str(x).upper().strip() for x in body["teams"]]
+        sl, sr = [int(x) for x in body["score"]]
+        team, pts = str(body["team"]).upper(), int(body["pts"])
+    except (KeyError, TypeError, ValueError):
+        return None, "teams, score, team and pts are required"
+    if left not in official["teams"] or right not in official["teams"] or team not in (left, right) or not 1 <= pts <= 3:
+        return None, "unknown teams or points"
+    p = body.get("player")
+    if p is not None and not (isinstance(p, dict) and str(p.get("name") or "").strip()):
+        return None, "player needs a name"
+    gid = game_id(*_which(left, right, body.get("matchday"), official))
+    with _lock:
+        g = _load(gid)
+        if not g:
+            return None, "no such game"
+        i = _basket(g, left, right, (sl, sr))
+        if i is None:
+            return None, "no such basket"
+        e = g["timeline"][i]
+        by = e.setdefault("by", {})
+        if (by.get(team) or {}).get("admin"):                                    # an admin already said who it was
+            return {"index": i, **by[team]}, None
+        by[team] = {"id": str(p.get("id") or "")[:40] or None, "number": p.get("number"), "name": str(p["name"])[:60],
+                    "conf": round(float(body.get("conf") or 0), 2), "sure": bool(body.get("sure"))} if p else {"id": None, "number": None, "name": None, "conf": 0, "sure": False}
+        _save(g)
+    return {"index": i, **by[team]}, None
+
+
+def set_scorer(gid, index, team, player):
+    """The admin's choice for one basket: player {"id", "number", "name"}, or None (nobody / unknown). Returns (basket, None) or (None, error)."""
+    try:
+        _path(gid)
+    except ValueError:
+        return None, "no such game"
+    with _lock:
+        g = _load(gid)
+        if not g:
+            return None, "no such game"
+        if not (isinstance(index, int) and 0 <= index < len(g["timeline"])) or team not in (g["home"], g["away"]):
+            return None, "no such basket"
+        e = g["timeline"][index]
+        e.setdefault("by", {})[team] = ({"id": player.get("id"), "number": player.get("number"), "name": str(player.get("name") or "")[:60] or None}
+                                        if player else {"id": None, "number": None, "name": None}) | {"admin": True, "sure": True}
+        _save(g)
+    return {"index": index, **e["by"][team]}, None
+
+
+def _baskets(g):
+    """[(timeline index, reading, team, points)] of every basket of g, oldest first."""
+    h, a = g["home"], g["away"]
+    out, last = [], (0, 0)
+    for i, e in enumerate(g["timeline"]):
+        if not e.get("base") and not e.get("fix"):
+            for code, d in ((h, e[h] - last[0]), (a, e[a] - last[1])):
+                if d > 0:
+                    out.append((i, e, code, d))
+        last = (e[h], e[a])
+    return out
+
+
+def scorers(g):
+    """{team: [{id, number, name, pts}] best first}, and the points nobody was named for: {team: pts}."""
+    pts, unknown = {g["home"]: {}, g["away"]: {}}, {g["home"]: 0, g["away"]: 0}
+    for _, e, code, d in _baskets(g):
+        b = (e.get("by") or {}).get(code) or {}
+        if b.get("name"):
+            key = b.get("id") or f"{b.get('number')}|{b['name']}"
+            p = pts[code].setdefault(key, {"id": b.get("id"), "number": b.get("number"), "name": b["name"], "pts": 0})
+            p["pts"] += d
+        else:
+            unknown[code] += d
+    return {c: sorted(v.values(), key=lambda p: -p["pts"]) for c, v in pts.items()}, unknown
+
+
+def review(days=3, now=None):
+    """The admin's Live section: the games read from the broadcast in the last days, with every basket and who the reader named."""
+    now = int(now or time.time())
+    out = []
+    for g in sorted(_all(), key=lambda g: -g["updated"]):
+        if now - g["updated"] > days * 86400:
+            continue
+        rows = [{"index": i, "q": e["q"], "t": e.get("t"), "team": code, "pts": d, "score": f"{e[g['home']]}-{e[g['away']]}", "by": (e.get("by") or {}).get(code)}
+                for i, e, code, d in _baskets(g)]
+        out.append({"id": g["id"], "home": g["home"], "away": g["away"], "matchday": g["matchday"], "score": g["score"], "final": g["final"],
+                    "updated": g["updated"], "baskets": rows[::-1],
+                    "to_check": sum(1 for r in rows if not (r["by"] or {}).get("sure"))})
+    return out
+
+
 def summary(g):
     return {"id": g["id"], "home": g["home"], "away": g["away"], "matchday": g["matchday"], "q": g["q"], "clock": g["clock"], "score": g["score"], "final": g["final"]}
 
@@ -296,7 +404,8 @@ def _plays(g):
         else:
             for code, d in ((h, e[h] - last[0]), (a, e[a] - last[1])):
                 if d > 0:
-                    out.append({"q": e["q"], "t": e.get("t") or 0, "team": code, "name": "", "number": None,
+                    b = (e.get("by") or {}).get(code) or {}                  # the scorer the commentator named (--scorers), if any
+                    out.append({"q": e["q"], "t": e.get("t") or 0, "team": code, "name": b.get("name") or "", "number": b.get("number"), "id": b.get("id"),
                                 "text": {1: "free throw made", 2: "2-pointer made", 3: "3-pointer made"}.get(d, f"{d} points"), "pts": d})
         last = (e[h], e[a])
     return out[::-1][:30]
@@ -311,12 +420,14 @@ def live_games(skip=(), now=None):
         if not _showing(g, now) or frozenset((g["home"], g["away"])) in skip:
             continue
         n = max(4, g["q"], *(len(v) for v in g["quarters"].values()))
+        named, unknown = scorers(g)
         teams = {c: {"code": c, "name": names.get(c, c), "score": g["score"][c], "players": [], "totals": {}, "extra": {}} for c in (g["home"], g["away"])}
         out.append({"id": g["id"], "home": g["home"], "away": g["away"], "matchday": g["matchday"], "source": "scoreboard", "final": g["final"],
                     "clock": {"q": g["q"], "t": g["clock"] or 0} if g["clock"] is not None or g["q"] else None, "teams": teams, "plays": _plays(g),
                     "used_court": False, "ball": None, "flow": _flow(g),
                     "quarters": None if g.get("joined") else {"periods": n, "pts": {c: (g["quarters"][c] + [0] * n)[:n] for c in (g["home"], g["away"])}},
-                    "updated": g["updated"], "since": g["started"]})
+                    "updated": g["updated"], "since": g["started"],
+                    "scorers": {"by_team": named, "unknown": unknown} if any(named.values()) else None})
     return out
 
 

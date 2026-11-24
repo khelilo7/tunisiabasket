@@ -93,10 +93,11 @@
   <div class="tabs" id="maintabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="monitor">🖥️ Server</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games &amp; scores</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden>
-    <div class="tabs subtabs" id="gamesub"><button data-sub="proa" class="on">🏀 Pro A</button><button data-sub="nat1">🥈 National One</button><button data-sub="cup">🏆 Cup</button></div>
+    <div class="tabs subtabs" id="gamesub"><button data-sub="proa" class="on">🏀 Pro A</button><button data-sub="nat1">🥈 National One</button><button data-sub="cup">🏆 Cup</button><button data-sub="live">🔴 Live scorers</button></div>
     <div id="games-proa"><div id="gamesbox"><div class="mut">Loading…</div></div></div>
     <div id="games-nat1" hidden><div id="nat1box"><div class="mut">Loading…</div></div></div>
-    <div id="games-cup" hidden><div id="cupbox"><div class="mut">Loading…</div></div></div></div>
+    <div id="games-cup" hidden><div id="cupbox"><div class="mut">Loading…</div></div></div>
+    <div id="games-live" hidden><div id="livescorebox"><div class="mut">Loading…</div></div></div></div>
   <div id="tab-analytics" hidden><div id="analyticsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-news" hidden><div id="newsbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-images" hidden><div id="imgbox"><div class="mut">Loading…</div></div></div>
@@ -437,15 +438,17 @@ async function loadMvp() {
     card.querySelector('[data-msg]').textContent = r.ok ? 'Saved.' : (r.body.error || 'Could not save.');
   });
 }
-// The Games & scores tab has one subsection per competition: the Pro A (admin-content.js), the National One (admin-nat1.js) and the Cup (admin-comp.js).
+// The Games & scores tab has one subsection per competition: the Pro A (admin-content.js), the National One (admin-nat1.js) and the Cup (admin-comp.js),
+// and the scorers of the games read live from the broadcast (admin-livescore.js).
 let gamesSub = 'proa';
 function showGamesSub(sub) {
   gamesSub = sub;
   document.querySelectorAll('#gamesub button').forEach(x => x.classList.toggle('on', x.dataset.sub === sub));
-  ['proa', 'nat1', 'cup'].forEach(t => { $('#games-' + t).hidden = t !== sub; });
+  ['proa', 'nat1', 'cup', 'live'].forEach(t => { $('#games-' + t).hidden = t !== sub; });
   if (sub === 'proa') loadGames();
   if (sub === 'nat1' && window.loadNat1) window.loadNat1();
   if (sub === 'cup' && window.loadCup) window.loadCup();
+  if (sub === 'live' && window.loadLiveScorers) window.loadLiveScorers();
 }
 document.querySelectorAll('#gamesub button').forEach(b => b.onclick = () => showGamesSub(b.dataset.sub));
 function showTab(tab) { const b = document.querySelector(`#maintabs button[data-tab="${tab}"]`); if (b) b.click(); }
@@ -488,6 +491,7 @@ boot();
 <script src="/admin-content.js"></script>
 <script src="/admin-rounds.js"></script>
 <script src="/admin-plays.js"></script>
+<script src="/admin-livescore.js"></script>
 <script src="/admin-nat1.js"></script>
 <script src="/admin-sources.js"></script>
 <script src="/admin-comp.js"></script>

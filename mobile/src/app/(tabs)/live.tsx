@@ -14,10 +14,12 @@ import { C, F } from '@/theme';
 type LP = { id: string; name: string; number: number; photo?: string | null; on: boolean; pts: number; reb: number; ast: number; stl: number; blk: number; tov: number; pf: number; fgm: number; fga: number; p3m: number; p3a: number; ftm: number; fta: number; sec?: number; pm?: number; inj?: boolean; ej?: boolean };
 type LT = { code: string; name: string; score: number; players: LP[]; totals: Record<string, number> };
 type LG = { id: string; home: string; away: string; matchday?: number; source?: 'scoreboard'; final?: boolean; flow?: { lead: Record<string, number>; run: Record<string, number>; changes: number; ties: number }; clock?: { q: number; t: number } | null; teams: Record<string, LT>; quarters?: { periods: number; pts: Record<string, number[]> };
-  plays: { q?: number; t?: number; team: string; name: string; number: number | null; text: string; pts: number }[] };
+  plays: { q?: number; t?: number; team: string; name: string; number: number | null; text: string; pts: number }[];
+  scorers?: { by_team: Record<string, { id: string | null; number: number | null; name: string; pts: number }[]>; unknown: Record<string, number> } | null };
 type Sched = { teams: Record<string, string>; current: number; matchdays: { matchday: number; date: string | null; games: { home: string; away: string; played: boolean; date: string | null; time: string | null }[] }[] };
 
-// a game read automatically from the broadcast's scoreboard (source "scoreboard"): score, quarter, clock and the score changes, no players
+// a game read automatically from the broadcast's scoreboard (source "scoreboard"): score, quarter, clock and the score changes; the scorers when the
+// reader names them from the commentator (about 8 out of 10 right, the box score comes after the game)
 const PLAY_FR: Record<string, string> = { 'free throw made': 'lancer franc réussi', '2-pointer made': 'tir à 2 pts réussi', '3-pointer made': 'tir à 3 pts réussi', 'score corrected': 'score corrigé' };
 const clock = (c?: { q: number; t: number } | null) => (!c ? '' : `${c.q > 4 ? `OT${c.q - 4}` : `Q${c.q}`} · ${String(Math.floor(c.t / 60)).padStart(2, '0')}:${String(c.t % 60).padStart(2, '0')}`);
 
@@ -155,13 +157,33 @@ function ScoreTimeline({ g, fr }: { g: LG; fr: boolean }) {
           <Txt v="small" style={{ textAlign: 'center', marginTop: 6 }}>{fr ? 'Changements de leader' : 'Lead changes'} {fl.changes} · {fr ? 'Égalités' : 'Ties'} {fl.ties}</Txt>
         </Card>
       ) : null}
+      {g.scorers ? (
+        <Card style={{ marginTop: 12 }}>
+          <Txt v="label" style={{ marginBottom: 8 }}>{fr ? 'Marqueurs' : 'Scorers'}</Txt>
+          <Row style={{ gap: 12, alignItems: 'flex-start' }}>
+            {[a, b].map(tm => (
+              <View key={tm.code} style={{ flex: 1 }}>
+                <Row style={{ gap: 6, marginBottom: 6 }}><TeamLogo code={tm.code} size={18} /><Txt v="small" c={C.txt} style={{ fontWeight: '700' }}>{tm.code}</Txt></Row>
+                {(g.scorers!.by_team[tm.code] || []).map((p, i) => (
+                  <Row key={i} style={{ paddingVertical: 3, gap: 6 }}>
+                    <Txt v="sub" c={C.txt} style={{ flex: 1 }} numberOfLines={1}>{titleCase(p.name)}</Txt>
+                    <Txt v="num" style={{ fontSize: 15 }}>{p.pts}</Txt>
+                  </Row>
+                ))}
+                {g.scorers!.unknown[tm.code] ? <Row style={{ paddingVertical: 3, gap: 6 }}><Txt v="small" style={{ flex: 1 }}>{fr ? 'Pas encore nommé' : 'Not named yet'}</Txt><Txt v="num" c={C.mut} style={{ fontSize: 15 }}>{g.scorers!.unknown[tm.code]}</Txt></Row> : null}
+              </View>
+            ))}
+          </Row>
+          <Txt v="small" style={{ marginTop: 8 }}>{fr ? 'Reconnus dans les paroles du commentateur : environ 8 sur 10 sont justes.' : 'Named from the commentator: about 8 out of 10 are right.'}</Txt>
+        </Card>
+      ) : null}
       <Txt v="h3" style={{ marginTop: 16, marginBottom: 8 }}>{fr ? 'Évolution du score' : 'Score timeline'}</Txt>
       <Card padded={false}>
         {g.plays.length ? g.plays.map((p, i) => (
           <Row key={i} style={{ paddingHorizontal: 12, paddingVertical: 9, gap: 10, borderTopWidth: i ? 1 : 0, borderColor: C.line }}>
             <Txt v="small" style={{ width: 70 }}>{p.q ? clock({ q: p.q, t: p.t || 0 }) : ''}</Txt>
             <TeamLogo code={p.team} size={22} />
-            <Txt v="sub" c={C.txt} style={{ flex: 1 }} numberOfLines={1}>{p.team} · <Txt v="sub">{fr ? PLAY_FR[p.text] || p.text : p.text}</Txt></Txt>
+            <Txt v="sub" c={C.txt} style={{ flex: 1 }} numberOfLines={1}>{p.name ? `${titleCase(p.name)} · ` : ''}{p.team} · <Txt v="sub">{fr ? PLAY_FR[p.text] || p.text : p.text}</Txt></Txt>
             {p.pts ? <Txt v="num" c={C.good} style={{ fontSize: 16 }}>+{p.pts}</Txt> : null}
           </Row>
         )) : <Txt v="small" style={{ padding: 14 }}>{fr ? 'Pas encore de panier.' : 'No basket yet.'}</Txt>}
