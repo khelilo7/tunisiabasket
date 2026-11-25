@@ -2,7 +2,7 @@
 // the Tunisian league (they get a small page of their own), the games (the results and the next game of the national team page) and the competitions.
 // What is saved wins over the list that ships with the code (assets/national_team.json). Uses the helpers of admin.html ($, esc, api).
 (function () {
-  let S = null, msg = null, list = null, matches = null, editExt = null, editGame = null, gameFor = null;
+  let S = null, msg = null, list = null, matches = null, editExt = null, editGame = null, boxFor = null, boxText = '', boxLines = null, statComp = null, statText = '', statLines = null;
   const J = { 'Content-Type': 'application/json' };
   const say = (t, ok = true) => { msg = t ? { t, ok } : null; };
   const today = () => new Date(Date.now() + 3600e3).toISOString().slice(0, 10);
@@ -75,7 +75,43 @@
       <table style="margin-top:8px"><thead><tr><th class="l">Date</th><th class="l">Game</th><th>Score</th><th class="l">Competition</th><th></th></tr></thead><tbody>
       ${games.map(x => `<tr><td class="l">${esc(x.date)}${x.time ? ' ' + esc(x.time) : ''}</td><td class="l">${x.site === 'away' ? esc(x.opp_name) + ' – Tunisia' : 'Tunisia – ' + esc(x.opp_name)} <span class="mut small">${esc(x.site)}</span>${x.check ? ' <span class="pill warn" title="Not confirmed by a second source">?</span>' : ''}</td>
         <td>${x.tun != null ? `<b>${x.tun}–${x.opp_score}</b>${x.ot ? ' OT' : ''}` : '<span class="mut">to come</span>'}</td><td class="l mut small">${esc(compName(x.competition))}${x.round ? ' · ' + esc(x.round) : ''}</td>
-        <td style="white-space:nowrap"><button data-gedit="${esc(x.id)}">Edit</button> <button data-gdel="${esc(x.id)}" class="danger">Delete</button></td></tr>`).join('') || '<tr><td colspan="5" class="mut">No game yet.</td></tr>'}</tbody></table></div>`;
+        <td style="white-space:nowrap">${x.tun != null ? `<button data-gbox="${esc(x.id)}" title="Paste the box score">${(x.box || []).length ? '📊 ' + x.box.length : '📊'}</button> ` : ''}<button data-gedit="${esc(x.id)}">Edit</button> <button data-gdel="${esc(x.id)}" class="danger">Delete</button></td></tr>`).join('') || '<tr><td colspan="5" class="mut">No game yet.</td></tr>'}</tbody></table></div>`;
+  }
+
+
+  // A pasted table (box score or per-game statistics) after the server matched the names: one row per line, a player to choose, the numbers editable.
+  const FIELDS = { box: ['min', 'pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'], stats: ['g', 'min', 'pts', 'reb', 'ast'] };
+  function previewTable(lines, kind) {
+    return `<table style="margin-top:8px"><thead><tr><th class="l">Pasted</th><th class="l">Player</th>${FIELDS[kind].map(f => `<th>${f.toUpperCase()}</th>`).join('')}<th></th></tr></thead><tbody>
+      ${lines.map((r, i) => `<tr data-pv="${i}" class="${r.uncertain ? 'saved' : ''}"><td class="l">${esc(r.input)}</td><td class="l"><select data-f="pid"><option value="${esc(r.pid || '')}">${r.pid ? esc(r.name) + (r.team ? ' (' + esc(r.team) + ')' : ' (outside the league)') : '— nobody (' + (kind === 'box' ? 'kept by name' : 'skipped') + ') —'}</option>
+        ${(r.others || []).map(o => `<option value="${esc(o.pid)}">${esc(o.name)}</option>`).join('')}${r.pid ? `<option value="">— nobody —</option>` : ''}</select></td>
+        ${FIELDS[kind].map(f => `<td><input data-f="${f}" class="num" style="width:56px" value="${r.values[f] ?? ''}"></td>`).join('')}<td>${r.uncertain ? '<span class="pill warn">check</span>' : '<span class="pill ok">sure</span>'}</td></tr>`).join('')}</tbody></table>`;
+  }
+  const readPreview = (kind, lines) => [...document.querySelectorAll(`#${kind}-pv tr[data-pv]`)].map(tr => {
+    const o = { pid: tr.querySelector('[data-f=pid]').value || null, name: lines[+tr.dataset.pv].input };
+    FIELDS[kind].forEach(f => { const v = tr.querySelector(`[data-f=${f}]`).value.trim(); if (v !== '') o[f] = v.replace(',', '.'); });
+    return o;
+  });
+
+  function boxCard() {
+    const g = S.games.find(x => x.id === boxFor); if (!g) return '';
+    return `<div class="card" style="border-color:var(--acc)"><h3 style="margin-top:0">Box score · ${g.site === 'away' ? esc(g.opp_name) + ' – Tunisia' : 'Tunisia – ' + esc(g.opp_name)} ${g.tun}–${g.opp_score} <span class="mut small">${esc(g.date)}</span></h3>
+      ${(g.box || []).length ? `<table><thead><tr><th class="l">Player</th>${FIELDS.box.map(f => `<th>${f.toUpperCase()}</th>`).join('')}</tr></thead><tbody>${g.box.map(l => `<tr><td class="l">${esc(l.pid ? pname(l.pid) : l.name + ' (not matched)')}</td>${FIELDS.box.map(f => `<td>${l[f] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table>
+        <div class="row" style="margin-top:6px"><button data-boxclear class="danger">Remove this box score</button></div>` : '<div class="mut small">No box score yet.</div>'}
+      <p class="small mut" style="margin-bottom:4px">Paste the lines of Tunisia's players, from a spreadsheet, a CSV or typed: <b>name, MIN, PTS, REB, AST, STL, BLK, TO, PF</b> (a first line with the column names works too, in any order; minutes like 24:30 are fine).</p>
+      <textarea id="box-text" rows="7" style="width:100%" placeholder="Player;MIN;PTS;REB;AST&#10;Omar Abada;33:20;26;4;6">${esc(boxText)}</textarea>
+      <div class="row" style="margin-top:6px"><button id="box-read">Read the lines</button><button id="box-close">Close</button></div>
+      ${boxLines ? `<div id="box-pv">${previewTable(boxLines, 'box')}</div><div class="row" style="margin-top:8px"><button class="primary" id="box-save">Save this box score</button><span class="mut small">It replaces the one above. The statistics of the players are computed from the box scores of a competition as soon as they cover his games.</span></div>` : ''}</div>`;
+  }
+
+  function statsCard() {
+    const comp = statComp || S.competitions[0].id, has = S.admin.stats.includes(comp);
+    return `<div class="card"><h3 style="margin-top:0">Per-game statistics without box scores</h3>
+      <p class="small mut" style="margin-top:0">For a competition whose box scores you do not have: paste a table <b>name, G, MIN, PTS, REB, AST</b> (per game). It replaces the numbers that ship with the code for that competition. Box scores take over player by player once they cover as many games.</p>
+      <div class="row"><select id="st-comp">${S.competitions.map(c => `<option value="${esc(c.id)}" ${c.id === comp ? 'selected' : ''}>${esc(c.en)}</option>`).join('')}</select>${has ? '<span class="pill ok">your table is shown</span><button id="st-clear">Back to the shipped numbers</button>' : '<span class="mut small">the numbers that ship with the code are shown (if any)</span>'}</div>
+      <textarea id="st-text" rows="6" style="width:100%;margin-top:6px" placeholder="Omar Abada 7 33 18.1 4.3 5.7">${esc(statText)}</textarea>
+      <div class="row" style="margin-top:6px"><button id="st-read">Read the lines</button></div>
+      ${statLines ? `<div id="stats-pv">${previewTable(statLines, 'stats')}</div><div class="row" style="margin-top:8px"><button class="primary" id="st-save">Save these statistics</button></div>` : ''}</div>`;
   }
 
   function compCard() {
@@ -86,7 +122,7 @@
 
   function render() {
     if (!S) return load();
-    $('#ntbox').innerHTML = `${msg ? `<div class="${msg.ok ? 'okbox' : 'problems'}">${esc(msg.t)}</div>` : ''}<div style="display:grid;gap:12px">${callupCard()}${gameCard()}${extCard()}${compCard()}</div>`;
+    $('#ntbox').innerHTML = `${msg ? `<div class="${msg.ok ? 'okbox' : 'problems'}">${esc(msg.t)}</div>` : ''}<div style="display:grid;gap:12px">${callupCard()}${gameCard()}${boxFor ? boxCard() : ''}${statsCard()}${extCard()}${compCard()}</div>`;
     wire();
   }
 
@@ -135,6 +171,16 @@
       const r = await send(body);
       if (r) editGame = null; render();
     };
+    // box scores and statistics
+    document.querySelectorAll('[data-gbox]').forEach(b => b.onclick = () => { boxFor = b.dataset.gbox; boxText = ''; boxLines = null; render(); $('#box-text').scrollIntoView({ block: 'center' }); });
+    if ($('#box-close')) $('#box-close').onclick = () => { boxFor = null; boxLines = null; render(); };
+    if ($('#box-read')) $('#box-read').onclick = async () => { boxText = $('#box-text').value; const r = await send({ op: 'box_preview', text: boxText }); boxLines = r ? r.lines : null; render(); };
+    if ($('#box-save')) $('#box-save').onclick = async () => { const r = await send({ op: 'box_save', id: boxFor, lines: readPreview('box', boxLines) }); if (r) { boxLines = null; boxText = ''; } render(); };
+    if ($('[data-boxclear]')) $('[data-boxclear]').onclick = async () => { if (confirm('Remove this box score?')) await send({ op: 'box_clear', id: boxFor }); render(); };
+    $('#st-comp').onchange = e => { statComp = e.target.value; statLines = null; render(); };
+    $('#st-read').onclick = async () => { statText = $('#st-text').value; const r = await send({ op: 'stats_preview', text: statText }); statLines = r ? r.lines : null; render(); };
+    if ($('#st-save')) $('#st-save').onclick = async () => { const r = await send({ op: 'stats_save', competition: $('#st-comp').value, rows: readPreview('stats', statLines).filter(x => x.pid) }); if (r) { statLines = null; statText = ''; } render(); };
+    if ($('#st-clear')) $('#st-clear').onclick = async () => { if (confirm('Go back to the statistics that ship with the code?')) await send({ op: 'stats_clear', competition: $('#st-comp').value }); render(); };
     // competitions
     $('#c-add').onclick = async () => { await send({ op: 'competition', en: $('#c-en').value, fr: $('#c-fr').value }); render(); };
     document.querySelectorAll('[data-cdel]').forEach(a => a.onclick = async e => { e.preventDefault(); if (confirm('Remove this competition?')) await send({ op: 'competition_delete', id: a.dataset.cdel }); render(); });

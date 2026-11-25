@@ -135,6 +135,57 @@ check(post({"op": "game_delete", "id": "wcq27-05"}).status_code == 200 and all(x
 check(post({"op": "game_delete", "id": "nope"}).status_code == 422, "unknown game")
 check(post({"op": "nonsense"}).status_code == 422, "unknown operation")
 
+# --- pasted tables: parsing
+pt = natteam.parse_table("Player MIN PTS REB AST\nOmar Abada 33:30 18 4 5\nFiras Lahiani;30;15;9,5;2\nTotal", ["min", "pts", "reb", "ast"])
+check(pt == [{"name": "Omar Abada", "min": 33.5, "pts": 18.0, "reb": 4.0, "ast": 5.0}, {"name": "Firas Lahiani", "min": 30.0, "pts": 15.0, "reb": 9.5, "ast": 2.0}], f"header, minutes and decimals read: {pt}")
+check(natteam.parse_table("Omar Abada\t7\t33\t18.1\t4,3\t5.7", ["g", "min", "pts", "reb", "ast"])[0]["ast"] == 5.7, "a line of a spreadsheet (tabs)")
+check(natteam.parse_table("PTS REB\nOmar Abada 18 4", ["min"])[0] == {"name": "Omar Abada", "pts": 18.0, "reb": 4.0}, "the header sets the columns")
+try:
+    natteam.parse_table("nothing here\n\n", ["min"])
+    check(False, "a text with no numbers is refused")
+except ValueError:
+    pass
+
+# --- box score of a game: the statistics follow
+gid = post({"op": "game", "competition": "friendly", "date": "2026-12-12", "opp_name": "Algeria", "site": "home", "venue": "Radès", "tun": 81, "opp_score": 70}).get_json()["id"]
+txt = "Player;MIN;PTS;REB;AST;STL;BLK;TO;PF\nOmar Abada;33:20;26;4;6;2;0;3;2\nFiras Lahiani;30;20;10;2;1;1;2;3\nYacine Toumi;25;18;5;1;0;0;1;2\nBilel Jaziri;12;9;1;3;0;0;0;1\nMr Nobody;8;8;2;0;0;0;1;1"
+pv = post({"op": "box_preview", "text": txt}).get_json()["lines"]
+check([x["pid"] for x in pv] == ["ca-24", "usm-23", "yacine-toumi", "ca-8", None] and pv[1]["uncertain"] and pv[4]["uncertain"] and pv[0]["values"]["min"] == 33.3, f"the box score lines are matched: {[(x['pid'], x['uncertain']) for x in pv]}")
+lines = [{"pid": x["pid"], "name": x["input"], **x["values"]} for x in pv]
+r = post({"op": "box_save", "id": gid, "lines": lines})
+check(r.status_code == 200 and "add up" not in r.get_json()["message"], f"box score saved, 81 points add up (26+20+18+9+8): {r.get_json().get('message')}")
+check(post({"op": "box_save", "id": gid, "lines": [{"pid": "ca-24", "pts": 5}, {"pid": "ca-24", "pts": 4}]}).status_code == 422, "a player twice in a box score is refused")
+check(post({"op": "box_save", "id": gid, "lines": [{"pid": "ca-24", "pts": 500}]}).status_code == 422 and post({"op": "box_save", "id": gid, "lines": [{"pid": "nobody-1", "pts": 5}]}).status_code == 422, "absurd numbers and unknown players refused")
+check("add up" in post({"op": "box_save", "id": gid, "lines": [{"pid": "ca-24", "min": 30, "pts": 20}]}).get_json()["message"], "a box score that does not add up to the score warns")
+post({"op": "box_save", "id": gid, "lines": lines})
+check(post({"op": "box_save", "id": "wcq27-10", "lines": lines}).status_code == 422, "no box score for a game still to come")
+gm = next(x for x in pub()["games"] if x["id"] == gid)
+check(len(gm["lines"]) == 5 and gm["lines"][0]["name"] == "Omar Abada" and any(x["pid"] is None and x["name"] == "Mr Nobody" for x in gm["lines"]), "the public view has the box score, the unmatched player kept by name")
+st = {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}
+check(st["friendly"]["g"] == 1 and st["friendly"]["pts"] == 26 and st["friendly"]["stl"] == 2 and st["wcq27"]["src"] == "summary", "his stats: the friendly from the box score, the qualifiers from the summary")
+box = {s["competition"]: s for s in c.get("/api/players/ca-8").get_json()["national"]["stats"]}
+check(box["friendly"]["pts"] == 9.0, "another player")
+# a box score that covers fewer games than the summary does not replace the summary
+bg = post({"op": "game", "competition": "wcq27", "date": "2026-08-27", "opp_name": "Cape Verde", "site": "home", "tun": 60, "opp_score": 56}).get_json()["id"]
+post({"op": "box_save", "id": bg, "lines": [{"pid": "ca-24", "min": 30, "pts": 10, "reb": 1, "ast": 1}]})
+w = {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]
+check(w["src"] == "summary" and w["pts"] == 18.1, "one box score does not replace a summary of seven games")
+check(post({"op": "box_clear", "id": gid}).status_code == 200 and not next(x for x in pub()["games"] if x["id"] == gid)["lines"], "a box score is removed")
+
+# --- statistics without box scores
+sp = post({"op": "stats_preview", "text": "Omar Abada 5 30 20.0 4.0 6.0\nFiras Lahiani 5 28 14.5 8.0 2.0"}).get_json()["lines"]
+rows_ = [{"pid": x["pid"], **x["values"]} for x in sp]
+check(rows_[0] == {"pid": "ca-24", "g": 5, "min": 30, "pts": 20, "reb": 4, "ast": 6} or rows_[0]["pts"] == 20, f"the lines of a table are read: {rows_[0]}")
+check(post({"op": "stats_save", "competition": "afrobasket", "rows": rows_}).status_code == 200, "statistics saved for a competition")
+check({s["competition"]: s for s in c.get("/api/players/usm-23").get_json()["national"]["stats"]}["afrobasket"]["pts"] == 14.5, "they show on the player page")
+check(any(t_["competition"] == "afrobasket" for t_ in pub()["stats"]), "and as a block of the page")
+check(post({"op": "stats_save", "competition": "afrobasket", "rows": [{"pid": None, "g": 3}]}).status_code == 422 and post({"op": "stats_save", "competition": "nope", "rows": rows_}).status_code == 422, "bad statistics refused")
+check(post({"op": "stats_save", "competition": "afrobasket", "rows": [{"pid": "ca-24", "pts": 3}]}).status_code == 422, "the number of games is needed")
+check(post({"op": "stats_clear", "competition": "afrobasket"}).status_code == 200 and not any(t_["competition"] == "afrobasket" for t_ in pub()["stats"]), "removed")
+check(post({"op": "stats_save", "competition": "wcq27", "rows": [{"pid": "ca-24", "g": 2, "min": 20, "pts": 10, "reb": 2, "ast": 2}]}).status_code == 200
+      and {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]["pts"] == 10, "typed statistics replace the shipped ones of that competition")
+check(post({"op": "stats_clear", "competition": "wcq27"}).status_code == 200 and {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]["pts"] == 18.1, "and going back restores them")
+
 print("national team:", "FAILED" if fails else "ok")
 for f in fails:
     print("  FAIL", f)

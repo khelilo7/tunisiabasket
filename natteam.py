@@ -173,7 +173,9 @@ def view():
     league = _league()
     ids = called_ids()
     comps = [{**c, "record": record(c["id"], d)} for c in d["competitions"]]
-    games = [_game_out(g) for g in d["games"]]
+    games = [{**_game_out(g), "lines": [{**{k: ln.get(k) for k in BOX_FIELDS if ln.get(k) is not None}, "pid": ln.get("pid"),
+                                          "name": _person(ln["pid"], d, league)["name"] if ln.get("pid") else ln.get("name") or "?", "ext": ln.get("pid") in d["externals"]}
+                                         for ln in sorted(g.get("box") or [], key=lambda x: -(x.get("min") or 0))]} for g in d["games"]]
     td = today()
     upcoming = [g for g in games if not g["played"] and (g["date"] or "") >= td]
     seen = set(ids)
@@ -428,3 +430,170 @@ def delete_game(gid):
         if any(g.get("id") == gid for g in (_read(ASSET).get("games") or [])):
             adm["hidden_games"] = sorted({*(adm.get("hidden_games") or []), gid})        # a game that ships with the code is hidden, not erased
     _edit(fn)
+
+
+# ---------------------------------------------------------------- box scores and statistics typed or pasted by the admin
+NUM = re.compile(r"^-?\d+([.,]\d+)?$|^\d{1,2}:\d{2}$")
+ALIASES = {"min": "min", "mins": "min", "minutes": "min", "mn": "min", "pts": "pts", "pt": "pts", "points": "pts", "pp": "pts", "reb": "reb", "rebs": "reb", "rebounds": "reb", "tr": "reb", "rebonds": "reb",
+           "ast": "ast", "assists": "ast", "pd": "ast", "passes": "ast", "as": "ast", "stl": "stl", "steals": "stl", "int": "stl", "blk": "blk", "blocks": "blk", "ctr": "blk", "contres": "blk",
+           "to": "tov", "tov": "tov", "turnovers": "tov", "bp": "tov", "pf": "pf", "fouls": "pf", "fautes": "pf", "g": "g", "gp": "g", "games": "g", "mj": "g", "j": "g", "matchs": "g"}
+NAME_HEADS = {"player", "players", "joueur", "joueurs", "name", "nom", "joueuse"}
+BOX_ORDER = ("min", "pts", "reb", "ast", "stl", "blk", "tov", "pf")
+SUMMARY_ORDER = ("g", "min", "pts", "reb", "ast")
+MAX_ROWS = 40
+
+
+def _cut(line):
+    """The fields of a pasted line: split on tabs, semicolons, commas or bars when there are some, else on spaces."""
+    s = line.strip()
+    if re.search(r"[\t;|]", s):
+        return [x.strip() for x in re.split(r"[\t;|]", s)]
+    if re.search(r",\s*\S", s) and not re.search(r"\d,\d", s):
+        return [x.strip() for x in s.split(",")]
+    return s.split()
+
+
+def _tok_num(tok):
+    t = str(tok).strip().replace(",", ".")
+    if re.fullmatch(r"\d{1,2}:\d{2}", t):
+        m, s = t.split(":")
+        return round(int(m) + int(s) / 60, 1)
+    return float(t)
+
+
+def parse_table(text, order):
+    """A pasted table (CSV, tab separated from a spreadsheet, or lines like 'Omar Abada 33 18 4 5') -> [{name, <field>: number}]. A first line of column names ('Player MIN PTS REB AST')
+    sets the order of the columns; without it `order` is the order. Lines with no number (headers, titles) are skipped. ValueError when nothing can be read."""
+    rows, cols = [], None
+    for line in str(text or "").splitlines():
+        if not line.strip():
+            continue
+        parts = _cut(line)
+        heads = [ALIASES.get(re.sub(r"[^a-z]", "", p.lower())) for p in parts]
+        if cols is None and not rows and sum(1 for h in heads if h) >= 2 and not any(NUM.match(p) for p in parts):
+            cols = [h for h in heads if h]                   # the names of the columns, the first column being the player
+            continue
+        i = next((k for k, p in enumerate(parts) if NUM.match(p) and k > 0), None)
+        if i is None:
+            continue
+        name = " ".join(parts[:i]).strip(" .-")
+        if not name or name.lower() in NAME_HEADS:
+            continue
+        try:
+            nums = [_tok_num(p) for p in parts[i:] if NUM.match(p)]
+        except ValueError:
+            raise ValueError(f"Cannot read the numbers of: {line.strip()[:60]}")
+        use = cols or order
+        row = {"name": name}
+        for k, f in enumerate(use):
+            if k < len(nums):
+                row[f] = nums[k]
+        rows.append(row)
+        if len(rows) > MAX_ROWS:
+            raise ValueError("Too many lines.")
+    if not rows:
+        raise ValueError("No line with a name followed by numbers was found.")
+    return rows
+
+
+def _preview(rows, order):
+    """Match each parsed line to a player (league or outside) and keep its numbers."""
+    rep = match_report([r["name"] for r in rows])
+    out = []
+    for r, m in zip(rows, rep):
+        out.append({**m, "values": {f: r.get(f) for f in order if r.get(f) is not None}})
+    return out
+
+
+def box_preview(text):
+    return _preview(parse_table(text, list(BOX_ORDER)), BOX_ORDER)
+
+
+def stats_preview(text):
+    return _preview(parse_table(text, list(SUMMARY_ORDER)), SUMMARY_ORDER)
+
+
+def _clean_values(v, order, limits):
+    out = {}
+    for f in order:
+        x = v.get(f)
+        if x in (None, ""):
+            continue
+        x = float(x)
+        lo, hi = limits.get(f, (0, 200))
+        if not lo <= x <= hi:
+            raise ValueError(f"{f.upper()} must be between {lo} and {hi}.")
+        out[f] = int(x) if x == int(x) and f != "min" else round(x, 1)
+    return out
+
+
+def set_box(gid, lines):
+    """Store the box score of a game: lines [{pid or None, name, min, pts, reb, ast, stl, blk, tov, pf}]. Returns a warning when the points do not add up to Tunisia's score."""
+    d = load()
+    g = next((x for x in d["games"] if x["id"] == gid), None)
+    if not g:
+        raise ValueError("Unknown game.")
+    if not _played(g):
+        raise ValueError("Type the score of the game first.")
+    known = known_ids()
+    box, seen = [], set()
+    for ln in lines or []:
+        pid = ln.get("pid") or None
+        if pid and pid not in known:
+            raise ValueError(f"Unknown player {pid}.")
+        if pid and pid in seen:
+            raise ValueError("A player is in the box score twice.")
+        seen.add(pid)
+        v = _clean_values(ln, BOX_FIELDS, {"min": (0, 70), "pts": (0, 120), "reb": (0, 40), "ast": (0, 30), "stl": (0, 15), "blk": (0, 15), "tov": (0, 20), "pf": (0, 7)})
+        box.append({**({"pid": pid} if pid else {"name": str(ln.get("name") or "")[:60]}), **v})
+    if not box:
+        raise ValueError("The box score is empty.")
+
+    def fn(adm):
+        base = {**g}
+        base.pop("id", None)
+        base["box"] = box
+        adm.setdefault("games", {})[gid] = base
+        adm["hidden_games"] = [x for x in adm.get("hidden_games") or [] if x != gid]
+    _edit(fn)
+    pts = sum(b.get("pts") or 0 for b in box)
+    return None if pts == g["tun"] else f"The points of the box score add up to {pts}, the score is {g['tun']}: check the numbers (or a player is missing)."
+
+
+def clear_box(gid):
+    d = load()
+    g = next((x for x in d["games"] if x["id"] == gid), None)
+    if not g:
+        raise ValueError("Unknown game.")
+
+    def fn(adm):
+        base = {**g}
+        base.pop("id", None)
+        base.pop("box", None)
+        adm.setdefault("games", {})[gid] = base
+    _edit(fn)
+
+
+def set_stats(comp, rows, note=""):
+    """Per-game totals of a competition typed without box scores: rows [{pid, g, min, pts, reb, ast}] replace the shipped ones of that competition."""
+    if comp not in {c["id"] for c in load()["competitions"]}:
+        raise ValueError("Pick a competition.")
+    known, out, seen = known_ids(), [], set()
+    for r in rows or []:
+        pid = r.get("pid")
+        if not pid or pid not in known:
+            raise ValueError("Every line needs a known player: match the names first.")
+        if pid in seen:
+            raise ValueError("A player is listed twice.")
+        seen.add(pid)
+        v = _clean_values(r, SUMMARY_ORDER, {"g": (1, 60), "min": (0, 60), "pts": (0, 80), "reb": (0, 40), "ast": (0, 30)})
+        if "g" not in v:
+            raise ValueError("Every line needs the number of games.")
+        out.append({"pid": pid, **v})
+    if not out:
+        raise ValueError("No statistics to save.")
+    _edit(lambda adm: adm.setdefault("stats", {}).__setitem__(comp, {"rows": out, "note": str(note or "")[:200]}))
+
+
+def clear_stats(comp):
+    _edit(lambda adm: (adm.get("stats") or {}).pop(comp, None))

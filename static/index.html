@@ -1958,6 +1958,14 @@ function ntPlayerBlock(n) {
     <div class="mut small" style="margin-top:6px">${_('Per game averages.')} <a href="${url('natteam')}">${_('Tunisia national team')} →</a></div>`;
 }
 
+// The box score of a game (when one was typed): folded under its row
+function ntBox(g) {
+  if (!g.lines.length) return '';
+  const ks = ['min', 'pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'];
+  return `<tr><td colspan="4" class="l"><details><summary class="small mut">${_('Box score')} · ${g.lines.length}</summary><div class="scroll"><table><thead><tr><th class="l">${_('Player')}</th>${ks.map(k => `<th>${k === 'min' ? 'MIN' : k === 'pts' ? 'PTS' : k === 'reb' ? 'REB' : H(k.toUpperCase())}</th>`).join('')}</tr></thead><tbody>
+    ${g.lines.map(l => `<tr><td class="l">${l.pid ? ntPlayerLink({ pid: l.pid, name: l.name, ext: l.ext }) : esc(l.name)}</td>${ks.map(k => `<td>${l[k] == null ? '–' : k === 'min' ? Math.round(l[k]) : l[k]}</td>`).join('')}</tr>`).join('')}</tbody></table></div></details></td></tr>`;
+}
+
 function ntStatsTable(d, block) {
   if (!block || !block.rows.length) return '';
   return `<h3 class="sub">${esc(ntName(d, block.competition))}</h3>
@@ -1994,7 +2002,7 @@ async function natteam(arg) {
       <span class="pill w">${rec.w}${W}</span> <span class="pill l">${rec.l}${Ls}</span></div>
     <div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Date')}</th><th class="l">${_('Opponent')}</th><th>${_('Result')}</th><th class="l">${_('Competition')}</th></tr></thead><tbody>
     ${shown.map(g => `<tr><td class="l">${esc(fmtDate(g.date))} <span class="mut small">${g.date.slice(0, 4)}</span></td><td class="l">${g.site === 'away' ? '@ ' : g.site === 'neutral' ? '' : _('vs') + ' '}${oppFlag(g)}${esc(oppName(g))}${g.check ? ` <span class="mut" title="${esc(_('Not confirmed by a second source'))}">?</span>` : ''}</td>
-      <td><b class="${g.won ? 'good' : 'bad'}">${g.won ? W : Ls}</b> ${g.tun}–${g.opp_score}${g.ot ? ` <span class="mut small">${_('OT')}</span>` : ''}</td><td class="l mut small">${esc(ntName(d, g.competition))}${g.round ? ' · ' + esc(rnd(g.round)) : ''}</td></tr>`).join('')}
+      <td><b class="${g.won ? 'good' : 'bad'}">${g.won ? W : Ls}</b> ${g.tun}–${g.opp_score}${g.ot ? ` <span class="mut small">${_('OT')}</span>` : ''}</td><td class="l mut small">${esc(ntName(d, g.competition))}${g.round ? ' · ' + esc(rnd(g.round)) : ''}</td></tr>${ntBox(g)}`).join('')}
     </tbody></table></div></div>` : `<div class="empty">${_('No result yet.')}</div>`}
   ${d.stats.length ? `<h2>${_('National team stats')}</h2>${d.stats.map(b => ntStatsTable(d, b)).join('')}` : ''}
   <h2>${_('History')}</h2>

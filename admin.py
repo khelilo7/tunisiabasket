@@ -342,7 +342,7 @@ def _natteam_state(**extra):
     players = [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"]} for p in sorted(stats.build()["players"], key=lambda p: (p["team"], p["number"] or 0))]
     return {"view": natteam.view(), "players": players, "externals": d["externals"], "competitions": d["competitions"], "games": natteam.load()["games"],
             "countries": [{"code": c, "name": n[0]} for c, n in sorted(countries.COUNTRIES.items(), key=lambda kv: kv[1][0])],
-            "admin": {"callup": bool(d["admin"].get("callup")), "games": sorted((d["admin"].get("games") or {}))}, **extra}
+            "admin": {"callup": bool(d["admin"].get("callup")), "games": sorted((d["admin"].get("games") or {})), "stats": sorted((d["admin"].get("stats") or {}))}, **extra}
 
 
 @bp.get("/admin/api/national-team")
@@ -353,7 +353,8 @@ def natteam_admin_view():
 @bp.post("/admin/api/national-team")
 def natteam_admin_edit():
     """Body {"op": ...}: callup (ids, label, label_fr, date), callup_names (text: the names pasted, answers the matches to confirm), callup_reset, external, external_delete (key),
-    competition (en, fr), competition_delete (id), game (the fields of a game, id to change one), game_delete (id)."""
+    competition (en, fr), competition_delete (id), game (the fields of a game, id to change one), game_delete (id), box_preview (text) / box_save (id, lines) / box_clear (id),
+    stats_preview (text) / stats_save (competition, rows, note) / stats_clear (competition)."""
     b = request.get_json(silent=True) or {}
     op, msg, extra = b.get("op"), "Saved.", {}
     try:
@@ -386,6 +387,24 @@ def natteam_admin_edit():
         elif op == "game_delete":
             natteam.delete_game(str(b.get("id") or ""))
             msg = "Game removed."
+        elif op == "box_preview":
+            extra["lines"] = natteam.box_preview(b.get("text"))
+            msg = f"{len(extra['lines'])} line(s) read: check the uncertain matches."
+        elif op == "box_save":
+            warn = natteam.set_box(str(b.get("id") or ""), b.get("lines"))
+            msg = "Box score saved: the statistics of the players follow." + (f" Careful: {warn}" if warn else "")
+        elif op == "box_clear":
+            natteam.clear_box(str(b.get("id") or ""))
+            msg = "Box score removed."
+        elif op == "stats_preview":
+            extra["lines"] = natteam.stats_preview(b.get("text"))
+            msg = f"{len(extra['lines'])} line(s) read: check the uncertain matches."
+        elif op == "stats_save":
+            natteam.set_stats(str(b.get("competition") or ""), b.get("rows"), b.get("note"))
+            msg = "Statistics saved: they replace the ones that shipped with the code for this competition."
+        elif op == "stats_clear":
+            natteam.clear_stats(str(b.get("competition") or ""))
+            msg = "Back to the statistics that ship with the code."
         else:
             return jsonify(error="Unknown operation."), 422
     except ValueError as e:
