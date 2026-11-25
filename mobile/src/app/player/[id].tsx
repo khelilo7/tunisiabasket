@@ -15,6 +15,10 @@ type Tab = 'overview' | 'log';
 const TODAY = Date.now();
 const POS: Record<string, string> = { PG: 'Meneur · PG', SG: 'Arrière · SG', SF: 'Ailier · SF', PF: 'Ailier fort · PF', C: 'Pivot · C' };
 
+// Only a player who is not just Tunisian is marked (everybody is Tunisian by default): the flags of his countries
+const foreignFlags = (codes?: string[]) =>
+  codes && !(codes.length === 1 && codes[0] === 'TN') ? codes.map((c) => String.fromCodePoint(...[...c].map((ch) => 0x1f1e6 + ch.charCodeAt(0) - 65))).join(' ') : '';
+
 export default function PlayerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t, lang } = useApp();
@@ -42,6 +46,7 @@ export default function PlayerScreen() {
               {p.pos ? <Pill label={lang === 'fr' ? POS[p.pos] || p.pos : p.pos} /> : null}
               {age ? <Pill label={`${age} ${lang === 'fr' ? 'ans' : 'y'}`} /> : null}
               {p.bio?.height ? <Pill label={`${p.bio.height} cm`} /> : null}
+              {foreignFlags(p.bio?.nationality) ? <Pill label={foreignFlags(p.bio?.nationality)} /> : null}
             </Row>
           </View>
         </LinearGradient>

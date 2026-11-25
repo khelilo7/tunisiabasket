@@ -2,6 +2,7 @@
 import datetime
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 os.environ.setdefault("DATA_DIR", tempfile.mkdtemp())
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config  # noqa: E402
+import countries  # noqa: E402
 import stats  # noqa: E402
 
 config.ensure_data()
@@ -28,7 +30,7 @@ for pid, b in raw.items():
         continue
     n += 1
     check(pid in players, f"{pid}: no such player in the data")
-    FIELDS = {"height", "weight", "wingspan", "birth", "age", "age_as_of", "approx", "src"}
+    FIELDS = {"height", "weight", "wingspan", "birth", "age", "age_as_of", "approx", "src", "nationality", "nat_src"}
     check(set(b) <= FIELDS, f"{pid}: unknown fields {set(b) - FIELDS}")
     h = b.get("height")
     for v in (h if isinstance(h, list) else [h] if h else []):
@@ -52,6 +54,16 @@ for pid, b in raw.items():
         except ValueError:
             check(False, f"{pid}: age_as_of must be YYYY-MM-DD")
     check(set(b.get("approx", [])) <= {"height", "weight", "birth"}, f"{pid}: bad approx list")
+    if "nationality" in b:
+        try:
+            codes = countries.clean(b["nationality"])
+        except ValueError as e:
+            codes = []
+            check(False, f"{pid}: {e}")
+        check(codes and codes != ["TN"], f"{pid}: a nationality is only listed when it is not just Tunisian")
+        check(isinstance(b["nationality"], (str, list)) and b.get("nat_src") in ("FIBA", "press", "name"), f"{pid}: nat_src must say how sure the nationality is (FIBA, press, name)")
+    else:
+        check("nat_src" not in b, f"{pid}: nat_src without a nationality")
 
 # the API shows them
 if "ca-24" in players:
@@ -60,6 +72,15 @@ if "ca-24" in players:
 if "esg-30" in players:
     b = players["esg-30"]["bio"]
     check(b and b["height"] == 202 and b["weight"] == 96 and b["wingspan"] == 208 and b["age"] == 20, "esg-30 profile (height, weight, wingspan, age) not attached")
+check(players["usm-1"]["bio"]["nationality"] == ["US"] if "usm-1" in players else True, "usm-1 nationality (US) not on the API")
+check(players["ca-21"]["bio"]["nationality"] == ["SN", "FR"] if "ca-21" in players else True, "dual nationality not on the API")
+check(all("nationality" not in (p["bio"] or {}) for p in players.values() if p["id"] not in raw or "nationality" not in raw[p["id"]]), "only the profiles that say so have a nationality")
+check(not any(c.get("nationality") == ["TN"] for c in [p["bio"] or {} for p in players.values()]), "nobody is listed as only Tunisian")
+# the country list of the site (static/index.html) is the one of countries.py
+html = (config.ROOT / "static" / "index.html").read_text()
+m = re.search(r"const COUNTRY = (\{.*?\});", html)
+check(m and json.loads(m.group(1)) == {k: list(v) for k, v in countries.COUNTRIES.items()}, "COUNTRY in static/index.html differs from countries.py")
+check(countries.clean("sn, FR") == ["SN", "FR"] and countries.clean("") == [] and countries.clean(["US", "us"]) == ["US"], "countries.clean")
 check(all("bio" in p for p in players.values()), "every player must carry a bio key (None when unknown)")
 
 # category leaders (home page): 8 categories, top 10 each, sorted best first, only players with enough games

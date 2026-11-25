@@ -167,6 +167,7 @@
   footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
   footer a:hover { color:var(--txt); }
   .brand { display:flex; align-items:center; gap:9px; } .brand .bm { display:block; width:38px; height:38px; flex:none; } .brand .wm { display:block; height:21px; width:auto; color:var(--txt); flex:none; }
+  .nat { margin-left:5px; font-size:.85em; cursor:help; white-space:nowrap; } h1 .nat { font-size:.6em; vertical-align:middle; }
   .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
   .tlogo { flex:none; display:inline-block; vertical-align:middle; }   /* the files are already round, same-size badges */
   td .tlogo { margin-right:4px; } .tn .tlogo { margin:0; }
@@ -652,7 +653,7 @@ const FR = {
   'Team stats': 'Statistiques d’équipe', 'Key players': 'Joueurs clés', 'No previous meeting this season.': 'Pas de confrontation cette saison.', 'Best player so far': 'Meilleur joueur à ce jour',
   'Stats race': 'Course aux statistiques', 'Current MVP': 'MVP actuel', 'Most votes so far': 'Le plus de votes jusqu’ici', 'No votes yet: shown by stats until the fans vote': 'Pas encore de votes : classé aux statistiques en attendant le vote des fans',
   'MVP ranking': 'Classement MVP', 'Most votes first, then stats': 'Les plus votés d’abord, puis les statistiques', 'Best by stats': 'Meilleur aux statistiques', 'Decided by the fans': 'Décidé par les fans', 'Impact': 'Impact',
-  'Height': 'Taille', 'Weight': 'Poids', 'Wingspan': 'Envergure', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
+  'Height': 'Taille', 'Weight': 'Poids', 'Wingspan': 'Envergure', 'Nationality': 'Nationalité', 'Found from the name and the web, not confirmed yet: tell us if it is wrong.': 'Trouvée d’après le nom et le web, pas encore confirmée : dites-nous si elle est fausse.', 'Born': 'Né le', 'Age': 'Âge', 'yrs': 'ans',
   'Not enough games to rank': 'Pas assez de matchs pour être classé', 'game MVP': 'MVP de match', 'MVP race': 'Course au MVP',
   'Starting five': 'Cinq de départ', 'Most-played five': 'Cinq les plus utilisés', 'Show': 'Afficher', 'Click a player for the season page': 'Cliquez sur un joueur pour sa page',
   'Season averages · click a player': 'Moyennes de la saison · cliquez sur un joueur', 'Marker colour = rating:': 'Couleur du marqueur = note :',
@@ -1418,11 +1419,17 @@ async function players() {
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
     <span class="mut small">${rows.length} ${_('players')} · ${_('per game')}</span></div>
   <div class="card tablecard"><div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th data-sort="gp">${H('GP')}${sortKey === 'gp' ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${p.mvp_games ? ` <span class="pill mvp hm">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
+  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${natFlags(p.bio)}${p.mvp_games ? ` <span class="pill mvp hm">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
     ${cols.map(([k, , fn]) => `<td>${fn ? fn(p) : p[k]}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
 
+const COUNTRY = {"TN":["Tunisia","Tunisie"],"DZ":["Algeria","Algérie"],"MA":["Morocco","Maroc"],"LY":["Libya","Libye"],"EG":["Egypt","Égypte"],"FR":["France","France"],"US":["United States","États-Unis"],"CA":["Canada","Canada"],"GB":["United Kingdom","Royaume-Uni"],"HR":["Croatia","Croatie"],"RS":["Serbia","Serbie"],"SI":["Slovenia","Slovénie"],"ES":["Spain","Espagne"],"IT":["Italy","Italie"],"SN":["Senegal","Sénégal"],"NG":["Nigeria","Nigéria"],"CI":["Ivory Coast","Côte d’Ivoire"],"GA":["Gabon","Gabon"],"CM":["Cameroon","Cameroun"],"ML":["Mali","Mali"],"GN":["Guinea","Guinée"],"CD":["DR Congo","RD Congo"],"CG":["Congo","Congo"],"GH":["Ghana","Ghana"],"AO":["Angola","Angola"],"BF":["Burkina Faso","Burkina Faso"],"CV":["Cape Verde","Cap-Vert"],"SS":["South Sudan","Soudan du Sud"],"RW":["Rwanda","Rwanda"],"BI":["Burundi","Burundi"],"MR":["Mauritania","Mauritanie"],"BJ":["Benin","Bénin"],"TG":["Togo","Togo"],"LB":["Lebanon","Liban"],"SY":["Syria","Syrie"],"PS":["Palestine","Palestine"],"JO":["Jordan","Jordanie"],"TR":["Turkey","Turquie"],"BR":["Brazil","Brésil"]};   // country codes of the nationalities (same list as countries.py, checked by tests/test_bios.py)
+const flagOf = c => String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
+const countryName = c => (COUNTRY[c] || [c, c])[LANG === 'fr' ? 1 : 0];
+// A player is Tunisian unless his profile says otherwise: only the other nationalities are marked, with a small flag (the name of the country in the tooltip)
+const natList = b => ((b && b.nationality) || []).filter(c => COUNTRY[c]);
+const natFlags = b => { const l = natList(b); return l.length && !(l.length === 1 && l[0] === 'TN') ? `<span class="nat" title="${esc(l.map(countryName).join(' · '))}">${l.filter(c => c !== 'TN' || l.length > 1).map(flagOf).join('')}</span>` : ''; };
 // Height / weight / birth date of a player (only what is known). Estimated values get a "~", disagreeing sources a range.
 function bioLine(b) {
   if (!b) return '';
@@ -1432,7 +1439,8 @@ function bioLine(b) {
     [_('Wingspan'), b.wingspan && `${b.wingspan} cm`],
     [_('Born'), b.birth && new Date(b.birth + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { day: 'numeric', month: 'long', year: 'numeric' })],
     [_('Age'), age && `${age} ${_('yrs')}`]].filter(x => x[1]);
-  return bits.length ? `<div class="bio">${bits.map(([l, v]) => `<span><span class="mut">${l}</span> <b>${esc(v)}</b></span>`).join('')}</div>` : '';
+  const nat = natList(b), natBit = nat.length && !(nat.length === 1 && nat[0] === 'TN') ? `<span><span class="mut">${_('Nationality')}</span> <b>${nat.map(c => `${flagOf(c)} ${esc(countryName(c))}`).join(' · ')}</b>${b.nat_src === 'name' ? ` <span class="mut small" title="${esc(_('Found from the name and the web, not confirmed yet: tell us if it is wrong.'))}">?</span>` : ''}</span>` : '';
+  return bits.length || natBit ? `<div class="bio">${bits.map(([l, v]) => `<span><span class="mut">${l}</span> <b>${esc(v)}</b></span>`).join('')}${natBit}</div>` : '';
 }
 
 function transferLine(p) {
@@ -1450,7 +1458,7 @@ async function player(ref) {
   const pts = logRows.filter(r => r.pir != null).map(r => r.pir);
   return `<a class="mut" href="${url('players')}">← ${_('Players')}</a>
   <div class="card row phead" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
-    <div class="sp"><h1 style="margin:0">${esc(p.name)}</h1>
+    <div class="sp"><h1 style="margin:0">${esc(p.name)}${natFlags(p.bio)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
       ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span></div></div></div>
@@ -2012,7 +2020,7 @@ async function team(codeArg) {
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-  ${t.players.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="mut">${esc(posName(p.pos))}</td><td>${p.gp}</td><td>${p.min}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('') || `<tr><td colspan="9" class="mut">${_('No player stats yet.')}</td></tr>`}
+  ${t.players.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${natFlags(p.bio)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="mut">${esc(posName(p.pos))}</td><td>${p.gp}</td><td>${p.min}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('') || `<tr><td colspan="9" class="mut">${_('No player stats yet.')}</td></tr>`}
   </tbody></table></div>`;
 }
 

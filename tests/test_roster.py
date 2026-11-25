@@ -43,6 +43,18 @@ check(post({"op": "bio", "id": pid, "height": 300}).status_code == 422, "absurd 
 check(post({"op": "bio", "id": pid, "birth": "1850-01-01"}).status_code == 422, "absurd birth date refused")
 check(post({"op": "bio", "id": "nobody-1", "height": 190}).status_code == 404, "unknown player")
 
+# --- nationality: shipped for the foreigners, the admin's value wins over it, empty goes back to Tunisian
+check(players()["usm-1"]["bio"]["nationality"] == ["US"], "a shipped nationality is on the API")
+check("nationality" not in (players()["usm-13"].get("bio") or {}), "nobody is marked by default: a player with no nationality is Tunisian")
+check(post({"op": "bio", "id": "usm-1", "nationality": "ng"}).status_code == 200 and players()["usm-1"]["bio"]["nationality"] == ["NG"], "admin nationality overrides the shipped one")
+check(post({"op": "bio", "id": "usm-1", "nationality": "sn, fr"}).status_code == 200 and players()["usm-1"]["bio"]["nationality"] == ["SN", "FR"], "dual nationality")
+check(post({"op": "bio", "id": "usm-1", "nationality": "XX"}).status_code == 422, "unknown country code refused")
+check(post({"op": "bio", "id": "usm-1", "nationality": None}).status_code == 200 and players()["usm-1"]["bio"].get("nationality") in (None, ["TN"]), "cleared: Tunisian again, even over the shipped value")
+check(post({"op": "bio", "id": "usm-13", "nationality": "FR"}).status_code == 200 and players()["usm-13"]["bio"]["nationality"] == ["FR"], "a Tunisian player can be given a nationality")
+check(post({"op": "bio", "id": "usm-13", "nationality": ""}).status_code == 200 and "nationality" not in (players()["usm-13"].get("bio") or {}), "clearing his own value leaves him Tunisian")
+check(c.get("/admin/api/roster", headers=H).get_json()["countries"], "the admin gets the list of countries")
+check(post({"op": "bio", "id": "usm-1", "nationality": "FR"}).status_code == 200 and players()["usm-1"]["bio"]["nat_src"] == "admin", "a typed nationality is marked as the admin's")
+
 # --- add a new signing (no box score yet)
 check(post({"op": "add", "team": "CA", "name": "karim  ben salah", "number": 77, "pos": "SG", "height": 192, "weight": 85, "birth": "2001-02-03"}).status_code == 200, "add")
 p = players().get("ca-77")

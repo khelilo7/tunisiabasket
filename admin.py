@@ -22,6 +22,7 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 
 import auth
 import config
+import countries
 import stats
 import monitor
 import mvp
@@ -494,6 +495,14 @@ def _roster_save(ro: dict):
     tmp.replace(stats.ROSTER_FILE)
 
 
+def _shipped_nationality(pid):
+    """The nationality that ships with the code (assets/players_info.json) for this player, or None."""
+    try:
+        return (json.loads((config.ASSETS_DIR / "players_info.json").read_text()).get(pid) or {}).get("nationality")
+    except (OSError, ValueError):
+        return None
+
+
 def _bio_value(field, v):
     """Validated value for one bio field; None clears it. Height may be 190 or [189, 192]."""
     if v in (None, "", []):
@@ -513,6 +522,9 @@ def _bio_value(field, v):
         if not 1970 <= d.tm_year <= 2014:
             raise ValueError("Birth year must be between 1970 and 2014.")
         return time.strftime("%Y-%m-%d", d)
+    if field == "nationality":
+        codes = countries.clean(v)               # one code, or "SN, FR" for a dual national; empty clears it (= Tunisian)
+        return None if not codes else codes[0] if len(codes) == 1 else codes
     raise ValueError(f"unknown field {field}")
 
 
@@ -560,7 +572,8 @@ def roster_view():
              "bio": p["bio"], "photo": p.get("photo"), "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
             for p in d["players"]]
     rows.sort(key=lambda r: (r["team"], r["number"]))
-    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS)
+    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS,
+                   countries=[{"code": c, "name": n[0]} for c, n in sorted(countries.COUNTRIES.items(), key=lambda kv: kv[1][0])])
 
 
 def _date(v, default=None):
@@ -602,9 +615,13 @@ def roster_change():
                 except (OSError, ValueError):
                     cur = {}
                 entry = dict(cur.get(pid) or {})
-                edited = [f for f in ("height", "weight", "birth") if f in b]
+                edited = [f for f in ("height", "weight", "birth", "nationality") if f in b]
                 for f in edited:
                     entry[f] = _bio_value(f, b[f])
+                if "nationality" in edited:
+                    entry["nat_src"] = "admin" if entry["nationality"] else None     # typed by the admin: sure, whatever the shipped file guessed
+                    if entry["nationality"] is None and _shipped_nationality(pid):
+                        entry["nationality"] = countries.DEFAULT                     # clears a nationality that ships with the code: back to Tunisian (an empty value would not override it)
                 base = (p.get("bio") or {}).get("approx") or []
                 entry["approx"] = [x for x in base if x not in edited]       # a value typed by the admin is no longer an estimate
                 entry = {k: v for k, v in entry.items() if k == "approx" or v not in (None, [])}      # an empty 'approx' must stay: it overrides the estimate flags of the repo file
