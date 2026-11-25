@@ -1,0 +1,7 @@
+{
+ "game": "dc6a24daad7e9a04",
+ "why": "ESS-ESG (J15): Adem Slimane (#45) had 1 offensive rebound (3 in all) and shot 2/3 (1/1 from two, 1/2 from three); the sheet said 0 and 2/4.",
+ "players": [
+  {"team": "ESS", "vs": "ESG", "number": 45, "set": {"oreb": 1, "p2a": 1}}
+ ]
+}

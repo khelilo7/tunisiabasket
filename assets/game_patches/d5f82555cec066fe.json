@@ -1,0 +1,8 @@
+{
+ "game": "d5f82555cec066fe",
+ "why": "CSS-DSG (J15): Rachdi (#10) scored 11 with 2 turnovers (the sheet said 9 and 1), Dhraief (#5) only 3 (the sheet said 5). The made shots follow the points; attempts and the team total do not change.",
+ "players": [
+  {"team": "DSG", "vs": "CSS", "number": 10, "set": {"p2m": 4, "tov": 2}},
+  {"team": "DSG", "vs": "CSS", "number": 5, "set": {"p2m": 0}}
+ ]
+}
