@@ -306,7 +306,7 @@ def nat1_admin_edit():
             msg = "Game removed from the calendar." if gone else "That game is not in the calendar."
         elif op == "time":
             t = nat1.set_time(b.get("matchday"), b.get("home"), b.get("away"), b.get("time"), b.get("date"))
-            msg = f"Kick-off time saved: {t}." if t else "Kick-off time removed."
+            msg = ("Day and kick-off time saved." if t else "Day saved, kick-off time removed.") if b.get("date") else ("Kick-off time saved." if t else "Kick-off time removed.")
         elif op == "official":
             published, rows = nat1.parse_official(b.get("text"))
             n = nat1.set_official(published, rows)
