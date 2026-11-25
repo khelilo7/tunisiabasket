@@ -35,27 +35,29 @@ for pid in ship["callup"]["players"]:
 check(len(ship["callup"]["players"]) == 15, "the shipped call-up has the 15 players of the qualifiers")
 check(sum(1 for x in ship["callup"]["players"] if x not in league) == 1 and "yacine-toumi" in ship["externals"], "exactly one player is outside the league: Yacine Toumi")
 rows = {r["pid"]: r for r in ship["stats"][0]["rows"]}
-check(len(rows) == 15 and rows["ca-24"] == {"pid": "ca-24", "g": 7, "min": 33, "pts": 18.1, "reb": 4.3, "ast": 5.7}, "the pasted statistics are shipped")
-check(rows["yacine-toumi"]["pts"] == 12.8 and rows["usm-11"]["pts"] == 1.9, "stats of the outsider and of the last player")
+check(len(rows) == 15 and rows["ca-24"] == {"pid": "ca-24", "g": 9, "pts": 18.2, "reb": 4.2, "ast": 5.8, "eff": 17.9}, "the full statistics of the qualifiers (FIBA profiles, 9 games) are shipped")
+check(rows["yacine-toumi"]["pts"] == 12.7 and rows["yacine-toumi"]["g"] == 6 and rows["usm-11"]["pts"] == 1.8 and max(r["g"] for r in rows.values()) == 9, "stats of the outsider and of the last player")
 ids = {g["id"] for g in ship["games"]}
 check(len(ids) == len(ship["games"]), "game ids are unique")
 check({c_["id"] for c_ in ship["competitions"]} >= {g["competition"] for g in ship["games"]}, "every shipped game has a known competition")
 check(all(g["tun"] != g["opp_score"] for g in ship["games"] if g["tun"] is not None), "no tie in a shipped game")
 check(natteam.record("wcq27", natteam.load()) == {"w": 5, "l": 4, "pf": 645, "pa": 629}, "the record of the qualifiers adds up (5-4, 645-629)")
 
+check(all(x in ship["externals"] or x in league for x in ship["callup"]["players"]), "call-up ids exist")
+
 # --- public view
 v = pub()
 check([p["pid"] for p in v["callup"]["players"]] == ship["callup"]["players"], "the call-up is shown in the list's order")
 ab = next(p for p in v["callup"]["players"] if p["pid"] == "ca-24")
-check(ab["name"] == "Omar Abada" and ab["team"] == "CA" and ab["stats"][0]["pts"] == 18.1, "a league player carries his club and national team stats")
+check(ab["name"] == "Omar Abada" and ab["team"] == "CA" and ab["stats"][0]["pts"] == 18.2, "a league player carries his club and national team stats")
 yt = next(p for p in v["callup"]["players"] if p["pid"] == "yacine-toumi")
-check(yt["ext"] and yt["team"] is None and yt["stats"][0]["g"] == 4, "the outsider has no club of the league and his stats")
+check(yt["ext"] and yt["team"] is None and yt["stats"][0]["g"] == 6, "the outsider has no club of the league and his stats")
 check(v["stats"][0]["rows"][0]["pid"] == "ca-24", "the stats block starts with the best scorer")
 check(v["next"] is None or (not v["next"]["played"] and v["next"]["date"] >= natteam.today()), "the next game is one still to come")
 check(v["history"] and all(h["en"] and h["fr"] and h["src"] for h in v["history"]), "every history fact has both languages and a source")
 check(c.get("/api/national-team/called").get_json()["ids"] == ship["callup"]["players"], "the light list for the labels")
 pl = c.get("/api/players/ca-24").get_json()
-check(pl["national"]["called"] and pl["national"]["stats"][0]["g"] == 7, "the player page API carries the national team block")
+check(pl["national"]["called"] and pl["national"]["stats"][0]["g"] == 9, "the player page API carries the national team block")
 check(not c.get("/api/players/ca-1").get_json()["national"]["called"], "a player who was not called up is not labelled")
 
 # --- the pages
@@ -162,20 +164,20 @@ check(post({"op": "box_save", "id": "wcq27-10", "lines": lines}).status_code == 
 gm = next(x for x in pub()["games"] if x["id"] == gid)
 check(len(gm["lines"]) == 5 and gm["lines"][0]["name"] == "Omar Abada" and any(x["pid"] is None and x["name"] == "Mr Nobody" for x in gm["lines"]), "the public view has the box score, the unmatched player kept by name")
 st = {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}
-check(st["friendly"]["g"] == 1 and st["friendly"]["pts"] == 26 and st["friendly"]["stl"] == 2 and st["wcq27"]["src"] == "summary", "his stats: the friendly from the box score, the qualifiers from the summary")
+check(st["friendly"]["g"] == 1 and st["friendly"]["pts"] == 26 and st["friendly"]["stl"] == 2 and st["wcq27"]["src"] == "summary" and st["wcq27"]["eff"] == 17.9, "his stats: the friendly from the box score, the qualifiers from the summary")
 box = {s["competition"]: s for s in c.get("/api/players/ca-8").get_json()["national"]["stats"]}
 check(box["friendly"]["pts"] == 9.0, "another player")
 # a box score that covers fewer games than the summary does not replace the summary
 bg = post({"op": "game", "competition": "wcq27", "date": "2026-08-27", "opp_name": "Cape Verde", "site": "home", "tun": 60, "opp_score": 56}).get_json()["id"]
 post({"op": "box_save", "id": bg, "lines": [{"pid": "ca-24", "min": 30, "pts": 10, "reb": 1, "ast": 1}]})
 w = {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]
-check(w["src"] == "summary" and w["pts"] == 18.1, "one box score does not replace a summary of seven games")
+check(w["src"] == "summary" and w["pts"] == 18.2, "one box score does not replace a summary of nine games")
 check(post({"op": "box_clear", "id": gid}).status_code == 200 and not next(x for x in pub()["games"] if x["id"] == gid)["lines"], "a box score is removed")
 
 # --- statistics without box scores
-sp = post({"op": "stats_preview", "text": "Omar Abada 5 30 20.0 4.0 6.0\nFiras Lahiani 5 28 14.5 8.0 2.0"}).get_json()["lines"]
+sp = post({"op": "stats_preview", "text": "Omar Abada 5 30 20.0 4.0 6.0 18.5\nFiras Lahiani 5 28 14.5 8.0 2.0"}).get_json()["lines"]
 rows_ = [{"pid": x["pid"], **x["values"]} for x in sp]
-check(rows_[0] == {"pid": "ca-24", "g": 5, "min": 30, "pts": 20, "reb": 4, "ast": 6} or rows_[0]["pts"] == 20, f"the lines of a table are read: {rows_[0]}")
+check(rows_[0]["pts"] == 20 and rows_[0]["g"] == 5 and rows_[0]["eff"] == 18.5, f"the lines of a table are read: {rows_[0]}")
 check(post({"op": "stats_save", "competition": "afrobasket", "rows": rows_}).status_code == 200, "statistics saved for a competition")
 check({s["competition"]: s for s in c.get("/api/players/usm-23").get_json()["national"]["stats"]}["afrobasket"]["pts"] == 14.5, "they show on the player page")
 check(any(t_["competition"] == "afrobasket" for t_ in pub()["stats"]), "and as a block of the page")
@@ -184,7 +186,7 @@ check(post({"op": "stats_save", "competition": "afrobasket", "rows": [{"pid": "c
 check(post({"op": "stats_clear", "competition": "afrobasket"}).status_code == 200 and not any(t_["competition"] == "afrobasket" for t_ in pub()["stats"]), "removed")
 check(post({"op": "stats_save", "competition": "wcq27", "rows": [{"pid": "ca-24", "g": 2, "min": 20, "pts": 10, "reb": 2, "ast": 2}]}).status_code == 200
       and {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]["pts"] == 10, "typed statistics replace the shipped ones of that competition")
-check(post({"op": "stats_clear", "competition": "wcq27"}).status_code == 200 and {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]["pts"] == 18.1, "and going back restores them")
+check(post({"op": "stats_clear", "competition": "wcq27"}).status_code == 200 and {s["competition"]: s for s in c.get("/api/players/ca-24").get_json()["national"]["stats"]}["wcq27"]["pts"] == 18.2, "and going back restores them")
 
 print("national team:", "FAILED" if fails else "ok")
 for f in fails:

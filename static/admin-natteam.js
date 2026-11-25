@@ -80,7 +80,7 @@
 
 
   // A pasted table (box score or per-game statistics) after the server matched the names: one row per line, a player to choose, the numbers editable.
-  const FIELDS = { box: ['min', 'pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'], stats: ['g', 'min', 'pts', 'reb', 'ast'] };
+  const FIELDS = { box: ['min', 'pts', 'reb', 'ast', 'stl', 'blk', 'tov', 'pf'], stats: ['g', 'min', 'pts', 'reb', 'ast', 'eff'] };
   function previewTable(lines, kind) {
     return `<table style="margin-top:8px"><thead><tr><th class="l">Pasted</th><th class="l">Player</th>${FIELDS[kind].map(f => `<th>${f.toUpperCase()}</th>`).join('')}<th></th></tr></thead><tbody>
       ${lines.map((r, i) => `<tr data-pv="${i}" class="${r.uncertain ? 'saved' : ''}"><td class="l">${esc(r.input)}</td><td class="l"><select data-f="pid"><option value="${esc(r.pid || '')}">${r.pid ? esc(r.name) + (r.team ? ' (' + esc(r.team) + ')' : ' (outside the league)') : '— nobody (' + (kind === 'box' ? 'kept by name' : 'skipped') + ') —'}</option>
@@ -107,7 +107,7 @@
   function statsCard() {
     const comp = statComp || S.competitions[0].id, has = S.admin.stats.includes(comp);
     return `<div class="card"><h3 style="margin-top:0">Per-game statistics without box scores</h3>
-      <p class="small mut" style="margin-top:0">For a competition whose box scores you do not have: paste a table <b>name, G, MIN, PTS, REB, AST</b> (per game). It replaces the numbers that ship with the code for that competition. Box scores take over player by player once they cover as many games.</p>
+      <p class="small mut" style="margin-top:0">For a competition whose box scores you do not have: paste a table <b>name, G, MIN, PTS, REB, AST, EFF</b> (per game; MIN and EFF are optional). It replaces the numbers that ship with the code for that competition. Box scores take over player by player once they cover as many games.</p>
       <div class="row"><select id="st-comp">${S.competitions.map(c => `<option value="${esc(c.id)}" ${c.id === comp ? 'selected' : ''}>${esc(c.en)}</option>`).join('')}</select>${has ? '<span class="pill ok">your table is shown</span><button id="st-clear">Back to the shipped numbers</button>' : '<span class="mut small">the numbers that ship with the code are shown (if any)</span>'}</div>
       <textarea id="st-text" rows="6" style="width:100%;margin-top:6px" placeholder="Omar Abada 7 33 18.1 4.3 5.7">${esc(statText)}</textarea>
       <div class="row" style="margin-top:6px"><button id="st-read">Read the lines</button></div>

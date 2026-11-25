@@ -1944,17 +1944,20 @@ const oppFlag = g => g.opp ? `<span class="nat" style="margin:0 4px 0 0">${flagO
 const rnd = r => LANG === 'fr' ? String(r || '').replace('First round', 'Premier tour').replace('Second round', 'Deuxième tour').replace('Group', 'Groupe').replace('Quarter-final', 'Quart de finale').replace('Semi-final', 'Demi-finale').replace('Final', 'Finale').replace('Friendly', 'Amical') : r;
 const siteName = s => _(s === 'home' ? 'Home game' : s === 'away' ? 'Away game' : 'Neutral venue');
 const fmtFull = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-const ntStatCells = r => ['g', 'min', 'pts', 'reb', 'ast'].map(k => `<td>${r && r[k] != null ? (k === 'g' ? r[k] : Number(r[k]).toFixed(k === 'min' ? 0 : 1)) : '–'}</td>`).join('');
-const ntHead = () => `<th>${_('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th>`;
+// the columns of a table of national team statistics: minutes and efficiency only when some line has them (a source may not give them)
+const ntCols = rows => ['g', 'min', 'pts', 'reb', 'ast', 'eff'].filter(k => k === 'g' || k === 'pts' || k === 'reb' || k === 'ast' || (rows || []).some(r => r[k] != null));
+const ntStatCells = (r, cols) => cols.map(k => `<td>${r && r[k] != null ? (k === 'g' ? r[k] : Number(r[k]).toFixed(k === 'min' ? 0 : 1)) : '–'}</td>`).join('');
+const ntLabel1 = k => k === 'g' ? _('GP') : k === 'ast' ? H('AST') : k.toUpperCase();
+const ntHead = cols => cols.map(k => `<th>${ntLabel1(k)}</th>`).join('');
 const ntFace = (p, px) => p.ext ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph generic" src="${esc(p.photo || '/img/players/generic.svg')}" alt="" loading="lazy"></span>` : face(p, px);
 const ntPlayerLink = p => p.ext ? `<a href="${url('natteam', p.pid)}">${esc(p.name)}</a>` : plink({ id: p.pid, name: p.name });
 
 // On a league player's page: his national team statistics, per competition (nothing when he has none)
 function ntPlayerBlock(n) {
   if (!n || !n.stats.length) return '';
-  const nm = id => (n.competitions[id] || {})[LANG === 'fr' ? 'fr' : 'en'] || id;
-  return `<h2>${_('National team stats')}</h2><div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Competition')}</th>${ntHead()}</tr></thead><tbody>
-    ${n.stats.map(r => `<tr><td class="l">${esc(nm(r.competition))}</td>${ntStatCells(r)}</tr>`).join('')}</tbody></table></div></div>
+  const nm = id => (n.competitions[id] || {})[LANG === 'fr' ? 'fr' : 'en'] || id, cols = ntCols(n.stats);
+  return `<h2>${_('National team stats')}</h2><div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Competition')}</th>${ntHead(cols)}</tr></thead><tbody>
+    ${n.stats.map(r => `<tr><td class="l">${esc(nm(r.competition))}</td>${ntStatCells(r, cols)}</tr>`).join('')}</tbody></table></div></div>
     <div class="mut small" style="margin-top:6px">${_('Per game averages.')} <a href="${url('natteam')}">${_('Tunisia national team')} →</a></div>`;
 }
 
@@ -1968,10 +1971,11 @@ function ntBox(g) {
 
 function ntStatsTable(d, block) {
   if (!block || !block.rows.length) return '';
+  const cols = ntCols(block.rows);
   return `<h3 class="sub">${esc(ntName(d, block.competition))}</h3>
-    <div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Player')}</th>${ntHead()}</tr></thead><tbody>
-    ${block.rows.map(r => `<tr><td class="l"><span class="tn">${ntPlayerLink({ pid: r.pid, name: r.name, ext: r.ext })}${r.team ? ` <span class="mut small">${esc(r.team)}</span>` : ''}</span></td>${ntStatCells(r)}</tr>`).join('')}
-    </tbody></table></div></div><div class="mut small" style="margin-top:6px">${_('Per game averages.')}${block.note ? ' ' + esc(block.note) : ''}</div>`;
+    <div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Player')}</th>${ntHead(cols)}</tr></thead><tbody>
+    ${block.rows.map(r => `<tr><td class="l"><span class="tn">${ntPlayerLink({ pid: r.pid, name: r.name, ext: r.ext })}${r.team ? ` <span class="mut small">${esc(r.team)}</span>` : ''}</span></td>${ntStatCells(r, cols)}</tr>`).join('')}
+    </tbody></table></div></div><div class="mut small" style="margin-top:6px">${_('Per game averages.')} ${esc(block[LANG === 'fr' ? 'note_fr' : 'note_en'] || '')}${block.src ? ` <a href="${esc(block.src)}" rel="noopener" target="_blank">${_('Source')}: FIBA</a>` : ''}</div>`;
 }
 
 async function natteam(arg) {

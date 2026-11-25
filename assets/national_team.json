@@ -1,5 +1,5 @@
 {
- "_doc": "Tunisian men's national team: the starting data of the national team page (natteam.py). The admin's changes live in data/national_team.json and win over this file. Players: a league id (team code and number) or, for somebody who does not play in Tunisia, a slug listed in 'externals'. 'check': true marks a fact that has only one source or that sources disagree about: the page shows a small ? next to it. Statistics are per game: g games, min minutes, pts points, reb rebounds, ast assists.",
+ "_doc": "Tunisian men's national team: the starting data of the national team page (natteam.py). The admin's changes live in data/national_team.json and win over this file. Players: a league id (team code and number) or, for somebody who does not play in Tunisia, a slug listed in 'externals'. 'check': true marks a fact that has only one source or that sources disagree about: the page shows a small ? next to it. Statistics are per game: g games, min minutes, pts points, reb rebounds, ast assists, eff the FIBA efficiency (a source may give some of them only).",
  "team": {
   "name_en": "Tunisia",
   "name_fr": "Tunisie",
@@ -108,126 +108,129 @@
  "stats": [
   {
    "competition": "wcq27",
+   "note_en": "From the FIBA player profiles: every game of the qualifiers played so far (up to the August 2026 window). Games played, points, rebounds, assists and efficiency (EFF) per game; FIBA does not give minutes.",
+   "note_fr": "D’après les profils FIBA des joueurs : tous les matchs des qualifications joués jusqu’ici (jusqu’à la fenêtre d’août 2026). Matchs joués, points, rebonds, passes décisives et évaluation (EFF) par match ; la FIBA ne donne pas les minutes.",
+   "src": "https://www.fiba.basketball/en/events/fiba-basketball-world-cup-2027-african-qualifiers/teams/tunisia",
    "rows": [
     {
      "pid": "ca-24",
-     "g": 7,
-     "min": 33,
-     "pts": 18.1,
-     "reb": 4.3,
-     "ast": 5.7
+     "g": 9,
+     "pts": 18.2,
+     "reb": 4.2,
+     "ast": 5.8,
+     "eff": 17.9
     },
     {
      "pid": "usm-23",
-     "g": 7,
-     "min": 30,
-     "pts": 15.0,
-     "reb": 9.7,
-     "ast": 2.0
+     "g": 9,
+     "pts": 14.0,
+     "reb": 9.1,
+     "ast": 2.1,
+     "eff": 18.3
     },
     {
      "pid": "jsk-7",
      "g": 3,
-     "min": 26,
      "pts": 13.7,
      "reb": 2.0,
-     "ast": 2.3
+     "ast": 2.0,
+     "eff": 7.0
     },
     {
      "pid": "yacine-toumi",
-     "g": 4,
-     "min": 26,
-     "pts": 12.8,
-     "reb": 4.8,
-     "ast": 0.8
+     "g": 6,
+     "pts": 12.7,
+     "reb": 5.0,
+     "ast": 1.2,
+     "eff": 12.0
     },
     {
      "pid": "jsk-2",
-     "g": 4,
-     "min": 21,
-     "pts": 7.3,
-     "reb": 1.5,
-     "ast": 1.5
+     "g": 6,
+     "pts": 7.8,
+     "reb": 1.7,
+     "ast": 1.5,
+     "eff": 4.0
     },
     {
      "pid": "jsk-9",
-     "g": 7,
-     "min": 20,
-     "pts": 5.6,
-     "reb": 3.6,
-     "ast": 1.1
-    },
-    {
-     "pid": "ca-5",
-     "g": 4,
-     "min": 15,
-     "pts": 4.5,
-     "reb": 3.0,
-     "ast": 1.0
+     "g": 9,
+     "pts": 5.0,
+     "reb": 2.9,
+     "ast": 1.0,
+     "eff": 4.9
     },
     {
      "pid": "jsk-5",
-     "g": 4,
-     "min": 14,
-     "pts": 4.5,
+     "g": 6,
+     "pts": 4.3,
+     "reb": 2.3,
+     "ast": 1.2,
+     "eff": 4.7
+    },
+    {
+     "pid": "ca-5",
+     "g": 6,
+     "pts": 3.8,
      "reb": 3.0,
-     "ast": 0.8
+     "ast": 1.0,
+     "eff": 3.8
+    },
+    {
+     "pid": "usm-32",
+     "g": 6,
+     "pts": 3.3,
+     "reb": 3.2,
+     "ast": 0.8,
+     "eff": 4.7
     },
     {
      "pid": "usm-13",
-     "g": 7,
-     "min": 14,
-     "pts": 3.1,
-     "reb": 2.6,
-     "ast": 0.4
+     "g": 9,
+     "pts": 2.7,
+     "reb": 2.8,
+     "ast": 0.6,
+     "eff": 5.6
     },
     {
      "pid": "ca-6",
      "g": 3,
-     "min": 18,
      "pts": 2.7,
      "reb": 2.0,
-     "ast": 2.0
-    },
-    {
-     "pid": "usm-32",
-     "g": 4,
-     "min": 17,
-     "pts": 2.5,
-     "reb": 4.0,
-     "ast": 1.0
+     "ast": 2.0,
+     "eff": 4.7
     },
     {
      "pid": "jsk-23",
      "g": 3,
-     "min": 12,
      "pts": 2.3,
      "reb": 2.0,
-     "ast": 0.3
+     "ast": 0.3,
+     "eff": 1.7
     },
     {
      "pid": "ca-8",
      "g": 5,
-     "min": 8,
      "pts": 2.2,
      "reb": 0.8,
-     "ast": 1.2
+     "ast": 1.4,
+     "eff": 1.4
     },
     {
      "pid": "usm-11",
-     "g": 7,
-     "min": 22,
-     "pts": 1.9,
-     "reb": 3.0,
-     "ast": 1.3
+     "g": 9,
+     "pts": 1.8,
+     "reb": 3.7,
+     "ast": 1.1,
+     "eff": 6.0
     },
     {
      "pid": "jsk-8",
-     "g": 4,
-     "min": 7,
-     "pts": 1.8,
-     "reb": 0.8,
-     "ast": 0.8
+     "g": 6,
+     "pts": 1.2,
+     "reb": 1.3,
+     "ast": 0.7,
+     "eff": 1.3
     }
    ]
   }

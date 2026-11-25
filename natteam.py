@@ -32,6 +32,7 @@ SLUG = re.compile(r"^[a-z][a-z0-9-]{1,40}$")
 LEAGUE_ID = re.compile(r"^[a-z0-9]+-\d+$")
 SITES = ("home", "away", "neutral")
 BOX_FIELDS = ("min", "pts", "reb", "ast", "stl", "blk", "tov", "pf")
+SUMMARY_FIELDS = ("min", "pts", "reb", "ast", "eff")      # what a summary row (per game) can hold, besides g
 
 
 def _file():
@@ -111,7 +112,7 @@ def player_stats(pid, data=None):
     for comp, s in d["summaries"].items():
         r = next((r for r in s.get("rows") or [] if r.get("pid") == pid), None)
         if r:
-            rows[comp] = {"competition": comp, "g": r.get("g"), **{k: r.get(k) for k in BOX_FIELDS if r.get(k) is not None}, "src": "summary"}
+            rows[comp] = {"competition": comp, "g": r.get("g"), **{k: r.get(k) for k in SUMMARY_FIELDS if r.get(k) is not None}, "src": "summary"}
     for comp, (n, tot) in boxes.items():
         if comp not in rows or n >= (rows[comp].get("g") or 0):
             rows[comp] = {"competition": comp, "g": n, **{k: _round1(v / n) for k, v in tot.items() if v or k in ("min", "pts", "reb", "ast")}, "src": "box"}
@@ -184,7 +185,8 @@ def view():
         rows = comp_table(c["id"], d)
         if rows:
             seen |= {r["pid"] for r in rows}
-            tables.append({"competition": c["id"], "note": (d["summaries"].get(c["id"]) or {}).get("note") or "", "rows": [{**r, **{k: v for k, v in _person(r["pid"], d, league).items() if k in ("name", "team", "ext", "number")}} for r in rows]})
+            sm = d["summaries"].get(c["id"]) or {}
+            tables.append({"competition": c["id"], "note": sm.get("note") or "", "note_en": sm.get("note_en") or sm.get("note") or "", "note_fr": sm.get("note_fr") or sm.get("note") or "", "src": sm.get("src") or "", "rows": [{**r, **{k: v for k, v in _person(r["pid"], d, league).items() if k in ("name", "team", "ext", "number")}} for r in rows]})
     return {"team": d["team"], "history": d["history"], "competitions": comps, "games": games[::-1], "next": upcoming[0] if upcoming else None,
             "callup": {"label": d["callup"].get("label") or "", "label_fr": d["callup"].get("label_fr") or "", "date": d["callup"].get("date") or "",
                        "players": [{**_person(pid, d, league), "stats": player_stats(pid, d)} for pid in ids]},
@@ -436,10 +438,10 @@ def delete_game(gid):
 NUM = re.compile(r"^-?\d+([.,]\d+)?$|^\d{1,2}:\d{2}$")
 ALIASES = {"min": "min", "mins": "min", "minutes": "min", "mn": "min", "pts": "pts", "pt": "pts", "points": "pts", "pp": "pts", "reb": "reb", "rebs": "reb", "rebounds": "reb", "tr": "reb", "rebonds": "reb",
            "ast": "ast", "assists": "ast", "pd": "ast", "passes": "ast", "as": "ast", "stl": "stl", "steals": "stl", "int": "stl", "blk": "blk", "blocks": "blk", "ctr": "blk", "contres": "blk",
-           "to": "tov", "tov": "tov", "turnovers": "tov", "bp": "tov", "pf": "pf", "fouls": "pf", "fautes": "pf", "g": "g", "gp": "g", "games": "g", "mj": "g", "j": "g", "matchs": "g"}
+           "eff": "eff", "evaluation": "eff", "index": "eff", "to": "tov", "tov": "tov", "turnovers": "tov", "bp": "tov", "pf": "pf", "fouls": "pf", "fautes": "pf", "g": "g", "gp": "g", "games": "g", "mj": "g", "j": "g", "matchs": "g"}
 NAME_HEADS = {"player", "players", "joueur", "joueurs", "name", "nom", "joueuse"}
 BOX_ORDER = ("min", "pts", "reb", "ast", "stl", "blk", "tov", "pf")
-SUMMARY_ORDER = ("g", "min", "pts", "reb", "ast")
+SUMMARY_ORDER = ("g", "min", "pts", "reb", "ast", "eff")
 MAX_ROWS = 40
 
 
@@ -586,7 +588,7 @@ def set_stats(comp, rows, note=""):
         if pid in seen:
             raise ValueError("A player is listed twice.")
         seen.add(pid)
-        v = _clean_values(r, SUMMARY_ORDER, {"g": (1, 60), "min": (0, 60), "pts": (0, 80), "reb": (0, 40), "ast": (0, 30)})
+        v = _clean_values(r, SUMMARY_ORDER, {"g": (1, 60), "min": (0, 60), "pts": (0, 80), "reb": (0, 40), "ast": (0, 30), "eff": (-30, 80)})
         if "g" not in v:
             raise ValueError("Every line needs the number of games.")
         out.append({"pid": pid, **v})
