@@ -15,7 +15,11 @@
   "sn-9": "Montassar Lajmi",
   "sn-23": "Mohamed Amine Bouaouina",
   "esr-77": "Naiem Dhifallah",
-  "esg-30": "Nassim Temime"
+  "esg-30": "Nassim Temime",
+  "ca-1": "Mohamed Amine Mejdi",
+  "usa-4": "Houssem Belhadj Ali",
+  "usa-9": "Louay Mesbehi",
+  "usa-11": "Nidhal Chebaane"
  },
  "transfers": [
   {
@@ -42,6 +46,14 @@
    "id": "ca-3",
    "from": "2026-11-11",
    "note": "Chris Crawford took number 8 in phase 2 (Bilel Jaziri did not play)"
+  },
+  {
+   "team": "CA",
+   "number": 8,
+   "id": "ca-1",
+   "from": "2026-11-25",
+   "to": "2026-11-25",
+   "note": "the FIBA sheet of CA-USA (25 Nov) has Mohamed Amine Mejdi on 8, Chris Crawford did not play"
   },
   {
    "team": "CSS",
@@ -210,6 +222,14 @@
    "to": "2022-07-31",
    "name": "Naiem Dhifallah",
    "note": "Naiem Dhifallah (ES Radès #77 in 2026-27): Club Africain #7 2016-18, ES Sahel #7 2018-19, Grombalia #77 at the start of 2021-22 (the 49-point game, sheet 'DHIFALLAH N'), then Ezzahra #77"
+  },
+  {
+   "team": "USA",
+   "number": 7,
+   "id": "usa-107",
+   "name": "Yassine Mahfoudh",
+   "from": "2026-11-12",
+   "note": "Faker Bouzou left for Dalia on 8 Nov; Yassine Mahfoudh wears 7 (sheets of 18, 23 and 25 Nov)"
   }
  ]
 }
