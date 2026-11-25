@@ -24,11 +24,11 @@ DEFAULT = "fr"          # the main language: its addresses have no prefix (/equi
 LANGS = ("fr", "en")
 SLUGS = {
     "en": {"standings": "standings", "players": "players", "games": "games", "planning": "planning", "mvp": "mvp-race", "predict": "predictions", "news": "news", "live": "live",
-           "about": "about", "nat1": "national-one", "cup": "cup", "finals": "playoff-playout", "history": "history", "privacy": "privacy", "team": "team", "player": "player", "game": "game"},
+           "about": "about", "natteam": "national-team", "nat1": "national-one", "cup": "cup", "finals": "playoff-playout", "history": "history", "privacy": "privacy", "team": "team", "player": "player", "game": "game"},
     "fr": {"standings": "classement", "players": "joueurs", "games": "matchs", "planning": "calendrier", "mvp": "course-mvp", "predict": "pronostics", "news": "actualites", "live": "direct",
-           "about": "a-propos", "nat1": "nationale-1", "cup": "coupe", "finals": "playoff-playout", "history": "historique", "privacy": "confidentialite", "team": "equipe", "player": "joueur", "game": "match"},
+           "about": "a-propos", "natteam": "equipe-nationale", "nat1": "nationale-1", "cup": "coupe", "finals": "playoff-playout", "history": "historique", "privacy": "confidentialite", "team": "equipe", "player": "joueur", "game": "match"},
 }
-LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "nat1", "cup", "finals", "history", "privacy")
+LIST_PAGES = ("home", "live", "standings", "players", "games", "planning", "mvp", "predict", "news", "about", "natteam", "nat1", "cup", "finals", "history", "privacy")
 ITEM_PAGES = ("team", "player", "game")
 NAT1_TABS = {"en": {"games": "games", "planning": "calendar", "playoff": "play-off"}, "fr": {"games": "matchs", "planning": "calendrier", "playoff": "playoff"}}      # the tabs of the Nationale 1 page: /nationale-1 (table), /nationale-1/matchs, /nationale-1/calendrier
 SITE = "Tunisia Basket"
@@ -71,6 +71,10 @@ T = {
                  "Tunisia Basket is an independent project. It is not affiliated with the Tunisian Basketball Federation or with the clubs; club names and logos belong to their owners."],
         "nt_nav": "National One", "nt_title": "National One basketball results and standings – Tunisia Basket",
         "nt_desc": "Results and standings of the National One, the second basketball league below the Tunisian Pro A.", "nt_h1": "National One: results and standings",
+        "nat_nav": "National team", "nat_title": "Tunisia national basketball team – called-up players, results and history – Tunisia Basket",
+        "nat_desc": "The Tunisian men's national basketball team: the players called up for the latest games, the results and the next game, per-game statistics and a short history.",
+        "nat_h1": "Tunisia national basketball team", "nat_roster": "Called-up players", "nat_pt_title": "{name} – Tunisia national basketball team player – Tunisia Basket",
+        "nat_pt_desc": "{name}, called up for the Tunisian national basketball team. He does not play in the Tunisian league: his profile and his national team statistics.",
         "follow_us": "Follow us",
         "cup_title": "Tunisia Basketball Cup – bracket, results and draw – Tunisia Basket",
         "cup_desc": "The Tunisian basketball Cup: Pro A and National One clubs meet in single-game ties. The bracket, the results, the upsets.", "cup_h1": "Cup",
@@ -130,6 +134,10 @@ T = {
                  "Tunisia Basket est un projet indépendant. Il n’est pas affilié à la Fédération Tunisienne de Basket-Ball ni aux clubs ; les noms et logos des clubs appartiennent à leurs propriétaires."],
         "nt_nav": "Nationale 1", "nt_title": "Nationale 1 basket : résultats et classement – Tunisia Basket",
         "nt_desc": "Résultats et classement de la Nationale 1, la deuxième division du basket tunisien sous la Pro A.", "nt_h1": "Nationale 1 : résultats et classement",
+        "nat_nav": "Équipe nationale", "nat_title": "Équipe nationale de basket de Tunisie – joueurs convoqués, résultats et histoire – Tunisia Basket",
+        "nat_desc": "L’équipe nationale masculine de basket de Tunisie : les joueurs convoqués pour les derniers matchs, les résultats et le prochain match, les statistiques par match et un court historique.",
+        "nat_h1": "Équipe nationale de basket de Tunisie", "nat_roster": "Joueurs convoqués", "nat_pt_title": "{name} – joueur de l’équipe nationale de basket de Tunisie – Tunisia Basket",
+        "nat_pt_desc": "{name}, convoqué en équipe nationale de basket de Tunisie. Il ne joue pas dans le championnat tunisien : son profil et ses statistiques en équipe nationale.",
         "follow_us": "Suivez-nous",
         "cup_title": "Coupe de Tunisie de basket – tableau, résultats et tirage – Tunisia Basket",
         "cup_desc": "La Coupe de Tunisie de basket : les clubs de Pro A et de Nationale 1 se rencontrent en match sec. Le tableau, les résultats, les surprises.", "cup_h1": "Coupe",
@@ -207,7 +215,7 @@ def parse_path(p):
     page = rev.get(parts[0])
     if not page or len(parts) > 2:
         return None
-    if page == "live":                              # /direct and /direct/<game id>
+    if page in ("live", "natteam"):                  # /direct and /direct/<game id>; /equipe-nationale and /equipe-nationale/<player outside the league>
         return (lang, page, parts[1] if len(parts) == 2 else None)
     if page in ITEM_PAGES:
         return (lang, page, parts[1]) if len(parts) == 2 else None
@@ -329,6 +337,21 @@ def meta(lang, page, arg=None):
         v = nat1.view()
         rows = "".join(f'<tr><td>{r["rank"]}</td><td>{esc(r["name"])}</td><td>{r["w"]}</td><td>{r["l"]}</td><td>{r["pts"]}</td><td>{r["diff"]:+d}</td></tr>' for r in v["standings"])
         out.update(title=t["nt_title"], description=t["nt_desc"], ssr=f'<h1>{t["nt_h1"]}</h1><table><thead><tr><th>#</th><th>{t["team"]}</th><th>W</th><th>L</th><th>Pts</th><th>+/-</th></tr></thead><tbody>{rows}</tbody></table>')
+    elif page == "natteam":
+        import natteam
+        v = natteam.view()
+        pl = v["callup"]["players"]
+        if arg:
+            x = v["externals"].get(arg)
+            if not x:
+                return None
+            out.update(title=t["nat_pt_title"].format(name=x["name"]), description=t["nat_pt_desc"].format(name=x["name"]), og_type="profile",
+                       ssr=f'<h1>{esc(x["name"])}</h1><p>{esc(t["nat_pt_desc"].format(name=x["name"]))}</p>')
+        else:
+            li = "".join(f'<li>{esc(p["name"])} ({esc(p["team"] or p.get("club") or "")})</li>' for p in pl)
+            res = "".join(f'<li>{esc(g["date"] or "")} {esc(g["opp_name_fr"] if lang == "fr" else g["opp_name_en"])} {g["tun"]}–{g["opp_score"]}</li>' for g in v["games"] if g["played"])
+            out.update(title=t["nat_title"], description=t["nat_desc"],
+                       ssr=f'<h1>{t["nat_h1"]}</h1><p>{esc(t["nat_desc"])}</p><h2>{t["nat_roster"]}</h2><ul>{li}</ul><h2>{t["results"]}</h2><ul>{res}</ul>')
     elif page == "live":
         out.update(title=t["live_title"], description=t["live_desc"], ssr=f'<h1>{t["live_h1"]}</h1><p>{esc(t["live_desc"])}</p>', robots="noindex,follow")   # a proof of concept: not worth indexing
     elif page == "standings":
@@ -486,7 +509,7 @@ def shell(lang, page, m):
             .replace("{{REGULAR}}", esc(T[lang]["regular"][0].upper() + T[lang]["regular"][1:]))
             .replace("{{LEGAL}}", esc(T[lang]["legal"].format(year=time.gmtime().tm_year)))
             .replace("{{FB}}", "https://www.facebook.com/people/Tunisia-Basket/61596371069928/").replace("{{FBHINT}}", esc(T[lang]["fb_hint"]))
-            .replace("{{PREDICT}}", path(lang, "predict")).replace("{{ABOUT}}", path(lang, "about")).replace("{{PRIVACY}}", path(lang, "privacy")).replace("{{PRIVACYLABEL}}", "Confidentialité" if lang == "fr" else "Privacy").replace("{{ABOUTLABEL}}", esc(T[lang]["ab_nav"]))
+            .replace("{{NTLINK}}", path(lang, "natteam")).replace("{{NTLABEL}}", T[lang]["nat_nav"]).replace("{{PREDICT}}", path(lang, "predict")).replace("{{ABOUT}}", path(lang, "about")).replace("{{PRIVACY}}", path(lang, "privacy")).replace("{{PRIVACYLABEL}}", "Confidentialité" if lang == "fr" else "Privacy").replace("{{ABOUTLABEL}}", esc(T[lang]["ab_nav"]))
             .replace("{{SOCIAL}}", social.html(T[lang]["follow_us"])).replace("{{SOCIALBIG}}", social.html(T[lang]["follow_us"], big=True))
             .replace("<!--NAV-->", nav_html(lang)).replace("<!--HEAD-->", head_html(lang, page, m))
             .replace("<!--SSR-->", m.get("ssr", "")))
@@ -500,10 +523,12 @@ def sitemap_xml():
     last = max((f.stat().st_mtime for f in files if f.exists()), default=0)
     lastmod = time.strftime("%Y-%m-%d", time.gmtime(last)) if last else None
     import content
-    entries = [("home", None), ("standings", None), ("nat1", None), ("nat1", "games"), ("nat1", "planning"), ("nat1", "playoff"), ("cup", None), ("finals", None), ("history", None), ("players", None), ("games", None), ("planning", None), ("mvp", None), ("predict", None), ("about", None), ("privacy", None)]
+    entries = [("home", None), ("standings", None), ("nat1", None), ("nat1", "games"), ("nat1", "planning"), ("nat1", "playoff"), ("cup", None), ("finals", None), ("history", None), ("players", None), ("games", None), ("planning", None), ("natteam", None), ("mvp", None), ("predict", None), ("about", None), ("privacy", None)]
     if content.load_news(1):                       # an empty news page is not worth indexing
         entries.append(("news", None))
     import history
+    import natteam
+    entries += [("natteam", k) for k in natteam.load()["externals"]]
     entries += [("history", "records")] + [("history", x) for x in history.season_ids()]
     entries += [("team", c) for c in stats.load_official()["teams"]]
     entries += [("player", player_ref(p)) for p in d["players"] if p["gp"]]

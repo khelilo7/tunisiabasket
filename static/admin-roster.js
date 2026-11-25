@@ -1,4 +1,4 @@
-// Admin: players and rosters. Edit height / weight / birth date, rename, change a jersey number (the statistics stay with the player), add a player, delete a player (his number is free again), mark a transfer.
+// Admin: players and rosters. Edit height / weight / birth date / nationality, rename, change a jersey number (the statistics stay with the player), add a player, delete a player (his number is free again), mark a transfer.
 // Uses the helpers of admin.html ($, esc, api). Everything is saved on the server (data/roster.json, data/players_info.json).
 (function () {
   let R = null, A = {}, team = '', query = '', showHidden = false, msg = null;      // A: players marked as not playing {id: {note, since}}
@@ -6,6 +6,7 @@
   const age = b => b ? Math.floor((Date.now() - new Date(b + 'T12:00')) / 31557600000) : '';
   const hv = b => !b || !b.height ? '' : Array.isArray(b.height) ? b.height.join('-') : String(b.height);
   const approx = (b, k) => b && (b.approx || []).includes(k) ? ' title="Estimated value: typing a new one makes it official"' : '';
+  const natv = b => b && b.nationality ? b.nationality.join(', ') : '';
   const say = (t, ok = true) => { msg = t ? { t, ok } : null; };
 
   async function post(body) {
@@ -77,7 +78,7 @@
         <input id="r-q" placeholder="Search any player…" value="${esc(query)}" style="min-width:200px">
         <label class="small mut"><input type="checkbox" id="r-hidden" ${showHidden ? 'checked' : ''}> show deleted</label>
         <span class="sp"></span><button class="primary" id="r-addbtn">➕ Add a player</button></div>
-      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Position</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th></th></tr></thead><tbody>
+      <div class="card" style="padding:0;overflow-x:auto"><table id="r-table"><thead><tr><th>#</th><th>Photo</th><th class="l">Player</th><th>Position</th><th>GP</th><th>Height cm</th><th>Weight kg</th><th>Born</th><th>Age</th><th title="Country code(s), e.g. SN or SN, FR. Empty = Tunisian">Nationality</th><th></th></tr></thead><tbody>
       ${rows.map(p => `<tr data-id="${esc(p.id)}" class="${p.hidden ? 'saved' : ''}"><td>${p.number}</td>
         <td style="white-space:nowrap"><img src="${esc(p.photo || '/img/players/generic.svg')}" alt="" width="34" height="34" style="border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:4px"><button data-act="photo" title="Upload a photo (square crop, JPEG)">📷</button>${p.photo && p.photo.startsWith('/photo/') ? ' <button data-act="nophoto" class="danger" title="Remove the uploaded photo">✕</button>' : ''}</td>
         <td class="l"><b>${esc(p.name)}</b> <span class="mut small">${p.team}</span>${p.added && !p.gp ? ' <span class="pill acc">new</span>' : ''}${p.hidden ? ' <span class="pill bad">deleted</span>' : ''}${A[p.id] ? ` <span class="pill bad" title="${esc(A[p.id].note || 'Not playing')}">🤕 out</span>` : ''}
@@ -87,12 +88,15 @@
         <td><input class="num" style="width:72px" data-f="weight" value="${esc((p.bio && p.bio.weight) || '')}" placeholder="–"${approx(p.bio, 'weight')}></td>
         <td><input data-f="birth" type="date" value="${esc((p.bio && p.bio.birth) || '')}" style="width:140px"></td>
         <td class="mut">${age(p.bio && p.bio.birth)}</td>
+        <td><input data-f="nationality" list="r-countries" maxlength="12" style="width:78px;text-transform:uppercase" value="${esc(natv(p.bio))}" placeholder="TN" title="Country code(s): SN, or SN, FR for a dual national. Empty = Tunisian (the default).">${p.bio && p.bio.nat_src === 'name' ? ' <span class="pill warn" title="Guessed from the name and what the web says about a player of that name: check it, and type the right code if it is wrong">to check</span>' : ''}</td>
         <td style="white-space:nowrap">${p.hidden ? `<button data-act="restore">↺ Restore</button>` :
           `<button data-act="save" hidden class="primary">Save</button> <button data-act="rename" title="Rename">✎</button> <button data-act="number" title="Change his jersey number: his statistics stay with him">#</button> <button data-act="transfer" title="Mark a transfer">⇄</button> <button data-act="out" title="${A[p.id] ? 'Back in the squad' : 'Not playing (injured, suspended…): leave him out of the expected starting five'}"${A[p.id] ? ' class="primary"' : ''}>🤕</button> <button data-act="hide" class="danger" title="Delete from the site">🗑</button>`}</td></tr>`).join('')
-        || '<tr><td colspan="10" class="mut" style="padding:14px">No players.</td></tr>'}
+        || '<tr><td colspan="11" class="mut" style="padding:14px">No players.</td></tr>'}
       </tbody></table></div>
       <p class="mut small">Photos: 📷 crops a centred square from the image you pick (crop it beforehand for exact framing) and shows it on the player page, the players list and the MVP race. Players without a photo show a silhouette. Only upload photos you have the right to publish.</p>
       <p class="mut small">Height accepts <b>190</b> or a range <b>189-192</b>. Values you type are official; empty fields clear the value. “Delete” hides a player from the site (rankings, leaders, MVP race, pages) but keeps the box scores, and can be undone with Restore; his number is free for somebody else at once. <b>#</b> gives a player a new jersey number without touching his statistics.</p>
+      <datalist id="r-countries">${(R.countries || []).map(c => `<option value="${c.code}">${esc(c.name)}</option>`).join('')}</datalist>
+      <p class="mut small"><b>Nationality</b>: everybody is Tunisian unless a code is given (two letters: <b>SN</b>, <b>US</b>, <b>NG</b>…; <b>SN, FR</b> for a dual national, the first is the sporting one). The site shows a small flag for the others. The ones that ship with the code were found from the name and the web: if one is wrong, type the right code (or <b>TN</b> / nothing for Tunisian) and Save; what you type wins over the shipped value.</p>
       <div id="r-forms"></div>
       <h3 class="sub">Number changes</h3>
       ${(R.changes.numbers || []).length ? `<div class="card"><table><tbody>${R.changes.numbers.map((n, i) => { const p = R.players.find(x => x.id === n.id); return `<tr><td class="l"><b>${esc(n.name || (p ? p.name : n.id))}</b></td><td>${esc(n.team)} #${n.number}</td><td class="mut">${n.from ? 'from ' + esc(n.from) : 'until the start'}${n.to ? ' to ' + esc(n.to) : ''}</td><td class="mut l">${esc(n.note || '')}</td><td><button data-undonum="${i}" class="danger">Undo</button></td></tr>`; }).join('')}</tbody></table></div>` : '<div class="mut small">None yet. The ones that ship with the code (phase 2 of the season) are not listed here.</div>'}
@@ -113,15 +117,15 @@
       tr.querySelectorAll('input, select').forEach(i => i[i.tagName === 'SELECT' ? 'onchange' : 'oninput'] = () => { if (btn('save')) btn('save').hidden = false; });
       if (btn('save')) btn('save').onclick = async () => {
         const sel = tr.querySelector('[data-f=pos]'), posChanged = sel && sel.value !== sel.dataset.was;
-        const bioInputs = ['height', 'weight', 'birth'].map(f => tr.querySelector(`[data-f=${f}]`)), bioChanged = bioInputs.some(i => i.value !== i.defaultValue);
-        const h = parseHeight(tr.querySelector('[data-f=height]').value), w = tr.querySelector('[data-f=weight]').value.trim(), b = tr.querySelector('[data-f=birth]').value;
+        const bioInputs = ['height', 'weight', 'birth', 'nationality'].map(f => tr.querySelector(`[data-f=${f}]`)), bioChanged = bioInputs.some(i => i.value !== i.defaultValue);
+        const natChanged = bioInputs[3].value !== bioInputs[3].defaultValue, h = parseHeight(tr.querySelector('[data-f=height]').value), w = tr.querySelector('[data-f=weight]').value.trim(), b = tr.querySelector('[data-f=birth]').value;
         if (bioChanged && tr.querySelector('[data-f=height]').value.trim() && h === null) { say('Height: type 190 or a range like 189-192.', false); return render(); }
         let ok = true;
         if (posChanged) {       // a correction of the guessed position (kept in data/positions.json; going back to the guessed one removes it)
           try { const r = await api('positions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ changes: { [id]: sel.value || null } }) }); ok = r.ok; say(ok ? 'Saved.' : (r.body.error || 'Could not save the position.'), ok); } catch (e) { ok = false; say(e.message, false); }
         }
         // the bio is only sent when one of its fields changed (sending it again would turn an estimated value into an official one)
-        if (ok && bioChanged) ok = await post({ op: 'bio', id, height: h, weight: w ? parseInt(w, 10) : null, birth: b || null });
+        if (ok && bioChanged) ok = await post({ op: 'bio', id, height: h, weight: w ? parseInt(w, 10) : null, birth: b || null, ...(natChanged ? { nationality: tr.querySelector('[data-f=nationality]').value.trim() || null } : {}) });
         R = null; if (ok) load(); else render();
       };
       if (btn('photo')) btn('photo').onclick = () => pickPhoto(id);
@@ -141,7 +145,7 @@
         if (A[id]) { if (await absent(id, false)) load(); return; }
         document.querySelectorAll('.r-note').forEach(x => x.remove());      // the note form opens right under the player's row (no scrolling)
         const nr = document.createElement('tr'); nr.className = 'r-note';
-        nr.innerHTML = `<td colspan="10" style="text-align:left;background:var(--card);border-bottom:1px solid var(--acc)"><div class="row"><b>🤕 ${esc(p.name)} is not playing</b><input id="f-note" maxlength="120" placeholder="Optional note, only you see it: knee injury, suspended, left the club…" style="flex:1;min-width:240px"><button class="primary" id="f-go">Mark as not playing</button><button id="f-no">Cancel</button></div><div class="mut small" style="margin-top:4px">He will be left out of the expected starting five on the home page.</div></td>`;
+        nr.innerHTML = `<td colspan="11" style="text-align:left;background:var(--card);border-bottom:1px solid var(--acc)"><div class="row"><b>🤕 ${esc(p.name)} is not playing</b><input id="f-note" maxlength="120" placeholder="Optional note, only you see it: knee injury, suspended, left the club…" style="flex:1;min-width:240px"><button class="primary" id="f-go">Mark as not playing</button><button id="f-no">Cancel</button></div><div class="mut small" style="margin-top:4px">He will be left out of the expected starting five on the home page.</div></td>`;
         tr.after(nr);
         $('#f-note').focus();
         $('#f-no').onclick = () => nr.remove();

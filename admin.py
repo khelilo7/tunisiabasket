@@ -22,8 +22,10 @@ from flask import Blueprint, abort, jsonify, request, send_from_directory
 
 import auth
 import config
+import countries
 import stats
 import monitor
+import natteam
 import mvp
 import predict
 import cup
@@ -333,6 +335,84 @@ def nat1_admin_edit():
     return jsonify(ok=True, message=msg, **nat1.view())
 
 
+# ---------------------------------------------------------------- the national team (natteam.py): the called-up players, the games, the players outside the league
+def _natteam_state(**extra):
+    """What the admin tab shows: the public view, the players one can call up, the countries, and the competitions."""
+    d = natteam.load()
+    players = [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"]} for p in sorted(stats.build()["players"], key=lambda p: (p["team"], p["number"] or 0))]
+    return {"view": natteam.view(), "players": players, "externals": d["externals"], "competitions": d["competitions"], "games": natteam.load()["games"],
+            "countries": [{"code": c, "name": n[0]} for c, n in sorted(countries.COUNTRIES.items(), key=lambda kv: kv[1][0])],
+            "admin": {"callup": bool(d["admin"].get("callup")), "games": sorted((d["admin"].get("games") or {})), "stats": sorted((d["admin"].get("stats") or {}))}, **extra}
+
+
+@bp.get("/admin/api/national-team")
+def natteam_admin_view():
+    return jsonify(_natteam_state())
+
+
+@bp.post("/admin/api/national-team")
+def natteam_admin_edit():
+    """Body {"op": ...}: callup (ids, label, label_fr, date), callup_names (text: the names pasted, answers the matches to confirm), callup_reset, external, external_delete (key),
+    competition (en, fr), competition_delete (id), game (the fields of a game, id to change one), game_delete (id), box_preview (text) / box_save (id, lines) / box_clear (id),
+    stats_preview (text) / stats_save (competition, rows, note) / stats_clear (competition)."""
+    b = request.get_json(silent=True) or {}
+    op, msg, extra = b.get("op"), "Saved.", {}
+    try:
+        if op == "callup":
+            natteam.set_callup(b.get("ids") or [], b.get("label"), b.get("label_fr"), b.get("date"))
+            msg = "The list of called-up players is saved: the site shows it now."
+        elif op == "callup_names":
+            names = [" ".join(x.split()) for x in re.split(r"[\n;]+", str(b.get("text") or "")) if x.strip()]
+            extra["matches"] = natteam.match_report(names[:60])
+            msg = f"{len(names)} name(s) matched: check the uncertain ones."
+        elif op == "callup_reset":
+            natteam.reset_callup()
+            msg = "Back to the list that ships with the code."
+        elif op == "external":
+            key = natteam.save_external(b)
+            extra["key"] = key
+            msg = "The player is saved: his page is on the site, and he can be added to the list."
+        elif op == "external_delete":
+            natteam.delete_external(str(b.get("key") or ""))
+            msg = "The player is removed (and taken out of the list)."
+        elif op == "competition":
+            extra["id"] = natteam.add_competition(b.get("en"), b.get("fr"))
+            msg = "Competition added."
+        elif op == "competition_delete":
+            natteam.delete_competition(str(b.get("id") or ""))
+            msg = "Competition removed."
+        elif op == "game":
+            extra["id"] = natteam.save_game(b)
+            msg = "Game saved: the results and the next game of the national team page are updated."
+        elif op == "game_delete":
+            natteam.delete_game(str(b.get("id") or ""))
+            msg = "Game removed."
+        elif op == "box_preview":
+            extra["lines"] = natteam.box_preview(b.get("text"))
+            msg = f"{len(extra['lines'])} line(s) read: check the uncertain matches."
+        elif op == "box_save":
+            warn = natteam.set_box(str(b.get("id") or ""), b.get("lines"))
+            msg = "Box score saved: the statistics of the players follow." + (f" Careful: {warn}" if warn else "")
+        elif op == "box_clear":
+            natteam.clear_box(str(b.get("id") or ""))
+            msg = "Box score removed."
+        elif op == "stats_preview":
+            extra["lines"] = natteam.stats_preview(b.get("text"))
+            msg = f"{len(extra['lines'])} line(s) read: check the uncertain matches."
+        elif op == "stats_save":
+            natteam.set_stats(str(b.get("competition") or ""), b.get("rows"), b.get("note"))
+            msg = "Statistics saved: they replace the ones that shipped with the code for this competition."
+        elif op == "stats_clear":
+            natteam.clear_stats(str(b.get("competition") or ""))
+            msg = "Back to the statistics that ship with the code."
+        else:
+            return jsonify(error="Unknown operation."), 422
+    except ValueError as e:
+        return jsonify(error=str(e) or "Invalid value."), 422
+    auth.audit("national-team", str(op))
+    return jsonify(ok=True, message=msg, **_natteam_state(**extra))
+
+
 @bp.get("/admin/api/cup")
 def cup_admin_view():
     return jsonify(**cup.view(), known=cup.known_teams())
@@ -494,6 +574,14 @@ def _roster_save(ro: dict):
     tmp.replace(stats.ROSTER_FILE)
 
 
+def _shipped_nationality(pid):
+    """The nationality that ships with the code (assets/players_info.json) for this player, or None."""
+    try:
+        return (json.loads((config.ASSETS_DIR / "players_info.json").read_text()).get(pid) or {}).get("nationality")
+    except (OSError, ValueError):
+        return None
+
+
 def _bio_value(field, v):
     """Validated value for one bio field; None clears it. Height may be 190 or [189, 192]."""
     if v in (None, "", []):
@@ -513,6 +601,9 @@ def _bio_value(field, v):
         if not 1970 <= d.tm_year <= 2014:
             raise ValueError("Birth year must be between 1970 and 2014.")
         return time.strftime("%Y-%m-%d", d)
+    if field == "nationality":
+        codes = countries.clean(v)               # one code, or "SN, FR" for a dual national; empty clears it (= Tunisian)
+        return None if not codes else codes[0] if len(codes) == 1 else codes
     raise ValueError(f"unknown field {field}")
 
 
@@ -560,7 +651,8 @@ def roster_view():
              "bio": p["bio"], "photo": p.get("photo"), "hidden": p.get("hidden", False), "added": p.get("added", False), "transfers": p.get("transfers", [])}
             for p in d["players"]]
     rows.sort(key=lambda r: (r["team"], r["number"]))
-    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS)
+    return jsonify(players=rows, teams=stats.load_official()["teams"], changes=stats.load_roster(include_base=False), positions=stats.POSITIONS,
+                   countries=[{"code": c, "name": n[0]} for c, n in sorted(countries.COUNTRIES.items(), key=lambda kv: kv[1][0])])
 
 
 def _date(v, default=None):
@@ -602,9 +694,13 @@ def roster_change():
                 except (OSError, ValueError):
                     cur = {}
                 entry = dict(cur.get(pid) or {})
-                edited = [f for f in ("height", "weight", "birth") if f in b]
+                edited = [f for f in ("height", "weight", "birth", "nationality") if f in b]
                 for f in edited:
                     entry[f] = _bio_value(f, b[f])
+                if "nationality" in edited:
+                    entry["nat_src"] = "admin" if entry["nationality"] else None     # typed by the admin: sure, whatever the shipped file guessed
+                    if entry["nationality"] is None and _shipped_nationality(pid):
+                        entry["nationality"] = countries.DEFAULT                     # clears a nationality that ships with the code: back to Tunisian (an empty value would not override it)
                 base = (p.get("bio") or {}).get("approx") or []
                 entry["approx"] = [x for x in base if x not in edited]       # a value typed by the admin is no longer an estimate
                 entry = {k: v for k, v in entry.items() if k == "approx" or v not in (None, [])}      # an empty 'approx' must stay: it overrides the estimate flags of the repo file

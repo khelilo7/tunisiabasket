@@ -1,0 +1,459 @@
+{
+ "_doc": "Tunisian men's national team: the starting data of the national team page (natteam.py). The admin's changes live in data/national_team.json and win over this file. Players: a league id (team code and number) or, for somebody who does not play in Tunisia, a slug listed in 'externals'. 'check': true marks a fact that has only one source or that sources disagree about: the page shows a small ? next to it. Statistics are per game: g games, min minutes, pts points, reb rebounds, ast assists, eff the FIBA efficiency (a source may give some of them only).",
+ "team": {
+  "name_en": "Tunisia",
+  "name_fr": "Tunisie",
+  "code": "TUN",
+  "fiba_rank": 50,
+  "fiba_rank_date": "2026-09",
+  "fiba_rank_src": "https://www.fiba.basketball/en/events/fiba-basketball-world-cup-2027-african-qualifiers/teams/tunisia"
+ },
+ "competitions": [
+  {
+   "id": "wcq27",
+   "en": "FIBA World Cup 2027 – African Qualifiers",
+   "fr": "Coupe du monde FIBA 2027 – Qualifications africaines"
+  },
+  {
+   "id": "afrobasket",
+   "en": "AfroBasket",
+   "fr": "AfroBasket"
+  },
+  {
+   "id": "olympic-q",
+   "en": "Olympic qualifiers",
+   "fr": "Qualifications olympiques"
+  },
+  {
+   "id": "arab",
+   "en": "Arab Basketball Championship",
+   "fr": "Championnat arabe de basket"
+  },
+  {
+   "id": "friendly",
+   "en": "Friendly games",
+   "fr": "Matchs amicaux"
+  }
+ ],
+ "callup": {
+  "label": "FIBA World Cup 2027 qualifiers",
+  "label_fr": "Qualifications Coupe du monde 2027",
+  "date": "",
+  "players": [
+   "ca-24",
+   "usm-23",
+   "jsk-7",
+   "yacine-toumi",
+   "jsk-2",
+   "jsk-9",
+   "ca-5",
+   "jsk-5",
+   "usm-13",
+   "ca-6",
+   "usm-32",
+   "jsk-23",
+   "ca-8",
+   "usm-11",
+   "jsk-8"
+  ]
+ },
+ "externals": {
+  "yacine-toumi": {
+   "name": "Yacine Toumi",
+   "birth": "2000-10-12",
+   "height": 204,
+   "nationality": [
+    "TN",
+    "FR"
+   ],
+   "note_en": "The only player of the latest squad who does not play in the Tunisian league. His club is not given on his FIBA profile.",
+   "note_fr": "Le seul joueur du dernier groupe qui ne joue pas dans le championnat tunisien. Son club n’est pas indiqué sur son profil FIBA.",
+   "src": "https://www.fiba.basketball/en/players/257668-yacine-toumi",
+   "career": [
+    {
+     "competition_en": "AfroBasket 2025",
+     "competition_fr": "AfroBasket 2025",
+     "g": 4,
+     "pts": 5.3,
+     "reb": 6.0,
+     "ast": 0.3
+    },
+    {
+     "competition_en": "World Cup 2023 – African qualifiers",
+     "competition_fr": "Coupe du monde 2023 – Qualifications africaines",
+     "g": 3,
+     "pts": 7.7,
+     "reb": 3.3,
+     "ast": 0.7
+    },
+    {
+     "competition_en": "Olympic pre-qualifying tournament 2023 (Nigeria)",
+     "competition_fr": "Tournoi de pré-qualification olympique 2023 (Nigéria)",
+     "g": 2,
+     "pts": 6.0,
+     "reb": 3.5,
+     "ast": 2.5
+    },
+    {
+     "competition_en": "U18 AfroBasket 2018",
+     "competition_fr": "AfroBasket U18 2018",
+     "g": 7,
+     "pts": 8.6,
+     "reb": 4.1,
+     "ast": 1.9
+    }
+   ]
+  }
+ },
+ "stats": [
+  {
+   "competition": "wcq27",
+   "note_en": "From the FIBA player profiles: every game of the qualifiers played so far (up to the August 2026 window). Games played, points, rebounds, assists and efficiency (EFF) per game; FIBA does not give minutes.",
+   "note_fr": "D’après les profils FIBA des joueurs : tous les matchs des qualifications joués jusqu’ici (jusqu’à la fenêtre d’août 2026). Matchs joués, points, rebonds, passes décisives et évaluation (EFF) par match ; la FIBA ne donne pas les minutes.",
+   "src": "https://www.fiba.basketball/en/events/fiba-basketball-world-cup-2027-african-qualifiers/teams/tunisia",
+   "rows": [
+    {
+     "pid": "ca-24",
+     "g": 9,
+     "pts": 18.2,
+     "reb": 4.2,
+     "ast": 5.8,
+     "eff": 17.9
+    },
+    {
+     "pid": "usm-23",
+     "g": 9,
+     "pts": 14.0,
+     "reb": 9.1,
+     "ast": 2.1,
+     "eff": 18.3
+    },
+    {
+     "pid": "jsk-7",
+     "g": 3,
+     "pts": 13.7,
+     "reb": 2.0,
+     "ast": 2.0,
+     "eff": 7.0
+    },
+    {
+     "pid": "yacine-toumi",
+     "g": 6,
+     "pts": 12.7,
+     "reb": 5.0,
+     "ast": 1.2,
+     "eff": 12.0
+    },
+    {
+     "pid": "jsk-2",
+     "g": 6,
+     "pts": 7.8,
+     "reb": 1.7,
+     "ast": 1.5,
+     "eff": 4.0
+    },
+    {
+     "pid": "jsk-9",
+     "g": 9,
+     "pts": 5.0,
+     "reb": 2.9,
+     "ast": 1.0,
+     "eff": 4.9
+    },
+    {
+     "pid": "jsk-5",
+     "g": 6,
+     "pts": 4.3,
+     "reb": 2.3,
+     "ast": 1.2,
+     "eff": 4.7
+    },
+    {
+     "pid": "ca-5",
+     "g": 6,
+     "pts": 3.8,
+     "reb": 3.0,
+     "ast": 1.0,
+     "eff": 3.8
+    },
+    {
+     "pid": "usm-32",
+     "g": 6,
+     "pts": 3.3,
+     "reb": 3.2,
+     "ast": 0.8,
+     "eff": 4.7
+    },
+    {
+     "pid": "usm-13",
+     "g": 9,
+     "pts": 2.7,
+     "reb": 2.8,
+     "ast": 0.6,
+     "eff": 5.6
+    },
+    {
+     "pid": "ca-6",
+     "g": 3,
+     "pts": 2.7,
+     "reb": 2.0,
+     "ast": 2.0,
+     "eff": 4.7
+    },
+    {
+     "pid": "jsk-23",
+     "g": 3,
+     "pts": 2.3,
+     "reb": 2.0,
+     "ast": 0.3,
+     "eff": 1.7
+    },
+    {
+     "pid": "ca-8",
+     "g": 5,
+     "pts": 2.2,
+     "reb": 0.8,
+     "ast": 1.4,
+     "eff": 1.4
+    },
+    {
+     "pid": "usm-11",
+     "g": 9,
+     "pts": 1.8,
+     "reb": 3.7,
+     "ast": 1.1,
+     "eff": 6.0
+    },
+    {
+     "pid": "jsk-8",
+     "g": 6,
+     "pts": 1.2,
+     "reb": 1.3,
+     "ast": 0.7,
+     "eff": 1.3
+    }
+   ]
+  }
+ ],
+ "games": [
+  {
+   "id": "wcq27-01",
+   "competition": "wcq27",
+   "date": "2025-11-27",
+   "time": "17:00",
+   "opp": "NG",
+   "site": "home",
+   "venue": "Radès",
+   "round": "First round · Group C",
+   "tun": 88,
+   "opp_score": 78,
+   "ot": 1,
+   "opp_name": "Nigeria"
+  },
+  {
+   "id": "wcq27-02",
+   "competition": "wcq27",
+   "date": "2025-11-29",
+   "time": "17:00",
+   "opp": "RW",
+   "site": "home",
+   "venue": "Radès",
+   "round": "First round · Group C",
+   "tun": 79,
+   "opp_score": 66,
+   "opp_name": "Rwanda"
+  },
+  {
+   "id": "wcq27-03",
+   "competition": "wcq27",
+   "date": "2025-11-30",
+   "time": "17:00",
+   "opp": "GN",
+   "site": "home",
+   "venue": "Radès",
+   "round": "First round · Group C",
+   "tun": 57,
+   "opp_score": 66,
+   "opp_name": "Guinea"
+  },
+  {
+   "id": "wcq27-04",
+   "competition": "wcq27",
+   "date": "2026-07-02",
+   "time": "13:00",
+   "opp": "NG",
+   "site": "neutral",
+   "venue": "Belas, Luanda (Angola)",
+   "round": "First round · Group C",
+   "tun": 81,
+   "opp_score": 84,
+   "opp_name": "Nigeria"
+  },
+  {
+   "id": "wcq27-05",
+   "competition": "wcq27",
+   "date": "2026-07-03",
+   "time": "19:00",
+   "opp": "RW",
+   "site": "neutral",
+   "venue": "Belas, Luanda (Angola)",
+   "round": "First round · Group C",
+   "tun": 83,
+   "opp_score": 67,
+   "opp_name": "Rwanda"
+  },
+  {
+   "id": "wcq27-06",
+   "competition": "wcq27",
+   "date": "2026-07-05",
+   "time": "13:00",
+   "opp": "GN",
+   "site": "neutral",
+   "venue": "Belas, Luanda (Angola)",
+   "round": "First round · Group C",
+   "tun": 61,
+   "opp_score": 50,
+   "opp_name": "Guinea"
+  },
+  {
+   "id": "wcq27-07",
+   "competition": "wcq27",
+   "date": "2026-08-27",
+   "time": "19:00",
+   "opp": "CV",
+   "site": "home",
+   "venue": "Radès",
+   "round": "Second round · Group E",
+   "tun": 60,
+   "opp_score": 56,
+   "check": true,
+   "opp_name": "Cape Verde"
+  },
+  {
+   "id": "wcq27-08",
+   "competition": "wcq27",
+   "date": "2026-08-28",
+   "time": "19:00",
+   "opp": "CM",
+   "site": "home",
+   "venue": "Radès",
+   "round": "Second round · Group E",
+   "tun": 61,
+   "opp_score": 83,
+   "check": true,
+   "opp_name": "Cameroon"
+  },
+  {
+   "id": "wcq27-09",
+   "competition": "wcq27",
+   "date": "2026-08-30",
+   "time": "19:00",
+   "opp": "SS",
+   "site": "home",
+   "venue": "Radès",
+   "round": "Second round · Group E",
+   "tun": 75,
+   "opp_score": 79,
+   "check": true,
+   "opp_name": "South Sudan"
+  },
+  {
+   "id": "wcq27-10",
+   "competition": "wcq27",
+   "date": "2027-02-25",
+   "time": "",
+   "opp": "CV",
+   "site": "away",
+   "venue": "",
+   "round": "Second round · Group E",
+   "tun": null,
+   "opp_score": null,
+   "check": true,
+   "opp_name": "Cape Verde"
+  },
+  {
+   "id": "wcq27-11",
+   "competition": "wcq27",
+   "date": "2027-02-26",
+   "time": "",
+   "opp": "CM",
+   "site": "home",
+   "venue": "Radès",
+   "round": "Second round · Group E",
+   "tun": null,
+   "opp_score": null,
+   "check": true,
+   "opp_name": "Cameroon"
+  },
+  {
+   "id": "wcq27-12",
+   "competition": "wcq27",
+   "date": "2027-02-28",
+   "time": "",
+   "opp": "SS",
+   "site": "away",
+   "venue": "",
+   "round": "Second round · Group E",
+   "tun": null,
+   "opp_score": null,
+   "check": true,
+   "opp_name": "South Sudan"
+  }
+ ],
+ "history": [
+  {
+   "id": "afrobasket-gold",
+   "en": "AfroBasket champions three times: 2011 (final won against Angola, 67–56), 2017 (against Nigeria, 77–65, as co-host with Senegal) and 2021 (against Ivory Coast, 78–75).",
+   "fr": "Trois fois champion d’AfroBasket : 2011 (finale gagnée contre l’Angola, 67-56), 2017 (contre le Nigéria, 77-65, en co-organisateur avec le Sénégal) et 2021 (contre la Côte d’Ivoire, 78-75).",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team",
+    "https://www.fiba.basketball/en/news/team-profile-is-a-three-peat-in-sight-for-tunisia"
+   ]
+  },
+  {
+   "id": "afrobasket-medals",
+   "en": "Other AfroBasket medals: silver in 1965, bronze in 1970, 1974, 2009 and 2015. Ninth in 2013 and twelfth in 2025.",
+   "fr": "Autres médailles à l’AfroBasket : argent en 1965, bronze en 1970, 1974, 2009 et 2015. Neuvième en 2013 et douzième en 2025.",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team"
+   ],
+   "check": true
+  },
+  {
+   "id": "world-cup",
+   "en": "FIBA Basketball World Cup: two appearances, in 2010 (24th, five defeats) and in 2019 (20th, three wins and two defeats in the first round).",
+   "fr": "Coupe du monde FIBA : deux participations, en 2010 (24e, cinq défaites) et en 2019 (20e, trois victoires et deux défaites au premier tour).",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team"
+   ]
+  },
+  {
+   "id": "olympics",
+   "en": "Olympic Games: one appearance, London 2012, after the 2011 AfroBasket title; five games, five defeats in the group stage.",
+   "fr": "Jeux olympiques : une participation, Londres 2012, après le titre à l’AfroBasket 2011 ; cinq matchs, cinq défaites en phase de groupes.",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team",
+    "https://www.fiba.basketball/en/news/afrobasket-2017-news-how-tunisia-evolved-from-an-average-team-to-becoming-a-fiba-africa-giant-in-a-decade"
+   ]
+  },
+  {
+   "id": "arab",
+   "en": "Arab Basketball Championship: gold in 1981, 1983, 2008 and 2009, silver in 2022 and 2025.",
+   "fr": "Championnat arabe : or en 1981, 1983, 2008 et 2009, argent en 2022 et 2025.",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team"
+   ],
+   "check": true
+  },
+  {
+   "id": "fiba",
+   "en": "Member of FIBA since 1956. FIBA men's world ranking: 50th (September 2026).",
+   "fr": "Membre de la FIBA depuis 1956. Classement mondial FIBA masculin : 50e (septembre 2026).",
+   "src": [
+    "https://en.wikipedia.org/wiki/Tunisia_men%27s_national_basketball_team",
+    "https://www.fiba.basketball/en/events/fiba-basketball-world-cup-2027-african-qualifiers/teams/tunisia"
+   ],
+   "check": true
+  }
+ ]
+}

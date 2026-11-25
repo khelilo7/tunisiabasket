@@ -12,6 +12,7 @@ import time
 from collections import Counter, defaultdict
 
 import config
+import countries
 import honours
 import ranking
 
@@ -1102,12 +1103,20 @@ def load_photos() -> dict:
 
 
 def attach_bios(players):
-    """Adds p['bio'] (or None). height may be a [min, max] pair; 'approx' names the estimated fields."""
+    """Adds p['bio'] (or None). height may be a [min, max] pair; 'approx' names the estimated fields; 'nationality' is a list of country codes
+    (only for a player who is not just Tunisian: everybody else is, by default)."""
     bios, photos = load_bios(), load_photos()
     for p in players:
         p["photo"] = photos.get(p["id"])
         b = bios.get(p["id"])
         p["bio"] = {k: b[k] for k in ("height", "weight", "wingspan", "birth", "age", "age_as_of", "approx") if k in b} if b else None
+        if b and b.get("nationality"):
+            try:
+                nat = countries.clean(b["nationality"])
+            except ValueError:
+                nat = []                                  # an unknown code in a file never breaks a page: he stays Tunisian
+            if nat:
+                p["bio"] = {**(p["bio"] or {}), "nationality": nat, **({"nat_src": b["nat_src"]} if b.get("nat_src") else {})}
 
 
 def _z(values):

@@ -6,7 +6,7 @@ export type Leader = { key: string; top: { id: string; name: string; team: strin
 export type Player = {
   id: string; name: string; team: string; number: number; pos?: string; photo?: string | null; gp: number; min: number; pts: number; reb: number; ast: number; stl: number; blk: number; tov: number;
   pir: number; rating: number; fg_pct: number; p3_pct: number; ft_pct: number; fgm: number; fga: number; p3m: number; p3a: number; ftm: number; fta: number; oreb: number; dreb: number;
-  totals?: Record<string, number>; log?: LogRow[]; bio?: { birth?: string; height?: number; weight?: number }; wins?: number; mvp_games?: number; team_rank?: number;
+  totals?: Record<string, number>; log?: LogRow[]; bio?: { birth?: string; height?: number; weight?: number; nationality?: string[] }; wins?: number; mvp_games?: number; team_rank?: number;
 };
 export type LogRow = { game_id: string; date: string; matchday?: string; opp: string; score: string; won: boolean; home?: boolean | null; min?: number; pts: number; reb: number; ast: number; pir: number; stl: number; blk: number };
 export type BoxLine = { pid?: string; id?: string; name: string; number: number; starter?: boolean; dnp?: boolean; min: number; pts: number; reb: number; oreb: number; dreb: number; ast: number; stl: number; blk: number; tov: number; pf: number; fgm: number; fga: number; p3m: number; p3a: number; ftm: number; fta: number; pir: number; rating?: number; pos?: string; pm?: number | null };
