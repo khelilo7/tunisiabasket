@@ -167,6 +167,8 @@
   footer { max-width:1100px; margin:10px auto 30px; padding:0 18px; display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; color:var(--mut); font-size:12px; }
   footer a:hover { color:var(--txt); }
   .brand { display:flex; align-items:center; gap:9px; } .brand .bm { display:block; width:38px; height:38px; flex:none; } .brand .wm { display:block; height:21px; width:auto; color:var(--txt); flex:none; }
+  .ntb { display:inline-flex; align-items:center; gap:4px; margin-left:6px; padding:1px 6px; border-radius:99px; border:1px solid #e7001380; background:#e7001318; font-size:.72em; font-weight:700; vertical-align:middle; color:var(--txt); white-space:nowrap; } .ntb img { display:block; border-radius:1px; }
+  .nthist { margin:0; padding-left:18px; display:grid; gap:8px; }
   .nat { margin-left:5px; font-size:.85em; cursor:help; white-space:nowrap; } h1 .nat { font-size:.6em; vertical-align:middle; }
   .tn { display:inline-flex; align-items:center; gap:7px; max-width:100%; }
   .tlogo { flex:none; display:inline-block; vertical-align:middle; }   /* the files are already round, same-size badges */
@@ -518,7 +520,7 @@
 <div id="scrim" hidden></div>
 <main id="app"><!--SSR--></main>
 <template id="socbig">{{SOCIALBIG}}</template>
-<footer><span>{{LEGAL}}</span><span class="fright"><a href="{{ABOUT}}">{{ABOUTLABEL}}</a><a href="{{PRIVACY}}">{{PRIVACYLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
+<footer><span>{{LEGAL}}</span><span class="fright"><a href="{{NTLINK}}">{{NTLABEL}}</a><a href="{{ABOUT}}">{{ABOUTLABEL}}</a><a href="{{PRIVACY}}">{{PRIVACYLABEL}}</a>{{SOCIAL}}<span class="faint"><a href="/analytics">Analytics</a> · <a href="/admin">Admin</a></span></span><span class="hint">{{FBHINT}}</span></footer>
 
 <script>
 // Instant navigation. GET /api/* answers are kept for a minute and shared by simultaneous requests (a page asking for what another page just asked costs nothing); any POST clears them so a vote
@@ -544,6 +546,7 @@ const LANG = document.documentElement.lang === 'en' ? 'en' : 'fr';
 // ---------------------------------------------------------------- languages
 // English text is the key; French is looked up here. Sentences with numbers use SENT below.
 const FR = {
+  'Tunisia': 'Tunisie', 'Pos': 'Poste', 'Called up for the Tunisian national team': 'Convoqué en équipe nationale de Tunisie', 'National team': 'Équipe nationale', 'Tunisia national team': 'Équipe nationale de Tunisie', 'Men’s senior team': 'Équipe masculine senior', 'Next game': 'Prochain match', 'No game announced yet.': 'Aucun match annoncé pour le moment.', 'Called-up players': 'Joueurs convoqués', 'Club': 'Club', 'Outside the Tunisian league': 'Hors championnat tunisien', 'The list has not been announced yet.': 'La liste n’a pas encore été annoncée.', 'All competitions': 'Toutes les compétitions', 'Competition': 'Compétition', 'No result yet.': 'Aucun résultat pour le moment.', 'National team stats': 'Statistiques en équipe nationale', 'Per game averages.': 'Moyennes par match.', 'Sources': 'Sources', 'A ? marks a fact we could not confirm with a second source.': 'Un ? signale une information que nous n’avons pas pu confirmer avec une deuxième source.', 'Not confirmed by a second source': 'Non confirmé par une deuxième source', 'Independent site: not affiliated with the Tunisian Basketball Federation.': 'Site indépendant : non affilié à la Fédération Tunisienne de Basket-Ball.', 'Player not found.': 'Joueur introuvable.', 'player of the Tunisian national team who does not play in the Tunisian league.': 'joueur de l’équipe nationale de Tunisie qui ne joue pas dans le championnat tunisien.', 'Called up': 'Convoqué', 'Other competitions with the national team': 'Autres compétitions avec l’équipe nationale', 'Home game': 'À domicile', 'Away game': 'À l’extérieur', 'Neutral venue': 'Terrain neutre', 'OT': 'Prol.',
   'among every box score on the site, since 2016-17': 'parmi toutes les feuilles de match du site, depuis 2016-17',
   'League record': 'Record du championnat',
   'Equals the record': 'Égale le record',
@@ -787,6 +790,7 @@ const SENT = {
       <p>When voting closes at the deadline, the player with the most votes is crowned Phase 1 MVP.</p>`,
     seasonMvp: s => `★ SEASON MVP · ${s}`, qualRule: n => `≥ ${n}% of team games`, mvpTeam: m => `${m.team_rank}${['st', 'nd', 'rd'][m.team_rank - 1] || 'th'} in the standings · ${m.gp} GP`,
     mvpLine: m => `${m.team} (#${m.team_rank} in the standings) · ${m.gp} GP · ${m.pts} pts · ${m.reb} reb · ${m.ast} ast · PIR ${m.pir}`,
+    fibaRank: n => `FIBA world ranking: ${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'}`,
     playersSub: s => `${s} · per-game averages`, standingsSub: s => `${s} · regular season · phase 1 complete (J1–J11)`,
     planningSub: (a, b) => `regular season · phase 2 (J${a}–J${b})`,
     topNote: n => `The season MVP can only come from the top ${n} teams.`,
@@ -812,6 +816,7 @@ const SENT = {
       <p>À la clôture du vote, à l’échéance, le joueur ayant le plus de voix est couronné MVP de la phase 1.</p>`,
     seasonMvp: s => `★ MVP DE LA SAISON · ${s}`, qualRule: n => `≥ ${n} % des matchs de l’équipe`, mvpTeam: m => `${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement · ${m.gp} MJ`,
     mvpLine: m => `${m.team} (${m.team_rank}${m.team_rank === 1 ? 'er' : 'e'} au classement) · ${m.gp} MJ · ${m.pts} pts · ${m.reb} reb · ${m.ast} pd · PIR ${m.pir}`,
+    fibaRank: n => `Classement mondial FIBA : ${n}${n === 1 ? 'er' : 'e'}`,
     playersSub: s => `${s} · moyennes par match`, standingsSub: s => `${s} · saison régulière · phase 1 terminée (J1–J11)`,
     planningSub: (a, b) => `saison régulière · phase 2 (J${a}–J${b})`,
     topNote: n => `Le MVP de la saison ne peut venir que des ${n} premières équipes.`,
@@ -829,8 +834,8 @@ const f = (k, ...a) => SENT[LANG][k](...a);
 
 // ---------------------------------------------------------------- addresses (real URLs, translated words in French)
 const SLUG = {
-  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', nat1: 'national-one', cup: 'cup', finals: 'playoff-playout', history: 'history', privacy: 'privacy', team: 'team', player: 'player', game: 'game' },
-  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', nat1: 'nationale-1', cup: 'coupe', finals: 'playoff-playout', history: 'historique', privacy: 'confidentialite', team: 'equipe', player: 'joueur', game: 'match' }
+  en: { standings: 'standings', players: 'players', games: 'games', planning: 'planning', mvp: 'mvp-race', predict: 'predictions', news: 'news', live: 'live', about: 'about', natteam: 'national-team', nat1: 'national-one', cup: 'cup', finals: 'playoff-playout', history: 'history', privacy: 'privacy', team: 'team', player: 'player', game: 'game' },
+  fr: { standings: 'classement', players: 'joueurs', games: 'matchs', planning: 'calendrier', mvp: 'course-mvp', predict: 'pronostics', news: 'actualites', live: 'direct', about: 'a-propos', natteam: 'equipe-nationale', nat1: 'nationale-1', cup: 'coupe', finals: 'playoff-playout', history: 'historique', privacy: 'confidentialite', team: 'equipe', player: 'joueur', game: 'match' }
 };
 const pre = l => (l === DEFAULT ? '' : '/' + l);
 const url = (page, arg, lang = LANG) => page === 'home' ? pre(lang) + '/' : `${pre(lang)}/${SLUG[lang][page]}${arg ? '/' + arg : ''}`;
@@ -918,7 +923,7 @@ function prefetchFor(pathname) {
   const r = parsePath(pathname); if (!r) return;
   const g = u => fetch(u).catch(() => {});
   ({ home: () => g('/api/home'), standings: () => api('overview').catch(() => {}), games: () => api('games').catch(() => {}), planning: () => g('/api/planning'), players: () => api('players').catch(() => {}),
-     nat1: () => g('/api/nat1'), cup: () => g('/api/cup'), finals: () => { g('/api/finals'); g('/api/rank-history'); }, history: () => g('/api/history' + (r.arg ? '/' + encodeURIComponent(r.arg) : '')), mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
+     natteam: () => g('/api/national-team'), nat1: () => g('/api/nat1'), cup: () => g('/api/cup'), finals: () => { g('/api/finals'); g('/api/rank-history'); }, history: () => g('/api/history' + (r.arg ? '/' + encodeURIComponent(r.arg) : '')), mvp: () => { g(`/api/mvp?phase=${PHASE}&vid=${voterId()}`); g(`/api/round?vid=${voterId()}`); }, predict: () => g(`/api/predict?vid=${voterId()}`),
      team: () => api('teams/' + encodeURIComponent(r.arg)).catch(() => {}), player: () => api('players/' + ((r.arg || '').match(/^([a-z0-9]+-\d+)/) || [, r.arg])[1]).catch(() => {}), game: () => g('/api/games/' + encodeURIComponent(r.arg)) }[r.page] || (() => {}))();
 }
 let routeSeq = 0;       // only the latest navigation may draw: a slower earlier one (e.g. started before /api/competitions answered) must not overwrite it
@@ -933,7 +938,7 @@ async function route(keepScroll) {
   app.classList.toggle('wide', ['games'].includes(r.page));     // these pages have a side panel next to the table
   courtData = null; pageMeta = null; clearInterval(nbTimer); clearInterval(liveTimer);
   try {
-    const html = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, nat1, cup, finals, history: historyPage, privacy }[r.page] || home)(r.arg);
+    const html = await ({ home, live, standings, players, games, planning, mvp, predict, news, team, player, game, about, natteam, nat1, cup, finals, history: historyPage, privacy }[r.page] || home)(r.arg);
     if (mine !== routeSeq) return;
     app.innerHTML = html;
     foldify(r.page);
@@ -955,6 +960,8 @@ const META = {
          fr: ['Coupe de Tunisie de basket – tableau, résultats et tirage – Tunisia Basket', 'La Coupe de Tunisie de basket : les clubs de Pro A et de Nationale 1 se rencontrent en match sec. Le tableau, les résultats, les surprises.'] },
   finals: { en: ['Pro A play-off and play-out – tables, series and results – Tunisia Basket', 'After the regular season the six best Pro A clubs play the play-off and the six others the play-out.'],
             fr: ['Play-off et play-out Pro A – classements, séries et résultats – Tunisia Basket', 'Après la saison régulière, les six meilleurs clubs de Pro A jouent le play-off et les six autres le play-out.'] },
+  natteam: { en: ['Tunisia national basketball team – called-up players, results and history – Tunisia Basket', 'The Tunisian men’s national basketball team: the players called up for the latest games, the results and the next game, per-game statistics and a short history.'],
+             fr: ['Équipe nationale de basket de Tunisie – joueurs convoqués, résultats et histoire – Tunisia Basket', 'L’équipe nationale masculine de basket de Tunisie : les joueurs convoqués pour les derniers matchs, les résultats et le prochain match, les statistiques par match et un court historique.'] },
   about: { en: ['About Tunisia Basket – basketball statistics for Tunisia, made for free by fans', 'Tunisia Basket is a team of people who love basketball, working for free to improve the visibility and the use of basketball statistics in Tunisia.'],
            fr: ['À propos de Tunisia Basket – les statistiques du basket tunisien, faites gratuitement par des passionnés', 'Tunisia Basket est une équipe de passionnés de basket qui travaillent gratuitement pour améliorer la visibilité et l’usage des statistiques du basket en Tunisie.'] },
   nat1: { en: ['National One basketball results and standings – Tunisia Basket', 'Results and standings of the National One, the second basketball league below the Tunisian Pro A.'],
@@ -1419,12 +1426,12 @@ async function players() {
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
     <span class="mut small">${rows.length} ${_('players')} · ${_('per game')}</span></div>
   <div class="card tablecard"><div class="scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th class="l">${_('Team')}</th><th data-sort="gp">${H('GP')}${sortKey === 'gp' ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>${cols.map(([k, l]) => `<th data-sort="${k}">${l}${sortKey === k ? (sortDir < 0 ? ' ▼' : ' ▲') : ''}</th>`).join('')}</tr></thead><tbody>
-  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${natFlags(p.bio)}${p.mvp_games ? ` <span class="pill mvp hm">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
+  ${rows.map((p, i) => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="rk${i < 3 ? ' t3' : ''}">${i + 1}</td><td class="l"><span class="tn">${face(p, 30)}${plink(p)}${tags(p)}${p.mvp_games ? ` <span class="pill mvp hm">${f('mvpTag', p.mvp_games)}</span>` : ''}</span></td><td class="l"><span class="tn">${logo(p.team, 24)}${esc(p.team)}</span></td><td>${p.gp}</td>
     ${cols.map(([k, , fn]) => `<td>${fn ? fn(p) : p[k]}</td>`).join('')}</tr>`).join('')}
   </tbody></table></div></div>${rows.length ? '' : `<div class="empty">${_('No players match.')}</div>`}`;
 }
 
-const COUNTRY = {"TN":["Tunisia","Tunisie"],"DZ":["Algeria","Algérie"],"MA":["Morocco","Maroc"],"LY":["Libya","Libye"],"EG":["Egypt","Égypte"],"FR":["France","France"],"US":["United States","États-Unis"],"CA":["Canada","Canada"],"GB":["United Kingdom","Royaume-Uni"],"HR":["Croatia","Croatie"],"RS":["Serbia","Serbie"],"SI":["Slovenia","Slovénie"],"ES":["Spain","Espagne"],"IT":["Italy","Italie"],"SN":["Senegal","Sénégal"],"NG":["Nigeria","Nigéria"],"CI":["Ivory Coast","Côte d’Ivoire"],"GA":["Gabon","Gabon"],"CM":["Cameroon","Cameroun"],"ML":["Mali","Mali"],"GN":["Guinea","Guinée"],"CD":["DR Congo","RD Congo"],"CG":["Congo","Congo"],"GH":["Ghana","Ghana"],"AO":["Angola","Angola"],"BF":["Burkina Faso","Burkina Faso"],"CV":["Cape Verde","Cap-Vert"],"SS":["South Sudan","Soudan du Sud"],"RW":["Rwanda","Rwanda"],"BI":["Burundi","Burundi"],"MR":["Mauritania","Mauritanie"],"BJ":["Benin","Bénin"],"TG":["Togo","Togo"],"LB":["Lebanon","Liban"],"SY":["Syria","Syrie"],"PS":["Palestine","Palestine"],"JO":["Jordan","Jordanie"],"TR":["Turkey","Turquie"],"BR":["Brazil","Brésil"]};   // country codes of the nationalities (same list as countries.py, checked by tests/test_bios.py)
+const COUNTRY = {"TN":["Tunisia","Tunisie"],"DZ":["Algeria","Algérie"],"MA":["Morocco","Maroc"],"LY":["Libya","Libye"],"EG":["Egypt","Égypte"],"FR":["France","France"],"US":["United States","États-Unis"],"CA":["Canada","Canada"],"GB":["United Kingdom","Royaume-Uni"],"HR":["Croatia","Croatie"],"RS":["Serbia","Serbie"],"SI":["Slovenia","Slovénie"],"ES":["Spain","Espagne"],"IT":["Italy","Italie"],"SN":["Senegal","Sénégal"],"NG":["Nigeria","Nigéria"],"CI":["Ivory Coast","Côte d’Ivoire"],"GA":["Gabon","Gabon"],"CM":["Cameroon","Cameroun"],"ML":["Mali","Mali"],"GN":["Guinea","Guinée"],"CD":["DR Congo","RD Congo"],"CG":["Congo","Congo"],"GH":["Ghana","Ghana"],"AO":["Angola","Angola"],"BF":["Burkina Faso","Burkina Faso"],"CV":["Cape Verde","Cap-Vert"],"SS":["South Sudan","Soudan du Sud"],"RW":["Rwanda","Rwanda"],"BI":["Burundi","Burundi"],"MR":["Mauritania","Mauritanie"],"BJ":["Benin","Bénin"],"TG":["Togo","Togo"],"LB":["Lebanon","Liban"],"SY":["Syria","Syrie"],"PS":["Palestine","Palestine"],"JO":["Jordan","Jordanie"],"TR":["Turkey","Turquie"],"BR":["Brazil","Brésil"],"UG":["Uganda","Ouganda"],"CF":["Central African Republic","République centrafricaine"],"MG":["Madagascar","Madagascar"],"KE":["Kenya","Kenya"],"MZ":["Mozambique","Mozambique"],"ZA":["South Africa","Afrique du Sud"],"ZW":["Zimbabwe","Zimbabwe"],"ZM":["Zambia","Zambie"],"ET":["Ethiopia","Éthiopie"],"SD":["Sudan","Soudan"],"TD":["Chad","Tchad"],"NE":["Niger","Niger"],"GM":["Gambia","Gambie"],"SL":["Sierra Leone","Sierra Leone"],"LR":["Liberia","Libéria"],"BW":["Botswana","Botswana"],"NA":["Namibia","Namibie"],"TZ":["Tanzania","Tanzanie"],"DE":["Germany","Allemagne"],"GR":["Greece","Grèce"],"LT":["Lithuania","Lituanie"],"CN":["China","Chine"],"JP":["Japan","Japon"],"IR":["Iran","Iran"],"SA":["Saudi Arabia","Arabie saoudite"],"QA":["Qatar","Qatar"],"AE":["United Arab Emirates","Émirats arabes unis"]};   // country codes of the nationalities (same list as countries.py, checked by tests/test_bios.py)
 const flagOf = c => String.fromCodePoint(...[...c].map(ch => 0x1F1E6 + ch.charCodeAt(0) - 65));
 const countryName = c => (COUNTRY[c] || [c, c])[LANG === 'fr' ? 1 : 0];
 // A player is Tunisian unless his profile says otherwise: only the other nationalities are marked, with a small flag (the name of the country in the tooltip)
@@ -1461,7 +1468,8 @@ async function player(ref) {
     <div class="sp"><h1 style="margin:0">${esc(p.name)}${natFlags(p.bio)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
       ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
-      ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span></div></div></div>
+      ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span>${ntTag(p.id, true)}</div></div></div>
+  ${ntPlayerBlock(d.national)}
   <h2>${esc(f('avgTitle', S.gp))}</h2>
   ${SP ? `<div class="seg" role="group">${[['all', 'Overall'], ['home', 'At home'], ['away', 'Away']].map(([k, l]) => `<button data-psplit="${k}" class="${split === k ? 'on' : ''}" aria-pressed="${split === k}">${_(l)} <span class="mut small">${SP[k].gp}</span></button>`).join('')}</div>` : ''}
   ${SP && !S.gp ? `<div class="banner">${_('No games in this view yet.')}</div>` : ''}
@@ -1618,7 +1626,7 @@ async function game(id) {
     const sum = k => rows.reduce((s, r) => s + (r[k] || 0), 0);
     return `<h2><span class="tn">${logo(t.code, 28)}${esc(t.name)}</span> <span class="${t.won ? 'good' : 'mut'}">${t.points}</span> <span class="mut small" style="text-transform:none;letter-spacing:0">${_('full stat sheet')}</span></h2>
    <div class="card scroll"><table><thead><tr><th>#</th><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('OR')}</th><th>${H('DR')}</th><th>${H('AST')}</th><th>${H('STL')}</th><th>${H('BLK')}</th><th>${H('TOV')}</th><th>${H('PF')}</th><th>${H('FD')}</th><th>${H('FG')}</th><th>${H('2P')}</th><th>${H('3P')}</th><th>${H('FT')}</th><th>+/-</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-   ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${esc(p.number)}</td><td class="l">${p.starter ? '<b>' : ''}${plink(p, esc(title(p.name)))}${p.starter ? '</b>' : ''}${g.mvp && g.mvp.player_id === p.id ? ' <span class="pill mvp">MVP</span>' : ''}</td><td class="mut">${esc(posName(p.pos))}</td>
+   ${rows.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td>${esc(p.number)}</td><td class="l">${p.starter ? '<b>' : ''}${plink(p, esc(title(p.name)))}${ntTag(p.id)}${p.starter ? '</b>' : ''}${g.mvp && g.mvp.player_id === p.id ? ' <span class="pill mvp">MVP</span>' : ''}</td><td class="mut">${esc(posName(p.pos))}</td>
      <td>${Math.round(p.min)}</td><td><b>${p.pts}</b></td><td>${p.reb}</td><td>${p.oreb}</td><td>${p.dreb}</td><td>${p.ast}</td><td>${p.stl}</td><td>${p.blk}</td><td>${p.tov}</td><td>${p.pf}</td><td>${p.fd}</td>
      <td>${frac(p.fgm, p.fga)}</td><td>${frac(p.p2m, p.p2a)}</td><td>${frac(p.p3m, p.p3a)}</td><td>${frac(p.ftm, p.fta)}</td><td>${p.pm == null ? '–' : signed(p.pm)}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('')}
    <tr class="tot"><td></td><td class="l">${_('Team')}</td><td></td><td>${Math.round(sum('min'))}</td><td>${sum('pts')}</td><td>${sum('reb')}</td><td>${sum('oreb')}</td><td>${sum('dreb')}</td><td>${sum('ast')}</td><td>${sum('stl')}</td><td>${sum('blk')}</td><td>${sum('tov')}</td><td>${sum('pf')}</td><td>${sum('fd')}</td>
@@ -1924,6 +1932,98 @@ async function privacy() {
   ${v.sections.map(s => `<h2>${esc(s.h)}</h2><div class="card abtext">${s.p.map(p => `<p>${esc(p)}</p>`).join('')}</div>`).join('')}
   <div class="note"><a href="${esc(v.contact)}" target="_blank" rel="noopener">Facebook · Tunisia Basket ↗</a></div>`;
 }
+// ---------------------------------------------------------------- the Tunisian national team (natteam.py): a discreet page, linked from the footer
+let NT = { ids: new Set(), label: '', label_fr: '' };      // the players called up in the latest window (/api/national-team/called): a small label next to their names
+const ntLabel = () => (LANG === 'fr' ? NT.label_fr : NT.label) || NT.label;
+const ntTag = (id, long) => NT.ids.has(id) ? `<a class="ntb" href="${url('natteam')}" title="${esc(_('Called up for the Tunisian national team') + (ntLabel() ? ' · ' + ntLabel() : ''))}"><img src="/img/tunisia-flag.svg" alt="" width="14" height="9">${long ? ' ' + esc(_('National team')) : ''}</a>` : '';
+const tags = p => natFlags(p.bio) + ntTag(p.id);
+let ntComp = '';
+const ntName = (d, id) => { const c = d.competitions.find(x => x.id === id); return c ? c[LANG === 'fr' ? 'fr' : 'en'] : id; };
+const oppName = g => LANG === 'fr' ? g.opp_name_fr : g.opp_name_en;
+const oppFlag = g => g.opp ? `<span class="nat" style="margin:0 4px 0 0">${flagOf(g.opp)}</span>` : '';
+const rnd = r => LANG === 'fr' ? String(r || '').replace('First round', 'Premier tour').replace('Second round', 'Deuxième tour').replace('Group', 'Groupe').replace('Quarter-final', 'Quart de finale').replace('Semi-final', 'Demi-finale').replace('Final', 'Finale').replace('Friendly', 'Amical') : r;
+const siteName = s => _(s === 'home' ? 'Home game' : s === 'away' ? 'Away game' : 'Neutral venue');
+const fmtFull = iso => new Date(iso + 'T12:00').toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const ntStatCells = r => ['g', 'min', 'pts', 'reb', 'ast'].map(k => `<td>${r && r[k] != null ? (k === 'g' ? r[k] : Number(r[k]).toFixed(k === 'min' ? 0 : 1)) : '–'}</td>`).join('');
+const ntHead = () => `<th>${_('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th>`;
+const ntFace = (p, px) => p.ext ? `<span class="face" style="width:${px}px;height:${px}px"><img class="ph generic" src="${esc(p.photo || '/img/players/generic.svg')}" alt="" loading="lazy"></span>` : face(p, px);
+const ntPlayerLink = p => p.ext ? `<a href="${url('natteam', p.pid)}">${esc(p.name)}</a>` : plink({ id: p.pid, name: p.name });
+
+// On a league player's page: his national team statistics, per competition (nothing when he has none)
+function ntPlayerBlock(n) {
+  if (!n || !n.stats.length) return '';
+  const nm = id => (n.competitions[id] || {})[LANG === 'fr' ? 'fr' : 'en'] || id;
+  return `<h2>${_('National team stats')}</h2><div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Competition')}</th>${ntHead()}</tr></thead><tbody>
+    ${n.stats.map(r => `<tr><td class="l">${esc(nm(r.competition))}</td>${ntStatCells(r)}</tr>`).join('')}</tbody></table></div></div>
+    <div class="mut small" style="margin-top:6px">${_('Per game averages.')} <a href="${url('natteam')}">${_('Tunisia national team')} →</a></div>`;
+}
+
+function ntStatsTable(d, block) {
+  if (!block || !block.rows.length) return '';
+  return `<h3 class="sub">${esc(ntName(d, block.competition))}</h3>
+    <div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Player')}</th>${ntHead()}</tr></thead><tbody>
+    ${block.rows.map(r => `<tr><td class="l"><span class="tn">${ntPlayerLink({ pid: r.pid, name: r.name, ext: r.ext })}${r.team ? ` <span class="mut small">${esc(r.team)}</span>` : ''}</span></td>${ntStatCells(r)}</tr>`).join('')}
+    </tbody></table></div></div><div class="mut small" style="margin-top:6px">${_('Per game averages.')}${block.note ? ' ' + esc(block.note) : ''}</div>`;
+}
+
+async function natteam(arg) {
+  const d = await (await fetch('/api/national-team', { cache: 'no-store' })).json();
+  if (arg) return ntExternal(d, arg);
+  pageMeta = META.natteam[LANG];
+  const callup = d.callup, comp = ntComp && d.competitions.some(c => c.id === ntComp) ? ntComp : '';
+  const compsWithGames = d.competitions.filter(c => d.games.some(g => g.competition === c.id));
+  const shown = d.games.filter(g => g.played && (!comp || g.competition === comp)), rec = { w: shown.filter(g => g.won).length, l: shown.filter(g => !g.won).length };
+  const nx = d.next, lbl = LANG === 'fr' ? callup.label_fr || callup.label : callup.label;
+  return `<h1 style="display:flex;align-items:center;gap:12px"><img src="/img/tunisia-flag.svg" alt="" width="42" height="28" style="border-radius:3px;box-shadow:0 0 0 1px var(--line)">${_('Tunisia national team')}</h1>
+  <p class="mut" style="margin-top:-4px">${_('Men’s senior team')}${d.team.fiba_rank ? ` · ${esc(f('fibaRank', d.team.fiba_rank))}` : ''}</p>
+  <h2>${_('Next game')}</h2>
+  ${nx ? `<div class="card"><div class="mut small">${esc(ntName(d, nx.competition))}${nx.round ? ' · ' + esc(rnd(nx.round)) : ''}</div>
+      <div style="font-size:20px;margin:6px 0"><b>${esc(fmtFull(nx.date))}${nx.time ? ' · ' + esc(nx.time) : ''}</b></div>
+      <div>${nx.site === 'away' ? '' : `<b>${_('Tunisia')}</b> – `}${oppFlag(nx)}<b>${esc(oppName(nx))}</b>${nx.site === 'away' ? ` – <b>${_('Tunisia')}</b>` : ''}</div>
+      <div class="mut small" style="margin-top:4px">${esc(siteName(nx.site))}${nx.venue ? ' · ' + esc(nx.venue) : ''}${nx.check ? ' <span class="mut" title="' + esc(_('Not confirmed by a second source')) + '">?</span>' : ''}</div></div>`
+    : `<div class="empty">${_('No game announced yet.')}</div>`}
+  <h2>${_('Called-up players')}${lbl ? ` <span class="sub mut">${esc(lbl)}</span>` : ''}</h2>
+  ${callup.players.length ? `<div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Player')}</th><th class="l">${_('Club')}</th><th>${_('Pos')}</th></tr></thead><tbody>
+  ${callup.players.map(p => {
+    return `<tr${p.ext ? ` data-go="${url('natteam', p.pid)}"` : ` data-go="${playerUrl(p.pid, p.name)}"`}><td class="l"><span class="tn">${ntFace(p, 30)}${ntPlayerLink(p)}${natFlags(p.bio)}</span></td>
+      <td class="l">${p.team ? `<span class="tn">${logo(p.team, 22)}${esc(p.team)}</span>` : `<span class="mut small">${esc(p.club || _('Outside the Tunisian league'))}</span>`}</td><td>${esc(p.pos || '')}</td></tr>`; }).join('')}
+  </tbody></table></div></div>`
+    : `<div class="empty">${_('The list has not been announced yet.')}</div>`}
+  <h2>${_('Results')}</h2>
+  ${d.games.some(g => g.played) ? `<div class="row" style="gap:10px;margin:6px 0">${compsWithGames.length > 1 ? `<select data-ntcomp aria-label="${_('Competition')}"><option value="">${_('All competitions')}</option>${compsWithGames.map(c => `<option value="${esc(c.id)}"${c.id === comp ? ' selected' : ''}>${esc(ntName(d, c.id))}</option>`).join('')}</select>` : ''}
+      <span class="pill w">${rec.w}${W}</span> <span class="pill l">${rec.l}${Ls}</span></div>
+    <div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Date')}</th><th class="l">${_('Opponent')}</th><th>${_('Result')}</th><th class="l">${_('Competition')}</th></tr></thead><tbody>
+    ${shown.map(g => `<tr><td class="l">${esc(fmtDate(g.date))} <span class="mut small">${g.date.slice(0, 4)}</span></td><td class="l">${g.site === 'away' ? '@ ' : g.site === 'neutral' ? '' : _('vs') + ' '}${oppFlag(g)}${esc(oppName(g))}${g.check ? ` <span class="mut" title="${esc(_('Not confirmed by a second source'))}">?</span>` : ''}</td>
+      <td><b class="${g.won ? 'good' : 'bad'}">${g.won ? W : Ls}</b> ${g.tun}–${g.opp_score}${g.ot ? ` <span class="mut small">${_('OT')}</span>` : ''}</td><td class="l mut small">${esc(ntName(d, g.competition))}${g.round ? ' · ' + esc(rnd(g.round)) : ''}</td></tr>`).join('')}
+    </tbody></table></div></div>` : `<div class="empty">${_('No result yet.')}</div>`}
+  ${d.stats.length ? `<h2>${_('National team stats')}</h2>${d.stats.map(b => ntStatsTable(d, b)).join('')}` : ''}
+  <h2>${_('History')}</h2>
+  <div class="card"><ul class="nthist">${d.history.map(h => `<li>${esc(h[LANG === 'fr' ? 'fr' : 'en'])}${h.check ? ` <span class="mut" title="${esc(_('Not confirmed by a second source'))}">?</span>` : ''}</li>`).join('')}</ul>
+    <div class="mut small" style="margin-top:8px">${_('Sources')}: Wikipedia, FIBA. ${_('A ? marks a fact we could not confirm with a second source.')}</div></div>
+  <div class="mut small" style="margin-top:14px">${_('Independent site: not affiliated with the Tunisian Basketball Federation.')}</div>`;
+}
+
+function ntExternal(d, key) {
+  const e = d.externals[key];
+  if (!e) return `<a class="mut" href="${url('natteam')}">← ${_('National team')}</a><div class="empty">${_('Player not found.')}</div>`;
+  pageMeta = [`${e.name} – ${_('Tunisia national team')} | Tunisia Basket`, `${e.name}: ${_('player of the Tunisian national team who does not play in the Tunisian league.')}`];
+  const age = e.birth ? Math.floor((Date.now() - new Date(e.birth + 'T12:00')) / 31557600000) : null;
+  const bio = { height: e.height, birth: e.birth, nationality: e.nationality };
+  const called = d.callup.players.some(p => p.pid === key), blocks = d.stats.map(b => ({ ...b, rows: b.rows.filter(r => r.pid === key) })).filter(b => b.rows.length);
+  const note = e[LANG === 'fr' ? 'note_fr' : 'note_en'] || e.note_en || '';
+  return `<a class="mut" href="${url('natteam')}">← ${_('National team')}</a>
+  <div class="card row phead" style="margin-top:10px;gap:20px">${ntFace({ ext: true, photo: e.photo }, 88)}
+    <div class="sp"><h1 style="margin:0">${esc(e.name)}${natFlags(bio)}</h1>
+      <div class="mut"><span class="tn"><img src="/img/tunisia-flag.svg" alt="" width="20" height="13">${_('Tunisia national team')}</span>${e.position ? ' · ' + esc(e.position) : ''}${e.club ? ' · ' + esc(e.club) : ''}</div>
+      ${bioLine(bio)}
+      <div style="margin-top:6px"><span class="pill">${_('Outside the Tunisian league')}</span> ${called ? `<span class="pill acc">${_('Called up')}${ntLabel() ? ' · ' + esc(ntLabel()) : ''}</span>` : ''}</div></div></div>
+  ${note ? `<p class="mut" style="margin-top:12px">${esc(note)}</p>` : ''}
+  ${blocks.length ? `<h2>${_('National team stats')}</h2>${blocks.map(b => ntStatsTable(d, b)).join('')}` : ''}
+  ${(e.career || []).length ? `<h2>${_('Other competitions with the national team')}</h2><div class="card tablecard"><div class="scroll"><table><thead><tr><th class="l">${_('Competition')}</th><th>${_('GP')}</th><th>PTS</th><th>REB</th><th>${H('AST')}</th></tr></thead><tbody>
+    ${e.career.map(c => `<tr><td class="l">${esc(LANG === 'fr' ? c.competition_fr : c.competition_en)}</td><td>${c.g}</td><td>${c.pts.toFixed(1)}</td><td>${c.reb.toFixed(1)}</td><td>${c.ast.toFixed(1)}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="mut small" style="margin-top:6px">${_('Per game averages.')}${e.src ? ` <a href="${esc(e.src)}" rel="noopener" target="_blank">${_('Source')}: FIBA</a>` : ''}</div>` : ''}`;
+}
+
 async function about() {
   pageMeta = META.about[LANG];
   const t = document.querySelector('#socbig'), btns = t ? t.innerHTML.trim() : '';
@@ -2020,7 +2120,7 @@ async function team(codeArg) {
   </tbody></table></div>
   <h2>${_('Players')}</h2>
   <div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('POS')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th><th>${H('RTG')}</th></tr></thead><tbody>
-  ${t.players.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${natFlags(p.bio)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="mut">${esc(posName(p.pos))}</td><td>${p.gp}</td><td>${p.min}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('') || `<tr><td colspan="9" class="mut">${_('No player stats yet.')}</td></tr>`}
+  ${t.players.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l">${plink(p)}${tags(p)}${p.mvp_games ? ` <span class="pill mvp">${f('mvpTag', p.mvp_games)}</span>` : ''}</td><td class="mut">${esc(posName(p.pos))}</td><td>${p.gp}</td><td>${p.min}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td><td>${rate(p.rating)}</td></tr>`).join('') || `<tr><td colspan="9" class="mut">${_('No player stats yet.')}</td></tr>`}
   </tbody></table></div>`;
 }
 
@@ -2323,6 +2423,7 @@ function bind() {
   document.querySelectorAll('[data-fstage]').forEach(b => b.onclick = () => { fStage = +b.dataset.fstage; route(true); });
   document.querySelectorAll('[data-racesel]').forEach(b => b.onclick = () => { raceSel = raceSel === b.dataset.racesel ? '' : b.dataset.racesel; route(true); });
   document.querySelectorAll('.race .rl').forEach(g => g.onclick = () => { raceSel = raceSel === g.dataset.race ? '' : g.dataset.race; route(true); });
+  const nc = document.querySelector('[data-ntcomp]'); if (nc) nc.onchange = () => { ntComp = nc.value; route(true); };
   const n1 = $('#n1t'); if (n1) n1.onchange = () => { n1Team = n1.value; route(true); };
   const gt = $('#gt'); if (gt) gt.onchange = () => { gamesTeam = gt.value; route(true); };
   const mt = $('#metric'); if (mt) mt.onchange = () => { metric = mt.value; localStorage.setItem('metric', metric); drawCourt(); };
@@ -2348,6 +2449,7 @@ if (location.hash.startsWith('#/')) {
 if (location.pathname === '/' && localStorage.getItem('lang') === 'en') location.replace('/en/');
 
 renderClubBtn(); $('#clubbtn').onclick = openFollow; updateHot();
+fetch('/api/national-team/called').then(r => r.json()).then(c => { const before = [...NT.ids].join(); NT = { ids: new Set(c.ids), label: c.label, label_fr: c.label_fr }; if ([...NT.ids].join() !== before && NT.ids.size) route(true); }).catch(() => {});
 fetch('/api/competitions').then(r => r.json()).then(c => { const changed = c.finals !== COMP.finals || c.cup !== COMP.cup || c.started !== COMP.started || c.nat1_playoff !== COMP.nat1_playoff; COMP = c; if (changed) route(true); }).catch(() => {});
 $('#predbtn').lastElementChild.textContent = _('Predictions');
 $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '☀️' : '🌙';

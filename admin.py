@@ -25,6 +25,7 @@ import config
 import countries
 import stats
 import monitor
+import natteam
 import mvp
 import predict
 import cup
@@ -332,6 +333,65 @@ def nat1_admin_edit():
         return jsonify(error=str(e)), 422
     auth.audit("nat1", f"{op}")
     return jsonify(ok=True, message=msg, **nat1.view())
+
+
+# ---------------------------------------------------------------- the national team (natteam.py): the called-up players, the games, the players outside the league
+def _natteam_state(**extra):
+    """What the admin tab shows: the public view, the players one can call up, the countries, and the competitions."""
+    d = natteam.load()
+    players = [{"id": p["id"], "name": p["name"], "team": p["team"], "number": p["number"]} for p in sorted(stats.build()["players"], key=lambda p: (p["team"], p["number"] or 0))]
+    return {"view": natteam.view(), "players": players, "externals": d["externals"], "competitions": d["competitions"], "games": natteam.load()["games"],
+            "countries": [{"code": c, "name": n[0]} for c, n in sorted(countries.COUNTRIES.items(), key=lambda kv: kv[1][0])],
+            "admin": {"callup": bool(d["admin"].get("callup")), "games": sorted((d["admin"].get("games") or {}))}, **extra}
+
+
+@bp.get("/admin/api/national-team")
+def natteam_admin_view():
+    return jsonify(_natteam_state())
+
+
+@bp.post("/admin/api/national-team")
+def natteam_admin_edit():
+    """Body {"op": ...}: callup (ids, label, label_fr, date), callup_names (text: the names pasted, answers the matches to confirm), callup_reset, external, external_delete (key),
+    competition (en, fr), competition_delete (id), game (the fields of a game, id to change one), game_delete (id)."""
+    b = request.get_json(silent=True) or {}
+    op, msg, extra = b.get("op"), "Saved.", {}
+    try:
+        if op == "callup":
+            natteam.set_callup(b.get("ids") or [], b.get("label"), b.get("label_fr"), b.get("date"))
+            msg = "The list of called-up players is saved: the site shows it now."
+        elif op == "callup_names":
+            names = [" ".join(x.split()) for x in re.split(r"[\n;]+", str(b.get("text") or "")) if x.strip()]
+            extra["matches"] = natteam.match_report(names[:60])
+            msg = f"{len(names)} name(s) matched: check the uncertain ones."
+        elif op == "callup_reset":
+            natteam.reset_callup()
+            msg = "Back to the list that ships with the code."
+        elif op == "external":
+            key = natteam.save_external(b)
+            extra["key"] = key
+            msg = "The player is saved: his page is on the site, and he can be added to the list."
+        elif op == "external_delete":
+            natteam.delete_external(str(b.get("key") or ""))
+            msg = "The player is removed (and taken out of the list)."
+        elif op == "competition":
+            extra["id"] = natteam.add_competition(b.get("en"), b.get("fr"))
+            msg = "Competition added."
+        elif op == "competition_delete":
+            natteam.delete_competition(str(b.get("id") or ""))
+            msg = "Competition removed."
+        elif op == "game":
+            extra["id"] = natteam.save_game(b)
+            msg = "Game saved: the results and the next game of the national team page are updated."
+        elif op == "game_delete":
+            natteam.delete_game(str(b.get("id") or ""))
+            msg = "Game removed."
+        else:
+            return jsonify(error="Unknown operation."), 422
+    except ValueError as e:
+        return jsonify(error=str(e) or "Invalid value."), 422
+    auth.audit("national-team", str(op))
+    return jsonify(ok=True, message=msg, **_natteam_state(**extra))
 
 
 @bp.get("/admin/api/cup")

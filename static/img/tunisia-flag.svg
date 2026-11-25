@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600"><title>Tunisia</title>
+<rect width="900" height="600" fill="#E70013"/>
+<circle cx="450" cy="300" r="150" fill="#fff"/>
+<circle cx="450" cy="300" r="120" fill="#E70013"/>
+<circle cx="472" cy="300" r="96" fill="#fff"/>
+<polygon fill="#E70013" points="480,246 492.8,286.6 535.2,285.5 501,310.7 514.2,351 480,326 445.8,351 459,310.7 424.8,285.5 467.2,286.6"/>
+</svg>

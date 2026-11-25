@@ -22,6 +22,7 @@ import lineups
 import livescore
 import mvp
 import nat1
+import natteam
 import notify
 import plays
 import predict
@@ -95,6 +96,7 @@ for _lang in seo.LANGS:   # French: /, /classement, /equipe/CA ...   English: /e
     for _tab in seo.NAT1_TABS[_lang]:                  # Nationale 1: its table, games and calendar tabs have their own addresses
         app.add_url_rule(seo.path(_lang, "nat1", _tab), f"page_{_lang}_nat1_{_tab}", partial(_page_view, _lang, "nat1", _tab))
     app.add_url_rule(seo.path(_lang, "history", "<arg>"), f"page_{_lang}_history_season", partial(_page_view, _lang, "history"))      # /historique/2018-2019
+    app.add_url_rule(seo.path(_lang, "natteam", "<arg>"), f"page_{_lang}_natteam_player", partial(_page_view, _lang, "natteam"))      # a called-up player who does not play in Tunisia
     app.add_url_rule(seo.path(_lang, "live", "<arg>"), f"page_{_lang}_live_game", partial(_page_view, _lang, "live"))      # the detail of one live game
     for _page in seo.ITEM_PAGES:
         app.add_url_rule(seo.path(_lang, _page, "<arg>"), f"page_{_lang}_{_page}", partial(_page_view, _lang, _page))
@@ -282,7 +284,7 @@ def player(pid):
         abort(404)
     rank = [x["id"] for x in d["players"] if x["mvp_eligible"]]
     return jsonify(season=d["season"], rank=rank.index(pid) + 1 if pid in rank else None,
-                   of=len(rank), top_teams=d["top_teams"], player={**p, "splits": stats.player_splits(p["log"])})
+                   of=len(rank), top_teams=d["top_teams"], player={**p, "splits": stats.player_splits(p["log"])}, national=natteam.for_player(pid))
 
 
 @app.get("/api/games")
@@ -451,6 +453,22 @@ def planning():
 def nat1_view():
     """Nationale 1 (nat1.py): the table and the results by matchday. No stats: we only have results."""
     r = jsonify(nat1.view())
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
+@app.get("/api/national-team")
+def national_team():
+    """The Tunisian national team (natteam.py): called-up players, results, next game, statistics, history."""
+    r = jsonify(natteam.view())
+    r.headers["Cache-Control"] = "no-cache"
+    return r
+
+
+@app.get("/api/national-team/called")
+def national_team_called():
+    """Ids of the players called up in the latest window: the small label shown next to their names."""
+    r = jsonify(natteam.called_view())
     r.headers["Cache-Control"] = "no-cache"
     return r
 

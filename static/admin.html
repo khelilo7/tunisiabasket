@@ -90,7 +90,8 @@
     <div id="loginmsg" style="margin-top:10px"></div>
   </div>
 <div id="tool" hidden>
-  <div class="tabs" id="maintabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="monitor">🖥️ Server</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games &amp; scores</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
+  <div class="tabs" id="maintabs"><button class="on" data-tab="data">📥 Data</button><button data-tab="traffic">📈 Traffic</button><button data-tab="monitor">🖥️ Server</button><button data-tab="mvp">🏆 MVP</button><button data-tab="plays">🎬 Plays</button><button data-tab="roster">👥 Players</button><button data-tab="natteam">🇹🇳 National team</button><button data-tab="images">🖼️ Images</button><button data-tab="games">📅 Games &amp; scores</button><button data-tab="sources">🔀 Sources</button><button data-tab="news">📰 News</button><button data-tab="finals">🔥 Play-off/out</button><button data-tab="analytics">📋 Analytics</button></div>
+  <div id="tab-natteam" hidden><div id="ntbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-roster" hidden><div id="rosterbox"><div class="mut">Loading…</div></div></div>
   <div id="tab-games" hidden>
     <div class="tabs subtabs" id="gamesub"><button data-sub="proa" class="on">🏀 Pro A</button><button data-sub="nat1">🥈 National One</button><button data-sub="cup">🏆 Cup</button><button data-sub="live">🔴 Live scorers</button></div>
@@ -455,7 +456,7 @@ function showTab(tab) { const b = document.querySelector(`#maintabs button[data-
 window.showTab = showTab;
 document.querySelectorAll('#maintabs button').forEach(b => b.onclick = () => {
   document.querySelectorAll('#maintabs button').forEach(x => x.classList.toggle('on', x === b));
-  ['data', 'traffic', 'monitor', 'mvp', 'plays', 'roster', 'images', 'games', 'sources', 'news', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
+  ['data', 'traffic', 'monitor', 'mvp', 'plays', 'roster', 'natteam', 'images', 'games', 'sources', 'news', 'finals', 'analytics'].forEach(t => { $('#tab-' + t).hidden = b.dataset.tab !== t; });
   if (b.dataset.tab === 'finals' && window.loadFinals) window.loadFinals();
   if (b.dataset.tab === 'sources' && window.loadSources) window.loadSources();
   if (b.dataset.tab === 'traffic') loadTraffic();
@@ -463,6 +464,7 @@ document.querySelectorAll('#maintabs button').forEach(b => b.onclick = () => {
   if (b.dataset.tab === 'plays' && window.loadPlays) window.loadPlays();
   if (b.dataset.tab === 'mvp') { loadMvp(); if (window.loadRounds) loadRounds(); }
   if (b.dataset.tab === 'roster') loadRoster();
+  if (b.dataset.tab === 'natteam' && window.loadNatTeam) window.loadNatTeam();
   if (b.dataset.tab === 'images') loadImages();
   if (b.dataset.tab === 'games') showGamesSub(gamesSub);
   if (b.dataset.tab === 'news') loadNews();
@@ -481,6 +483,7 @@ $('#theme').onclick = () => { const t = document.documentElement.dataset.theme =
 boot();
 </script>
 <script src="/admin-roster.js"></script>
+<script src="/admin-natteam.js"></script>
 <script src="/admin-images.js"></script>
 <script src="/admin-matchday.js"></script>
 <script src="/admin-nat1img.js"></script>

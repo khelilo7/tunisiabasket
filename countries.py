@@ -15,6 +15,12 @@ COUNTRIES = {
     "AO": ("Angola", "Angola"), "BF": ("Burkina Faso", "Burkina Faso"), "CV": ("Cape Verde", "Cap-Vert"), "SS": ("South Sudan", "Soudan du Sud"), "RW": ("Rwanda", "Rwanda"),
     "BI": ("Burundi", "Burundi"), "MR": ("Mauritania", "Mauritanie"), "BJ": ("Benin", "Bénin"), "TG": ("Togo", "Togo"), "LB": ("Lebanon", "Liban"),
     "SY": ("Syria", "Syrie"), "PS": ("Palestine", "Palestine"), "JO": ("Jordan", "Jordanie"), "TR": ("Turkey", "Turquie"), "BR": ("Brazil", "Brésil"),
+    # more teams the national team can meet (AfroBasket, qualifiers, friendlies)
+    "UG": ("Uganda", "Ouganda"), "CF": ("Central African Republic", "République centrafricaine"), "MG": ("Madagascar", "Madagascar"), "KE": ("Kenya", "Kenya"),
+    "MZ": ("Mozambique", "Mozambique"), "ZA": ("South Africa", "Afrique du Sud"), "ZW": ("Zimbabwe", "Zimbabwe"), "ZM": ("Zambia", "Zambie"), "ET": ("Ethiopia", "Éthiopie"),
+    "SD": ("Sudan", "Soudan"), "TD": ("Chad", "Tchad"), "NE": ("Niger", "Niger"), "GM": ("Gambia", "Gambie"), "SL": ("Sierra Leone", "Sierra Leone"), "LR": ("Liberia", "Libéria"),
+    "BW": ("Botswana", "Botswana"), "NA": ("Namibia", "Namibie"), "TZ": ("Tanzania", "Tanzanie"), "DE": ("Germany", "Allemagne"), "GR": ("Greece", "Grèce"), "LT": ("Lithuania", "Lituanie"),
+    "CN": ("China", "Chine"), "JP": ("Japan", "Japon"), "IR": ("Iran", "Iran"), "SA": ("Saudi Arabia", "Arabie saoudite"), "QA": ("Qatar", "Qatar"), "AE": ("United Arab Emirates", "Émirats arabes unis"),
 }
 
 
@@ -39,3 +45,19 @@ def clean(v):
 def flag(code):
     """The flag emoji of a country code."""
     return "".join(chr(0x1F1E6 + ord(c) - 65) for c in code)
+
+
+def lookup(text):
+    """The code of a country typed as a code or as its English or French name ('Nigeria', 'nigéria', 'NG'), or None."""
+    t = _fold(text)
+    if not t:
+        return None
+    for code, (en, fr) in COUNTRIES.items():
+        if t in (code.lower(), _fold(en), _fold(fr)):
+            return code
+    return None
+
+
+def _fold(s):
+    import unicodedata
+    return re.sub(r"[^a-z0-9]+", " ", unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()).strip()
