@@ -45,6 +45,41 @@ check(json.loads((data / "games" / "g1.json").read_text())["teams"][0]["points"]
 (fixes / "g1.json").write_text(json.dumps(game("g1", 64, 50)))
 game_fixes.apply(fixes, data)
 check(json.loads((data / "games" / "g1.json").read_text())["teams"][0]["points"] == 64, "an edited fix file applies again")
+# a patch changes a few numbers of the game as stored, with the same rules
+pat, data2 = Path(tempfile.mkdtemp()), Path(tempfile.mkdtemp())
+(data2 / "games").mkdir()
+base = game("g2", 60, 50)
+base["source"] = "ocr"
+base["teams"][0]["players"][0].update(name="RAW NAME", p2m=2, p2a=4, p3m=0, p3a=0, ftm=0, fta=0, fgm=2, fga=4, pts=4)
+base["teams"][0]["players"][1].update(pts=56, p2m=28, p2a=40, fgm=28, fga=40)
+base["teams"][0]["points"] = 60
+base["teams"][1]["players"][1].update(pts=0)
+(data2 / "games" / "g2.json").write_text(json.dumps(base))
+(pat / "ok.json").write_text(json.dumps({"game": "g2", "players": [{"team": "AAA", "vs": "BBB", "number": 1, "set": {"p2m": 1, "p3m": 1, "p3a": 2, "p2a": 3}}, {"team": "AAA", "number": 2, "set": {"p2m": 26, "p2a": 40, "p3m": 1, "p3a": 1, "ast": 4}}]}))
+(pat / "bad.json").write_text(json.dumps({"game": "g2", "players": [{"team": "AAA", "number": 1, "set": {"p2m": 3}}]}))      # 2 more points: the team total no longer matches
+(pat / "nobody.json").write_text(json.dumps({"game": "g2", "players": [{"team": "AAA", "number": 77, "set": {"ast": 1}}]}))
+(pat / "gone.json").write_text(json.dumps({"game": "nope", "players": [{"team": "AAA", "number": 1, "set": {"ast": 1}}]}))
+(pat / "pts.json").write_text(json.dumps({"game": "g2", "players": [{"team": "AAA", "number": 1, "set": {"pts": 9}}]}))      # points are never set, they follow from the shots
+(pat / "wrongteam.json").write_text(json.dumps({"game": "g2", "players": [{"team": "XXX", "vs": "YYY", "number": 1, "set": {"ast": 1}}]}))
+nofix = Path(tempfile.mkdtemp())
+log = game_fixes.apply(nofix, data2, pat)
+g2 = json.loads((data2 / "games" / "g2.json").read_text())
+a1, a2 = g2["teams"][0]["players"]
+check(a1["name"] == "RAW NAME" and g2["source"] == base.get("source") and g2["date"] == base["date"], "a patch keeps everything it does not name")
+check(a1["pts"] == 5 and a2["pts"] == 55 and a1["fga"] == 5 and a1["fgm"] == 2 and a2["ast"] == 4, f"the patched lines are recomputed: {a1} {a2}")
+check(any("patch:bad.json: REFUSED" in x for x in log), "a patch that breaks the team total is refused")
+for n in ("nobody", "pts", "wrongteam"):
+    check(any(f"patch:{n}.json: REFUSED" in x for x in log), f"patch {n} is refused")
+check(any("patch:gone.json: skipped" in x for x in log), "a patch for a game the site does not have is skipped")
+check(len(list((data2 / "games_replaced").glob("g2-*.json"))) == 1 and json.loads(next((data2 / "games_replaced").glob("g2-*.json")).read_text())["teams"][0]["players"][0]["pts"] == 4, "the game as it was is kept")
+log = game_fixes.apply(nofix, data2, pat)
+check(not any("patch:ok.json" in x for x in log) and json.loads((data2 / "games" / "g2.json").read_text())["teams"][0]["players"][0]["pts"] == 5, "a patch is applied once")
+# the patches that ship with the code name a game, a team, a number and fields a patch may change
+for f in sorted((ROOT / "assets" / "game_patches").glob("*.json")):
+    d = json.loads(f.read_text())
+    check(d["game"] == f.stem and d.get("why") and d["players"], f"{f.name}: a game named after the file, a reason and players")
+    for e in d["players"]:
+        check(set(e["set"]) <= game_fixes.FIELDS and isinstance(e["number"], int) and e["team"] and e["vs"], f"{f.name}: {e}")
 # the fixes that ship with the code are all consistent games named after their file
 from validate import validate  # noqa: E402
 for f in sorted((ROOT / "assets" / "game_fixes").glob("*.json")):

@@ -1,0 +1,7 @@
+{
+ "game": "dafec7724a6cf1dc",
+ "why": "DSG-ESS (J14): Adem Slimane (#45) shot 2/5 from two (the sheet said 2/6) and had 2 turnovers and 3 assists (the sheet said 1 and 2). Points stay 10.",
+ "players": [
+  {"team": "ESS", "vs": "DSG", "number": 45, "set": {"p2a": 5, "tov": 2, "ast": 3}}
+ ]
+}
