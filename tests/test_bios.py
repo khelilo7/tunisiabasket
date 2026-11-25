@@ -61,7 +61,7 @@ for pid, b in raw.items():
             codes = []
             check(False, f"{pid}: {e}")
         check(codes and codes != ["TN"], f"{pid}: a nationality is only listed when it is not just Tunisian")
-        check(isinstance(b["nationality"], (str, list)) and b.get("nat_src") in ("FIBA", "press", "name"), f"{pid}: nat_src must say how sure the nationality is (FIBA, press, name)")
+        check(isinstance(b["nationality"], (str, list)) and b.get("nat_src") in ("FIBA", "press", "name", "owner"), f"{pid}: nat_src must say how sure the nationality is (FIBA, press, name, owner)")
     else:
         check("nat_src" not in b, f"{pid}: nat_src without a nationality")
 
@@ -74,6 +74,8 @@ if "esg-30" in players:
     check(b and b["height"] == 202 and b["weight"] == 96 and b["wingspan"] == 208 and b["age"] == 20, "esg-30 profile (height, weight, wingspan, age) not attached")
 check(players["usm-1"]["bio"]["nationality"] == ["US"] if "usm-1" in players else True, "usm-1 nationality (US) not on the API")
 check(players["ca-21"]["bio"]["nationality"] == ["SN", "FR"] if "ca-21" in players else True, "dual nationality not on the API")
+check(all(players[k]["bio"]["nationality"] == [v] for k, v in (("sn-1", "CI"), ("sn-40", "US"), ("jsm-7", "US"), ("css-25", "US")) if k in players), "the nationalities given by the owner are on the API")
+check(players["ca-5"]["bio"]["nationality"] == ["TN", "DE"] if "ca-5" in players else True, "Chennoufi: Tunisian and German (FIBA)")
 check(all("nationality" not in (p["bio"] or {}) for p in players.values() if p["id"] not in raw or "nationality" not in raw[p["id"]]), "only the profiles that say so have a nationality")
 check(not any(c.get("nationality") == ["TN"] for c in [p["bio"] or {} for p in players.values()]), "nobody is listed as only Tunisian")
 # the country list of the site (static/index.html) is the one of countries.py
