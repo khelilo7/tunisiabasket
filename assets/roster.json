@@ -230,6 +230,38 @@
    "name": "Yassine Mahfoudh",
    "from": "2026-11-12",
    "note": "Faker Bouzou left for Dalia on 8 Nov; Yassine Mahfoudh wears 7 (sheets of 18, 23 and 25 Nov)"
+  },
+  {
+   "team": "CSHS",
+   "number": 11,
+   "id": "cshs-30",
+   "from": "2026-10-04",
+   "to": "2026-10-04",
+   "note": "the FIBA sheet of CSHS-ESR (4 Oct) has Ghribi on 11 and Hssini on 30, the other way round from the other games"
+  },
+  {
+   "team": "CSHS",
+   "number": 30,
+   "id": "cshs-11",
+   "from": "2026-10-04",
+   "to": "2026-10-04",
+   "note": "see number 11 on the same day"
+  },
+  {
+   "team": "CSHS",
+   "number": 13,
+   "id": "cshs-113",
+   "name": "Firas Fatnassi",
+   "from": "2026-11-21",
+   "note": "on the number of Anas Douss (FIBA sheets of 21 and 25 Nov)"
+  },
+  {
+   "team": "CSHS",
+   "number": 12,
+   "id": "cshs-112",
+   "name": "Reggie Baker",
+   "from": "2026-11-25",
+   "note": "on the number of Aziz Agerbi (FIBA sheet of 25 Nov)"
   }
  ]
 }
