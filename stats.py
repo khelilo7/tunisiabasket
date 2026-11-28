@@ -669,15 +669,18 @@ def _avg(xs):
 
 
 @_cached
-def build(season=None, keep_hidden=False):
-    """Return (games, players) for a season (default: the latest one)."""
+def build(season=None, keep_hidden=False, phase=None):
+    """Return (games, players) for a season (default: the latest one). `phase` (a past season whose box scores name theirs): only the games of that phase count."""
     all_games = build_all_games()
     seasons = sorted({season_of(g["date"]) for g in all_games}, reverse=True)
     if not season and seasons:
         season = seasons[0]
     games = [g for g in all_games if season_of(g["date"]) == season]
+    phases = sorted({g["phase"] for g in games if g.get("phase")})
+    if phase:
+        games = [g for g in games if g.get("phase") == phase]
 
-    partials = [g for g in partial_games(all_games) if season_of(g["date"]) == season]
+    partials = [] if phase else [g for g in partial_games(all_games) if season_of(g["date"]) == season]
     log = defaultdict(list)
     meta = {}
     for g in sorted([*games, *partials], key=lambda g: (g["date"], g["id"])):
@@ -695,7 +698,7 @@ def build(season=None, keep_hidden=False):
                 if p.get("dnp"):
                     continue
                 row = dict(p)
-                row.update(game_id=g["id"], date=g["date"], matchday=g.get("matchday"), team=t["code"],
+                row.update(game_id=g["id"], date=g["date"], matchday=g.get("matchday"), phase=g.get("phase"), team=t["code"],
                            opp=opp["code"], score=f'{t["points"]}-{opp["points"]}', won=t["won"],
                            home=(g.get("home_team") == t["code"]) if g.get("home_team") else None,       # None: the official result does not say who was at home
                            is_mvp=bool(g["mvp"] and g["mvp"]["player_id"] == i))
@@ -761,7 +764,7 @@ def build(season=None, keep_hidden=False):
         # MVP pool: enough games AND plays for a top-N team (if no official table, everyone is eligible)
         p["mvp_eligible"] = p["qualified"] and (not table or p["team"] in top)
     players.sort(key=lambda p: (p["mvp_eligible"], p["qualified"], p["impact"], p["pts"]), reverse=True)
-    return {"season": season, "seasons": seasons, "games": games, "partials": partials, "players": players,
+    return {"season": season, "seasons": seasons, "phases": phases, "phase": phase, "games": games, "partials": partials, "players": players,
             "standings": table, "top_teams": sorted(top, key=lambda c: rank[c]) if table else []}
 
 

@@ -497,6 +497,9 @@
   .hero, .mvp { border-radius:24px; } .rchip { border-radius:999px; }
   table tbody tr:hover { background:var(--hover); } tr { border-bottom:1px solid var(--line); }
   .banner { border-radius:14px; }
+  .seg.archtabs, .seg.phasechips { flex-wrap: wrap; margin: 10px 0; border-radius: 18px; max-width: 100%; }
+  .tielink { display: block; color: inherit; text-decoration: none; }
+  .misslist { margin: 0; padding-left: 18px; line-height: 1.9; }
 </style>
 </head>
 <body>
@@ -598,6 +601,10 @@ const FR = {
   'Super 6': 'Super 6',
   'Relegation round': 'Tour de relégation',
   'Super play-out': 'Super play-out',
+  'No result published': 'Résultat non publié', 'Whole season': 'Toute la saison', 'Phase': 'Phase', 'Finals MVP': 'MVP de la finale', 'average over the final': 'moyenne sur la finale', 'Chosen by the numbers: the best total evaluation of the champions in the final, not an official award.': 'Désigné par les chiffres : la meilleure évaluation cumulée du champion en finale, ce n’est pas un prix officiel.',
+  'No box score': 'Pas de feuille de match', 'opens the box score': 'ouvre la feuille de match', 'Points carried over': 'Points reportés', 'Earlier round': 'Tour précédent', 'A blank tie: no result was published for it.': 'Case vide : aucun résultat publié.', 'Results not found': 'Résultats introuvables', 'two games': 'deux matchs',
+  'Each club starts with the points of the phase before (2 for a win, 1 for a loss).': 'Chaque club repart avec les points de la phase précédente (2 par victoire, 1 par défaite).', 'without box score': 'sans feuille de match', 'Quarter-finals': 'Quarts de finale', '1/8': '1/8 de finale',
+  'Allowed': 'Encaissés', 'Opp. REB': 'Reb. adv.', 'Opp. FG%': 'Adresse adv.', 'Box score missing': 'Feuille manquante', 'score not found either': 'score introuvable aussi', 'winner': 'vainqueur', 'The season, phase by phase': 'La saison, phase par phase', 'Statistics': 'Statistiques', 'Per game, from the box scores': 'Par match, d’après les feuilles de match', 'Missing box scores': 'Feuilles de match manquantes', 'Every game of this club has its box score.': 'Tous les matchs du club ont leur feuille de match.',
   'Tunisian Cup': 'Coupe de Tunisie',
   'FTBB Cup': 'Coupe de la Fédération',
   'super play-out': 'super play-out',
@@ -1412,7 +1419,8 @@ let sortKey = 'rating', sortDir = -1, q = '', teamF = '', qualOnly = true;   // 
 const QUAL = 70;   // % of its team's games a player must have played to be ranked (same rule as the NBA, 58 of 82)
 const playersNav = on => `<div class="seg" role="tablist">${[['players', _('Players')], ['mvp', '🏆 ' + _('MVP') + ' · ' + _('Player of the round')]].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 async function players() {
-  const d = await api('players');
+  let d = await api('players' + (statPhase ? '?phase=' + encodeURIComponent(statPhase) : ''));
+  if (statPhase && !(d.phases || []).includes(statPhase)) { statPhase = ''; d = await api('players'); }
   pageMeta = META.players[LANG];
   const teams = [...new Set(d.players.flatMap(p => p.teams))].sort();
   const pair = (m, a) => `${m}-${a}`;
@@ -1424,7 +1432,7 @@ async function players() {
   return `${playersNav('players')}<h1>${_('Players')} <span class="mut" style="font-size:15px">${esc(f('playersSub', d.season))}</span></h1>
   <details class="fold" id="leadfold" ${leadOpen ? 'open' : ''}><summary><span>${_('League leaders')}</span><span class="sub mut">${_('per game')}</span><span class="chev">▾</span></summary>
     <div class="leaders">${(leadData = d.leaders).map(leaderCard).join('')}</div></details>
-  <h2>${_('All players')}</h2>
+  <h2>${_('All players')}</h2>${phaseChips(d.phases)}
   <div class="toolbar"><input id="q" placeholder="${_('Search player…')}" value="${esc(q)}" aria-label="${_('Search player…')}">
     <select id="tf" aria-label="${_('Team')}"><option value="">${_('All teams')}</option>${teams.map(t => `<option ${t === teamF ? 'selected' : ''}>${esc(t)}</option>`).join('')}</select>
     <span class="chip${qualOnly ? ' on' : ''}" id="qual" role="switch" aria-checked="${qualOnly}" tabindex="0">${qualOnly ? '✓ ' : ''}${esc(f('qualRule', QUAL))}</span>
@@ -1463,7 +1471,7 @@ let playerSplit = 'all';
 const inSplit = (r, k) => k === 'all' || (k === 'home' ? r.home === true : r.home === false);
 async function player(ref) {
   const id = (ref.match(/^([a-z0-9]+-\d+)/) || [, ref])[1];
-  const d = await api('players/' + id), p = d.player;
+  const d = await api('players/' + id + (statPhase ? '?phase=' + encodeURIComponent(statPhase) : '')), p = d.player;
   pageMeta = [f('metaPlayer', p.name, p.team, d.season), `${p.name}, ${p.team} #${p.number}: ${p.pts} ${_('pts')}, ${p.reb} ${_('reb')}, ${p.ast} ${_('ast')} · ${H('RTG')} ${p.rating}/99`];
   const SP = p.splits || null, split = SP && SP[playerSplit] ? playerSplit : 'all', S = SP ? SP[split] : p, logRows = p.log.filter(r => inSplit(r, split));
   const pts = logRows.filter(r => r.pir != null).map(r => r.pir);
@@ -1471,10 +1479,11 @@ async function player(ref) {
   <div class="card row phead" style="margin-top:10px;gap:20px">${face(p, 88)}${ring(p.rating)}
     <div class="sp"><h1 style="margin:0">${esc(p.name)}${natFlags(p.bio)}</h1>
       <div class="mut">${p.teams.map(c => `<a class="tn" href="${teamUrl(c)}">${logo(c, 24)}${esc(c)}</a>`).join(' → ')} · #${p.number} · ${posName(p.pos)} · ${esc(f('seasonOf', d.season))}</div>
-      ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
-      ${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span>${ntTag(p.id, true)}</div></div></div>
+      ${bioLine(p.bio)}${transferLine(p)}<div style="margin-top:6px">${isArchived(d.season) ? '' : d.rank ? `<span class="pill">${esc(f('race', d.rank, d.of))}</span> ` : `<span class="pill">${p.qualified ? esc(f('notPool', d.top_teams.length)) : _('Not enough games to rank')}</span> `}
+      ${d.finals_mvp ? `<span class="pill mvp">🌟 ${_('Finals MVP')} ${seasonLbl(d.season)}</span> ` : ''}${d.rank === 1 ? `<span class="pill mvp">${_('★ SEASON MVP')}</span> ` : ''}${p.mvp_games ? `<span class="pill mvp">${esc(f('mvpCount', p.mvp_games))}</span> ` : ''}<span class="pill w">${p.wins}${W}</span> <span class="pill l">${p.gp - p.wins}${Ls}</span>${ntTag(p.id, true)}</div></div></div>
   ${ntPlayerBlock(d.national)}
-  <h2>${esc(f('avgTitle', S.gp))}</h2>
+  ${d.phases && d.phases.length ? phaseChips(d.phases) : ''}
+  <h2>${esc(f('avgTitle', S.gp))}${d.phase ? ` <span class="mut" style="font-size:14px">${_(PHASE_LBL[d.phase])}</span>` : ''}</h2>
   ${SP ? `<div class="seg" role="group">${[['all', 'Overall'], ['home', 'At home'], ['away', 'Away']].map(([k, l]) => `<button data-psplit="${k}" class="${split === k ? 'on' : ''}" aria-pressed="${split === k}">${_(l)} <span class="mut small">${SP[k].gp}</span></button>`).join('')}</div>` : ''}
   ${SP && !S.gp ? `<div class="banner">${_('No games in this view yet.')}</div>` : ''}
   <div class="grid g4">${[['PTS', S.pts], ['REB', S.reb], [H('AST'), S.ast], [H('STL'), S.stl], [H('BLK'), S.blk], [H('TOV'), S.tov], ['MIN', S.min], ['+/-', signed(S.pm)],
@@ -1663,20 +1672,22 @@ function standTable(d, compact) {
   ${d.standings.map(t => `<tr data-go="${teamUrl(t.code)}" class="${['zone-' + zoneOf(t.rank), t.rank === PLAYOFF_N ? 'zend' : '', t.code === favTeam ? 'fav' : ''].join(' ').trim()}"><td class="rkz">${t.rank}${moveTag(d.movement, t.code)}</td><td class="l"><span class="tn" style="flex-wrap:wrap"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 32)}<span>${esc(t.name)}</span></a>${zonePill(t.rank)}${top.has(t.code) ? `<span class="mvpdot hm" title="${esc(_('MVP pool'))}">★</span>` : ''}</span></td><td class="hm">${t.j}</td><td>${t.w}</td><td>${t.l}</td>${compact ? '' : `<td class="hm">${t.pf}</td><td class="hm">${t.pa}</td>`}<td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td>${compact ? '' : `<td class="mut hm">${t.box}/${t.j}</td>`}</tr>`).join('')}</tbody></table></div>`;
 }
 
-let COMP = { cup: true, finals: false, started: false, nat1_playoff: false };
+let COMP = { cup: true, finals: false, started: false, nat1_playoff: false, archived: ['2025-2026'] };
+let seasonList = [];      // newest first, filled with the season picker
 const previewMode = () => new URLSearchParams(location.search).get('preview') === '1';      // the admin looks at a page that is not announced yet          // which competitions exist (from /api/competitions): the Cup always shows (an empty bracket says "draw soon"), the finals once they are set up
 const leagueNav = on => `<div class="seg league" role="tablist"><a role="tab" aria-selected="${on === 'proa'}" class="${on === 'proa' ? 'on' : ''}" href="${url('standings')}">Pro A</a><a role="tab" aria-selected="${on === 'nat1'}" class="${on === 'nat1' ? 'on' : ''}" href="${url('nat1')}">${_('National One')}</a>${COMP.cup ? `<a role="tab" aria-selected="${on === 'cup'}" class="${on === 'cup' ? 'on' : ''}" href="${url('cup')}">🏆 ${_('Cup')}</a>` : ''}<a role="tab" aria-selected="${on === 'history'}" class="${on === 'history' ? 'on' : ''}" href="${url('history')}">🕘 ${_('History')}</a></div>`;
 const finTab = ['finals', '🔥 ' + _('Play-off') + ' · ' + _('Play-out')];
 // Once the play-off / play-out have started they take the place of the championship (regular-season) standings; the regular season stays under their "Regular season" tab
-const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${[...(COMP.started ? [finTab] : [['standings', '🏆 ' + _('Standings')]]), ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.finals && !COMP.started ? [finTab] : [])].map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
+const standNav = on => leagueNav('proa') + `<div class="seg" role="tablist">${(isArchived(pickedSeason()) ? [['standings', '🏆 ' + _('Standings')], ['games', '🏀 ' + _('Games')]] : [...(COMP.started ? [finTab] : [['standings', '🏆 ' + _('Standings')]]), ['games', '🏀 ' + _('Games')], ['planning', '📅 ' + _('Planning')], ...(COMP.finals && !COMP.started ? [finTab] : [])]).map(([k, l]) => `<a role="tab" aria-selected="${on === k}" class="${on === k ? 'on' : ''}" href="${url(k)}">${l}</a>`).join('')}</div>`;
 // the law behind the order of every table, small on purpose: the FTBB's General Regulations, articles 182 to 184
 const isFinal = rows => !(rows || []).length || rows.every(t => t.final !== false);       // the phase is over: the FTBB's tie-break law has been applied
 const LAW_URL = 'https://www.ftbb.org.tn/wp-content/uploads/2025/11/Reglements-Generaux-de-la-FTBB_2024-2.pdf';
 const lawNote = (final = true) => `<div class="lawnote">${final ? _('Ranking as in the FTBB General Regulations (articles 182 to 184): 2 points for a win, 1 for a loss, 0 for a forfeit. Teams level on points are separated by the games between them (point difference), then by the point difference of all the games.') : _('Season in progress: teams are ordered by points, then by point difference. The FTBB tie-break rules (articles 182 to 184: the games between the teams first) are applied after the last round.')} <a href="${LAW_URL}" target="_blank" rel="noopener">${_('FTBB regulations')} ↗</a></div>`;
 async function standings() {
-  if (COMP.started) return finals();
+  if (COMP.started && !isArchived(pickedSeason())) return finals();
   const d = await api('overview' + (new URLSearchParams(location.search).get('move') === '1' ? '?move=1' : ''));      // ?move=1 shows the last round's rises and falls whatever the date (to look at them)
   pageMeta = META.standings[LANG];
+  if (isArchived(d.season)) return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${seasonLbl(d.season)}</span></h1>${await seasonHub(d.season)}`;
   if (d.seasons && d.season !== d.seasons[0]) {          // a past season: the official tables and series of the history, not a table rebuilt from the box scores we happen to have
     const h = await fetch('/api/history/' + encodeURIComponent(d.season)).then(r => r.ok ? r.json() : null).catch(() => null);
     if (h && h.sections.length) return `${standNav('standings')}<h1>${_('Standings')} <span class="mut" style="font-size:15px">${seasonLbl(d.season)}</span></h1>
@@ -1742,6 +1753,7 @@ const lgTag = l => l === 'proa' ? '<i class="lg a" title="Pro A">A</i>' : l === 
 function cupSide(x, score, win, lose) {
   if (x.bye) return `<div class="ts bye"><span class="mut small">${_('Bye: goes through')}</span></div>`;
   if (x.code) return `<div class="ts${win ? ' w' : ''}${lose ? ' l' : ''}">${logo(x.code, 24)}<span class="tnm">${esc(x.name)}</span>${lgTag(x.league)}<b>${score ?? ''}</b></div>`;
+  if (x.unknown) return `<div class="ts tbd"><span class="mut small">${_('No result published')}</span></div>`;
   return `<div class="ts tbd"><span class="mut small">${x.label ? esc(_('Winner of')) + ' ' + esc(x.label) : _('To be drawn')}</span></div>`;
 }
 function cupTie(t) {
@@ -1769,6 +1781,79 @@ async function cup() {
   <div class="note">${_('⚡ Upset: a club of a lower division beats a club of a higher one.')}</div>`;
 }
 
+
+// ---------------------------------------------------------------- A finished season, shown like the current one (archive.py): a tab per phase, tables, series, the cup bracket, each club
+let archTab = 'regular', statPhase = '';
+const PHASE_LBL = { 'regular season': 'Regular season', 'play-off': 'Play-off', 'play-out': 'Play-out', 'super play-off': 'Super play-off', 'super play-out': 'Super play-out', 'cup': 'Tunisian Cup', 'ftbb cup': 'FTBB Cup' };
+const PHASE_ORDER = Object.keys(PHASE_LBL);
+const ARCH_ICON = { regular: '📜', playoff: '🔥', playout: '🛟', super: '⚡', superout: '🧯', cup: '🏆', ftbb: '🏅' };
+const isArchived = s => (COMP.archived || []).includes(s);
+const pickedSeason = () => season || seasonList[0] || '';
+// "Which games count": the phase chips of the player and team pages of a finished season
+const phaseChips = list => list && list.length ? `<div class="seg phasechips" role="group" aria-label="${_('Phase')}">${[['', 'Whole season'], ...PHASE_ORDER.filter(p => list.includes(p)).map(p => [p, PHASE_LBL[p]])].map(([k, l]) => `<button data-phase="${k}" class="${statPhase === k ? 'on' : ''}" aria-pressed="${statPhase === k}">${_(l)}</button>`).join('')}</div>` : '';
+const phaseQ = (list) => statPhase && (!list || list.includes(statPhase)) ? 'phase=' + encodeURIComponent(statPhase) : '';
+const mvpCard = m => m ? `<div class="card winner finmvp"><div class="trophy">🌟</div><div><div class="crown">${_('Finals MVP')}</div><div class="nm"><a class="tn" href="${playerUrl(m.id, m.name)}">${face(m, 56)}<span>${esc(title(m.name))}</span></a></div>
+  <div class="mut">${esc(m.team)} · ${m.pts} ${_('pts')} · ${m.reb} ${_('reb')} · ${m.ast} ${_('ast')} · PIR ${m.pir} <span class="small">(${_('average over the final')}, ${m.gp} ${_('games')})</span></div>
+  <div class="mut small">${_('Chosen by the numbers: the best total evaluation of the champions in the final, not an official award.')}</div></div></div>` : '';
+const archGame = g => { const hw = g.home_score > g.away_score; const sc = `<b>${g.home_score} – ${g.away_score}</b>`;
+  return `<div class="n1g"><span class="tn ${hw ? 'win' : ''}">${logo(g.home, 24)}<a href="${teamUrl(g.home)}">${esc(g.home)}</a></span>${g.box ? `<a href="${gameUrl(g.box)}" title="${esc(_('Box score'))}">${sc} 📋</a>` : `<span title="${esc(_('No box score'))}">${sc}</span>`}<span class="tn ${!hw ? 'win' : ''}"><a href="${teamUrl(g.away)}">${esc(g.away)}</a>${logo(g.away, 24)}</span></div>`; };
+function archGames(games) {
+  const days = [...new Set(games.map(g => g.date))];
+  return `<h3>${_('Games')} <span class="mut small">📋 ${_('opens the box score')}</span></h3><div class="grid n1grid">${days.map(d => `<div class="card"><div class="row"><b>${d ? esc(hDate(d)) : ''}</b></div>${games.filter(g => g.date === d).map(archGame).join('')}</div>`).join('')}</div>`;
+}
+const archTable = (rows, carry) => `<div class="card scroll"><table class="ftable"><thead><tr><th>#</th><th class="l">${_('Team')}</th>${carry ? `<th title="${esc(_('Points carried over'))}">${_('Carry')}</th>` : ''}<th>J</th><th>${W}</th><th>${Ls}</th><th>${_('Diff')}</th><th>${_('Pts')}</th></tr></thead><tbody>${rows.map(t =>
+  `<tr data-go="${teamUrl(t.code)}"><td class="rkz">${t.rank}</td><td class="l"><a class="tn" href="${teamUrl(t.code)}">${logo(t.code, 28)}<span>${esc(t.name)}</span></a></td>${carry ? `<td class="mut">+${t.carry}</td>` : ''}<td>${t.j}</td><td>${t.w}</td><td>${t.l}</td><td class="${t.diff >= 0 ? 'good' : 'bad'}">${signed(t.diff)}</td><td><b>${t.pts}</b></td></tr>`).join('')}</tbody></table></div>`;
+function archBracket(b) {
+  const cols = b.rounds.map((r, ri) => { const last = ri === b.rounds.length - 1, ties = r.ties.map(t => { const html = cupTie(t); return t.box ? `<a class="tielink" href="${gameUrl(t.box)}">${html}</a>` : html; });
+    const inner = last ? ties.join('') : ties.reduce((acc, t, i) => i % 2 ? acc : acc + `<div class="pair">${t}${ties[i + 1] || ''}</div>`, '');
+    return `<div class="bcol${last ? ' last' : ''}"><div class="bhead"><b>${esc(_(r.name))}</b></div><div class="bties">${inner}</div></div>`; });
+  const champ = b.champion ? `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Cup winner')}</div><div class="nm">${logo(b.champion.code, 56)}<span>${esc(b.champion.name)}</span></div></div></div>` : '';
+  // on a phone the tree is read as a list, final first
+  const list = [...b.rounds].reverse().map(r => `<h3>${esc(_(r.name))}</h3><div class="grid g2">${r.ties.filter(t => t.played).map(cupTie).join('')}</div>`).join('');
+  return `${champ}<div class="bracketwrap"><div class="bracket">${cols.join('')}</div></div><div class="cuplist">${list}</div>${b.earlier.length ? `<h3>${_('Earlier round')}</h3><div class="grid g2">${b.earlier.map(cupTie).join('')}</div>` : ''}<div class="note">${_('A blank tie: no result was published for it.')}</div>`;
+}
+function archPhase(a, b) {
+  const gap = b.missing && b.missing.length ? `<div class="banner">${_('Results not found')}: ${b.missing.map(m => `${esc(m.home)} – ${esc(m.away)}`).join(' · ')}</div>` : '';
+  if (b.format === 'bracket') return archBracket(b) + archGames(b.games);
+  if (b.format === 'series') {
+    const main = b.rounds.filter(r => r.name !== 'Third place'), third = b.rounds.find(r => r.name === 'Third place');
+    const legs = third ? third.series.map(x => `<h3>${_('Third place')} <span class="mut small">${_('two games')}</span></h3><div class="card">${x.games.map(archGame).join('')}</div>`).join('') : '';
+    return mvpCard(a.finals_mvp) + seriesBracket({ rounds: main, champion: b.champion }, { key: 'super' }) + legs + archGames(b.games);
+  }
+  return `${b.groups.map(g => `${g.name ? `<h3>${_(g.name)}</h3>` : ''}${archTable(g.table, b.carry)}`).join('')}
+    ${b.carry ? `<div class="note">${_('Each club starts with the points of the phase before (2 for a win, 1 for a loss).')}</div>` : ''}${gap}${archGames(b.games)}`;
+}
+async function seasonHub(name) {
+  const a = await fetch('/api/archive/' + encodeURIComponent(name), { cache: 'no-cache' }).then(r => r.ok ? r.json() : Promise.reject(new Error(r.status)));
+  const b = a.phases.find(x => x.key === archTab) || a.phases[0];
+  const tabs = `<div class="seg archtabs" role="group">${a.phases.map(x => `<button data-atab="${x.key}" class="${x === b ? 'on' : ''}" aria-pressed="${x === b}">${ARCH_ICON[x.key]} ${_(x.key === 'regular' ? 'Regular season' : x.name)}</button>`).join('')}</div>`;
+  const champ = `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Champion')} ${seasonLbl(a.season)}</div><div class="nm">${a.champion_code ? logo(a.champion_code, 56) : ''}<span>${esc(a.champion || '?')}</span></div></div></div>`;
+  return `${b.key === 'regular' ? champ : ''}${tabs}<h2>${ARCH_ICON[b.key]} ${_(b.key === 'regular' ? 'Regular season' : b.name)} <span class="mut" style="font-size:14px">${b.games.length} ${_('games')}${b.without_box ? ` · ${b.without_box} ${_('without box score')}` : ''}</span></h2>${archPhase(a, b)}`;
+}
+async function archTeam(code) {
+  const name = pickedSeason(), get = q => fetch(`/api/archive/${encodeURIComponent(name)}/teams/${encodeURIComponent(code)}${q}`, { cache: 'no-cache' });
+  let r = await get(statPhase ? '?phase=' + encodeURIComponent(statPhase) : '');
+  if (!r.ok) throw new Error(r.status);
+  let t = await r.json();
+  if (statPhase && !t.phases.some(p => p.box_phase === statPhase)) { statPhase = ''; t = await (await get('')).json(); }
+  pageMeta = [f('metaTeam', t.name, t.code), `${t.name} · ${seasonLbl(t.season)}`];
+  const st = t.stats, phLbl = p => _(PHASE_LBL[p]);
+  const tiles = st ? [['PTS', st.pts], [_('Allowed'), st.opp_pts], ['REB', st.reb], [_('Opp. REB'), st.opp_reb], [H('AST'), st.ast], [H('TOV'), st.tov], [H('STL'), st.stl], [H('BLK'), st.blk], [H('FG%'), st.fg_pct], [H('3P%'), st.p3_pct], [H('FT%'), st.ft_pct], [_('Opp. FG%'), st.opp_fg_pct]] : [];
+  const games = t.games.filter(g => !statPhase || g.phase === statPhase);
+  const rows = games.map(g => { const home = g.home === t.code, opp = home ? g.away : g.home, pf = home ? g.home_score : g.away_score, pa = home ? g.away_score : g.home_score;
+    return `<tr ${g.box ? `data-go="${gameUrl(g.box)}"` : 'style="cursor:default"'}><td class="l">${g.date ? esc(hDate(g.date)) : ''}</td><td class="l mut small">${phLbl(g.phase)}</td><td class="l"><span class="tn"><span class="mut small">${home ? _('vs') : '@'}</span>${logo(opp, 24)}<a href="${teamUrl(opp)}">${esc(opp)}</a></span></td><td><span class="pill ${pf > pa ? 'w' : 'l'}">${pf > pa ? W : Ls}</span> <b>${pf} – ${pa}</b></td><td class="small">${g.box ? `<a href="${gameUrl(g.box)}">📋 ${_('Match stats ›')}</a>` : `<span class="pill l">${_('Box score missing')}</span>`}</td></tr>`; }).join('');
+  const miss = [...t.without_box.map(g => `<li>${esc(hDate(g.date))} · ${phLbl(g.phase)} · ${esc(g.home)} ${g.home_score}–${g.away_score} ${esc(g.away)}</li>`), ...t.no_result.map(g => `<li>${phLbl(g.phase)} · ${esc(g.home)} – ${esc(g.away)} <span class="mut">(${_('score not found either')})</span></li>`)];
+  return `<a class="mut" href="${url('standings')}">← ${_('Standings')}</a>
+  <div class="card" style="margin-top:10px"><div class="row">${logo(t.code, 64)}<h1 style="margin:0">${esc(t.name)} <span class="mut" style="font-size:16px">${seasonLbl(t.season)}</span></h1></div>
+    <div style="margin-top:8px">${t.titles.map(x => `<span class="pill mvp">🏆 ${_(x === 'Super play-off' ? 'Champion' : x)}${x === 'Super play-off' ? '' : ' · ' + _('winner')}</span> `).join('')}</div></div>
+  ${mvpCard(t.finals_mvp)}
+  <h2>${_('The season, phase by phase')}</h2><div class="card scroll"><table class="ftable"><thead><tr><th class="l">${_('Phase')}</th><th>#</th><th>J</th><th>${W}</th><th>${Ls}</th><th>${_('Diff')}</th><th>${_('Box scores')}</th></tr></thead><tbody>${t.phases.map(p => `<tr style="cursor:default"><td class="l">${phLbl(p.box_phase)}</td><td>${p.rank ?? '–'}</td><td>${p.played}</td><td>${p.w}</td><td>${p.l}</td><td class="${p.pf >= p.pa ? 'good' : 'bad'}">${signed(p.pf - p.pa)}</td><td class="mut">${p.with_box}/${p.played}</td></tr>`).join('')}</tbody></table></div>
+  <h2>${_('Statistics')}</h2>${phaseChips(t.phases.map(p => p.box_phase))}
+  ${st ? `<div class="grid g4">${tiles.map(([l, v]) => `<div class="card stat"><b>${v ?? '–'}</b><span>${l}</span></div>`).join('')}</div><div class="note">${_('Per game, from the box scores')}: ${st.gp}.</div>` : `<div class="banner">${_('No box scores in this view yet.')}</div>`}
+  <h2>${_('Players')}</h2><div class="card scroll"><table><thead><tr><th class="l">${_('Player')}</th><th>${H('GP')}</th><th>MIN</th><th>PTS</th><th>REB</th><th>${H('AST')}</th><th>PIR</th></tr></thead><tbody>${t.players.map(p => `<tr data-go="${playerUrl(p.id, p.name)}"><td class="l"><span class="mut small">#${p.number}</span> ${plink(p)}</td><td>${p.gp}</td><td>${p.min}</td><td>${p.pts}</td><td>${p.reb}</td><td>${p.ast}</td><td>${p.pir}</td></tr>`).join('') || `<tr><td colspan="7" class="mut">${_('No player stats yet.')}</td></tr>`}</tbody></table></div>
+  <h2>${_('Games')} <span class="mut" style="font-size:14px">${games.length}</span></h2><div class="card scroll"><table><tbody>${rows}</tbody></table></div>
+  <h2>${_('Missing box scores')} <span class="mut" style="font-size:14px">${miss.length}</span></h2>${miss.length ? `<div class="card"><ul class="misslist">${miss.join('')}</ul></div>` : `<div class="note">✓ ${_('Every game of this club has its box score.')}</div>`}`;
+}
 
 // ---------------------------------------------------------------- History: the past seasons
 const seasonLbl = x => String(x).replace('-', '/');
@@ -1840,6 +1925,12 @@ async function historyPage(arg) {
   }
   pageMeta = LANG === 'fr' ? [`Pro A tunisienne ${seasonLbl(arg)} : champion, formule, classements et feuilles de match – Tunisia Basket`, `La saison ${seasonLbl(arg)} du basket tunisien : champion ${d.champion || '-'}, la formule, les classements, les séries et les résultats.`]
     : [`Tunisian Pro A ${seasonLbl(arg)}: champion, format, standings and box scores – Tunisia Basket`, `The ${seasonLbl(arg)} Tunisian basketball season: champion ${d.champion || '-'}, how it was played, tables, series and results.`];
+  if (isArchived(arg)) {
+    season = arg; try { localStorage.setItem('season', season); } catch (e) { /* ignore */ }
+    const sel = $('#season'); if (sel) sel.value = arg;
+    const all = d.seasons.map(x => `<a class="rchip${x === arg ? ' on' : ''}" href="${url('history', x)}">${seasonLbl(x)}</a>`).join('');
+    return `${top}<div class="rchips" style="flex-wrap:wrap">${all}</div>${await seasonHub(arg)}`;
+  }
   const fm = d.format, chips = d.seasons.map(x => `<a class="rchip${x === arg ? ' on' : ''}" href="${url('history', x)}">${seasonLbl(x)}</a>`).join('');
   const hero = `<div class="card winner"><div class="trophy">🏆</div><div><div class="crown">${_('Champion')} ${seasonLbl(d.season)}</div><div class="nm">${d.champion_code ? logo(d.champion_code, 56) : ''}<span>${esc(d.champion || '?')}</span></div>
     ${d.runner_up ? `<div class="mut">${_('Runner-up')}: ${esc(d.runner_up)}${d.final_score ? ` · ${_('final')} ${esc(d.final_score)}` : ''}</div>` : ''}${d.third ? `<div class="mut">${_('Third')}: ${esc(d.third)}</div>` : ''}${d.relegated ? `<div class="mut">${_('Relegated')}: ${esc(d.relegated)}</div>` : ''}</div></div>`;
@@ -2106,6 +2197,7 @@ function honoursLine(h) {
   return `<div class="honours">${main.join('<span class="mut"> · </span>')}<a class="hsrc" href="${esc(h.sources.league || '#')}" target="_blank" rel="noopener" title="${esc(_('Source: Wikipedia, to be verified'))}">ⓘ</a>${side.length ? `<div class="hside">★ ${side.join(' · ')}</div>` : ''}</div>`;
 }
 async function team(codeArg) {
+  if (isArchived(pickedSeason())) return archTeam(codeArg);
   const t = await api('teams/' + encodeURIComponent(codeArg)), st = t.standing, inPool = t.top_teams.includes(t.code);
   const played = t.results.length;
   courtData = t.lineup.length ? { kind: 'team', lineup: t.lineup } : null;
@@ -2435,6 +2527,8 @@ function bind() {
   const tf = $('#tf'); if (tf) tf.onchange = () => { teamF = tf.value; route(true); };
   const pt = $('#pt'); if (pt) pt.onchange = () => { planTeam = pt.value; route(true); };
   document.querySelectorAll('[data-cupr]').forEach(b => b.onclick = () => { cupRound = +b.dataset.cupr; route(true); });
+  document.querySelectorAll('[data-phase]').forEach(b => b.onclick = () => { statPhase = b.dataset.phase; route(true); });
+  document.querySelectorAll('[data-atab]').forEach(b => b.onclick = () => { archTab = b.dataset.atab; route(true); });
   document.querySelectorAll('[data-ftab]').forEach(b => b.onclick = () => { fTab = b.dataset.ftab; route(true); });
   document.querySelectorAll('[data-fstage]').forEach(b => b.onclick = () => { fStage = +b.dataset.fstage; route(true); });
   document.querySelectorAll('[data-racesel]').forEach(b => b.onclick = () => { raceSel = raceSel === b.dataset.racesel ? '' : b.dataset.racesel; route(true); });
@@ -2472,7 +2566,7 @@ $('#theme').textContent = document.documentElement.dataset.theme === 'dark' ? '�
 $('#theme').onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 $('#lang').value = LANG;
 $('#lang').onchange = e => { localStorage.setItem('lang', e.target.value); const r = parsePath(location.pathname) || { page: 'home' }; location.href = url(r.page, r.arg, e.target.value); };
-$('#season').onchange = e => { season = e.target.value; localStorage.setItem('season', season); route(true); };
+$('#season').onchange = e => { statPhase = ''; archTab = 'regular'; season = e.target.value; localStorage.setItem('season', season); route(true); };
 fetch('/admin/api/me', { credentials: 'same-origin' }).then(r => r.json()).then(m => { $('#syncbtn').hidden = !m.admin; }).catch(() => {});  // Sync is for the admin only
 $('#syncbtn').onclick = async () => {
   const b = $('#syncbtn'); b.textContent = '⟳ ' + _('Syncing…');
@@ -2483,6 +2577,7 @@ $('#syncbtn').onclick = async () => {
 };
 (async () => {  // fill the season picker on every page
   const d = await api('overview');
+  seasonList = d.seasons;
   $('#season').innerHTML = d.seasons.map(x => `<option ${x === d.season ? 'selected' : ''}>${x}</option>`).join('');
   $('#season').closest('label').hidden = d.seasons.length < 2;
 })();

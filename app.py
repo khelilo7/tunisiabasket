@@ -40,6 +40,7 @@ app.config["MAX_CONTENT_LENGTH"] = 300 * 1024 * 1024  # admin uploads (PDF/image
 import admin  # noqa: E402  (registers the /admin tool)
 app.register_blueprint(admin.bp)
 import analytics  # noqa: E402  (/analytics: analysts count games by hand; the admin approves them)
+import archive  # noqa: E402  (a finished season, phase by phase)
 app.register_blueprint(analytics.bp)
 SYNC_EVERY_MIN = float(os.environ.get("SYNC_INTERVAL_MIN", "10"))
 status = {"running": False, "last": None, "error": None, "enabled": True}
@@ -272,18 +273,23 @@ def player_photo(pid):
 
 @app.get("/api/players")
 def players():
-    d = stats.build(request.args.get("season"))
-    return jsonify(season=d["season"], players=[slim(p) for p in d["players"]], leaders=stats.leaders(d["players"]))
+    d = stats.build(request.args.get("season"), phase=request.args.get("phase") or None)
+    return jsonify(season=d["season"], phases=d["phases"], phase=d["phase"], players=[slim(p) for p in d["players"]], leaders=stats.leaders(d["players"]))
 
 
 @app.get("/api/players/<pid>")
 def player(pid):
-    d = stats.build(request.args.get("season"))
-    p = next((p for p in d["players"] if p["id"] == pid), None)
-    if not p:
+    whole = stats.build(request.args.get("season"))
+    mine = next((p for p in whole["players"] if p["id"] == pid), None)
+    if not mine:
         abort(404)
+    played = sorted({r["phase"] for r in mine["log"] if r.get("phase")})
+    phase = request.args.get("phase") if request.args.get("phase") in played else None      # a phase the player did not play shows the whole season
+    d = stats.build(whole["season"], phase=phase) if phase else whole
+    p = next(p for p in d["players"] if p["id"] == pid)
+    fm = archive.finals_mvp(d["season"]) if archive.available(d["season"]) else None
     rank = [x["id"] for x in d["players"] if x["mvp_eligible"]]
-    return jsonify(season=d["season"], rank=rank.index(pid) + 1 if pid in rank else None,
+    return jsonify(season=d["season"], phases=played, phase=phase, finals_mvp=bool(fm and fm["id"] == pid), rank=rank.index(pid) + 1 if pid in rank and not archive.available(d["season"]) else None,
                    of=len(rank), top_teams=d["top_teams"], player={**p, "splits": stats.player_splits(p["log"])}, national=natteam.for_player(pid))
 
 
@@ -349,6 +355,23 @@ def game(gid):
 @app.get("/api/teams/<code>")
 def team(code):
     v = stats.team_view(code.upper(), request.args.get("season"))
+    if not v:
+        abort(404)
+    return jsonify(v)
+
+
+@app.get("/api/archive/<season>")
+def archive_season(season):
+    """A finished season, phase by phase (archive.py): tables, series, the cup bracket, the Finals MVP."""
+    v = archive.view(season)
+    if not v:
+        abort(404)
+    return jsonify(v)
+
+
+@app.get("/api/archive/<season>/teams/<code>")
+def archive_team(season, code):
+    v = archive.team(season, code.upper(), request.args.get("phase") or None)
     if not v:
         abort(404)
     return jsonify(v)
@@ -478,7 +501,7 @@ def competitions():
     """Which extra competitions exist (the page's switches show only those): the Cup once it has a bracket, the play-off / play-out once the ADMIN has announced them (until then the public site does not change),
     and the National One play-off once the admin has announced it."""
     fv = finals.view()
-    return jsonify(cup=bool(cup.load()["rounds"]), finals=bool(fv["announced"]), started=bool(fv["announced"]), nat1=bool(nat1.load()["teams"]), nat1_playoff=bool(nat1.load()["playoff_on"]))
+    return jsonify(archived=list(archive.SEASONS), cup=bool(cup.load()["rounds"]), finals=bool(fv["announced"]), started=bool(fv["announced"]), nat1=bool(nat1.load()["teams"]), nat1_playoff=bool(nat1.load()["playoff_on"]))
 
 
 @app.get("/api/history")
