@@ -7,6 +7,7 @@ import json
 import math
 import os
 import re
+import unicodedata
 import threading
 import time
 from collections import Counter, defaultdict
@@ -30,6 +31,7 @@ GAME_DATES_FILES = (config.ASSETS_DIR / "game_dates.json", config.DATA_DIR / "ga
 POSITIONS_FILE = config.DATA_DIR / "positions.json"  # manual position corrections: {"<player id>": "PG"}
 POSITIONS = ["PG", "SG", "SF", "PF", "C"]
 PHASE_LEN = 11  # 12 teams, each plays every other team once per phase
+SEPARATE_SEASONS = ("2025-2026",)   # past seasons whose box scores must not take on this season's identities (see _separate_people)
 MVP_TOP_TEAMS = 4  # the season MVP can only come from the top-N teams in the official standings
 
 # --- Rating model -----------------------------------------------------------
@@ -118,7 +120,7 @@ def load_games():
     games, by_key = [], {}
     for g in raw:
         t1, t2 = sorted(g["teams"], key=lambda t: t["code"])
-        key = (t1["code"], t2["code"], t1["points"], t2["points"])  # same game uploaded twice
+        key = (season_of(g["date"]), t1["code"], t2["code"], t1["points"], t2["points"])  # same game uploaded twice
         prev = by_key.get(key)
         if prev is not None:
             # keep the better copy: exact text > OCR > hand-entered sample; real date over approximate
@@ -131,8 +133,9 @@ def load_games():
     by_season = defaultdict(list)                          # a jersey number is only a player's identity within one season (CA #1 of 2018 is not CA #1 of 2026): each season names its own players
     for g in games:
         by_season[season_of(g["date"])].append(g)
-    for group in by_season.values():
-        _canonicalise(group)
+    for season, group in by_season.items():
+        _canonicalise(group, overlay=season not in SEPARATE_SEASONS)
+    _separate_people(by_season)
     games.sort(key=lambda g: (g["date"], g["id"]))
     return games
 
@@ -156,9 +159,60 @@ def number_rule(rules, code, number, date):
     return best
 
 
-def _canonicalise(games):
+def _name_words(name):
+    plain = unicodedata.normalize("NFKD", name or "").encode("ascii", "ignore").decode().upper()
+    return [w for w in re.findall(r"[A-Z]+", plain) if w not in ("BEN", "BEL", "EL", "AL")]
+
+
+def same_person(a, b):
+    """Do two spellings of a name read as the same person? "ABADA OMAR" / "Omar Abeda" yes; two brothers, who only share the family name, no."""
+    x, y = _name_words(a), _name_words(b)
+    alike = lambda s, t: difflib.SequenceMatcher(None, s, t).ratio()
+    if not x or not y:
+        return False
+    if alike("".join(sorted(x)), "".join(sorted(y))) >= 0.8:
+        return True
+    left, hits = list(y), 0
+    for w in x:
+        best = max(left, key=lambda v: alike(w, v), default=None)
+        if best and alike(w, best) >= 0.7:
+            left.remove(best)
+            hits += 1
+    return hits >= 2
+
+
+def _separate_people(by_season):
+    """A player id is "team-number", and this season's roster file, bios and photos hang on it. In a SEPARATE season the same number may be somebody else:
+    he gets an id of his own (number + 1000 x the season's year), so nothing of today's holder shows on him. The same person keeps his id, under today's name."""
+    ro = load_roster()
+    for season in SEPARATE_SEASONS:
+        later = sorted((s for s in by_season if s > season), reverse=True)
+        if season not in by_season or not later:
+            continue
+        now = {a["id"]: a["name"] for a in ro["added"]}
+        for g in sorted((g for s in later for g in by_season[s]), key=lambda g: g["date"]):
+            for t in g["teams"]:
+                for p in t["players"]:
+                    if not p.get("dnp") and not p.get("unnamed"):
+                        now[p["pid"]] = p["name"]
+        now.update(ro["renames"])
+        for g in by_season[season]:
+            for t in g["teams"]:
+                for p in t["players"]:
+                    holder = now.get(p["pid"])
+                    if holder is None or p.get("unnamed"):
+                        continue
+                    if same_person(p["name"], holder):
+                        p["name"] = holder
+                    else:
+                        code, number = p["pid"].rsplit("-", 1)
+                        p["pid"] = f"{code}-{int(season[2:4]) * 1000 + int(number)}"
+
+
+def _canonicalise(games, overlay=True):
     """Players are identified by (team, jersey number); spelling is the weighted-majority variant.
     Team names are the majority non-garbled variant per team code.
+    `overlay` False: a past season, which this season's renames, merges and transfers do not touch.
     Jersey-number rules (roster.json "numbers") come first: a row they cover belongs to the player the rule names, whatever the number's usual owner is,
     and it takes no part in naming the others (so a newcomer who takes a number never borrows the name, or the statistics, of the player who left it)."""
     rules = load_roster()["numbers"]
@@ -214,14 +268,14 @@ def _canonicalise(games):
                 if not p.get("_rule") and not p.get("dnp") and not p.get("unnamed"):
                     by_pid[p["pid"]][p["name"]] += 1
     added = {a["id"]: a["name"] for a in load_roster()["added"]}
-    renames = load_roster()["renames"]
+    renames = load_roster()["renames"] if overlay else {}
     for g in games:
         for t in g["teams"]:
             for p in t["players"]:
                 r = p.pop("_rule", None)
                 if r:
                     p["name"] = renames.get(r["id"]) or r.get("name") or (by_pid[r["id"]].most_common(1)[0][0] if by_pid.get(r["id"]) else None) or added.get(r["id"]) or p["name"].title()
-    alias = _pid_alias()
+    alias = _pid_alias() if overlay else {}
     for g in games:
         for t in g["teams"]:
             for p in t["players"]:
@@ -557,6 +611,8 @@ def link_official(games, official):
             t["box_points"] = t["points"]
             if t["code"] in official["teams"]:
                 t["name"] = official["teams"][t["code"]]
+        if official.get("season") and g.get("date") and season_of(g["date"]) != official["season"]:
+            continue                                     # a past season's box score must never take this season's score or matchday
         cands = [r for r in by_pair.get(frozenset([a["code"], b["code"]]), []) if id(r) not in used]
         hint = matchday_hint(g)
         box = {t["code"]: t["box_points"] for t in g["teams"]}

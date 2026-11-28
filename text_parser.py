@@ -75,6 +75,8 @@ def parse_text_pdf(path, page=0):
                 raise ValueError(f"unparsable stats row: {ln}")
             g = [int(x) for x in s.groups()[:8]]
             tail = [int(x) for x in s.group(9).split()]
+            if len(tail) == 13:      # OR DR TOT AS TO ST BS BA(blocks against) PF FD +/- EF PTS
+                tail.pop(7)
             if len(tail) == 12:      # OR DR TOT AS TO ST BS PF FD +/- EF PTS
                 oreb, dreb, reb, ast, tov, stl, blk, pf, fd, pm, ef, pts = tail
             elif len(tail) == 11:    # same without EF
