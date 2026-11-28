@@ -20,6 +20,30 @@ SCORE_LINE = re.compile(r"^(?!.*Match)(.+?)\s+(\d{2,3})\s*-\s*(\d{2,3})\s+(.+?)\
 TEAM = re.compile(r"^([123456]{3}|[A-Z][A-Z .]{1,5}?)\s+-\s+(.+?)\s*$")                                                   # "123 - Etoile sportive de radès"
 TEAM_CODE = re.compile(r"^(.+?)\s*\(([A-Za-z0-9 ]{2,6})\)\W*\s*Entra[iî]neur\(s\)")                           # "Ez-zahra Sport (EZS) Entraîneur(s) Adjoints(s):"
 DNP = re.compile(r"^(\*?)(\d{1,2})\s+(.+?)\s+(?:NPJ|DNP)$")
+# a long name wraps around its row: "MARMOUCH MOHAMED" / "*6 36:30 7/11 ..." / "YASSINE (C)"
+NAMELESS = re.compile(r"^(\*?)(\d{1,2})\s+(\d{1,3}:\d{2})\s+(.*)$")
+NAMEPART = re.compile(r"^[A-Za-zÀ-ÿ'.()\- ]{1,40}$")
+NOT_NAME = ("Equipe", "Totaux", "Entraîneur", "Tirs", "No ", "R/T")
+
+
+def unwrap(lines):
+    """The lines with every wrapped name put back in its row."""
+    out, skip = [], False
+    part = lambda l: bool(NAMEPART.match(l)) and not l.startswith(NOT_NAME)
+    for i, ln in enumerate(lines):
+        if skip:
+            skip = False
+            continue
+        m = NAMELESS.match(ln)
+        if m:
+            before = out.pop() if out and part(out[-1]) else ""
+            after = lines[i + 1] if i + 1 < len(lines) and part(lines[i + 1]) else ""
+            skip = bool(after)
+            name = f"{before} {after}".strip()
+            if name:
+                ln = f"{m.group(1)}{m.group(2)} {name} {m.group(3)} {m.group(4)}"
+        out.append(ln)
+    return out
 CODES = [("monastir", "USM"), ("sahel", "ESS"), ("rad", "ESR"), ("africain", "CA"), ("kairouan", "JSK"), ("nabeul", "SN"), ("ezzahra", "EZS"), ("grombalia", "DSG"), ("menzah", "JSM"),
          ("menazeh", "JSM"), ("manzah", "JSM"), ("manazeh", "JSM"), ("ansar", "USA"), ("goulet", "ESG"), ("mahdia", "BCM"), ("hammamet", "ASH"), ("bizert", "CAB"), ("gab", "SG"), ("sfax", "SSS"), ("marsa", "ASM"), ("cheminot", "CSC")]
 KNOWN = {c for _, c in CODES} | {"SN", "CA", "ESS", "ESR", "USM"}      # the clubs of the league: a game with another team (a national U23 side, a misread code) is never stored
@@ -84,7 +108,7 @@ def parse_french_pdf(path, page=0):
         return parse_match_entier(text)
     if not is_french(text):
         return None
-    lines = [l.strip().replace("\u200b", "") for l in text.splitlines()]
+    lines = unwrap([l.strip().replace("\u200b", "") for l in text.splitlines()])
     dm = re.search(r"(\d{1,2})\s+([A-Za-zéûô]+)\.?\s+(20\d\d)", text)
     date = None
     if dm and dm.group(2).lower() in MONTHS:

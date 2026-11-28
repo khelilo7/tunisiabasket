@@ -376,7 +376,14 @@ def meta(lang, page, arg=None):
         code = (arg or "").upper()
         v = stats.team_view(code)
         if not v:
-            return None
+            import archive                      # a club of a finished season that is not in today's league: its page exists too
+            old = next((a for a in (archive.team(s, code) for s in archive.SEASONS) if a), None)
+            if not old:
+                return None
+            res = "".join(f'<li>{esc(g["home"])} {g["home_score"]}–{g["away_score"]} {esc(g["away"])}</li>' for g in old["games"])
+            out.update(title=f'{old["name"]} ({code}) – {old["season"]} – Tunisia Basket', description=f'{old["name"]}, {old["season"]}', arg=code,
+                       ssr=f'<h1>{esc(old["name"])} ({code}) {old["season"]}</h1><ul>{res}</ul>')
+            return out
         st = v["standing"] or {"w": 0, "l": 0, "rank": "-"}
         w, l, rk = st["w"], st["l"], st["rank"]
         if lang == "en":
@@ -398,6 +405,12 @@ def meta(lang, page, arg=None):
     elif page == "player":
         pid = player_id(arg)
         p = next((x for x in d["players"] if x["id"] == pid), None)
+        for older in (d.get("seasons") or [])[1:] if not p else []:      # a player of a past season only: the newest season that has them
+            past = stats.build(older)
+            p = next((x for x in past["players"] if x["id"] == pid), None)
+            if p:
+                season = past["season"]
+                break
         if not p:
             return None
         ref = player_ref(p)
